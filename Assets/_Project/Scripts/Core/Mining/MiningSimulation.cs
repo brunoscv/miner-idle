@@ -5,7 +5,8 @@ namespace MinersIdle.Core
 {
     /// <summary>
     /// O loop de mineração no mapa (M2): o anão escolhe o alvo (D-27), anda até ele, bate a cada intervalo, quebra,
-    /// soma lascas e escolhe o próximo; cristais nascem a cada intervalo até o máximo.
+    /// soma lascas e escolhe o próximo; cristais nascem a cada intervalo até o máximo. Desde o M3, dano, intervalo,
+    /// caminhada e lascas vêm dos atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram.
     ///
     /// O tempo é do código (Arquitetura Técnica, D-T2): <see cref="Tick"/> avança de evento em evento (chegada, golpe,
     /// nascimento), então um <c>Tick(600)</c> dá o mesmo resultado que 36.000 <c>Tick(1/60)</c>. É o que permite o
@@ -23,13 +24,19 @@ namespace MinersIdle.Core
         readonly CrystalField _field;
         readonly Miner _miner;
         readonly GameState _state;
+        readonly EconomyRules _economy;
 
+        MinerStats _stats;
         double _spawnTimer;
 
-        public MiningSimulation(MiningRules rules, IRandom random, GameState state = null)
+        /// <param name="economy">Melhorias à venda. Sem ela, nenhuma linha vende e os atributos são os valores base (o jogo do M2).</param>
+        public MiningSimulation(MiningRules rules, IRandom random, GameState state = null, EconomyRules economy = null)
         {
             _rules = rules ?? throw new ArgumentNullException(nameof(rules));
             _state = state ?? new GameState();
+            // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
+            _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
+            _stats = MinerStats.Compute(_rules, _economy, _state);
             _miner = new Miner(rules.MinerStart);
             _field = new CrystalField(rules, random);
 
@@ -47,8 +54,16 @@ namespace MinersIdle.Core
         public event Action<Crystal> CrystalBroken;
         /// <summary>O total de lascas mudou.</summary>
         public event Action<double> ShardsChanged;
+        /// <summary>Uma melhoria foi comprada, com o nível novo.</summary>
+        public event Action<UpgradeId, int> UpgradePurchased;
+        /// <summary>Os atributos do anão mudaram (DANO e VELOCIDADE do HUD).</summary>
+        public event Action<MinerStats> StatsChanged;
 
         public MiningRules Rules => _rules;
+        public EconomyRules Economy => _economy;
+
+        /// <summary>Atributos atuais do anão: valores base + melhorias.</summary>
+        public MinerStats Stats => _stats;
         public GameState State => _state;
         public Miner Miner => _miner;
 
@@ -121,6 +136,23 @@ namespace MinersIdle.Core
             ShardsChanged?.Invoke(_state.Shards);
         }
 
+        /// <summary>
+        /// Compra a próxima melhoria da linha (REQ-ECO-08). Se der certo, os atributos novos valem a partir de agora:
+        /// golpe com intervalo menor sai no próximo <see cref="Tick"/> se o tempo acumulado já passou dele; caminhada mais
+        /// rápida vale do ponto onde o anão está. Sem compra, nada muda e nenhum evento sai.
+        /// </summary>
+        public PurchaseResult Purchase(UpgradeId id)
+        {
+            var result = Purchases.TryPurchase(_state, _economy, id);
+            if (result != PurchaseResult.Purchased) return result;
+
+            _stats = MinerStats.Compute(_rules, _economy, _state);
+            UpgradePurchased?.Invoke(id, _state.LevelOf(id));
+            StatsChanged?.Invoke(_stats);
+            ShardsChanged?.Invoke(_state.Shards);
+            return result;
+        }
+
         /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, escolha de alvo, golpe.</summary>
         void ProcessDueEvents()
         {
@@ -147,9 +179,9 @@ namespace MinersIdle.Core
                     }
                 }
 
-                if (_miner.State == MinerState.Mining && _miner.HitTimer >= _rules.HitInterval - Epsilon)
+                if (_miner.State == MinerState.Mining && _miner.HitTimer >= _stats.HitInterval - Epsilon)
                 {
-                    _miner.HitTimer = Math.Max(0, _miner.HitTimer - _rules.HitInterval);
+                    _miner.HitTimer = Math.Max(0, _miner.HitTimer - _stats.HitInterval);
                     Hit();
                     changed = true;
                 }
@@ -167,10 +199,10 @@ namespace MinersIdle.Core
             {
                 case MinerState.Walking:
                     double toGo = Vec2.Distance(_miner.Position, _miner.Target.Position) - _rules.MiningRange;
-                    next = Math.Min(next, Math.Max(0, toGo / _rules.WalkSpeed));
+                    next = Math.Min(next, Math.Max(0, toGo / _stats.WalkSpeed));
                     break;
                 case MinerState.Mining:
-                    next = Math.Min(next, Math.Max(0, _rules.HitInterval - _miner.HitTimer));
+                    next = Math.Min(next, Math.Max(0, _stats.HitInterval - _miner.HitTimer));
                     break;
             }
 
@@ -202,7 +234,7 @@ namespace MinersIdle.Core
             var toTarget = _miner.Target.Position - _miner.Position;
             double distance = toTarget.Length;
             double toGo = distance - _rules.MiningRange;
-            double travel = _rules.WalkSpeed * step;
+            double travel = _stats.WalkSpeed * step;
 
             if (travel >= toGo - Epsilon)
             {
@@ -229,7 +261,7 @@ namespace MinersIdle.Core
         void Hit()
         {
             var target = _miner.Target;
-            double damage = _rules.Damage;
+            double damage = _stats.Damage;
 
             _state.RegisterHit();
             bool broke = target.ApplyDamage(damage);
@@ -241,7 +273,7 @@ namespace MinersIdle.Core
         void Break(Crystal target)
         {
             _field.Remove(target);
-            _state.RegisterBreak(target.Reward);
+            _state.RegisterBreak(target.Reward * _stats.RewardMultiplier);
             _miner.Target = null;
             _miner.State = MinerState.Idle;
 

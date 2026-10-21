@@ -64,10 +64,11 @@ namespace MinersIdle.Core
         public double CrystalHealth { get; }
         public double CrystalReward { get; }
 
-        /// <summary>Dano por golpe (o DANO do HUD).</summary>
+        /// <summary>Dano base por golpe, sem melhorias (o atual está em <see cref="MinerStats.Damage"/>).</summary>
         public double Damage { get; }
-        /// <summary>Segundos entre golpes (a VELOCIDADE do HUD).</summary>
+        /// <summary>Segundos entre golpes, sem melhorias (o atual está em <see cref="MinerStats.HitInterval"/>).</summary>
         public double HitInterval { get; }
+        /// <summary>Caminhada base, sem melhorias (a atual está em <see cref="MinerStats.WalkSpeed"/>).</summary>
         public double WalkSpeed { get; }
         /// <summary>O anão para a esta distância do centro do cristal e começa a bater.</summary>
         public double MiningRange { get; }

@@ -111,7 +111,7 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 |---|---|---|
 | E0 Testes pendentes da E5 | ✅ 2026-10-21 | Em batch: EditMode **57/57**, PlayMode **3/3** (inclui `DebugPanelTests`, que clica cada botão) |
 | E1 Melhorias no núcleo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Economy`: `UpgradeId`, `UpgradeDefinition` (custo inicial, crescimento, limite, efeito; limite 0 = linha desligada), `EconomyRules`, `MinerStats.Compute` (fórmulas do plano, sempre recalculadas do zero), `Purchases` (`TryPurchase` → Comprado / Sem lascas / No limite; `NextCost`). `GameState` ganhou os níveis e `SpendShards` (nunca negativo). Folga do custo: 1e-9 **ou** 10⁻¹² do custo, o que for maior (custos do GDD chegam a ~10²³, onde o erro de arredondamento passa de milhões). Testes: `UpgradeEconomyTests` (12 testes, 14 casos). EditMode **71/71**. Ainda não muda nada no jogo: a simulação passa a usar as melhorias na E2 |
-| E2 Simulação usa as melhorias | ⏳ | |
+| E2 Simulação usa as melhorias | ✅ validada pelo Bruno em 2026-10-21 | `MiningSimulation` recebe a `EconomyRules` (opcional: sem ela, nada vende e os atributos são os valores base, o jogo do M2), guarda os `Stats` atuais e usa dano, intervalo, caminhada e multiplicador de lascas deles. `Purchase(id)` compra, recalcula e avisa na ordem `UpgradePurchased` → `StatsChanged` → `ShardsChanged`; compra que falha não muda nada nem avisa. Golpe já vencido pelo intervalo novo sai no próximo `Tick`, uma vez só; o resto do tempo conta para o golpe seguinte. Testes: `MiningUpgradesTests` (9). Em batch: EditMode **80/80**, PlayMode **3/3**. Ainda não aparece no jogo: o asset e os botões vêm na E3 |
 | E3 Assets, HUD e debug | ⏳ | |
 | E4 Relatório de economia | ⏳ | |
 | E5 Spec do estagiário | ⏳ | |
@@ -122,4 +122,12 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 - `Pickaxe_…`, `Speed_…`, `Mining_…`, `Boots_…`, `DoublePickaxe_…`: o efeito em cada nível (a Velocidade nunca passa do mínimo de 0,5 s; a Dupla só uma vez e a 2ª tentativa não cobra).
 - `GddV1_MatchesTheEconomyAnalysis`: a 19ª compra da Picareta do GDD custa ≈ 3,4·10¹², igual à análise da economia.
 - Nada visível no jogo ainda.
+
+**Como testar a E2:** Test Runner → EditMode → Run All: 80 verdes. Os que provam a regra estão em `MiningUpgradesTests`:
+- `Pickaxe_MakesCrystalsBreakInFewerHits`: com dano 2, um cristal de 10 de vida cai em 5 golpes.
+- `FasterSpeed_BoughtMidSwing_…`: comprar Velocidade no meio do golpe faz o golpe sair no próximo `Tick`, uma vez só.
+- `Boots_BoughtMidWalk_…`: Botas no meio da caminhada aceleram a partir de onde o anão está.
+- `Mining_MultipliesTheShardsOfEachCrystal`: com +50%, um cristal de 1 lasca rende 1,5.
+- `SamePurchasesAtTheSameTimes_…`: as mesmas compras nos mesmos instantes dão o mesmo jogo, com quadros pequenos ou um passo só.
+- `OneHour_BuyingTheCheapest_…`: 1 h comprando a mais barata, sem saldo negativo, sem passar de limite e sem intervalo abaixo do mínimo.
 
