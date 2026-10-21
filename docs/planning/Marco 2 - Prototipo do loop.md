@@ -138,10 +138,22 @@ Tiles, animações, arte e biomas · loja e melhorias · toque, crítico e combo
 | Etapa | Estado | Notas |
 |---|---|---|
 | E1 Seletor de alvo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Math/Vec2`, `Core/Random/IRandom` + `SeededRandom` (SplitMix64: mesma sequência no Editor e no celular, ao contrário do `System.Random`), `Core/Mining/Crystal`, `Core/Mining/TargetSelector`. Testes: `TargetSelectorTests` (8) e `CoreBasicsTests` (7). EditMode **19/19 verdes** (com os 4 do M1) |
-| E2 Simulação do loop | ⏳ | |
+| E2 Simulação do loop | ✅ validada pelo Bruno em 2026-10-21 | Núcleo: `MiningRules`, `GameState`, `Miner`, `CrystalField`, `MiningSimulation` (avança de evento em evento: chegada, golpe, nascimento). Game: `MiningRulesAsset` (o `Balance_Prototipo`). Editor: menu `Tools → Miners Idle → Debug → Simular 10 minutos`; o `ProjectSetup` cria o asset. Testes: `MiningSimulationTests` (13). Os 28 testes do núcleo passaram compilados fora do Unity (C# 9); no Unity, 32/32 verdes (Bruno) |
 | E3 Cena graybox | ⏳ | |
 | E4 HUD | ⏳ | |
 | E5 Painel de debug | ⏳ | |
 | E6 Fluxo e aparelho | ⏳ | |
 
 **Como testar a E1:** com o projeto aberto, `Window → General → Test Runner → EditMode → Run All` (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado). O teste que reproduz o seu exemplo é `TargetSelectorTests.FullSequence_ClearsInitialBatchByProximity_ThenFollowsBirthOrder`: o lote inicial é limpo de vizinho em vizinho (2 → 1 → 3) e depois a fila segue 4 → 5 → 6, mesmo com o 4 colado no anão e o 6 mais perto que o 5. Ainda não há nada na cena (a E3 é a primeira etapa visível).
+
+**Detalhes de regra fixados na E2** (dentro do que D-27/D-29 permitem, ajustáveis no protótipo):
+- O **1º golpe vem um intervalo depois de chegar** ao cristal (a "puxada" da picareta ocupa o intervalo; a animação vai se encaixar nisso).
+- Com o mapa **cheio**, o relógio de nascimento espera no limite: **um cristal novo nasce no instante em que outro quebra**. Com os valores atuais o mapa enche em ~10 s e fica sempre com 12.
+- Sem lugar livre em 30 tentativas, o nascimento é pulado.
+- Ritmo medido (3 sementes, 10 min): **5,00 lascas/min**, 50 quebras, ~500 golpes; ~12 s por cristal (10 s batendo + ~2 s andando).
+
+**Como testar a E2:**
+1. No Editor, espere a recompilação (barra de progresso no canto) e confira que o Console não tem erros vermelhos.
+2. `Tools → Miners Idle → Debug → Simular 10 minutos`. Na primeira vez, ele cria `Assets/_Project/Data/Balance_Prototipo.asset`. O Console mostra uma linha `[Simulação]` com lascas (~50), golpes (~500), quebras (~50), lascas/min (~5) e a semente.
+3. Clique no asset `Balance_Prototipo`: os valores da tabela deste plano aparecem no Inspector. Mude, por exemplo, *Hit Interval* para 0,5 e rode o menu de novo: as lascas/min devem subir (~8–9). Volte para 1.
+4. `Window → General → Test Runner → EditMode → Run All`: **32 testes verdes** (4 do M1 + 15 da E1 + 13 da E2).

@@ -35,6 +35,9 @@ namespace MinersIdle.EditorTools
         public const string BootstrapScenePath = "Assets/_Project/Scenes/Bootstrap.unity";
         public const string GameScenePath = "Assets/_Project/Scenes/Game.unity";
 
+        /// <summary>Valores de protótipo do loop de mineração (Marco 2, D-29).</summary>
+        public const string PrototypeBalancePath = "Assets/_Project/Data/Balance_Prototipo.asset";
+
         public const string PackageId = "com.brunocarvalho.minersidle";
         public const string VersionName = "0.1.0";
 
@@ -63,6 +66,7 @@ namespace MinersIdle.EditorTools
             ConfigureAndroid();
             ConfigureUrp();
             ConfigureInputSystem();
+            EnsurePrototypeBalance();
             EnsureBootstrapScene();
             EnsureGameScene();
             ConfigureBuildScenes();
@@ -245,6 +249,16 @@ namespace MinersIdle.EditorTools
             AssetDatabase.importPackageFailed += OnFailed;
             AssetDatabase.importPackageCancelled += OnCancelled;
             AssetDatabase.ImportPackage(package, false);
+        }
+
+        /// <summary>Cria o asset com os valores padrão do plano do Marco 2; se já existe, não mexe (pode ter ajustes).</summary>
+        internal static void EnsurePrototypeBalance()
+        {
+            if (File.Exists(PrototypeBalancePath)) return;
+
+            EnsureFolder(Path.GetDirectoryName(PrototypeBalancePath)?.Replace('\\', '/'));
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<MiningRulesAsset>(), PrototypeBalancePath);
+            Debug.Log($"[Setup] Valores de protótipo criados em {PrototypeBalancePath}.");
         }
 
         static void EnsureBootstrapScene()
