@@ -1,6 +1,6 @@
 # Miners Idle
 
-Idle/clicker de mineração para celular (Android primeiro). Um anão minerador desce por dez cavernas de cristais, quebra cinco por lote, junta lascas e compra melhorias. Pixel art de fantasia (mina de madeira). Unity 6 (URP 2D).
+Idle/clicker de mineração para celular (Android primeiro). Um anão minerador anda pelo mapa de cada caverna quebrando grupos de cristais (na ordem em que nasceram), junta lascas, compra melhorias e desce por dez cavernas, cada uma com seu bioma. Pixel art de fantasia (mina de madeira). Unity 6 (URP 2D).
 
 Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [docs/README.md](docs/README.md).
 
@@ -9,9 +9,10 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | Marco | Estado |
 |---|---|
 | M0 Descoberta e planejamento | ✅ aprovado em 2026-10-21 |
-| **M1 Fundação técnica** | ✅ implementado; **aguarda validação do Bruno** (APK rodando no Moto G75 a 60 fps) — ver [plano do M1](docs/planning/Marco%201%20-%20Plano%20da%20fundacao.md) |
-| M1b Art Spike | ⏳ |
-| M2 Núcleo de regras e economia | ⏳ |
+| M1 Fundação técnica | ✅ aprovado em 2026-10-21 — [plano do M1](docs/planning/Marco%201%20-%20Plano%20da%20fundacao.md) |
+| M1b Art Spike | ⏳ (em paralelo) |
+| **M2 Protótipo do loop no mapa** | 📝 plano escrito, **aguarda aprovação do Bruno** — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
+| M3 Regras e economia | ⏳ |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
 

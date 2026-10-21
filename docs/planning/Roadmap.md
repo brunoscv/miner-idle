@@ -7,6 +7,8 @@
 
 > **Atualizações de 2026-10-21 (decisões do Bruno):** economia **não bloqueia** o M2 (D-01) · estilo = mockup (D-05) · aparelho **Moto G75**, **sem ambiente Android instalado** (entra no M1) · **~20 h/semana** → as faixas de horas abaixo equivalem a **≈ 22–33 semanas** (5–8 meses), não às 11 semanas do RM · o jogo será **vendido com anúncios reais** → M12 passa a incluir a integração de anúncios e a conformidade (D-18, D-21, D-22) · teste do **PixelLab** para o anão no M1b (D-23).
 
+> **Atualização de 2026-10-21 (tarde) — D-25…D-29:** **M1 aprovado.** O jogo passa a ter **mineração no mapa** (o anão anda e minera grupos de cristais que nascem continuamente; regra de alvo "lote, depois mais próximo"). **Novo M2 = Protótipo do loop no mapa** (graybox jogável); o antigo M2 (regras e economia) vira **M3**; o antigo M3 (vertical slice) fica absorvido pelos dois. M4 em diante mantém o número. Nas tabelas de outros documentos anteriores a esta data, "M2" como marco de economia/simulador = **M3**.
+
 ## 1. Como este roadmap se relaciona com o do RM
 
 | RM (semanas) | Aqui | Mudança e motivo |
@@ -30,12 +32,12 @@
 ```
 M0  Descoberta e aprovação ──┐
                              ▼
-M1  Fundação técnica ─────────┬────────────────────────────┐
+M1  Fundação técnica ✅ ───────┬────────────────────────────┐
 M1b Art Spike (paralelo) ─────┤                            │
                               ▼                            ▼
-M2  Núcleo de regras + economia (+ decisão D-01)      [arte: caverna 1 assinatura]
+M2  Protótipo do loop no mapa (graybox)  ← 1º jogável  [arte: caverna 1 assinatura]
                               ▼
-M3  Vertical slice: caverna 1 (graybox)   ← Marco B (jogável no celular)
+M3  Regras e economia (calculadores, simulador, spec do estagiário)  ← Marco B
                               ▼
 M4  Loja, melhorias, HUD, save mínimo
                               ▼
@@ -80,7 +82,12 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **DoD:** D-05 e D-14 (resolução/PPU) decididas e registradas; paleta e regras do [Art doc](../design/Direcao%20de%20Arte%20e%20Assets.md) validadas.
 - **Riscos:** IA inconsistente (já anotado); perfeccionismo → **limitar a 1–2 sessões**. **Fora:** animação completa, outros cristais. **Esforço:** 12–25 h.
 
-### M2 — Núcleo de regras e economia
+### M2 — Protótipo do loop no mapa (graybox) — *novo, D-28*
+- **Objetivo:** primeiro jogável: o anão anda pelo mapa, minera grupos de cristais pela regra D-27, soma lascas; HUD e painel de debug. **Jogador:** assiste o loop rodando sozinho no celular.
+- **Plano detalhado:** [Marco 2 - Prototipo do loop.md](Marco%202%20-%20Prototipo%20do%20loop.md) (etapas E1–E6, como testar, critério de pronto).
+- **Dependências:** M1 ✔ (D-25); D-26, D-27, D-29 ✔. **Fora:** loja, toque, crítico, combo, estagiário, save, arte. **Esforço:** 30–45 h.
+
+### M3 — Regras e economia (antigo M2, adaptado ao mapa — D-28)
 - **Objetivo:** todas as fórmulas e estados em C# puro, testados e simulados; economia calibrada. **Jogador:** nada (ferramenta).
 - **Tarefas:** T-M2-01…T-M2-12. **Dependências:** M1 (asmdefs/testes). **D-01 (decidida):** a economia **não é calibrada agora** — `Balance_GDD_v1` entra como valores iniciais; o simulador **mede e reporta**, sem bloquear (T-M2-12 vira "relatório de observações").
 - **Entregáveis:** `GameState`, calculadores (Reward/Upgrade/Cost), `MiningSimulation`, `PurchaseService`, `IClock`/`IRandom`, `BalanceConfig` com **`Balance_GDD_v1`** e **`Balance_v2`**, **simulador econômico** (relatório tempo×caverna para 3 perfis), **especificação do estagiário** (diagrama), painel de debug (esqueleto), suíte EditMode.
@@ -89,7 +96,8 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **DoD:** **marco A** (RM): fórmulas cobertas e reproduzíveis sem cena; economia aprovada pelo Bruno (D-01); spec do estagiário aprovada.
 - **Riscos:** recalibração é problema de design (pode levar mais de uma rodada); ambiguidades de C-04. **Fora:** qualquer cena, arte, UI. **Esforço:** 35–55 h.
 
-### M3 — Vertical slice da caverna 1 (graybox)
+### ~~M3 — Vertical slice da caverna 1 (graybox)~~ — absorvido (D-28)
+> O loop jogável em graybox foi para o **M2**; os itens que dependem de regra (toque, recompensa com economia, testes de fluxo completos) vão para o **M3** e o **M4**. O texto abaixo fica como histórico; o "lote de 5" foi substituído pelo mapa (D-26).
 - **Objetivo:** loop completo jogável no celular com formas simples. **Jogador:** toca, vê a barra cair, quebra 5 cristais, o lote se renova.
 - **Tarefas:** T-M3-01…T-M3-10. **Dependências:** M2.
 - **Entregáveis:** cena `Game` com 5 cristais em posições aleatórias espaçadas, minerador principal (sprite provisório), timer automático, toque, barra de vida, lasca somada ao HUD básico, avanço e novo lote, lasca "voa" **opcional**.
@@ -159,7 +167,7 @@ Backlog em §6 (P1/P2). Reavaliar com dados reais.
 
 ## 4. Caminho crítico e paralelismo
 
-**Caminho crítico:** aprovações (D-01, D-12) → **M1 → M2 (economia aprovada) → M3 → M4 → M6 → M7 → M8 → M10 → M11 → M12**.
+**Caminho crítico:** aprovações (D-01, D-12) → **M1 ✅ → M2 (protótipo do loop) → M3 (regras e economia) → M4 → M6 → M7 → M8 → M10 → M11 → M12**.
 
 **Em paralelo (fora do caminho crítico, mas com prazo):**
 
@@ -198,7 +206,7 @@ Prioridade: **P0** = caminho crítico/obrigatório · **P1** = importante · **P
 | T-M1B-04 | Teste de escala 270×480 × 360×640 no aparelho | REQ-PLT-01 | P0 | M | M1 (T-M1-08) |
 | T-M1B-05 | `CREDITS.md` + tabela de fontes/licenças | REQ-ART-07 | P1 | S | — |
 
-### M2 — Núcleo e economia (resumo; o plano detalhado do marco será escrito no início dele)
+### M3 — Regras e economia (antigo M2; resumo; o plano detalhado será escrito no início dele. Os IDs `T-M2-*` abaixo são históricos)
 T-M2-01 spec do estagiário (diagrama) · T-M2-02 `GameState`/`IClock`/`IRandom` · T-M2-03 calculadores de custo/efeito de todas as linhas · T-M2-04 `RewardCalculator` (+ penalidade/Mineração) · T-M2-05 `MiningSimulation` (tick determinístico, crítico, toque) · T-M2-06 `PurchaseService` · T-M2-07 `BalanceConfig` (v1 literal + v2) · T-M2-08 **simulador econômico** (3 perfis) · T-M2-09 **teste estatístico do crítico** · T-M2-10 testes de limites/fora-do-limite · T-M2-11 painel de debug (esqueleto) · T-M2-12 **relatório de calibração** para aprovação (D-01). **P0** todas, exceto T-M2-11 (P1).
 
 ### M3–M8 (granularidade de recurso; cada marco ganha plano próprio em `docs/planning/Marco N — …` antes de começar, como nos projetos anteriores)
@@ -225,8 +233,8 @@ Arte cavernas 2–10 · UI final · VFX/áudio finais · `CREDITS.md` · auditor
 | M0 | 8–12 |
 | M1 | 25–40 |
 | M1b | 12–25 |
-| M2 | 35–55 |
-| M3 | 40–55 |
+| M2 (protótipo do loop) | 30–45 |
+| M3 (regras e economia) | 35–55 |
 | M4 | 40–50 |
 | M5 | 45–65 |
 | M6 | 35–50 |
@@ -236,7 +244,7 @@ Arte cavernas 2–10 · UI final · VFX/áudio finais · `CREDITS.md` · auditor
 | M10 | 35–50 |
 | M11 | 25–40 |
 | M12 | 15–30 |
-| **Total** | **≈ 450–660 h** (≈ **23–33 semanas a 20 h/sem**) (o RM estima 420–460 h para M1–M11, sem M1b, M12 e sem a recalibração) |
+| **Total** | **≈ 440–650 h** (≈ **22–33 semanas a 20 h/sem**; recalculado em 2026-10-21 com o M2 novo) (o RM estima 420–460 h para M1–M11, sem M1b, M12 e sem a recalibração) |
 
 **Premissas (a validar — C-18, D-17):** (1) horas de desenvolvimento **focado com o Claude escrevendo o código** e o Bruno revisando/testando — em 2026-10-20 não há medida de velocidade neste projeto; (2) **uma pessoa**;
 (3) o aparelho Android e as ferramentas existem; (4) a arte é produzida (não comprada); (5) **sem calendário**: converter em semanas só depois de o Bruno informar quantas horas/semana tem para este projeto (hoje há 2 projetos irmãos em andamento);
@@ -245,7 +253,7 @@ Arte cavernas 2–10 · UI final · VFX/áudio finais · `CREDITS.md` · auditor
 ## 8. Ordem de execução recomendada para o início
 
 1. **Aprovar** D-01, D-05, D-12, D-02/D-03 e revisar estes documentos (M0).
-2. **M1** (Unity + Android + APK vazio) **em paralelo com M1b** (Art Spike — não depende do Unity).
-3. **M2** com foco em primeiro escrever o **relatório de calibração** (D-01) e a **spec do estagiário**; só então as fórmulas e o simulador.
-4. **M3** (vertical slice) — primeiro marco em que o Bruno **joga**.
+2. **M1** (Unity + Android + APK vazio) **em paralelo com M1b** (Art Spike — não depende do Unity). ✅ M1 aprovado em 2026-10-21.
+3. **M2** (protótipo do loop no mapa) — primeiro marco em que o Bruno **vê o jogo rodando** (D-28).
+4. **M3** (regras e economia, adaptadas ao mapa) com a **spec do estagiário** e o simulador.
 5. A partir daí, 1 marco por vez, **plano do marco** (`docs/planning/Marco N — …`) → implementação → testes → "Como testar" para o Bruno → aprovação.

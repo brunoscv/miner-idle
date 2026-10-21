@@ -31,12 +31,19 @@
 | **D-21** | **Anúncios fora do MVP.** O time ainda vai definir como serão os ads. Por ora o botão AD só dá o **boost de velocidade** (×2,5 por 30 s), **sem integração de rede de anúncios**. M12 deixa de incluir o SDK de anúncios (volta a ser só publicação); a integração fica como item **pós-MVP** quando os ads forem definidos (D-18 continua: o jogo será comercializado e deverá ter ads no futuro). O código mantém o boost atrás de uma interface para trocar depois. |
 | **D-23** | **PixelLab:** aprovado seguir com o teste do anão (verificação de créditos e termos comerciais continua no M1b). |
 | **D-24** | **Moto G75 é o aparelho-alvo mínimo de desempenho.** |
+| **D-25** | **M1 aprovado** (fundação técnica; APK rodando no Moto G75 a 60 fps). |
+| **D-26** | **Mineração no mapa.** O anão **anda** por um mapa visto de cima e minera **grupos de cristais** que **nascem continuamente** (até um máximo na tela). Substitui o lote fixo de 5 cristais com o minerador parado acima do alvo (REQ-LOOP-02 e REQ-LOOP-03 ficam **superados**). Cada grupo de cristais é **um alvo** (uma vida, uma recompensa). Referência de layout da tela: [Referencia de tela - mapa.jpg](../design/Referencia%20de%20tela%20-%20mapa.jpg) (HUD de 4 indicadores em cima, Loja/AD à direita, "Passar de caverna" embaixo). Cada caverna terá um **bioma** (gelo, fogo, lava, pântano…); o detalhe visual fica para o Art Spike. Os elementos do print sem regra definida (barras laterais, timers, "Modifiers", botões subir/descer/Auto) **não** estão decididos. |
+| **D-27** | **Regra de prioridade de alvo: "lote, depois mais próximo".** Cada cristal nasce com um **número de lote**: os que estão na tela no início são o lote 1; cada nascimento posterior recebe o próximo número. O anão escolhe **o cristal de menor lote; entre os do mesmo lote, o mais próximo dele** no momento da escolha (empate exato: o que nasceu primeiro). O alvo **não muda** até quebrar. Sem cristal na tela, o anão fica parado onde está. Efeito: os cristais iniciais são quebrados de vizinho em vizinho; depois a fila segue a ordem de nascimento, mesmo que um cristal novo surja ao lado do anão. |
+| **D-28** | **Roadmap reordenado: jogável antes do núcleo de economia.** O novo **M2 é o "Protótipo do loop no mapa"** (graybox jogável: andar, minerar, quebrar, juntar lascas, HUD e debug), com só as regras que esse loop pede. O antigo M2 (calculadores de melhoria, `BalanceConfig` v1, simulador econômico, spec do estagiário) passa a ser o **M3 "Regras e economia"**, adaptado ao mapa. O antigo M3 (vertical slice) fica absorvido pelo M2 e pelo M3. M4 em diante não muda de número. Referências a "M2" como marco de economia/simulador em documentos anteriores a esta data valem para o **M3**. |
+| **D-29** | **Valores de protótipo no M2.** O M2 usa um conjunto de valores marcado **"protótipo"** (vida, recompensa, dano, intervalo, velocidade de caminhada, nascimento de cristais), num ScriptableObject separado. Esses números servem para sentir o loop, **não são balanceamento**, e podem ser ajustados durante o M2 sem nova decisão. Os valores de regra do GDD v1 (D-01) continuam valendo como referência do M3. |
 | **Ferramenta de arte** | Testar o **PixelLab** (IA que gera pixel art e animações por MCP) para o anão; viabilidade de créditos gratuitos **a confirmar** (ver [Arte](../design/Direcao%20de%20Arte%20e%20Assets.md) §5). |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.
 
+> **Atualização 2026-10-21 (tarde):** D-25…D-29 decididas (M1 aprovado, mineração no mapa, regra de alvo, roadmap reordenado, valores de protótipo); D-30 e D-31 abertas em §2.3.
+>
 > **Atualização 2026-10-21:** D-01, D-02, D-03, D-05, D-12, D-17, D-18 e D-20 foram **decididas** (tabela §1.1). A tabela abaixo é o histórico das perguntas; restam abertas as D-04, D-06…D-11, D-13…D-16 e D-19.
 
 ### 2.1 Bloqueantes (decidir antes de M1/M2) — *todas respondidas em 2026-10-21*
@@ -76,6 +83,8 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | **D-22** | **Conformidade de anúncios** (quando houver ads): política de privacidade, consentimento, classificação etária. A política de privacidade e a conta do Google Play ainda são necessárias para publicar. | Planejar no M12; verificar regras vigentes na época | M12 |
 | ~~D-23~~ | ~~PixelLab~~ → **aprovado** o teste; falta confirmar créditos grátis e **termos de uso comercial** no M1b | — | M1b |
 | ~~D-24~~ | ~~Moto G75 aparelho-alvo~~ → **decidido** | — | — |
+| **D-30** | **"Contar picaretas"** (pedido de 2026-10-21): é um **contador de golpes** (estatística) ou um **segundo recurso**? | **Contador de golpes**, exibido no painel de debug no M2; um segundo recurso contraria a "uma moeda" (DEC-03) e pediria decisão própria **[rec.]** | M2 (não bloqueia o início) |
+| **D-31** | **Caminho do anão:** linha reta até o alvo (cristais não bloqueiam) ou desviar de cristais/paredes? | **Linha reta no M2** **[rec.]**; desvio só se o mapa ganhar obstáculos | M2 |
 
 ### 2.4 Para depois do MVP
 Prestígio ("Nova Descida") · música · iOS · idiomas adicionais · missões.
@@ -117,6 +126,8 @@ Probabilidade/Impacto: B(aixo) · M(édio) · A(lto). Dono: Bruno, salvo indica�
 | R-18 | Requisitos de loja/política mudam até M12 | M | B | Checar no momento; M12 é separado do MVP | Início do M12 |
 | R-19 | Jogo "parece genérico" no mercado de idle mining | M | M | Investir em *game feel* e arte (M5), identidade da descida, polimento | Playtest sem "uau" |
 | R-20 | Dois outros jogos em andamento disputam as horas do Bruno | A | M | Trabalhar 1 marco por vez; estimar com horas reais (D-17) | Marco atrasado 2× |
+| R-23 | **Tempo de caminhada** (D-26/D-27) vira parte da economia: andar longe pela ordem do lote reduz lascas/min e pode parecer "burro" ao jogador | M | M | Caminhada no núcleo (medível no simulador); velocidade de caminhada como valor ajustável; avaliar o *feel* no M2 com o debug de ordem ligado | Bruno acha o vaivém irritante no M2 |
+| R-24 | Mapa com nascimento contínuo + estagiário (M6) aumenta a chance de alvo duplicado ou espera infinita | M | A | Seletor de alvo isolado e testado desde o M2; reserva de alvo entra junto com o estagiário | Qualquer P0 do estagiário |
 
 ## 5. Premissas a validar
 

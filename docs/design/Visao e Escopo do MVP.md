@@ -3,6 +3,8 @@
 > Proposta de 2026-10-20, **[REC]** salvo onde marcado **[DOC]**. Baseada no GDD v1.0; não substitui o GDD enquanto o Bruno não
 > aprovar (ver [Decisões e Riscos](../planning/Decisoes%20e%20Riscos.md)). Requisitos em [Requisitos e Restrições](Requisitos%20e%20Restricoes.md).
 
+> **Nota de 2026-10-21 (D-26/D-27):** o "lote de 5 cristais" com o minerador parado foi substituído pela **mineração no mapa**: o anão anda e quebra grupos de cristais que nascem continuamente, na ordem "lote, depois mais próximo". Onde este documento fala em lote de 5, leia o mapa (REQ-MAP-01…03). Cada caverna terá um bioma (gelo, fogo, lava, pântano…).
+
 ## 1. Conceito de alto nível
 
 **Miners Idle** é um incremental vertical de mineração para celular. Um anão minerador desce por **dez cavernas** de cristais cada

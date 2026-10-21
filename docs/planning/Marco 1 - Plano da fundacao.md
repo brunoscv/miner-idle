@@ -37,8 +37,8 @@ D-12 (Unity 6000.6.0f1 + Android) · D-03 (nome Miners Idle, pacote `com.brunoca
 ## Critério de pronto (do Roadmap)
 - [x] Projeto abre e compila sem erros; testes verdes.
 - [x] APK instala e abre **sem erros no Moto G75**, a 60 fps (ver Estado).
-- [ ] Commit inicial.
-- [ ] Bruno valida o marco A parcial.
+- [x] Commit inicial (0a1fba3).
+- [x] Bruno valida o marco A parcial — **aprovado em 2026-10-21 (D-25)**.
 
 ## Fora deste marco
 Qualquer regra de jogo, arte, economia, UI funcional, save, anúncios.

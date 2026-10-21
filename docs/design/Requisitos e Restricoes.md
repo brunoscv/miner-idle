@@ -25,8 +25,11 @@
 | ID | Requisito | Origem | Status |
 |---|---|---|---|
 | REQ-LOOP-01 | Loop: atacar → quebrar → coletar → avançar → melhorar → descer | GDD §2.1 | OK |
-| REQ-LOOP-02 | Cinco cristais visíveis por lote, posições **aleatórias com espaçamento proporcional**, leitura vertical; ao quebrar o 5º, volta ao topo e gera novo lote | GDD §2.2, §10 | OK |
-| REQ-LOOP-03 | Minerador começa no topo, fica visualmente acima do alvo sem sobrepô-lo e avança ao cristal disponível mais próximo | GDD §2.2 | OK |
+| REQ-LOOP-02 | ~~Cinco cristais visíveis por lote, posições **aleatórias com espaçamento proporcional**, leitura vertical; ao quebrar o 5º, volta ao topo e gera novo lote~~ | GDD §2.2, §10 | **SUPERADO** (D-26 → REQ-MAP-01…03) |
+| REQ-LOOP-03 | ~~Minerador começa no topo, fica visualmente acima do alvo sem sobrepô-lo e avança ao cristal disponível mais próximo~~ | GDD §2.2 | **SUPERADO** (D-26, D-27) |
+| REQ-MAP-01 | O minerador **anda** pelo mapa visto de cima até o alvo (linha reta, D-31 em aberto) e bate quando está a uma distância ≤ alcance; o tempo de caminhada é regra do núcleo | Bruno, 2026-10-21 (D-26) | OK (novo) |
+| REQ-MAP-02 | Grupos de cristais **nascem continuamente** dentro da área do mapa, com distância mínima entre si e do minerador, até um máximo na tela; cada grupo é um alvo (uma vida, uma recompensa) | Bruno, 2026-10-21 (D-26) | OK (novo; valores = protótipo, D-29) |
+| REQ-MAP-03 | **Prioridade de alvo:** menor número de lote; no mesmo lote, o mais próximo do minerador; empate → o que nasceu primeiro. Cristais do início = lote 1, cada nascimento seguinte recebe o próximo lote. O alvo não muda até quebrar | Bruno, 2026-10-21 (D-27) | OK (novo) |
 | REQ-LOOP-04 | Passar de caverna: quebrar uma "parede" que bloqueia a nova seção **(passo 6)** × botão "Passar de Caverna" **(§4.2, §7.3)** | GDD §2.1 × §4.2 | **CONF** (C-03) |
 | REQ-MIN-01 | Golpe automático no intervalo atual: 5,0 s inicial, −0,1 s por nível de Velocidade, mínimo 0,5 s | GDD §4, §10 | OK |
 | REQ-MIN-02 | Toque manual = **10% de uma picaretada atual** (com Picareta Dupla, considera as duas); alimenta o combo | GDD §3.2, §10 | AMB (C-06: área, taxa, crítico) |

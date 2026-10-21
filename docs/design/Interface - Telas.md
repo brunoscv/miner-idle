@@ -15,6 +15,8 @@
 
 ## 2. Inventário
 
+> **Nota de 2026-10-21 (D-26/D-28):** S01 passa a ser o **mapa** com o anão andando e grupos de cristais nascendo continuamente (não mais "5 cristais"); layout de referência em [Referencia de tela - mapa.jpg](Referencia%20de%20tela%20-%20mapa.jpg). O primeiro graybox de S01 e S02 é no **M2**.
+
 | ID | Tela / elemento | Propósito | Elementos | Interações | Estados | Dependências | Quando prototipar |
 |---|---|---|---|---|---|---|---|
 | **S01** | **Tela principal de mineração** (mundo + HUD) | O jogo | HUD (S02), minerador(es), 5 cristais + barras de vida, lasca voando, `xN`, "CRÍTICO", selos de penalidade/boost, botões laterais, "Passar de Caverna" | Toque (mundo), abrir Loja, abrir AD, abrir Config, Passar de Caverna | Mineração · penalidade ativa · boost ativo · loja/modal aberto (mundo escurecido e sem toque, mas rodando) · transição de caverna | Núcleo de regras (M2) | **M3 (graybox)**, M5 (polimento) |
