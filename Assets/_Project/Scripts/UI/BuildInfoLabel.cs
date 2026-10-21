@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MinersIdle.UI
 {
     /// <summary>
-    /// Rótulo de diagnóstico do Marco 1: nome, versão do build, resolução, Safe Area e FPS.
-    /// Serve para conferir no aparelho que o build abre e que o Safe Area funciona. Sai antes do release.
+    /// Rótulo de diagnóstico: nome, versão do build, resolução, Safe Area e FPS. Criado no Marco 1; desde o Marco 2 (E5)
+    /// fica dentro do painel de debug, que não existe no release.
     /// </summary>
     [RequireComponent(typeof(TMP_Text))]
     public class BuildInfoLabel : MonoBehaviour
@@ -28,7 +28,7 @@ namespace MinersIdle.UI
             _frames = 0;
             var safe = Screen.safeArea;
             _text.text =
-                $"Miners Idle\nv{Application.version} (M1)\n{Screen.width}x{Screen.height}\n" +
+                $"Miners Idle\nv{Application.version}\n{Screen.width}x{Screen.height}\n" +
                 $"safe {safe.x:0},{safe.y:0} {safe.width:0}x{safe.height:0}\n{_fps:0} fps";
         }
     }

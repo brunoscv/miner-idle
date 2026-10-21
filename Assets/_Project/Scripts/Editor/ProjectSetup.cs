@@ -75,6 +75,23 @@ namespace MinersIdle.EditorTools
             Debug.Log("[Setup] Configuração do projeto aplicada.");
         }
 
+        /// <summary>
+        /// Antes de cada build: deixa a cena e os prefabs na versão que o código espera (só cria o que falta). Sem isso, um
+        /// build feito antes de rodar o setup de uma etapa nova sai com referências faltando (achado da E5). Volta para a
+        /// cena que estava aberta.
+        /// </summary>
+        internal static void ApplyBeforeBuild()
+        {
+            if (!TmpEssentialsReady())
+                throw new InvalidOperationException(
+                    "Falta importar o TextMeshPro: rode Tools → Miners Idle → Projeto → Aplicar configuração do projeto.");
+
+            var previous = SceneManager.GetActiveScene().path;
+            ApplyAll();
+            if (!Application.isBatchMode && !string.IsNullOrEmpty(previous) && previous != SceneManager.GetActiveScene().path)
+                EditorSceneManager.OpenScene(previous, OpenSceneMode.Single);
+        }
+
         /// <summary>Entrada para o modo batch: aplica e sai com código 0 (ok) ou 1 (erro).</summary>
         public static void RunBatch()
         {

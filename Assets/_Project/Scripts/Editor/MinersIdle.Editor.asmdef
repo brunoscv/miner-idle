@@ -1,7 +1,7 @@
 {
   "name": "MinersIdle.Editor",
   "rootNamespace": "MinersIdle.EditorTools",
-  "references": ["MinersIdle.Core", "MinersIdle.Game", "MinersIdle.Presentation", "MinersIdle.UI", "Unity.TextMeshPro", "Unity.RenderPipelines.Universal.2D.Runtime", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime", "UnityEngine.UI"],
+  "references": ["MinersIdle.Core", "MinersIdle.Game", "MinersIdle.Presentation", "MinersIdle.UI", "Unity.TextMeshPro", "Unity.InputSystem", "Unity.RenderPipelines.Universal.2D.Runtime", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime", "UnityEngine.UI"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

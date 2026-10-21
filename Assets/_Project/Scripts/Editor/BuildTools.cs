@@ -52,6 +52,8 @@ namespace MinersIdle.EditorTools
 
         static string BuildAndroid(bool development, bool run = false)
         {
+            ProjectSetup.ApplyBeforeBuild();
+
             Directory.CreateDirectory(OutputFolder);
             var path = Path.GetFullPath(Path.Combine(OutputFolder, DevApkName));
 

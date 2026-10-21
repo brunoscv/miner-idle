@@ -87,6 +87,40 @@ namespace MinersIdle.Core
             return crystal;
         }
 
+        /// <summary>
+        /// Atalho do debug: um cristal agora, num lugar livre e com lote próprio, sem esperar o relógio e ignorando o
+        /// máximo. <c>null</c> se não houver lugar livre.
+        /// </summary>
+        public Crystal SpawnCrystalNow()
+        {
+            var crystal = _field.TrySpawn(_miner.Position, ignoreMax: true);
+            if (crystal != null) CrystalSpawned?.Invoke(crystal);
+            return crystal;
+        }
+
+        /// <summary>
+        /// Atalho do debug: quebra o alvo atual na hora, pelo mesmo caminho de uma quebra normal (paga a recompensa, conta
+        /// a quebra, mas não conta golpe). O próximo alvo é escolhido no próximo <see cref="Tick"/>. <c>false</c> sem alvo.
+        /// </summary>
+        public bool BreakTarget()
+        {
+            var target = _miner.Target;
+            if (target == null) return false;
+
+            target.ApplyDamage(target.Health);
+            Break(target);
+            return true;
+        }
+
+        /// <summary>Atalho do debug: soma lascas sem quebrar cristal.</summary>
+        public void AddShards(double amount)
+        {
+            if (amount < 0 || double.IsNaN(amount)) throw new ArgumentOutOfRangeException(nameof(amount));
+
+            _state.AddShards(amount);
+            ShardsChanged?.Invoke(_state.Shards);
+        }
+
         /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, escolha de alvo, golpe.</summary>
         void ProcessDueEvents()
         {
@@ -201,8 +235,11 @@ namespace MinersIdle.Core
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(target, damage);
 
-            if (!broke) return;
+            if (broke) Break(target);
+        }
 
+        void Break(Crystal target)
+        {
             _field.Remove(target);
             _state.RegisterBreak(target.Reward);
             _miner.Target = null;

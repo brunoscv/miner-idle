@@ -1,11 +1,12 @@
 using MinersIdle.Core;
+using TMPro;
 using UnityEngine;
 
 namespace MinersIdle.Presentation
 {
     /// <summary>
     /// Um grupo de cristais em graybox, reaproveitado pelo pool do <see cref="CrystalFieldView"/>. A barra de vida só
-    /// aparece no alvo atual (REQ-CRY-03).
+    /// aparece no alvo atual (REQ-CRY-03). O número do lote só aparece com "Mostrar ordem" do debug (D-27).
     /// </summary>
     public sealed class CrystalView : MonoBehaviour
     {
@@ -16,10 +17,13 @@ namespace MinersIdle.Presentation
         [SerializeField] GameObject healthBar;
         [SerializeField] SpriteRenderer healthBack;
         [SerializeField] SpriteRenderer healthFill;
+        [SerializeField] TMP_Text batchLabel;
 
         float _fillWidth;
 
         public Crystal Crystal { get; private set; }
+
+        public bool IsShowingBatch => batchLabel.gameObject.activeSelf;
 
         void Awake()
         {
@@ -33,11 +37,14 @@ namespace MinersIdle.Presentation
             Crystal = crystal;
             transform.position = new Vector3((float)crystal.Position.X, (float)crystal.Position.Y, 0f);
             body.sortingOrder = sortingOrder;
+            batchLabel.SetText("{0}", crystal.Batch);
             SetTargeted(false);
             RefreshHealth();
         }
 
         public void SetTargeted(bool targeted) => healthBar.SetActive(targeted);
+
+        public void SetShowBatch(bool show) => batchLabel.gameObject.SetActive(show);
 
         public void RefreshHealth()
         {

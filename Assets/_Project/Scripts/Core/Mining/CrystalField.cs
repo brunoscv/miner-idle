@@ -47,10 +47,13 @@ namespace MinersIdle.Core
             return created;
         }
 
-        /// <summary>Um cristal num lugar livre, com lote próprio. <c>null</c> se o mapa está cheio ou sem espaço.</summary>
-        public Crystal TrySpawn(Vec2 minerPosition)
+        /// <summary>
+        /// Um cristal num lugar livre, com lote próprio. <c>null</c> se o mapa está cheio (a menos de
+        /// <paramref name="ignoreMax"/>, usado pelo debug) ou sem espaço.
+        /// </summary>
+        public Crystal TrySpawn(Vec2 minerPosition, bool ignoreMax = false)
         {
-            if (IsFull || !TryFindFreePosition(minerPosition, out var position)) return null;
+            if ((IsFull && !ignoreMax) || !TryFindFreePosition(minerPosition, out var position)) return null;
             return Add(_nextBatch++, position);
         }
 

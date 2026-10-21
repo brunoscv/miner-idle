@@ -17,8 +17,24 @@ namespace MinersIdle.Presentation
         ObjectPool<CrystalView> _pool;
         CrystalView _target;
 
+        bool _showOrder;
+
         /// <summary>Cristais desenhados agora (para testes: deve bater com a simulação).</summary>
         public int ActiveCount => _active.Count;
+
+        /// <summary>"Mostrar ordem" do debug: o número do lote em cada cristal.</summary>
+        public bool ShowOrder
+        {
+            get => _showOrder;
+            set
+            {
+                _showOrder = value;
+                foreach (var view in _active.Values) view.SetShowBatch(value);
+            }
+        }
+
+        /// <summary>Os cristais desenhados agora (para testes).</summary>
+        public IEnumerable<CrystalView> ActiveViews => _active.Values;
 
         void Awake()
         {
@@ -65,6 +81,7 @@ namespace MinersIdle.Presentation
         {
             var view = _pool.Get();
             view.Show(crystal, SortingOrderFor(crystal.Position));
+            view.SetShowBatch(_showOrder);
             _active[crystal.Id] = view;
         }
 

@@ -12,8 +12,8 @@ namespace MinersIdle.EditorTools
 {
     /// <summary>
     /// Parte do <see cref="ProjectSetup"/> para o graybox do Marco 2: sprites brancos 16×16, o prefab do cristal, o objeto
-    /// "Mining" na cena Game (partida, chão, cristais e anão; E3) e o HUD de cima (E4). Como o resto do setup, só cria o
-    /// que falta.
+    /// "Mining" na cena Game (partida, chão, cristais e anão; E3), o HUD de cima (E4) e o painel de debug com o "Mostrar
+    /// ordem" (E5, ver <see cref="DebugPanelSetup"/>). Como o resto do setup, só cria o que falta.
     /// </summary>
     static class GrayboxSetup
     {
@@ -28,6 +28,8 @@ namespace MinersIdle.EditorTools
         const int SpriteSize = 16;
         const float PixelsPerUnit = 16f;
         const int MapSortingOrder = -32000;
+        const int TargetLineSortingOrder = 29000;   // abaixo das barras de vida (30000)
+        const int BatchLabelSortingOrder = 30002;   // acima das barras
 
         // Cores provisórias do graybox: chão ardósia, cristal magenta (o do mockup), anão âmbar (cor de ação do GDD).
         static readonly Color FloorColor = new Color32(0x23, 0x33, 0x44, 0xFF);
@@ -35,6 +37,7 @@ namespace MinersIdle.EditorTools
         static readonly Color MinerColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         static readonly Color BarBackColor = new Color32(0x15, 0x19, 0x1C, 0xFF);
         static readonly Color BarFillColor = new Color32(0x4C, 0xD9, 0x64, 0xFF);
+        static readonly Color TargetLineColor = new Color(0.949f, 0.663f, 0f, 0.7f);
         // HUD: painel de madeira escura do mockup, rótulo âmbar, valor claro.
         static readonly Color HudPanelColor = new Color32(0x2B, 0x1D, 0x14, 0xE6);
         static readonly Color HudLabelColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
@@ -99,6 +102,38 @@ namespace MinersIdle.EditorTools
                 Object.DestroyImmediate(root);
                 Debug.Log($"[Setup] Prefab criado: {CrystalPrefabPath}.");
             }
+
+            EnsureBatchLabel();
+        }
+
+        /// <summary>E5: o número do lote em cada cristal ("Mostrar ordem"), escondido por padrão.</summary>
+        static void EnsureBatchLabel()
+        {
+            var contents = PrefabUtility.LoadPrefabContents(CrystalPrefabPath);
+            try
+            {
+                if (contents.transform.Find("BatchLabel") != null) return;
+
+                var label = new GameObject("BatchLabel", typeof(TextMeshPro));
+                label.transform.SetParent(contents.transform, false);
+                var tmp = label.GetComponent<TextMeshPro>();
+                tmp.text = "1";
+                tmp.fontSize = 6f;
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.color = Color.white;
+                tmp.textWrappingMode = TextWrappingModes.NoWrap;
+                tmp.sortingOrder = BatchLabelSortingOrder;
+                tmp.rectTransform.sizeDelta = new Vector2(1.5f, 1f);
+                label.SetActive(false);
+
+                SetReferences(contents.GetComponent<CrystalView>(), ("batchLabel", tmp));
+                PrefabUtility.SaveAsPrefabAsset(contents, CrystalPrefabPath);
+                Debug.Log("[Setup] Número do lote adicionado ao prefab do cristal.");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
         }
 
         static void EnsureMiningInGameScene()
@@ -150,9 +185,27 @@ namespace MinersIdle.EditorTools
                 Debug.Log("[Setup] Graybox do mapa criado na cena Game.");
             }
 
+            changed |= EnsureTargetLine();
             changed |= EnsureHud();
+            changed |= DebugPanelSetup.Ensure();
 
             if (changed) EditorSceneManager.SaveScene(scene);
+        }
+
+        /// <summary>E5: a linha do anão até o alvo ("Mostrar ordem"), desligada por padrão.</summary>
+        static bool EnsureTargetLine()
+        {
+            var root = GameObject.Find(MiningRootName);
+            if (root == null || root.transform.Find("TargetLine") != null) return false;
+
+            var square = AssetDatabase.LoadAssetAtPath<Sprite>(SquarePath);
+            var line = CreateSprite("TargetLine", root.transform, square, TargetLineColor, Vector3.zero, Vector3.one);
+            line.sortingOrder = TargetLineSortingOrder;
+            line.enabled = false;
+            SetReferences(line.gameObject.AddComponent<TargetLineView>(),
+                          ("runner", root.GetComponent<MiningRunner>()), ("line", line));
+            Debug.Log("[Setup] Linha até o alvo criada na cena Game.");
+            return true;
         }
 
         /// <summary>
@@ -208,7 +261,7 @@ namespace MinersIdle.EditorTools
             return CreateHudText(panel.transform, "Value", "0", 12f, HudValueColor, new Vector2(0f, 0f), new Vector2(1f, 0.62f));
         }
 
-        static TMP_Text CreateHudText(Transform parent, string name, string text, float size, Color color, Vector2 anchorMin, Vector2 anchorMax)
+        internal static TMP_Text CreateHudText(Transform parent, string name, string text, float size, Color color, Vector2 anchorMin, Vector2 anchorMax)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             go.transform.SetParent(parent, false);
@@ -227,7 +280,7 @@ namespace MinersIdle.EditorTools
             return tmp;
         }
 
-        static SpriteRenderer CreateSprite(string name, Transform parent, Sprite sprite, Color color, Vector3 position, Vector3 scale)
+        internal static SpriteRenderer CreateSprite(string name, Transform parent, Sprite sprite, Color color, Vector3 position, Vector3 scale)
         {
             var go = new GameObject(name, typeof(SpriteRenderer));
             go.transform.SetParent(parent, false);
@@ -240,7 +293,7 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>Preenche campos privados com [SerializeField] (o mesmo que arrastar no Inspector).</summary>
-        static void SetReferences(Object target, params (string field, Object value)[] references)
+        internal static void SetReferences(Object target, params (string field, Object value)[] references)
         {
             var serialized = new SerializedObject(target);
             foreach (var (field, value) in references)

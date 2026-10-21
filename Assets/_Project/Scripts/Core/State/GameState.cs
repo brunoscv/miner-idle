@@ -17,6 +17,8 @@ namespace MinersIdle.Core
 
         internal void RegisterHit() => Hits++;
 
+        internal void AddShards(double amount) => Shards += amount;
+
         internal void RegisterBreak(double reward)
         {
             Breaks++;

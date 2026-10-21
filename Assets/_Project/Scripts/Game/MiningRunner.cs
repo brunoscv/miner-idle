@@ -52,7 +52,23 @@ namespace MinersIdle.Game
 
             Seed = seed;
             Simulation = new MiningSimulation(rules.ToRules(), new SeededRandom(seed));
-            SimulationStarted?.Invoke(Simulation);
+            NotifyStarted();
+        }
+
+        /// <summary>
+        /// Avisa cada view separadamente: uma view com erro não pode impedir as outras de se conectarem. Sem isso, um erro
+        /// no desenho dos cristais deixava o anão e o HUD desconectados (anão parado na tela, achado da E5).
+        /// </summary>
+        void NotifyStarted()
+        {
+            var handlers = SimulationStarted;
+            if (handlers == null) return;
+
+            foreach (Action<MiningSimulation> handler in handlers.GetInvocationList())
+            {
+                try { handler(Simulation); }
+                catch (Exception e) { Debug.LogException(e, this); }
+            }
         }
 
         public static ulong NewSeed() => (ulong)DateTime.UtcNow.Ticks;

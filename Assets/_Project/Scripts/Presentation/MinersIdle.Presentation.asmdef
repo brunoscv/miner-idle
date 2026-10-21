@@ -1,7 +1,7 @@
 {
   "name": "MinersIdle.Presentation",
   "rootNamespace": "MinersIdle.Presentation",
-  "references": ["MinersIdle.Core", "MinersIdle.Game", "Unity.InputSystem"],
+  "references": ["MinersIdle.Core", "MinersIdle.Game", "Unity.InputSystem", "Unity.TextMeshPro"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
