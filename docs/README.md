@@ -23,7 +23,7 @@
 | Interface | [design/Interface - Telas.md](design/Interface%20-%20Telas.md) | Inventário de telas e UX |
 | Arquitetura | [planning/Arquitetura Tecnica.md](planning/Arquitetura%20Tecnica.md) | Decisões técnicas e estrutura do projeto Unity |
 | Roadmap | [planning/Roadmap.md](planning/Roadmap.md) | Marcos, tarefas, caminho crítico, esforço |
-| Planos dos marcos | [Marco 1](planning/Marco%201%20-%20Plano%20da%20fundacao.md) · [Marco 2](planning/Marco%202%20-%20Prototipo%20do%20loop.md) | Etapas, como testar e critério de pronto de cada marco |
+| Planos dos marcos | [Marco 1](planning/Marco%201%20-%20Plano%20da%20fundacao.md) · [Marco 2](planning/Marco%202%20-%20Prototipo%20do%20loop.md) · [Marco 3](planning/Marco%203%20-%20Regras%20e%20economia.md) | Etapas, como testar e critério de pronto de cada marco |
 | Referência de tela | [design/Referencia de tela - mapa.jpg](design/Referencia%20de%20tela%20-%20mapa.jpg) | Layout da tela com o mapa (D-26), bioma de gelo |
 | Qualidade | [planning/Qualidade e Fluxo de Trabalho.md](planning/Qualidade%20e%20Fluxo%20de%20Trabalho.md) | Git, testes, DoR/DoD, triagem |
 | Decisões e riscos | [planning/Decisoes e Riscos.md](planning/Decisoes%20e%20Riscos.md) | **Decisões a aprovar**, perguntas, riscos |

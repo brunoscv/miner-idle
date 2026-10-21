@@ -35,7 +35,7 @@ M0  Descoberta e aprovação ──┐
 M1  Fundação técnica ✅ ───────┬────────────────────────────┐
 M1b Art Spike (paralelo) ─────┤                            │
                               ▼                            ▼
-M2  Protótipo do loop no mapa (graybox)  ← 1º jogável  [arte: caverna 1 assinatura]
+M2  Protótipo do loop no mapa (graybox) ✅ ← 1º jogável  [arte: caverna 1 assinatura]
                               ▼
 M3  Regras e economia (calculadores, simulador, spec do estagiário)  ← Marco B
                               ▼
@@ -88,6 +88,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Dependências:** M1 ✔ (D-25); D-26, D-27, D-29 ✔. **Fora:** loja, toque, crítico, combo, estagiário, save, arte. **Esforço:** 30–45 h.
 
 ### M3 — Regras e economia (antigo M2, adaptado ao mapa — D-28)
+- **Plano detalhado (2026-10-21):** [Marco 3 - Regras e economia.md](Marco%203%20-%20Regras%20e%20economia.md). Escopo reduzido pelas D-35…D-37: Picareta, Velocidade, Mineração, Picareta Dupla e **Botas** (nova), relatório de economia e spec do estagiário; compras pelo painel de debug. O texto abaixo é o escopo original (histórico).
 - **Objetivo:** todas as fórmulas e estados em C# puro, testados e simulados; economia calibrada. **Jogador:** nada (ferramenta).
 - **Tarefas:** T-M2-01…T-M2-12. **Dependências:** M1 (asmdefs/testes). **D-01 (decidida):** a economia **não é calibrada agora** — `Balance_GDD_v1` entra como valores iniciais; o simulador **mede e reporta**, sem bloquear (T-M2-12 vira "relatório de observações").
 - **Entregáveis:** `GameState`, calculadores (Reward/Upgrade/Cost), `MiningSimulation`, `PurchaseService`, `IClock`/`IRandom`, `BalanceConfig` com **`Balance_GDD_v1`** e **`Balance_v2`**, **simulador econômico** (relatório tempo×caverna para 3 perfis), **especificação do estagiário** (diagrama), painel de debug (esqueleto), suíte EditMode.
