@@ -1,0 +1,73 @@
+# Unity — tudo o que a Unity refaz sozinha a partir de Assets, Packages e ProjectSettings
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+[Uu]serSettings/
+Assets/_Recovery/
+Assets/_Recovery.meta
+
+# Temporários do build Android (IL2CPP/Gradle)
+.utmp/
+
+# Arquivos de projeto gerados pelas IDEs
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Builds e pacotes
+*.apk
+*.aab
+*.app
+*.unitypackage
+*.apk.sha1
+sysinfo.txt
+crashlytics-build.properties
+
+# Assinatura do app: NUNCA no git
+*.keystore
+*.jks
+keystore.properties
+
+# Segredos (tokens de API, p. ex. PixelLab)
+.env
+*.token
+
+# Assets de terceiros com licença que proíbe redistribuir (EULA/QAL): ficam fora do git
+Assets/_Vendor/AssetStore/
+Assets/_Vendor/AssetStore.meta
+
+# Arte: cópias de segurança e cache de ferramentas
+*.aseprite-recover
+ArtSource/_cache/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code (configuração local da máquina)
+.claude/
+
+# Saída de scripts (tools/)
+tools/ci/out/
+tools/build/out/

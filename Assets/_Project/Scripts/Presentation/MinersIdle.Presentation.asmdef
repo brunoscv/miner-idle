@@ -1,0 +1,14 @@
+{
+  "name": "MinersIdle.Presentation",
+  "rootNamespace": "MinersIdle.Presentation",
+  "references": ["MinersIdle.Core", "MinersIdle.Game", "Unity.InputSystem"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

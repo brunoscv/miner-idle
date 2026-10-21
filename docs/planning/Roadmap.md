@@ -1,0 +1,251 @@
+# Roadmap de desenvolvimento
+
+> Proposta de 2026-10-20 (**[REC]**), derivada do `Roadmap_MVP_Idle_Miner_Unity_CSharp.docx` (RM) e do GDD, **ajustada** pelo que a descoberta encontrou.
+> **Nenhuma data é compromisso.** As estimativas são faixas de **horas de desenvolvimento focado** (não calendário), válidas só sob as premissas do §7.
+> Rastreabilidade: cada tarefa cita os `REQ-*` de [Requisitos](../design/Requisitos%20e%20Restricoes.md); cada marco tem Definição de Pronto verificável.
+> **Regra de ouro (herdada):** *jogável antes de sistema*; um marco só começa depois que o anterior foi **aprovado pelo Bruno** (padrão do Underworld Towers).
+
+> **Atualizações de 2026-10-21 (decisões do Bruno):** economia **não bloqueia** o M2 (D-01) · estilo = mockup (D-05) · aparelho **Moto G75**, **sem ambiente Android instalado** (entra no M1) · **~20 h/semana** → as faixas de horas abaixo equivalem a **≈ 22–33 semanas** (5–8 meses), não às 11 semanas do RM · o jogo será **vendido com anúncios reais** → M12 passa a incluir a integração de anúncios e a conformidade (D-18, D-21, D-22) · teste do **PixelLab** para o anão no M1b (D-23).
+
+## 1. Como este roadmap se relaciona com o do RM
+
+| RM (semanas) | Aqui | Mudança e motivo |
+|---|---|---|
+| 1 Fundação Unity/Android | **M1** | + *Art Spike* (M1b) em paralelo: decidir estilo/resolução **antes** do slice (C-14) |
+| 2 Economia e testes | **M2** | + **recalibração da economia** e simulador (C-01 bloqueia o resto); + especificação da máquina do estagiário (C-08) |
+| 3 Vertical slice cave 1 | **M3** | igual (Marco B) |
+| 4 HUD, loja, melhorias | **M4** | + **save mínimo** (o RM já pede "compras persistidas" na sem. 4) |
+| 5 Crítico, combo, feedback | **M5** | + **arte final da caverna 1** aqui (RM só na sem. 9): é onde o *game feel* é avaliado |
+| 6 Estagiário | **M6** | igual |
+| 7 Progressão e 10 cavernas | **M7** | igual, com arte provisória por *recolor* |
+| 8 AD simulado e persistência | **M8** | + progressão offline (se D-04), configurações, tutorial mínimo |
+| 9 Assets e integração visual | **M9** | arte das cavernas 2–10 (estende a assinatura da caverna 1) |
+| 10 Balanceamento/perf/playtest | **M10** | igual |
+| 11 Regressão e RC | **M11** | igual |
+| — | **M12** | **Preparação de publicação** (o RM termina no APK/AAB; publicar exige loja, política de privacidade, assinatura) |
+| — | **M13** | Pós-lançamento (backlog) |
+
+## 2. Visão geral
+
+```
+M0  Descoberta e aprovação ──┐
+                             ▼
+M1  Fundação técnica ─────────┬────────────────────────────┐
+M1b Art Spike (paralelo) ─────┤                            │
+                              ▼                            ▼
+M2  Núcleo de regras + economia (+ decisão D-01)      [arte: caverna 1 assinatura]
+                              ▼
+M3  Vertical slice: caverna 1 (graybox)   ← Marco B (jogável no celular)
+                              ▼
+M4  Loja, melhorias, HUD, save mínimo
+                              ▼
+M5  Feedback de mineração + arte final da caverna 1 (assinatura)
+                              ▼
+M6  Estagiário ──► M7  Letrado, penalidade, 10 cavernas ← Marco C parcial
+                              ▼
+M8  AD simulado, save completo, offline, config ← Marco C
+                              ▼ ◄─── (paralelo desde M5) M9  arte das cavernas 2–10 e UI final
+M10 Balanceamento, desempenho, playtest
+                              ▼
+M11 Regressão e Release Candidate ← Marco D
+                              ▼
+M12 Publicação  →  M13 Pós-lançamento
+```
+
+## 3. Marcos
+
+Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) · Dependências · Entregáveis · Técnica · Arte/áudio · Testes e validação · Definição de Pronto · Riscos · Fora deste marco · Esforço**.
+
+### M0 — Descoberta e aprovação
+- **Objetivo:** transformar o GDD+RM em plano aprovado. **Jogador:** nada.
+- **Entregáveis:** estes documentos; lista de decisões ([Decisões e Riscos](Decisoes%20e%20Riscos.md)).
+- **Dependências:** nenhuma. **Testes:** revisão do Bruno.
+- **DoD:** Bruno aprovou (ou ajustou) os itens **bloqueantes**: D-01, D-02/D-03, D-05, D-12, D-17, D-20 — **respondidos em 2026-10-21** (ver [Decisões](Decisoes%20e%20Riscos.md) §1.1). Falta apenas a **autorização explícita para iniciar a fase de implementação (M1)**.
+- **Riscos:** decisões ficarem em aberto e travarem M1/M2. **Fora:** qualquer código ou asset. **Esforço:** ~8–12 h (já feito aqui) + revisão.
+
+### M1 — Fundação técnica
+- **Objetivo:** projeto Unity reprodutível que gera APK no aparelho. **Jogador:** nada (tela vazia).
+- **Tarefas:** T-M1-01…T-M1-09. **Dependências:** D-12 ✔, aparelho **Moto G75** ✔ (D-20); **a instalar:** Android Build Support no Unity (SDK/NDK/JDK embutidos), **opções de desenvolvedor + depuração USB** no celular, driver USB no Windows.
+- **Entregáveis:** projeto (URP 2D, portrait, Input System, TMP, Test Framework), `.gitignore`/`.gitattributes` ajustados (ver [Qualidade](Qualidade%20e%20Fluxo%20de%20Trabalho.md) §3), asmdefs, `ProjectSetup.cs`, cenas `Bootstrap` e `Game` vazias, `SafeAreaController`, `CLAUDE.md`/`README.md` do projeto, APK de desenvolvimento instalado.
+- **Técnica:** versão do Unity (D-12), nome do pacote Android, *Scripting Backend* IL2CPP/ARM64 só no release (Mono no dev para iterar rápido), *Orientation: Portrait* travada.
+- **Arte/áudio:** nenhum. **Testes:** APK instala/abre sem erros no aparelho; um teste EditMode trivial roda (pipeline de testes vivo).
+- **DoD:** REQ-TEC-01, REQ-TEC-08, REQ-PLT-01/02/05 verificados em aparelho; commit inicial no GitHub; **marco A parcial**.
+- **Riscos:** módulo Android/JDK/SDK; assinatura/keystore (**nunca** commitar); Git LFS mal configurado. **Fora:** qualquer regra de jogo. **Esforço:** 25–40 h.
+
+### M1b — Art Spike (paralelo ao M1/M2)
+- **Objetivo:** provar o estilo e a escala **antes** de gastar arte. **Jogador:** nada (é documento + imagens).
+- **Tarefas:** T-M1B-01…05 (+ **T-M1B-06: teste do PixelLab** — criar conta, ver créditos gratuitos e termos de uso comercial, gerar o anão e uma animação de golpe; ver [Arte](../design/Direcao%20de%20Arte%20e%20Assets.md) §5). **Dependências:** D-05 ✔ (mockup), ferramenta de pixel art (D-10/D-23).
+- **Entregáveis:** **folha de estilo** (paleta-mestre ~32–48 cores, rampa de cristal, anão em 1 pose + 1 quadro de golpe, cristal da cave 1, painel e botão da UI, fonte), teste de escala em 270×480 × 360×640 num aparelho real, `CREDITS.md` inicial e tabela de fontes.
+- **Arte:** sim (essencial). **Testes:** olhar a folha **no celular** em brilho baixo; Bruno aprova o estilo.
+- **DoD:** D-05 e D-14 (resolução/PPU) decididas e registradas; paleta e regras do [Art doc](../design/Direcao%20de%20Arte%20e%20Assets.md) validadas.
+- **Riscos:** IA inconsistente (já anotado); perfeccionismo → **limitar a 1–2 sessões**. **Fora:** animação completa, outros cristais. **Esforço:** 12–25 h.
+
+### M2 — Núcleo de regras e economia
+- **Objetivo:** todas as fórmulas e estados em C# puro, testados e simulados; economia calibrada. **Jogador:** nada (ferramenta).
+- **Tarefas:** T-M2-01…T-M2-12. **Dependências:** M1 (asmdefs/testes). **D-01 (decidida):** a economia **não é calibrada agora** — `Balance_GDD_v1` entra como valores iniciais; o simulador **mede e reporta**, sem bloquear (T-M2-12 vira "relatório de observações").
+- **Entregáveis:** `GameState`, calculadores (Reward/Upgrade/Cost), `MiningSimulation`, `PurchaseService`, `IClock`/`IRandom`, `BalanceConfig` com **`Balance_GDD_v1`** e **`Balance_v2`**, **simulador econômico** (relatório tempo×caverna para 3 perfis), **especificação do estagiário** (diagrama), painel de debug (esqueleto), suíte EditMode.
+- **Técnica:** [Arquitetura](Arquitetura%20Tecnica.md) D-T1…T5; `double`; determinismo por *seed*.
+- **Testes:** custo/efeito de **todos** os níveis de **todas** as linhas (inclui nível máximo e fora do limite); crítico: 100.000 golpes ≈ 5% (REQ-PRO-02); penalidade em 100 quebras; reward = f(caverna, Mineração, penalidade); compra uma vez; simulador alcança a caverna 10 em tempo dentro da meta nos 3 perfis.
+- **DoD:** **marco A** (RM): fórmulas cobertas e reproduzíveis sem cena; economia aprovada pelo Bruno (D-01); spec do estagiário aprovada.
+- **Riscos:** recalibração é problema de design (pode levar mais de uma rodada); ambiguidades de C-04. **Fora:** qualquer cena, arte, UI. **Esforço:** 35–55 h.
+
+### M3 — Vertical slice da caverna 1 (graybox)
+- **Objetivo:** loop completo jogável no celular com formas simples. **Jogador:** toca, vê a barra cair, quebra 5 cristais, o lote se renova.
+- **Tarefas:** T-M3-01…T-M3-10. **Dependências:** M2.
+- **Entregáveis:** cena `Game` com 5 cristais em posições aleatórias espaçadas, minerador principal (sprite provisório), timer automático, toque, barra de vida, lasca somada ao HUD básico, avanço e novo lote, lasca "voa" **opcional**.
+- **Arte/áudio:** retângulos/círculos coloridos, *beep* provisório. **Testes:** PlayMode: toque→dano; intervalo exato (REQ-MIN-01); quebra→recompensa **sem duplicar** (RM Marco B); lote sempre com 5 posições (REQ-LOOP-02); 10 minutos em aparelho sem erro; input responsivo.
+- **DoD:** **marco B** (RM): caverna 1 jogável em dispositivo, sem duplicação de recompensa, HUD provisório; Bruno joga e responde "é divertido o bastante para seguir?".
+- **Riscos:** posicionamento aleatório sobrepondo (requisito de espaçamento); *Safe Area*; "o 1º cristal demora 100 s" (C-01) — usar balanço v2. **Fora:** loja, crítico, combo, estagiário, arte final. **Esforço:** 40–55 h.
+
+### M4 — Loja, melhorias, HUD e save mínimo
+- **Objetivo:** gastar lascas e sentir o efeito. **Jogador:** compra Picareta/Velocidade/Mineração/Picareta Dupla; HUD reflete.
+- **Tarefas:** T-M4-01…T-M4-09. **Dependências:** M3, M2.
+- **Entregáveis:** `ShopView` + `UpgradeRowView` reutilizável, botão Loja com selo, **camada de bloqueio de toque** que **não** pausa a mineração, HUD completo (4 indicadores), compras com validação/limite, **save mínimo** (estado do GDD §11.1 sem migração), atualização imediata do HUD.
+- **Testes:** compra processada uma vez (duplo-toque); sem lascas = sem compra; limites; mineração continua com a loja aberta (REQ-UI-04, P0); estado salvo e relido; HUD atualiza imediatamente. **Estagiário e Letrado entram nos itens da loja desabilitados** (placeholder).
+- **DoD:** REQ-ECO-02…05,07,08; REQ-UI-01,02,04,06 verificados. **Riscos:** `Canvas` e *rebuilds*; formato de números (D-11). **Fora:** estagiário, Letrado, AD, polimento. **Esforço:** 40–50 h.
+
+### M5 — Feedback de mineração e arte final da caverna 1
+- **Objetivo:** **fazer bater gostoso.** **Jogador:** crítico, combo, impacto, lasca voando, caverna 1 bonita.
+- **Tarefas:** T-M5-01…T-M5-12. **Dependências:** M3/M4, M1b (estilo aprovado).
+- **Entregáveis:** crítico (REQ-MIN-03), combo `xN` + ×10, vibração do cristal e do cenário, *shake* de tela, lasca que voa lentamente ao HUD, faíscas, quebra do cristal, SFX finais da caverna 1, **arte final da caverna 1** (anão, picareta [5 faixas], cristal "Vidro", lasca, fundo, UI base), dicas de primeiro uso (toque), *pooling* dos números flutuantes.
+- **Testes:** latência toque→resposta < 100 ms (medir), teste estatístico do crítico, *profiler* sem alocação por quadro; **playtest informal de *feel*** com 2–3 pessoas sem explicação.
+- **DoD:** pilares "Toque com impacto" e "Leitura imediata" passam nos testes de aceite do [Vision](../design/Visao%20e%20Escopo%20do%20MVP.md) §3; Bruno aprova o *game feel*. **Riscos:** polir cedo demais (limitar à caverna 1); sincronia animação×golpe (código manda). **Fora:** estagiário, outras cavernas. **Esforço:** 45–65 h.
+
+### M6 — Estagiário
+- **Objetivo:** segundo minerador sem estados quebrados. **Jogador:** contrata, vê o estagiário atacar o cristal à frente.
+- **Tarefas:** T-M6-01…T-M6-07. **Dependências:** M5 (arte do principal), **spec do M2**.
+- **Entregáveis:** `MinerAgent` + `CrystalLot` com estados, `InternController`, barra de vida do estagiário, silhueta/capacete distinto, regras REQ-INT-01…06.
+- **Testes:** **matriz** (principal primeiro, estagiário primeiro, simultâneo, 5º cristal, troca de lote, compra no meio do lote, pausa); nenhum alvo duplicado; nenhuma espera infinita (P0); quebra do estagiário não conta p/ penalidade; Dupla não altera estagiário (REQ-INT-05).
+- **DoD:** matriz verde + 30 min de sessão sem travar; **Bruno testa**. **Riscos:** C-08 mal resolvido. **Fora:** mais mineradores. **Esforço:** 35–50 h.
+
+### M7 — Progressão: Letrado, penalidade, passagem e 10 cavernas
+- **Objetivo:** descer de verdade. **Jogador:** compra o Letrado, passa de caverna, vê a cor mudar; sente a penalidade.
+- **Tarefas:** T-M7-01…T-M7-09. **Dependências:** M4, M6, **D-07 (parede?)**.
+- **Entregáveis:** `CaveDefinition[10]` com *recolor* provisório, `Letrado`, `Penalty` (ícone), passagem (botão âmbar ou parede), reset da penalidade, bloqueio após a cave 10, tela "fim da descida", dica do Letrado/penalidade.
+- **Testes:** nova caverna remove a penalidade e gera 5 cristais novos; Letrado *n* só dobra o dano na caverna *n*; bônus não acumula (REQ-ECO-06); progressão 1→10 **alcançável** no simulador e jogando; botão desabilitado/habilitado.
+- **DoD:** **marco C parcial:** caverna 1→10 funcional com arte provisória; REQ-CAVE-01…03. **Riscos:** C-01/C-09 mal calibrados fazem o final inatingível — rodar o simulador em cada alteração. **Fora:** arte final das caves 2–10. **Esforço:** 35–45 h.
+
+### M8 — AD simulado, persistência completa, offline e ajustes
+- **Objetivo:** fechar os sistemas. **Jogador:** assiste (simulado) para ganhar boost; fecha e volta sem perder nada.
+- **Tarefas:** T-M8-01…T-M8-10. **Dependências:** M7.
+- **Entregáveis:** modal de AD (5 s, ×2,5, 30 s, recarga), selo do boost, `SaveService` completo (JSON versionado, escrita atômica, backup, migração), pausa/retomada, **offline (se D-04)**, Configurações (volume, tremor, vibração, apagar save com confirmação), créditos mínimos.
+- **Testes:** fechar/minimizar não duplica bônus/compra/moeda (RM sem. 8, P0); save corrompido recupera; versão futura tratada; teste de migração; manipular o relógio do aparelho; sessão longa (2 h).
+- **DoD:** **marco C** (RM): loja, estagiário, penalidade, progressão, boost e save integrados; testes de estados simultâneos feitos. **Riscos:** relógio do aparelho, *backgrounding* do Android. **Fora:** SDK de anúncios real. **Esforço:** 40–55 h.
+
+### M9 — Arte, áudio e integração visual das cavernas 2–10
+- **Objetivo:** os 10 ambientes e a UI final. **Jogador:** cada caverna parece outro lugar; interface com cara de jogo.
+- **Tarefas:** T-M9-01…T-M9-10. **Dependências:** M5 (assinatura), pode **começar em paralelo desde M5** e rodar até M10.
+- **Entregáveis:** 9 cristais, 9 pisos/paredes/props, UI final (*skin*), VFX completos (boost, penalidade, combo ×10), áudio final, `CREDITS.md` completo, auditoria de paleta/tamanho.
+- **Testes:** prints de cavernas distinguíveis sem HUD (pilar "Descida perceptível"); legibilidade no aparelho; sem *draw calls* explosivos.
+- **DoD:** assets aprovados e licenças registradas (marco do RM sem. 9). **Riscos:** custo de arte (cortar conforme RM §7.1). **Esforço:** 60–90 h.
+
+### M10 — Balanceamento, desempenho e playtest
+- **Objetivo:** "dar gosto" e rodar bem. **Jogador:** progressão compreensível, sem travadas.
+- **Tarefas:** T-M10-01…T-M10-08. **Entregáveis:** relatório de balanceamento (simulador + playtest), ajustes em `Balance_v2.x` com **registro de cada mudança**, Profiler em aparelho intermediário, **playtest com 5–8 pessoas** (20–30 min), lista de bugs P0–P2.
+- **DoD:** sem P0; loop e progressão compreendidos; metas de ritmo do [Econ](../design/Economia%20e%20Progressao.md) §4 atingidas ou renegociadas. **Riscos:** ajustes em cascata. **Esforço:** 35–50 h.
+
+### M11 — Regressão e Release Candidate
+- **Objetivo:** build confiável. **Entregáveis:** AAB/APK RC, regressão completa, instalação limpa e atualização, sessão longa, remoção do debug, *checklist* do MVP (GDD §14) atendido.
+- **DoD:** **marco D**: P0 zerados, P1 críticos zerados, *build* reproduzível, documentação mínima. **Esforço:** 25–40 h.
+
+### M12 — Publicação
+- **Objetivo:** chegar à loja (D-18). **Anúncios reais ficam fora (D-21, 2026-10-21):** o botão AD continua só dando o boost de velocidade; o time ainda vai definir os ads. O boost fica atrás de uma interface (`IBoostSource`) no M8 para a rede de anúncios entrar depois, **sem mexer na regra**.
+- **Entregáveis:** conta de desenvolvedor Google Play (taxa única — **conferir valor/regras atuais**), política de privacidade, ícone, *screenshots*, descrição, classificação etária, assinatura do app (keystore com backup), teste interno → fechado → aberto.
+- **Riscos:** requisitos de loja mudam (verificar na época — D-22); rejeição na revisão. **Esforço:** 15–30 h (voltou à faixa original).
+- **Pós-MVP (quando os ads forem definidos):** SDK da rede, consentimento/LGPD, testes de falha/sem rede, 25–40 h adicionais **[estimativa]**.
+
+### M13 — Pós-lançamento
+Backlog em §6 (P1/P2). Reavaliar com dados reais.
+
+## 4. Caminho crítico e paralelismo
+
+**Caminho crítico:** aprovações (D-01, D-12) → **M1 → M2 (economia aprovada) → M3 → M4 → M6 → M7 → M8 → M10 → M11 → M12**.
+
+**Em paralelo (fora do caminho crítico, mas com prazo):**
+
+| Trilha | Começa | Termina | Observação |
+|---|---|---|---|
+| Art Spike → arte da caverna 1 | M1b | M5 | **Bloqueia M5** |
+| Arte das cavernas 2–10, UI final, VFX | M5 | M9/M10 | Cortável (RM §7.1) |
+| Áudio (coleta, edição, *licenças*) | M3 | M9 | Provisório até M5 |
+| Registro de licenças | M1b | M11 | Obrigatório (RM §5.1) |
+| Spec do estagiário | M2 | M2 | Bloqueia M6 |
+| Documentação de decisões | contínuo | — | Padrão do Underworld Towers |
+
+## 5. Detalhamento de tarefas (priorizadas)
+
+Prioridade: **P0** = caminho crítico/obrigatório · **P1** = importante · **P2** = desejável. Tamanho: S ≤ 3 h · M 3–8 h · L > 8 h.
+
+### M1 — Fundação
+| ID | Tarefa | REQ | Pri | Tam | Depende | Validação |
+|---|---|---|---|---|---|---|
+| T-M1-01 | Aprovar versão do Unity e instalar **Android Build Support** | REQ-TEC-01 | P0 | S | D-12 | Hub mostra módulo |
+| T-M1-02 | Criar projeto 2D URP em `miners-idle` **sem sobrescrever `docs/`** | REQ-TEC-01 | P0 | S | T-M1-01 | Abre sem erros |
+| T-M1-03 | `.gitignore` Unity + `.gitattributes` (Force Text, LFS só onde faz sentido — Qualidade §3) | REQ-TEC-08 | P0 | S | T-M1-02 | `git status` limpo após abrir |
+| T-M1-04 | Estrutura de pastas + asmdefs (`Core` sem engine references) | REQ-TEC-06 | P0 | M | T-M1-02 | Compila; `Core` rejeita `using UnityEngine` |
+| T-M1-05 | `ProjectSetup.cs` reproduzível (portrait, URP 2D, Input System, TMP, nome/pacote) | — | P1 | M | T-M1-04 | Reaplicar não muda nada |
+| T-M1-06 | Cenas `Bootstrap` e `Game` vazias + `SafeAreaController` | REQ-PLT-05 | P0 | M | T-M1-04 | Safe Area correta no aparelho |
+| T-M1-07 | Assembly de testes EditMode/PlayMode + 1 teste trivial | REQ-TEC-07 | P0 | S | T-M1-04 | Test Runner verde |
+| T-M1-08 | APK *Development* instalado no aparelho | REQ-PLT-02 | P0 | M | T-M1-06 | Abre sem erros (marco A parcial) |
+| T-M1-09 | `CLAUDE.md` e `README.md` do projeto (regras de trabalho herdadas) | — | P1 | S | — | Revisado pelo Bruno |
+
+### M1b — Art Spike
+| ID | Tarefa | REQ | Pri | Tam | Depende |
+|---|---|---|---|---|---|
+| T-M1B-01 | Decidir ferramenta de pixel art e instalar | REQ-ART-07 | P0 | S | D-10 |
+| T-M1B-02 | Paleta-mestre (âncoras GDD + rampas) | REQ-ART-02 | P0 | M | T-M1B-01 |
+| T-M1B-03 | Anão (pose + 1 golpe), cristal cave 1, painel/botão, fonte com acentos | REQ-ART-03 | P0 | L | T-M1B-02 |
+| T-M1B-04 | Teste de escala 270×480 × 360×640 no aparelho | REQ-PLT-01 | P0 | M | M1 (T-M1-08) |
+| T-M1B-05 | `CREDITS.md` + tabela de fontes/licenças | REQ-ART-07 | P1 | S | — |
+
+### M2 — Núcleo e economia (resumo; o plano detalhado do marco será escrito no início dele)
+T-M2-01 spec do estagiário (diagrama) · T-M2-02 `GameState`/`IClock`/`IRandom` · T-M2-03 calculadores de custo/efeito de todas as linhas · T-M2-04 `RewardCalculator` (+ penalidade/Mineração) · T-M2-05 `MiningSimulation` (tick determinístico, crítico, toque) · T-M2-06 `PurchaseService` · T-M2-07 `BalanceConfig` (v1 literal + v2) · T-M2-08 **simulador econômico** (3 perfis) · T-M2-09 **teste estatístico do crítico** · T-M2-10 testes de limites/fora-do-limite · T-M2-11 painel de debug (esqueleto) · T-M2-12 **relatório de calibração** para aprovação (D-01). **P0** todas, exceto T-M2-11 (P1).
+
+### M3–M8 (granularidade de recurso; cada marco ganha plano próprio em `docs/planning/Marco N — …` antes de começar, como nos projetos anteriores)
+- **M3:** cena + câmera + `MiningView` · geração do lote (5 posições aleatórias espaçadas, *seeded*) · `CrystalView` + barra · minerador provisório · `IMiningInput` · HUD básico · avanço/renovação · build + teste em aparelho. (P0)
+- **M4:** `ShopView`/`UpgradeRowView` · bloqueio de toque sem pausar · compras e limites · HUD completo · save mínimo · selo "novo". (P0; selo P1)
+- **M5:** crítico · combo · *shake* · lasca voando · VFX · SFX · arte caverna 1 · dicas · *pooling*. (P0 exceto dicas/pooling P1)
+- **M6:** `MinerAgent` · `CrystalLot` · `InternController` · matriz de testes · arte do estagiário. (P0)
+- **M7:** `CaveDefinition[10]` · Letrado · Penalidade + ícone · passagem · fim da descida · reset. (P0)
+- **M8:** AD · save completo · offline (D-04) · configurações · créditos. (P0, offline P1 se D-04 = não)
+
+### M9–M12 (resumo)
+Arte cavernas 2–10 · UI final · VFX/áudio finais · `CREDITS.md` · auditoria · balanceamento · Profiler · playtest · regressão · RC · loja.
+
+## 6. MVP × pós-MVP
+
+| MVP (obrigatório) | MVP- (mínimo, depende de aprovação) | Pós-MVP (P1) | Talvez (P2) |
+|---|---|---|---|
+| Tudo de [Visão §8](../design/Visao%20e%20Escopo%20do%20MVP.md) item 1–8 | Offline (D-04), tutorial mínimo, configurações, créditos | Prestígio ("Nova Descida"), cristal dourado, cristais-chefe, música, missões/conquistas, daltonismo, idiomas, mais unidades de produção, anúncios reais, iOS | Recompensa diária, eventos sazonais, ranking, nuvem |
+
+## 7. Esforço e premissas
+
+| Marco | Horas (foco) |
+|---|---|
+| M0 | 8–12 |
+| M1 | 25–40 |
+| M1b | 12–25 |
+| M2 | 35–55 |
+| M3 | 40–55 |
+| M4 | 40–50 |
+| M5 | 45–65 |
+| M6 | 35–50 |
+| M7 | 35–45 |
+| M8 | 40–55 |
+| M9 | 60–90 |
+| M10 | 35–50 |
+| M11 | 25–40 |
+| M12 | 15–30 |
+| **Total** | **≈ 450–660 h** (≈ **23–33 semanas a 20 h/sem**) (o RM estima 420–460 h para M1–M11, sem M1b, M12 e sem a recalibração) |
+
+**Premissas (a validar — C-18, D-17):** (1) horas de desenvolvimento **focado com o Claude escrevendo o código** e o Bruno revisando/testando — em 2026-10-20 não há medida de velocidade neste projeto; (2) **uma pessoa**;
+(3) o aparelho Android e as ferramentas existem; (4) a arte é produzida (não comprada); (5) **sem calendário**: converter em semanas só depois de o Bruno informar quantas horas/semana tem para este projeto (hoje há 2 projetos irmãos em andamento);
+(6) refazer estas faixas **após M1** e **após M3** (padrão do RM).
+
+## 8. Ordem de execução recomendada para o início
+
+1. **Aprovar** D-01, D-05, D-12, D-02/D-03 e revisar estes documentos (M0).
+2. **M1** (Unity + Android + APK vazio) **em paralelo com M1b** (Art Spike — não depende do Unity).
+3. **M2** com foco em primeiro escrever o **relatório de calibração** (D-01) e a **spec do estagiário**; só então as fórmulas e o simulador.
+4. **M3** (vertical slice) — primeiro marco em que o Bruno **joga**.
+5. A partir daí, 1 marco por vez, **plano do marco** (`docs/planning/Marco N — …`) → implementação → testes → "Como testar" para o Bruno → aprovação.
