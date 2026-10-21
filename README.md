@@ -11,7 +11,7 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | M0 Descoberta e planejamento | ✅ aprovado em 2026-10-21 |
 | M1 Fundação técnica | ✅ aprovado em 2026-10-21 — [plano do M1](docs/planning/Marco%201%20-%20Plano%20da%20fundacao.md) |
 | M1b Art Spike | ⏳ (em paralelo) |
-| **M2 Protótipo do loop no mapa** | 🚧 plano aprovado em 2026-10-21; E1–E3 ✅; **E4 (HUD) em andamento** — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
+| **M2 Protótipo do loop no mapa** | 🚧 plano aprovado em 2026-10-21; E1–E4 ✅; próxima: **E5 (painel de debug)** — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
 | M3 Regras e economia | ⏳ |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
@@ -24,4 +24,5 @@ Unity Hub → **Add** → **Add project from disk** → esta pasta. Versão: **6
 
 - Reaplicar a configuração do projeto: menu `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`.
 - APK de desenvolvimento: menu `Tools → Miners Idle → Build → APK de desenvolvimento (Android)`; saída em `tools/build/out/`.
+- **Rodar no celular** (gera, instala e abre num passo, com o aparelho no USB): menu `Tools → Miners Idle → Build → Rodar no celular (Android)`, ou `bash tools/build/run-android.sh` com o Editor fechado.
 - Aparelho de teste: Motorola Moto G75 (depuração USB ligada).

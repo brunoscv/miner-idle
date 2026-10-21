@@ -1,6 +1,8 @@
 using System.IO;
 using MinersIdle.Game;
 using MinersIdle.Presentation;
+using MinersIdle.UI;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -9,8 +11,9 @@ using UnityEngine.UI;
 namespace MinersIdle.EditorTools
 {
     /// <summary>
-    /// Parte do <see cref="ProjectSetup"/> para o graybox do Marco 2 (E3): sprites brancos 16×16, o prefab do cristal e o
-    /// objeto "Mining" na cena Game (partida, chão, cristais e anão). Como o resto do setup, só cria o que falta.
+    /// Parte do <see cref="ProjectSetup"/> para o graybox do Marco 2: sprites brancos 16×16, o prefab do cristal, o objeto
+    /// "Mining" na cena Game (partida, chão, cristais e anão; E3) e o HUD de cima (E4). Como o resto do setup, só cria o
+    /// que falta.
     /// </summary>
     static class GrayboxSetup
     {
@@ -20,6 +23,7 @@ namespace MinersIdle.EditorTools
         const string CirclePath = SpriteFolder + "/Circle.png";
         const string CrystalPrefabPath = "Assets/_Project/Prefabs/Graybox/CrystalView.prefab";
         const string MiningRootName = "Mining";
+        const string HudName = "Hud";
 
         const int SpriteSize = 16;
         const float PixelsPerUnit = 16f;
@@ -31,6 +35,10 @@ namespace MinersIdle.EditorTools
         static readonly Color MinerColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         static readonly Color BarBackColor = new Color32(0x15, 0x19, 0x1C, 0xFF);
         static readonly Color BarFillColor = new Color32(0x4C, 0xD9, 0x64, 0xFF);
+        // HUD: painel de madeira escura do mockup, rótulo âmbar, valor claro.
+        static readonly Color HudPanelColor = new Color32(0x2B, 0x1D, 0x14, 0xE6);
+        static readonly Color HudLabelColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        static readonly Color HudValueColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
         public static void Ensure()
         {
@@ -142,7 +150,81 @@ namespace MinersIdle.EditorTools
                 Debug.Log("[Setup] Graybox do mapa criado na cena Game.");
             }
 
+            changed |= EnsureHud();
+
             if (changed) EditorSceneManager.SaveScene(scene);
+        }
+
+        /// <summary>
+        /// HUD de cima (S02, E4) dentro do Safe Area: quatro painéis com rótulo e valor. Os rótulos são dados da cena
+        /// (o código do jogo não escreve texto de interface). O rótulo de diagnóstico do M1 sai da tela (volta no debug, E5).
+        /// </summary>
+        static bool EnsureHud()
+        {
+            var safeArea = GameObject.Find("SafeArea");
+            if (safeArea == null || safeArea.transform.Find(HudName) != null) return false;
+
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            var hudObject = new GameObject(HudName, typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            hudObject.transform.SetParent(safeArea.transform, false);
+            var rect = (RectTransform)hudObject.transform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -4f);
+            rect.sizeDelta = new Vector2(-8f, 34f); // 4 px de margem dos lados, 34 px de altura (referência 270×480)
+
+            var layout = hudObject.GetComponent<HorizontalLayoutGroup>();
+            layout.spacing = 3f;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = true;
+
+            var shards = CreateHudPanel(hudObject.transform, "Lascas", "LASCAS");
+            var damage = CreateHudPanel(hudObject.transform, "Dano", "DANO");
+            var cave = CreateHudPanel(hudObject.transform, "Caverna", "CAVERNA");
+            var speed = CreateHudPanel(hudObject.transform, "Velocidade", "VELOCIDADE");
+
+            var hud = hudObject.AddComponent<HudView>();
+            SetReferences(hud, ("runner", runner), ("shardsValue", shards), ("damageValue", damage),
+                          ("caveValue", cave), ("speedValue", speed));
+
+            var buildInfo = safeArea.transform.Find("BuildInfo");
+            if (buildInfo != null) buildInfo.gameObject.SetActive(false);
+
+            Debug.Log("[Setup] HUD criado na cena Game.");
+            return true;
+        }
+
+        /// <summary>Um painel do HUD; devolve o texto do valor.</summary>
+        static TMP_Text CreateHudPanel(Transform parent, string name, string label)
+        {
+            var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(parent, false);
+            var image = panel.GetComponent<Image>();
+            image.color = HudPanelColor;
+            image.raycastTarget = false;
+
+            CreateHudText(panel.transform, "Label", label, 7f, HudLabelColor, new Vector2(0f, 0.55f), new Vector2(1f, 1f));
+            return CreateHudText(panel.transform, "Value", "0", 12f, HudValueColor, new Vector2(0f, 0f), new Vector2(1f, 0.62f));
+        }
+
+        static TMP_Text CreateHudText(Transform parent, string name, string text, float size, Color color, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+            go.transform.SetParent(parent, false);
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+            var tmp = go.GetComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = size;
+            tmp.color = color;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            tmp.raycastTarget = false;
+            return tmp;
         }
 
         static SpriteRenderer CreateSprite(string name, Transform parent, Sprite sprite, Color color, Vector3 position, Vector3 scale)

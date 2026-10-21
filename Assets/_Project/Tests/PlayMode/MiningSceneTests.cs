@@ -2,6 +2,7 @@ using System.Collections;
 using MinersIdle.Core;
 using MinersIdle.Game;
 using MinersIdle.Presentation;
+using MinersIdle.UI;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -50,6 +51,10 @@ namespace MinersIdle.Tests
             var drawn = minerView.transform.position;
             Assert.That(drawn.x, Is.EqualTo((float)simulation.Miner.Position.X).Within(1e-3f));
             Assert.That(drawn.y, Is.EqualTo((float)simulation.Miner.Position.Y).Within(1e-3f));
+
+            var hud = Object.FindAnyObjectByType<HudView>();
+            Assert.That(hud, Is.Not.Null, "a cena Game precisa do HUD (rode o setup do projeto)");
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(simulation.State.Shards)), "LASCAS no HUD = lascas do jogo");
         }
     }
 }

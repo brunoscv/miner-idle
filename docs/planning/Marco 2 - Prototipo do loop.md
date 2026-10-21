@@ -140,7 +140,7 @@ Tiles, animações, arte e biomas · loja e melhorias · toque, crítico e combo
 | E1 Seletor de alvo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Math/Vec2`, `Core/Random/IRandom` + `SeededRandom` (SplitMix64: mesma sequência no Editor e no celular, ao contrário do `System.Random`), `Core/Mining/Crystal`, `Core/Mining/TargetSelector`. Testes: `TargetSelectorTests` (8) e `CoreBasicsTests` (7). EditMode **19/19 verdes** (com os 4 do M1) |
 | E2 Simulação do loop | ✅ validada pelo Bruno em 2026-10-21 | Núcleo: `MiningRules`, `GameState`, `Miner`, `CrystalField`, `MiningSimulation` (avança de evento em evento: chegada, golpe, nascimento). Game: `MiningRulesAsset` (o `Balance_Prototipo`). Editor: menu `Tools → Miners Idle → Debug → Simular 10 minutos`; o `ProjectSetup` cria o asset. Testes: `MiningSimulationTests` (13). Os 28 testes do núcleo passaram compilados fora do Unity (C# 9); no Unity, 32/32 verdes (Bruno) |
 | E3 Cena graybox | ✅ validada pelo Bruno em 2026-10-21 | Game: `MiningRunner` (dono da partida na cena; `Tick` com o tempo do quadro limitado a 0,25 s × escala do debug; semente fixa opcional no Inspector). Presentation: `MapView`, `MinerView` (posição lida do Núcleo; "soco" de escala no golpe), `CrystalView` + `CrystalFieldView` (pool; barra de vida só no alvo), `CameraWidthFit`. Editor: `GrayboxSetup` (sprites 16×16, prefab `Prefabs/Graybox/CrystalView`, objeto `Mining` na cena Game). Teste PlayMode `MiningSceneTests`. Em batch: setup ok (reaplicar não muda nada), EditMode **32/32**, PlayMode **2/2**. Bug achado e corrigido no caminho: o setup carregava o prefab do cristal antes de abrir a cena Game, e abrir a cena descarrega assets "sem uso" (a referência ficava vazia); agora carrega depois |
-| E4 HUD | ⏳ | |
+| E4 HUD | ✅ validada pelo Bruno em 2026-10-21 (Editor e Moto G75) | Core: `NumberFormatter` (formato provisório pt-BR, D-11 em aberto: "1.234,5"; a partir de 1 milhão "1,23M", "12,3B", "123T"; tempo "1,00s"). UI: `HudView` (valores por evento; rótulos na cena). Setup: HUD dentro do Safe Area, 4 painéis; o rótulo de diagnóstico do M1 ficou oculto (volta no debug, E5). Testes: `NumberFormatterTests` (21 casos) e checagem do HUD em `MiningSceneTests`. Em batch: EditMode **53/53**, PlayMode **2/2** |
 | E5 Painel de debug | ⏳ | |
 | E6 Fluxo e aparelho | ⏳ | |
 
@@ -169,3 +169,12 @@ Tiles, animações, arte e biomas · loja e melhorias · toque, crítico e combo
 6. `Window → General → Test Runner → PlayMode → Run All`: 2 testes verdes (o do M1 e `MiningSceneTests`).
 
 *Criados:* pasta `Art/Graybox` (3 sprites), `Prefabs/Graybox/CrystalView.prefab`, objeto `Mining` (com `Map`, `Crystals`, `Miner`) e `CameraWidthFit` na câmera da cena Game. O painel âmbar do Safe Area ficou transparente (o componente continua).
+
+**Como testar a E4:**
+1. Abra `Bootstrap.unity` e aperte **Play** (a aba Game em retrato, ex.: 1080×2400).
+2. No topo, quatro painéis escuros com rótulo âmbar: **LASCAS 0**, **DANO 1**, **CAVERNA 1**, **VELOCIDADE 1,00s**.
+3. A cada cristal que some, LASCAS sobe 1. Os outros três não mudam (ainda não há melhorias).
+4. O texto de diagnóstico do M1 (versão/resolução/FPS) não aparece mais; ele volta dentro do painel de debug na E5.
+5. Teste rápido de valores: no asset `Balance_Prototipo`, ponha *Damage* 12,5 e *Hit Interval* 2,3 e aperte Play: o HUD mostra **12,5** e **2,30s**. Volte para 1 e 1.
+
+*Criados:* objeto `Hud` dentro de `Canvas/SafeArea` na cena Game (painéis `Lascas`, `Dano`, `Caverna`, `Velocidade`). O objeto `BuildInfo` ficou desativado.

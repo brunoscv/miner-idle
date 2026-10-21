@@ -25,6 +25,17 @@ namespace MinersIdle.EditorTools
             Debug.Log($"[Build] APK de desenvolvimento: {path}");
         }
 
+        /// <summary>
+        /// Gera o APK, instala no celular conectado por USB e abre o jogo (opção "Build And Run" do Unity). Precisa de um
+        /// aparelho aparecendo em <c>adb devices</c>.
+        /// </summary>
+        [MenuItem("Tools/Miners Idle/Build/Rodar no celular (Android)")]
+        public static void BuildAndRunAndroidDev()
+        {
+            var path = BuildAndroid(development: true, run: true);
+            Debug.Log($"[Build] Instalado e aberto no celular: {path}");
+        }
+
         public static void BuildAndroidDevBatch()
         {
             try
@@ -39,7 +50,7 @@ namespace MinersIdle.EditorTools
             }
         }
 
-        static string BuildAndroid(bool development)
+        static string BuildAndroid(bool development, bool run = false)
         {
             Directory.CreateDirectory(OutputFolder);
             var path = Path.GetFullPath(Path.Combine(OutputFolder, DevApkName));
@@ -49,7 +60,8 @@ namespace MinersIdle.EditorTools
                 scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
                 locationPathName = path,
                 target = BuildTarget.Android,
-                options = development ? BuildOptions.Development : BuildOptions.None,
+                options = (development ? BuildOptions.Development : BuildOptions.None) |
+                          (run ? BuildOptions.AutoRunPlayer : BuildOptions.None),
             };
 
             var report = BuildPipeline.BuildPlayer(options);
