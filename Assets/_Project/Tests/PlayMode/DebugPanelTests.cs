@@ -94,5 +94,55 @@ namespace MinersIdle.Tests
             yield return null;
             Assert.That(line.IsDrawn, Is.False);
         }
+
+        /// <summary>Marco 3, E3: os botões de compra usam a economia do asset e o HUD mostra os atributos novos.</summary>
+        [UnityTest]
+        public IEnumerator BuyButtons_ApplyTheUpgrade_AndTheHudFollows()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            _panel = Object.FindAnyObjectByType<DebugPanel>();
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            var hud = Object.FindAnyObjectByType<HudView>();
+            var simulation = runner.Simulation;
+            var economy = simulation.Economy;
+            Click("Toggle");
+
+            Assert.That(hud.DamageText, Is.EqualTo(NumberFormatter.Format(simulation.Stats.Damage)));
+            Assert.That(hud.SpeedText, Is.EqualTo(NumberFormatter.FormatSeconds(simulation.Stats.HitInterval)));
+
+            // Sem lascas suficientes: nada muda.
+            double damage = simulation.Stats.Damage;
+            Click("Content/Buttons/BuyDoublePickaxe");
+            Assert.That(simulation.State.LevelOf(UpgradeId.DoublePickaxe), Is.EqualTo(0));
+
+            for (int i = 0; i < 10; i++) Click("Content/Buttons/AddShards");
+            double shards = simulation.State.Shards;
+            double pickaxeCost = economy.Get(UpgradeId.Pickaxe).CostAt(0);
+
+            Click("Content/Buttons/BuyPickaxe");
+            Assert.That(simulation.State.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(1));
+            Assert.That(simulation.State.Shards, Is.EqualTo(shards - pickaxeCost).Within(1e-9));
+            Assert.That(simulation.Stats.Damage, Is.GreaterThan(damage));
+            Assert.That(hud.DamageText, Is.EqualTo(NumberFormatter.Format(simulation.Stats.Damage)));
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(simulation.State.Shards)));
+
+            double interval = simulation.Stats.HitInterval;
+            Click("Content/Buttons/BuySpeed");
+            Assert.That(simulation.Stats.HitInterval, Is.LessThan(interval));
+            Assert.That(hud.SpeedText, Is.EqualTo(NumberFormatter.FormatSeconds(simulation.Stats.HitInterval)));
+
+            double walk = simulation.Stats.WalkSpeed;
+            Click("Content/Buttons/BuyBoots");
+            Assert.That(simulation.Stats.WalkSpeed, Is.GreaterThan(walk));
+
+            Click("Content/Buttons/BuyMining");
+            Assert.That(simulation.State.LevelOf(UpgradeId.Mining), Is.EqualTo(1));
+
+            yield return null; // o painel atualiza as estatísticas no Update
+            Assert.That(_panel.transform.Find("Content/Upgrades").GetComponent<TMPro.TMP_Text>().text, Does.Contain("nv 1"));
+        }
     }
 }

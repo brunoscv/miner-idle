@@ -112,7 +112,7 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 | E0 Testes pendentes da E5 | ✅ 2026-10-21 | Em batch: EditMode **57/57**, PlayMode **3/3** (inclui `DebugPanelTests`, que clica cada botão) |
 | E1 Melhorias no núcleo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Economy`: `UpgradeId`, `UpgradeDefinition` (custo inicial, crescimento, limite, efeito; limite 0 = linha desligada), `EconomyRules`, `MinerStats.Compute` (fórmulas do plano, sempre recalculadas do zero), `Purchases` (`TryPurchase` → Comprado / Sem lascas / No limite; `NextCost`). `GameState` ganhou os níveis e `SpendShards` (nunca negativo). Folga do custo: 1e-9 **ou** 10⁻¹² do custo, o que for maior (custos do GDD chegam a ~10²³, onde o erro de arredondamento passa de milhões). Testes: `UpgradeEconomyTests` (12 testes, 14 casos). EditMode **71/71**. Ainda não muda nada no jogo: a simulação passa a usar as melhorias na E2 |
 | E2 Simulação usa as melhorias | ✅ validada pelo Bruno em 2026-10-21 | `MiningSimulation` recebe a `EconomyRules` (opcional: sem ela, nada vende e os atributos são os valores base, o jogo do M2), guarda os `Stats` atuais e usa dano, intervalo, caminhada e multiplicador de lascas deles. `Purchase(id)` compra, recalcula e avisa na ordem `UpgradePurchased` → `StatsChanged` → `ShardsChanged`; compra que falha não muda nada nem avisa. Golpe já vencido pelo intervalo novo sai no próximo `Tick`, uma vez só; o resto do tempo conta para o golpe seguinte. Testes: `MiningUpgradesTests` (9). Em batch: EditMode **80/80**, PlayMode **3/3**. Ainda não aparece no jogo: o asset e os botões vêm na E3 |
-| E3 Assets, HUD e debug | ⏳ | |
+| E3 Assets, HUD e debug | ✅ validada pelo Bruno em 2026-10-21 | `MiningRulesAsset` ganhou as cinco linhas (`UpgradeLineValues`: custo inicial, crescimento, limite, efeito) e o intervalo mínimo; os padrões são a tabela de protótipo deste plano. O setup cria `Data/Balance_GDD_v1` com os números do GDD (Botas desligadas). `MiningRunner` passa a economia do asset para a simulação. HUD: DANO e VELOCIDADE são os atributos atuais e mudam a cada compra. Painel DBG refeito (o setup troca o painel da E5): mais alto, linha de melhorias com nível e próximo custo ("máx." no limite), 5 botões **Comprar …**. Teste PlayMode `BuyButtons_ApplyTheUpgrade_AndTheHudFollows`. Em batch: setup ok, EditMode **80/80**, PlayMode **4/4** |
 | E4 Relatório de economia | ⏳ | |
 | E5 Spec do estagiário | ⏳ | |
 | E6 No celular | ⏳ | |
@@ -130,4 +130,15 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 - `Mining_MultipliesTheShardsOfEachCrystal`: com +50%, um cristal de 1 lasca rende 1,5.
 - `SamePurchasesAtTheSameTimes_…`: as mesmas compras nos mesmos instantes dão o mesmo jogo, com quadros pequenos ou um passo só.
 - `OneHour_BuyingTheCheapest_…`: 1 h comprando a mais barata, sem saldo negativo, sem passar de limite e sem intervalo abaixo do mínimo.
+
+**Como testar a E3:**
+1. **Rodar no celular** (o build aplica o setup) ou, no Editor, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` e Play na `Bootstrap`.
+2. Abra o **DBG**. Abaixo das estatísticas, a linha das melhorias: "Picareta nv 0 (próx. 10) · Velocidade nv 0 (próx. 15) · Mineração nv 0 (próx. 10) · Dupla nv 0 (próx. 500) · Botas nv 0 (próx. 10)".
+3. Com 10 lascas (~2 min, ou **+100 lascas**), **Comprar Picareta**: LASCAS cai 10, **DANO** vai para 2, a linha mostra "Picareta nv 1 (próx. 40)" e os cristais caem com metade dos golpes.
+4. **Comprar Velocidade**: VELOCIDADE vai para 0,95s. **Comprar Botas**: o anão anda mais rápido. **Comprar Mineração**: cada cristal passa a render 1,01 (LASCAS com casas decimais).
+5. Sem lascas, o botão não faz nada. **Comprar P. Dupla** com 500: DANO dobra; depois disso a linha mostra "máx." e o botão não cobra de novo.
+6. Para comparar com o GDD: no objeto `Mining`, troque *Rules* para `Balance_GDD_v1` e dê Play (DANO 0,5, VELOCIDADE 5,00s, 1ª Picareta custa 50). Volte para `Balance_Prototipo`.
+7. Test Runner: EditMode 80, PlayMode 4, todos verdes.
+
+O tamanho da letra e a altura do painel são um chute de graybox; se ficar apertado no celular, ajusto.
 

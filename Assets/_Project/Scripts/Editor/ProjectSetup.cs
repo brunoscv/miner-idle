@@ -38,6 +38,9 @@ namespace MinersIdle.EditorTools
         /// <summary>Valores de protótipo do loop de mineração (Marco 2, D-29).</summary>
         public const string PrototypeBalancePath = "Assets/_Project/Data/Balance_Prototipo.asset";
 
+        /// <summary>Os números literais do GDD v1, guardados para comparação (Marco 3, D-35). Não é o asset ativo.</summary>
+        public const string GddBalancePath = "Assets/_Project/Data/Balance_GDD_v1.asset";
+
         public const string PackageId = "com.brunocarvalho.minersidle";
         public const string VersionName = "0.1.0";
 
@@ -67,6 +70,7 @@ namespace MinersIdle.EditorTools
             ConfigureUrp();
             ConfigureInputSystem();
             EnsurePrototypeBalance();
+            EnsureGddBalance();
             EnsureBootstrapScene();
             EnsureGameScene();
             GrayboxSetup.Ensure();
@@ -277,6 +281,39 @@ namespace MinersIdle.EditorTools
             EnsureFolder(Path.GetDirectoryName(PrototypeBalancePath)?.Replace('\\', '/'));
             AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<MiningRulesAsset>(), PrototypeBalancePath);
             Debug.Log($"[Setup] Valores de protótipo criados em {PrototypeBalancePath}.");
+        }
+
+        /// <summary>
+        /// Cria o <c>Balance_GDD_v1</c>: os padrões do asset trocados pelos números do GDD v1.0 (REQ-ECO-02…07). As Botas
+        /// não existem no GDD e ficam desligadas (limite 0). Se já existe, não mexe.
+        /// </summary>
+        static void EnsureGddBalance()
+        {
+            if (File.Exists(GddBalancePath)) return;
+
+            EnsureFolder(Path.GetDirectoryName(GddBalancePath)?.Replace('\\', '/'));
+            var asset = ScriptableObject.CreateInstance<MiningRulesAsset>();
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("damage").doubleValue = 0.5;
+            serialized.FindProperty("hitInterval").doubleValue = 5;
+            SetLine(serialized, "pickaxe", 50, 4, 19, 2);
+            SetLine(serialized, "speed", 200, 3, 45, 0.1);
+            SetLine(serialized, "mining", 50, 1.2, 100, 0.01);
+            SetLine(serialized, "doublePickaxe", 5000, 1, 1, 2);
+            SetLine(serialized, "boots", 0, 1, 0, 0);
+            serialized.FindProperty("minHitInterval").doubleValue = 0.5;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            AssetDatabase.CreateAsset(asset, GddBalancePath);
+            Debug.Log($"[Setup] Valores do GDD v1 criados em {GddBalancePath}.");
+        }
+
+        static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect)
+        {
+            serialized.FindProperty(line + ".baseCost").doubleValue = baseCost;
+            serialized.FindProperty(line + ".costGrowth").doubleValue = costGrowth;
+            serialized.FindProperty(line + ".maxLevel").intValue = maxLevel;
+            serialized.FindProperty(line + ".effect").doubleValue = effect;
         }
 
         static void EnsureBootstrapScene()

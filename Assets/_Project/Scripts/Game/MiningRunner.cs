@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MinersIdle.Game
 {
     /// <summary>
-    /// Dono da partida na cena Game (M2): monta a <see cref="MiningSimulation"/> com os valores do asset e a avança a cada
+    /// Dono da partida na cena Game (M2): monta a <see cref="MiningSimulation"/> com os valores e as melhorias do asset (M3) e a avança a cada
     /// quadro. As views só leem a simulação e escutam os eventos dela. Quando o save chegar (M4), o estado inicial passa a
     /// vir do <c>GameBootstrap</c>.
     /// </summary>
@@ -51,7 +51,7 @@ namespace MinersIdle.Game
             }
 
             Seed = seed;
-            Simulation = new MiningSimulation(rules.ToRules(), new SeededRandom(seed));
+            Simulation = new MiningSimulation(rules.ToRules(), new SeededRandom(seed), economy: rules.ToEconomy());
             NotifyStarted();
         }
 

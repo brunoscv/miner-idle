@@ -7,7 +7,8 @@ namespace MinersIdle.UI
 {
     /// <summary>
     /// HUD superior (S02): LASCAS, DANO, CAVERNA e VELOCIDADE. Os rótulos ficam na cena (dados); aqui só os valores, todos
-    /// pelo <see cref="NumberFormatter"/>. Atualiza por evento, nunca por quadro.
+    /// pelo <see cref="NumberFormatter"/>. DANO e VELOCIDADE são os atributos atuais (com melhorias, M3). Atualiza por
+    /// evento, nunca por quadro.
     /// </summary>
     public sealed class HudView : MiningViewBase
     {
@@ -21,18 +22,35 @@ namespace MinersIdle.UI
 
         /// <summary>O texto de LASCAS na tela (para testes).</summary>
         public string ShardsText => shardsValue.text;
+        /// <summary>Os textos de DANO e VELOCIDADE na tela (para testes).</summary>
+        public string DamageText => damageValue.text;
+        public string SpeedText => speedValue.text;
 
-        protected override void Subscribe(MiningSimulation simulation) => simulation.ShardsChanged += OnShardsChanged;
-        protected override void Unsubscribe(MiningSimulation simulation) => simulation.ShardsChanged -= OnShardsChanged;
+        protected override void Subscribe(MiningSimulation simulation)
+        {
+            simulation.ShardsChanged += OnShardsChanged;
+            simulation.StatsChanged += OnStatsChanged;
+        }
+
+        protected override void Unsubscribe(MiningSimulation simulation)
+        {
+            simulation.ShardsChanged -= OnShardsChanged;
+            simulation.StatsChanged -= OnStatsChanged;
+        }
 
         protected override void Rebuild(MiningSimulation simulation)
         {
             OnShardsChanged(simulation.State.Shards);
-            damageValue.text = NumberFormatter.Format(simulation.Rules.Damage);
+            OnStatsChanged(simulation.Stats);
             caveValue.text = NumberFormatter.Format(CurrentCave);
-            speedValue.text = NumberFormatter.FormatSeconds(simulation.Rules.HitInterval);
         }
 
         void OnShardsChanged(double shards) => shardsValue.text = NumberFormatter.Format(shards);
+
+        void OnStatsChanged(MinerStats stats)
+        {
+            damageValue.text = NumberFormatter.Format(stats.Damage);
+            speedValue.text = NumberFormatter.FormatSeconds(stats.HitInterval);
+        }
     }
 }

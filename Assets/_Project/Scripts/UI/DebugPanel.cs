@@ -9,7 +9,8 @@ namespace MinersIdle.UI
 {
     /// <summary>
     /// Painel de debug do Marco 2 (E5): tempo ×1/×5/×20, gerar cristal, quebrar o alvo, +100 lascas, reiniciar com a
-    /// mesma semente ou com uma nova, "Mostrar ordem" e estatísticas. Os atalhos chamam os mesmos comandos das regras.
+    /// mesma semente ou com uma nova, "Mostrar ordem" e estatísticas. Desde o M3 (E3, D-37): comprar cada melhoria e ver
+    /// nível e próximo custo. Os atalhos chamam os mesmos comandos das regras.
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
     /// Os textos (rótulos e o modelo das estatísticas) ficam na cena.
     /// </summary>
@@ -28,6 +29,12 @@ namespace MinersIdle.UI
         [Tooltip("{0} semente · {1} escala do tempo · {2} minutos de jogo · {3} golpes · {4} quebras · {5} lascas/min · " +
                  "{6} cristais na tela · {7} máximo · {8} alvo (id) · {9} lote do alvo")]
         [SerializeField, TextArea(3, 8)] string statsFormat;
+        [SerializeField] TMP_Text upgrades;
+        [Tooltip("Pares nível/próximo custo, na ordem: {0}/{1} Picareta · {2}/{3} Velocidade · {4}/{5} Mineração · " +
+                 "{6}/{7} Picareta Dupla · {8}/{9} Botas")]
+        [SerializeField, TextArea(2, 6)] string upgradesFormat;
+        [Tooltip("Mostrado no lugar do próximo custo quando a linha está no limite.")]
+        [SerializeField] string maxedLabel;
 
         [SerializeField] Button speed1;
         [SerializeField] Button speed5;
@@ -38,6 +45,13 @@ namespace MinersIdle.UI
         [SerializeField] Button restartSameSeed;
         [SerializeField] Button restartNewSeed;
         [SerializeField] Button showOrder;
+        [SerializeField] Button buyPickaxe;
+        [SerializeField] Button buySpeed;
+        [SerializeField] Button buyMining;
+        [SerializeField] Button buyDoublePickaxe;
+        [SerializeField] Button buyBoots;
+
+        readonly object[] _upgradeArgs = new object[10];
 
         float _refresh;
 
@@ -67,6 +81,11 @@ namespace MinersIdle.UI
             restartSameSeed.onClick.AddListener(RestartSameSeed);
             restartNewSeed.onClick.AddListener(RestartNewSeed);
             showOrder.onClick.AddListener(ToggleOrder);
+            buyPickaxe.onClick.AddListener(BuyPickaxe);
+            buySpeed.onClick.AddListener(BuySpeed);
+            buyMining.onClick.AddListener(BuyMining);
+            buyDoublePickaxe.onClick.AddListener(BuyDoublePickaxe);
+            buyBoots.onClick.AddListener(BuyBoots);
         }
 
         void OnDisable()
@@ -81,6 +100,11 @@ namespace MinersIdle.UI
             restartSameSeed.onClick.RemoveListener(RestartSameSeed);
             restartNewSeed.onClick.RemoveListener(RestartNewSeed);
             showOrder.onClick.RemoveListener(ToggleOrder);
+            buyPickaxe.onClick.RemoveListener(BuyPickaxe);
+            buySpeed.onClick.RemoveListener(BuySpeed);
+            buyMining.onClick.RemoveListener(BuyMining);
+            buyDoublePickaxe.onClick.RemoveListener(BuyDoublePickaxe);
+            buyBoots.onClick.RemoveListener(BuyBoots);
         }
 
         void Update()
@@ -108,6 +132,18 @@ namespace MinersIdle.UI
         void RestartSameSeed() => runner.StartNew(runner.Seed);
         void RestartNewSeed() => runner.StartNew(MiningRunner.NewSeed());
 
+        void BuyPickaxe() => Buy(UpgradeId.Pickaxe);
+        void BuySpeed() => Buy(UpgradeId.Speed);
+        void BuyMining() => Buy(UpgradeId.Mining);
+        void BuyDoublePickaxe() => Buy(UpgradeId.DoublePickaxe);
+        void BuyBoots() => Buy(UpgradeId.Boots);
+
+        void Buy(UpgradeId id)
+        {
+            runner.Simulation?.Purchase(id);
+            _refresh = 0f; // mostra o nível e o custo novos já no próximo quadro
+        }
+
         void ToggleOrder()
         {
             crystals.ShowOrder = !crystals.ShowOrder;
@@ -133,6 +169,16 @@ namespace MinersIdle.UI
                 simulation.Rules.MaxCrystals,
                 target != null ? target.Id.ToString() : "-",
                 target != null ? target.Batch.ToString() : "-");
+
+            var economy = simulation.Economy;
+            int i = 0;
+            foreach (UpgradeId id in System.Enum.GetValues(typeof(UpgradeId)))
+            {
+                double? cost = Purchases.NextCost(state, economy, id);
+                _upgradeArgs[i++] = state.LevelOf(id);
+                _upgradeArgs[i++] = cost.HasValue ? NumberFormatter.Format(cost.Value) : maxedLabel;
+            }
+            upgrades.text = string.Format(upgradesFormat, _upgradeArgs);
         }
     }
 }
