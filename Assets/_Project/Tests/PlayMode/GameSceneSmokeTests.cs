@@ -21,7 +21,7 @@ namespace MinersIdle.Tests
             yield return null;
             yield return null;
 
-            Assert.That(Object.FindFirstObjectByType<SafeAreaController>(), Is.Not.Null);
+            Assert.That(Object.FindAnyObjectByType<SafeAreaController>(), Is.Not.Null);
             Assert.That(Camera.main, Is.Not.Null);
         }
     }

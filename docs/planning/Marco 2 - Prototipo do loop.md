@@ -139,7 +139,7 @@ Tiles, animações, arte e biomas · loja e melhorias · toque, crítico e combo
 |---|---|---|
 | E1 Seletor de alvo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Math/Vec2`, `Core/Random/IRandom` + `SeededRandom` (SplitMix64: mesma sequência no Editor e no celular, ao contrário do `System.Random`), `Core/Mining/Crystal`, `Core/Mining/TargetSelector`. Testes: `TargetSelectorTests` (8) e `CoreBasicsTests` (7). EditMode **19/19 verdes** (com os 4 do M1) |
 | E2 Simulação do loop | ✅ validada pelo Bruno em 2026-10-21 | Núcleo: `MiningRules`, `GameState`, `Miner`, `CrystalField`, `MiningSimulation` (avança de evento em evento: chegada, golpe, nascimento). Game: `MiningRulesAsset` (o `Balance_Prototipo`). Editor: menu `Tools → Miners Idle → Debug → Simular 10 minutos`; o `ProjectSetup` cria o asset. Testes: `MiningSimulationTests` (13). Os 28 testes do núcleo passaram compilados fora do Unity (C# 9); no Unity, 32/32 verdes (Bruno) |
-| E3 Cena graybox | ⏳ | |
+| E3 Cena graybox | ✅ validada pelo Bruno em 2026-10-21 | Game: `MiningRunner` (dono da partida na cena; `Tick` com o tempo do quadro limitado a 0,25 s × escala do debug; semente fixa opcional no Inspector). Presentation: `MapView`, `MinerView` (posição lida do Núcleo; "soco" de escala no golpe), `CrystalView` + `CrystalFieldView` (pool; barra de vida só no alvo), `CameraWidthFit`. Editor: `GrayboxSetup` (sprites 16×16, prefab `Prefabs/Graybox/CrystalView`, objeto `Mining` na cena Game). Teste PlayMode `MiningSceneTests`. Em batch: setup ok (reaplicar não muda nada), EditMode **32/32**, PlayMode **2/2**. Bug achado e corrigido no caminho: o setup carregava o prefab do cristal antes de abrir a cena Game, e abrir a cena descarrega assets "sem uso" (a referência ficava vazia); agora carrega depois |
 | E4 HUD | ⏳ | |
 | E5 Painel de debug | ⏳ | |
 | E6 Fluxo e aparelho | ⏳ | |
@@ -157,3 +157,15 @@ Tiles, animações, arte e biomas · loja e melhorias · toque, crítico e combo
 2. `Tools → Miners Idle → Debug → Simular 10 minutos`. Na primeira vez, ele cria `Assets/_Project/Data/Balance_Prototipo.asset`. O Console mostra uma linha `[Simulação]` com lascas (~50), golpes (~500), quebras (~50), lascas/min (~5) e a semente.
 3. Clique no asset `Balance_Prototipo`: os valores da tabela deste plano aparecem no Inspector. Mude, por exemplo, *Hit Interval* para 0,5 e rode o menu de novo: as lascas/min devem subir (~8–9). Volte para 1.
 4. `Window → General → Test Runner → EditMode → Run All`: **32 testes verdes** (4 do M1 + 15 da E1 + 13 da E2).
+
+**Achado da E3 — câmera:** a câmera do M1 tinha altura fixa (tamanho 15 = 30 unidades). Num celular mais alto que 9:16 (o Moto G75 é ~9:20) a largura visível cai para ~13,6 unidades e os cristais nas bordas do mapa (±7,5) sairiam da tela. O `CameraWidthFit` fixa a **largura** em 16,875 unidades (270 px ÷ 16, como o Canvas, que também casa pela largura) e deixa a sobra na altura. Provisório até o Art Spike decidir resolução e Pixel Perfect (D-14).
+
+**Como testar a E3:**
+1. Com o Editor aberto: `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`. Se a cena atual tiver mudanças, ele pergunta se quer salvar. O Console mostra linhas `[Setup]`: sprites de graybox, prefab `CrystalView`, "Graybox do mapa criado na cena Game" e o asset `Balance_Prototipo`.
+2. Abra `Assets/_Project/Scenes/Bootstrap.unity` e aperte **Play**, sem tocar em nada.
+3. Na aba Game (de preferência numa resolução retrato, ex.: 1080×2400): chão ardósia, losangos magenta, o anão (oval âmbar) indo até um losango e parando ao lado. Uma barra verde aparece **só** no alvo e diminui a cada ~1 s; o anão dá um "soco" a cada golpe; ao zerar, o losango some e o anão segue para o próximo.
+4. Deixe ~1 min: cristais novos aparecem até 12, sem sobrepor; o anão continua sozinho.
+5. Para repetir uma partida: no objeto `Mining`, ligue *Use Fixed Seed*. A mesma semente repete o mesmo jogo.
+6. `Window → General → Test Runner → PlayMode → Run All`: 2 testes verdes (o do M1 e `MiningSceneTests`).
+
+*Criados:* pasta `Art/Graybox` (3 sprites), `Prefabs/Graybox/CrystalView.prefab`, objeto `Mining` (com `Map`, `Crystals`, `Miner`) e `CameraWidthFit` na câmera da cena Game. O painel âmbar do Safe Area ficou transparente (o componente continua).

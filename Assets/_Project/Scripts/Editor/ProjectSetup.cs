@@ -69,6 +69,7 @@ namespace MinersIdle.EditorTools
             EnsurePrototypeBalance();
             EnsureBootstrapScene();
             EnsureGameScene();
+            GrayboxSetup.Ensure();
             ConfigureBuildScenes();
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Configuração do projeto aplicada.");
