@@ -132,3 +132,16 @@ Tiles, animações, arte e biomas · loja e melhorias · toque, crítico e combo
 ## Esforço
 
 **30–45 h** de desenvolvimento focado (≈ 2 semanas a 20 h/semana). Reavaliar ao fim da E2.
+
+## Estado
+
+| Etapa | Estado | Notas |
+|---|---|---|
+| E1 Seletor de alvo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Math/Vec2`, `Core/Random/IRandom` + `SeededRandom` (SplitMix64: mesma sequência no Editor e no celular, ao contrário do `System.Random`), `Core/Mining/Crystal`, `Core/Mining/TargetSelector`. Testes: `TargetSelectorTests` (8) e `CoreBasicsTests` (7). EditMode **19/19 verdes** (com os 4 do M1) |
+| E2 Simulação do loop | ⏳ | |
+| E3 Cena graybox | ⏳ | |
+| E4 HUD | ⏳ | |
+| E5 Painel de debug | ⏳ | |
+| E6 Fluxo e aparelho | ⏳ | |
+
+**Como testar a E1:** com o projeto aberto, `Window → General → Test Runner → EditMode → Run All` (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado). O teste que reproduz o seu exemplo é `TargetSelectorTests.FullSequence_ClearsInitialBatchByProximity_ThenFollowsBirthOrder`: o lote inicial é limpo de vizinho em vizinho (2 → 1 → 3) e depois a fila segue 4 → 5 → 6, mesmo com o 4 colado no anão e o 6 mais perto que o 5. Ainda não há nada na cena (a E3 é a primeira etapa visível).
