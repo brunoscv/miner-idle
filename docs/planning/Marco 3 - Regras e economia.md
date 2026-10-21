@@ -113,7 +113,7 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 | E1 Melhorias no núcleo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Economy`: `UpgradeId`, `UpgradeDefinition` (custo inicial, crescimento, limite, efeito; limite 0 = linha desligada), `EconomyRules`, `MinerStats.Compute` (fórmulas do plano, sempre recalculadas do zero), `Purchases` (`TryPurchase` → Comprado / Sem lascas / No limite; `NextCost`). `GameState` ganhou os níveis e `SpendShards` (nunca negativo). Folga do custo: 1e-9 **ou** 10⁻¹² do custo, o que for maior (custos do GDD chegam a ~10²³, onde o erro de arredondamento passa de milhões). Testes: `UpgradeEconomyTests` (12 testes, 14 casos). EditMode **71/71**. Ainda não muda nada no jogo: a simulação passa a usar as melhorias na E2 |
 | E2 Simulação usa as melhorias | ✅ validada pelo Bruno em 2026-10-21 | `MiningSimulation` recebe a `EconomyRules` (opcional: sem ela, nada vende e os atributos são os valores base, o jogo do M2), guarda os `Stats` atuais e usa dano, intervalo, caminhada e multiplicador de lascas deles. `Purchase(id)` compra, recalcula e avisa na ordem `UpgradePurchased` → `StatsChanged` → `ShardsChanged`; compra que falha não muda nada nem avisa. Golpe já vencido pelo intervalo novo sai no próximo `Tick`, uma vez só; o resto do tempo conta para o golpe seguinte. Testes: `MiningUpgradesTests` (9). Em batch: EditMode **80/80**, PlayMode **3/3**. Ainda não aparece no jogo: o asset e os botões vêm na E3 |
 | E3 Assets, HUD e debug | ✅ validada pelo Bruno em 2026-10-21 | `MiningRulesAsset` ganhou as cinco linhas (`UpgradeLineValues`: custo inicial, crescimento, limite, efeito) e o intervalo mínimo; os padrões são a tabela de protótipo deste plano. O setup cria `Data/Balance_GDD_v1` com os números do GDD (Botas desligadas). `MiningRunner` passa a economia do asset para a simulação. HUD: DANO e VELOCIDADE são os atributos atuais e mudam a cada compra. Painel DBG refeito (o setup troca o painel da E5): mais alto, linha de melhorias com nível e próximo custo ("máx." no limite), 5 botões **Comprar …**. Teste PlayMode `BuyButtons_ApplyTheUpgrade_AndTheHudFollows`. Em batch: setup ok, EditMode **80/80**, PlayMode **4/4** |
-| E4 Relatório de economia | ⏳ | |
+| E4 Relatório de economia | ✅ validada pelo Bruno em 2026-10-21 (menu e testes rodados no Editor) | Core: `EconomyReport.Run` (partida sem cena; a cada segundo junta para a melhoria mais barata e compra assim que der; mede 1ª compra, ritmo em lascas/min na média dos 5 min anteriores, compras, ganho, gasto e níveis). Editor: menu `Tools → Miners Idle → Debug → Relatório de economia` (protótipo e GDD v1, sementes 1–3, 30 min). Testes: `EconomyReportTests` (5, um deles com 3 sementes: **meta de D-35**, 1ª compra do `Balance_Prototipo` < 3 min). Rodado fora do Unity com os mesmos valores dos assets; compila sem erros |
 | E5 Spec do estagiário | ⏳ | |
 | E6 No celular | ⏳ | |
 
@@ -141,4 +141,21 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 7. Test Runner: EditMode 80, PlayMode 4, todos verdes.
 
 O tamanho da letra e a altura do painel são um chute de graybox; se ficar apertado no celular, ajusto.
+
+**Resultado do relatório (2026-10-21, rodado fora do Unity com os valores dos assets, 30 min, sementes 1–3):**
+
+| Asset | 1ª compra | Ritmo aos 5 / 10 / 30 min | Compras em 30 min | Níveis finais (Pic, Vel, Min, Dupla, Botas) |
+|---|---|---|---|---|
+| `Balance_Prototipo` | **111–114 s** (meta < 3 min ✅) | 7,2 / 8,8–9,2 / 11,2–11,4 lascas/min | 13 (gastou 260 de ~283) | 2, 1, 8, 0, 2 |
+| `Balance_GDD_v1` | **nenhuma** | 0,4 / 0,6 / 0,6 lascas/min | 0 (ganhou 17) | 0, 0, 0, 0, 0 |
+
+**Observações (medem, não decidem; mudar valores pede decisão):**
+1. A meta da D-35 foi atingida: a 1ª compra sai em ~1min52.
+2. **O ritmo cresce devagar depois:** de 5 para ~11 lascas/min em 30 min. Comprando "a mais barata", o jogador simulado gasta muito em **Mineração** (8 níveis = só +8% de lascas), porque ela é a mais barata (×1,2) e rende pouco. Na prática, Mineração vira uma "armadilha" para quem compra o que é barato. A Picareta (×2 de dano por ×4 de custo) é a que realmente acelera. Isso vale olhar quando a loja de verdade existir (M4) e no balanceamento.
+3. O GDD v1 literal não chega à 1ª compra em 30 min (50 lascas a ~0,6/min ≈ 80 min). Confirma o achado C-01 e justifica o protótipo.
+
+**Como testar a E4:**
+1. `Tools → Miners Idle → Debug → Relatório de economia`. O Console mostra um bloco `[Economia]` com uma linha por asset e semente (1ª compra, ritmo aos 5/10/30 min, compras, ganho, gasto e níveis). Leva alguns segundos.
+2. No `Balance_Prototipo`, mude *Crystal Reward* de 1 para 0,5 e rode de novo: o ritmo cai à metade, a 1ª compra passa de ~4 min e a linha mostra "ACIMA da meta de 3 min". Volte para 1. (Mudar só o custo da Picareta não altera a 1ª compra: o jogador simulado compra antes a mais barata, Mineração ou Botas.)
+3. Test Runner → EditMode: `EconomyReportTests` verdes (inclusive a meta de 3 min, com 3 sementes).
 
