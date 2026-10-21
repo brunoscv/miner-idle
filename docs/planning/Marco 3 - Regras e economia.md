@@ -104,3 +104,22 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 ## Esforço
 
 **25–40 h** de desenvolvimento focado (o núcleo e o debug do M2 já existem; o grosso é a E1, os testes e a spec).
+
+## Estado
+
+| Etapa | Estado | Notas |
+|---|---|---|
+| E0 Testes pendentes da E5 | ✅ 2026-10-21 | Em batch: EditMode **57/57**, PlayMode **3/3** (inclui `DebugPanelTests`, que clica cada botão) |
+| E1 Melhorias no núcleo | ✅ validada pelo Bruno em 2026-10-21 | `Core/Economy`: `UpgradeId`, `UpgradeDefinition` (custo inicial, crescimento, limite, efeito; limite 0 = linha desligada), `EconomyRules`, `MinerStats.Compute` (fórmulas do plano, sempre recalculadas do zero), `Purchases` (`TryPurchase` → Comprado / Sem lascas / No limite; `NextCost`). `GameState` ganhou os níveis e `SpendShards` (nunca negativo). Folga do custo: 1e-9 **ou** 10⁻¹² do custo, o que for maior (custos do GDD chegam a ~10²³, onde o erro de arredondamento passa de milhões). Testes: `UpgradeEconomyTests` (12 testes, 14 casos). EditMode **71/71**. Ainda não muda nada no jogo: a simulação passa a usar as melhorias na E2 |
+| E2 Simulação usa as melhorias | ⏳ | |
+| E3 Assets, HUD e debug | ⏳ | |
+| E4 Relatório de economia | ⏳ | |
+| E5 Spec do estagiário | ⏳ | |
+| E6 No celular | ⏳ | |
+
+**Como testar a E1:** `Window → General → Test Runner → EditMode → Run All` (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado): 71 verdes. Os que provam a regra estão em `UpgradeEconomyTests`:
+- `Cost_OfEveryLevel_…` e `BuyingEveryLevel_…`: custo de cada nível de cada linha (protótipo e GDD v1), compra até o limite exato gastando a soma dos custos, e nada além.
+- `Pickaxe_…`, `Speed_…`, `Mining_…`, `Boots_…`, `DoublePickaxe_…`: o efeito em cada nível (a Velocidade nunca passa do mínimo de 0,5 s; a Dupla só uma vez e a 2ª tentativa não cobra).
+- `GddV1_MatchesTheEconomyAnalysis`: a 19ª compra da Picareta do GDD custa ≈ 3,4·10¹², igual à análise da economia.
+- Nada visível no jogo ainda.
+
