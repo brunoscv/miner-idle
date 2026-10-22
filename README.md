@@ -15,20 +15,20 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | M3 Regras e economia | ✅ aprovado em 2026-10-21 — [plano do M3](docs/planning/Marco%203%20-%20Regras%20e%20economia.md) |
 | M4 Loja, HUD e save mínimo | ✅ aprovado em 2026-10-21 — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |
 | M5 Toque, crítico, combo e feedback (graybox) | ✅ aprovado em 2026-10-22 (E5 reduzida, D-59: o teste de 10 min no Moto G75 vai para a E5 do M6) — [plano do M5](docs/planning/Marco%205%20-%20Toque%20e%20feedback.md) |
-| **M6 Descida em corrida** (nova visão, [proposta](docs/planning/Proposta%20-%20Descida%20em%20corrida.md)) | 🔨 proposta aprovada (D-52…D-58); E1 (câmera e render, cena separada) ✅ validada no Moto G75 em 2026-10-22; E2 (fila no núcleo) ✅; E3 (jogo no corredor) em andamento — [plano do M6](docs/planning/Marco%206%20-%20Descida%20em%20corrida.md) |
+| **M6 Descida em corrida** (nova visão, [proposta](docs/planning/Proposta%20-%20Descida%20em%20corrida.md)) | 🔨 proposta aprovada (D-52…D-58); E1 (câmera e render, cena separada) ✅ validada no Moto G75 em 2026-10-22; E2 (fila no núcleo) ✅; E3 (jogo no corredor) ✅; E4 (feedback) em andamento — [plano do M6](docs/planning/Marco%206%20-%20Descida%20em%20corrida.md) |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
 
-## O que já roda (até o M4, graybox)
+## O que já roda (graybox)
 
-- O anão anda pelo mapa e quebra cristais sozinho, na ordem "lote, depois mais próximo" (D-27); cristais nascem até 12 na tela.
+- **Descida em corrida (M6):** a câmera de frente (D-50) mostra o anão correndo na sua direção por um corredor de caverna 3D com cara de pixel art; ele para em cada cristal da fila, bate até quebrar e volta a correr. Cristais nascem no fim da fila, até 12.
 - HUD de cima: LASCAS, DANO, CAVERNA e VELOCIDADE.
 - Melhorias: Picareta, Velocidade, Mineração, Picareta Dupla e Botas, compradas na **LOJA** (botão à direita, com o selo "!"); Estagiário e Letrado aparecem como "Em breve".
-- **Save** do progresso (lascas e níveis): fechar e reabrir o app mantém tudo; o mapa nasce de novo.
-- Painel **DBG** (só em build de desenvolvimento): tempo ×1/×5/×20, gerar cristal, quebrar alvo, +100 lascas, reiniciar com semente, "Mostrar ordem", compras e estatísticas.
+- **Save** do progresso (lascas e níveis): fechar e reabrir o app mantém tudo; a fila nasce de novo.
+- Painel **DBG** (só em build de desenvolvimento): tempo ×1/×5/×20, gerar cristal, quebrar alvo, +100 lascas, reiniciar com semente, compras, toques auto, crítico sempre, tremor, som, medição e estatísticas.
 - Menus em `Tools → Miners Idle → Debug`: **Simular 10 minutos** e **Relatório de economia**.
-- Tudo em formas simples (graybox); arte e animações vêm depois.
-- **Descida (teste, M6 E1):** DBG → **Descida (teste)** abre a cena com a câmera de frente (D-50): o anão corre na direção da câmera por um corredor de caverna, para nos cristais, bate e quebra. É só visual; o DBG de lá ajusta a câmera ao vivo.
+- Tudo desenhado por código (graybox); a arte de verdade vem do Art Spike.
+- DBG → **Câmera** ajusta a câmera da descida ao vivo (altura, inclinação, distância, campo de visão, largura do corredor, resolução).
 
 ## Como abrir
 

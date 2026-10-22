@@ -83,8 +83,7 @@ namespace MinersIdle.EditorTools
                 GrayboxSetup.SetReferences(feedback,
                     ("runner", mining.GetComponent<MiningRunner>()), ("texts", texts),
                     ("tapInput", mining.GetComponent<TapInput>()),
-                    ("crystals", Object.FindAnyObjectByType<CrystalFieldView>()),
-                    ("miner", Object.FindAnyObjectByType<MinerView>().transform),
+                    ("stage", Object.FindAnyObjectByType<DescentStage>()),
                     ("worldCamera", camera), ("screenShake", camera.GetComponent<ScreenShake>()),
                     ("sparks", sparks), ("floatingTexts", floating), ("shardFlight", flight), ("comboText", combo));
 
@@ -100,6 +99,21 @@ namespace MinersIdle.EditorTools
                 GrayboxSetup.SetReferences(sound, ("runner", mining.GetComponent<MiningRunner>()));
                 Debug.Log("[Setup] Som provisório criado na cena Game.");
                 changed = true;
+            }
+
+            // M6 (E3): o feedback passa a perguntar ao palco da descida onde estão o cristal e o anão.
+            var existingFeedback = Object.FindAnyObjectByType<MiningFeedbackView>();
+            if (existingFeedback != null)
+            {
+                var so = new SerializedObject(existingFeedback);
+                var stage = so.FindProperty("stage");
+                if (stage.objectReferenceValue == null)
+                {
+                    stage.objectReferenceValue = Object.FindAnyObjectByType<DescentStage>();
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                    Debug.Log("[Setup] Feedback ligado à descida.");
+                    changed = true;
+                }
             }
 
             // O HUD do M4 não conhecia a lasca voadora: liga uma vez.

@@ -37,8 +37,8 @@ namespace MinersIdle.Tests
 
             _panel = Object.FindAnyObjectByType<DebugPanel>();
             var runner = Object.FindAnyObjectByType<MiningRunner>();
-            var field = Object.FindAnyObjectByType<CrystalFieldView>();
-            var line = Object.FindAnyObjectByType<TargetLineView>();
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var cameraPanel = Object.FindAnyObjectByType<DescentCameraPanel>();
             var hud = Object.FindAnyObjectByType<HudView>();
             Assert.That(_panel, Is.Not.Null, "a cena Game precisa do painel de debug (rode o setup do projeto)");
             Assert.That(Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>(), Is.Not.Null, "sem EventSystem os botões não recebem toque");
@@ -63,28 +63,30 @@ namespace MinersIdle.Tests
             int count = simulation.Crystals.Count;
             Click("Content/Buttons/SpawnCrystal");
             Assert.That(simulation.Crystals.Count, Is.EqualTo(count + 1));
-            Assert.That(field.ActiveCount, Is.EqualTo(simulation.Crystals.Count));
+            stage.Draw();
+            Assert.That(stage.DrawnCrystals, Is.EqualTo(simulation.Crystals.Count), "o corredor desenha a fila inteira");
 
             Assert.That(simulation.Miner.Target, Is.Not.Null, "o anão já escolheu um alvo");
             long breaks = simulation.State.Breaks;
             Click("Content/Buttons/BreakTarget");
             Assert.That(simulation.State.Breaks, Is.EqualTo(breaks + 1));
-            Assert.That(field.ActiveCount, Is.EqualTo(simulation.Crystals.Count));
+            stage.Draw();
+            Assert.That(stage.DrawnCrystals, Is.EqualTo(simulation.Crystals.Count));
 
-            Click("Content/Buttons/ShowOrder");
-            Assert.That(field.ActiveViews.All(v => v.IsShowingBatch), Is.True, "número do lote em todos os cristais");
-            yield return null;
-            yield return null;
-            Assert.That(line.IsDrawn, Is.True, "linha até o alvo");
+            // M6 (E3): "Câmera" no lugar do "Mostrar ordem" do mapa (D-61).
+            Assert.That(cameraPanel.IsOpen, Is.False);
+            Click("Content/Buttons/Camera");
+            Assert.That(cameraPanel.IsOpen, Is.True, "abre os controles da câmera");
 
             ulong seed = runner.Seed;
             double progress = simulation.State.Shards;
             Click("Content/Buttons/RestartSameSeed");
             Assert.That(runner.Seed, Is.EqualTo(seed));
-            Assert.That(runner.Simulation, Is.Not.SameAs(simulation), "mapa novo");
+            Assert.That(runner.Simulation, Is.Not.SameAs(simulation), "fila nova");
             Assert.That(runner.Simulation.State.Shards, Is.EqualTo(progress), "Reiniciar mantém o progresso (M4)");
-            Assert.That(field.ActiveCount, Is.EqualTo(runner.Simulation.Crystals.Count));
-            Assert.That(field.ActiveViews.All(v => v.IsShowingBatch), Is.True, "\"Mostrar ordem\" continua ligado");
+            stage.Draw();
+            Assert.That(stage.DrawnCrystals, Is.EqualTo(runner.Simulation.Crystals.Count), "o corredor segue a partida nova");
+            Assert.That(cameraPanel.IsOpen, Is.True, "os controles da câmera continuam abertos");
             Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(progress)));
 
             Click("Content/Buttons/DeleteSave");
@@ -94,10 +96,8 @@ namespace MinersIdle.Tests
             Click("Content/Buttons/RestartNewSeed");
             Assert.That(runner.Seed, Is.Not.EqualTo(seed));
 
-            Click("Content/Buttons/ShowOrder");
-            Assert.That(field.ActiveViews.Any(v => v.IsShowingBatch), Is.False);
-            yield return null;
-            Assert.That(line.IsDrawn, Is.False);
+            Click("Content/Buttons/Camera");
+            Assert.That(cameraPanel.IsOpen, Is.False);
         }
 
         /// <summary>Marco 3, E3: os botões de compra usam a economia do asset e o HUD mostra os atributos novos.</summary>

@@ -11,9 +11,10 @@ using UnityEngine.UI;
 namespace MinersIdle.EditorTools
 {
     /// <summary>
-    /// Parte do <see cref="ProjectSetup"/> para o graybox do Marco 2: sprites brancos 16×16, o prefab do cristal, o objeto
-    /// "Mining" na cena Game (partida, chão, cristais e anão; E3), o HUD de cima (E4) e o painel de debug com o "Mostrar
-    /// ordem" (E5, ver <see cref="DebugPanelSetup"/>). Como o resto do setup, só cria o que falta.
+    /// Parte do <see cref="ProjectSetup"/> para a cena Game: sprites brancos 16×16 (efeitos e loja), o objeto "Mining"
+    /// (a partida), o HUD de cima, a descida (M6, <see cref="DescentSetup"/>), os efeitos, o painel de debug
+    /// (<see cref="DebugPanelSetup"/>) e a loja. Como o resto do setup, só cria o que falta. (A vista de cima do mapa,
+    /// do M2 ao M6 E2, saiu na E3 do M6, D-61.)
     /// </summary>
     static class GrayboxSetup
     {
@@ -21,23 +22,11 @@ namespace MinersIdle.EditorTools
         internal const string SquarePath = SpriteFolder + "/Square.png";
         internal const string DiamondPath = SpriteFolder + "/Diamond.png";
         internal const string CirclePath = SpriteFolder + "/Circle.png";
-        const string CrystalPrefabPath = "Assets/_Project/Prefabs/Graybox/CrystalView.prefab";
         const string MiningRootName = "Mining";
         const string HudName = "Hud";
 
         const int SpriteSize = 16;
         const float PixelsPerUnit = 16f;
-        const int MapSortingOrder = -32000;
-        const int TargetLineSortingOrder = 29000;   // abaixo das barras de vida (30000)
-        const int BatchLabelSortingOrder = 30002;   // acima das barras
-
-        // Cores provisórias do graybox: chão ardósia, cristal magenta (o do mockup), anão âmbar (cor de ação do GDD).
-        static readonly Color FloorColor = new Color32(0x23, 0x33, 0x44, 0xFF);
-        static readonly Color CrystalColor = new Color32(0xC2, 0x3C, 0xFF, 0xFF);
-        static readonly Color MinerColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
-        static readonly Color BarBackColor = new Color32(0x15, 0x19, 0x1C, 0xFF);
-        static readonly Color BarFillColor = new Color32(0x4C, 0xD9, 0x64, 0xFF);
-        static readonly Color TargetLineColor = new Color(0.949f, 0.663f, 0f, 0.7f);
         // HUD: painel de madeira escura do mockup, rótulo âmbar, valor claro.
         static readonly Color HudPanelColor = new Color32(0x2B, 0x1D, 0x14, 0xE6);
         static readonly Color HudLabelColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
@@ -46,9 +35,8 @@ namespace MinersIdle.EditorTools
         public static void Ensure()
         {
             var square = EnsureSprite(SquarePath, (x, y) => true);
-            var diamond = EnsureSprite(DiamondPath, (x, y) => Mathf.Abs(x - 7.5f) + Mathf.Abs(y - 7.5f) <= 8f);
+            EnsureSprite(DiamondPath, (x, y) => Mathf.Abs(x - 7.5f) + Mathf.Abs(y - 7.5f) <= 8f);
             EnsureSprite(CirclePath, (x, y) => (x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f) <= 64f);
-            EnsureCrystalPrefab(square, diamond);
             ShopSetup.EnsureAssets(square);
             FeedbackSetup.EnsureTexts();
             EnsureMiningInGameScene();
@@ -82,62 +70,6 @@ namespace MinersIdle.EditorTools
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
-        static void EnsureCrystalPrefab(Sprite square, Sprite diamond)
-        {
-            if (!File.Exists(CrystalPrefabPath))
-            {
-                ProjectSetup.EnsureFolder(Path.GetDirectoryName(CrystalPrefabPath)?.Replace('\\', '/'));
-
-                var root = new GameObject("CrystalView");
-                var body = CreateSprite("Body", root.transform, diamond, CrystalColor, Vector3.zero, new Vector3(1.2f, 1.2f, 1f));
-
-                var bar = new GameObject("HealthBar");
-                bar.transform.SetParent(root.transform, false);
-                bar.transform.localPosition = new Vector3(0f, 0.95f, 0f);
-                var back = CreateSprite("Back", bar.transform, square, BarBackColor, Vector3.zero, new Vector3(1.3f, 0.25f, 1f));
-                var fill = CreateSprite("Fill", bar.transform, square, BarFillColor, Vector3.zero, new Vector3(1.2f, 0.15f, 1f));
-
-                var view = root.AddComponent<CrystalView>();
-                SetReferences(view, ("body", body), ("healthBar", bar), ("healthBack", back), ("healthFill", fill));
-
-                PrefabUtility.SaveAsPrefabAsset(root, CrystalPrefabPath);
-                Object.DestroyImmediate(root);
-                Debug.Log($"[Setup] Prefab criado: {CrystalPrefabPath}.");
-            }
-
-            EnsureBatchLabel();
-        }
-
-        /// <summary>E5: o número do lote em cada cristal ("Mostrar ordem"), escondido por padrão.</summary>
-        static void EnsureBatchLabel()
-        {
-            var contents = PrefabUtility.LoadPrefabContents(CrystalPrefabPath);
-            try
-            {
-                if (contents.transform.Find("BatchLabel") != null) return;
-
-                var label = new GameObject("BatchLabel", typeof(TextMeshPro));
-                label.transform.SetParent(contents.transform, false);
-                var tmp = label.GetComponent<TextMeshPro>();
-                tmp.text = "1";
-                tmp.fontSize = 6f;
-                tmp.alignment = TextAlignmentOptions.Center;
-                tmp.color = Color.white;
-                tmp.textWrappingMode = TextWrappingModes.NoWrap;
-                tmp.sortingOrder = BatchLabelSortingOrder;
-                tmp.rectTransform.sizeDelta = new Vector2(1.5f, 1f);
-                label.SetActive(false);
-
-                SetReferences(contents.GetComponent<CrystalView>(), ("batchLabel", tmp));
-                PrefabUtility.SaveAsPrefabAsset(contents, CrystalPrefabPath);
-                Debug.Log("[Setup] Número do lote adicionado ao prefab do cristal.");
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(contents);
-            }
-        }
-
         static void EnsureMiningInGameScene()
         {
             if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
@@ -158,60 +90,27 @@ namespace MinersIdle.EditorTools
 
             if (GameObject.Find(MiningRootName) == null)
             {
-                // Carregar só depois de abrir a cena: abrir a cena descarrega assets "sem uso" e as referências
-                // carregadas antes viram nulas (o prefab do cristal saía vazio na primeira versão deste setup).
-                var square = AssetDatabase.LoadAssetAtPath<Sprite>(SquarePath);
-                var circle = AssetDatabase.LoadAssetAtPath<Sprite>(CirclePath);
-                var crystalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CrystalPrefabPath).GetComponent<CrystalView>();
                 var rules = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(ProjectSetup.PrototypeBalancePath);
                 var root = new GameObject(MiningRootName);
-                var runner = root.AddComponent<MiningRunner>();
-                SetReferences(runner, ("rules", rules));
+                SetReferences(root.AddComponent<MiningRunner>(), ("rules", rules));
 
-                var map = CreateSprite("Map", root.transform, square, FloorColor, Vector3.zero, Vector3.one);
-                map.sortingOrder = MapSortingOrder;
-                SetReferences(map.gameObject.AddComponent<MapView>(), ("runner", runner));
-
-                var crystals = new GameObject("Crystals");
-                crystals.transform.SetParent(root.transform, false);
-                SetReferences(crystals.AddComponent<CrystalFieldView>(), ("runner", runner), ("crystalPrefab", crystalPrefab));
-
-                var miner = CreateSprite("Miner", root.transform, circle, MinerColor, Vector3.zero, new Vector3(0.9f, 1.2f, 1f));
-                SetReferences(miner.gameObject.AddComponent<MinerView>(), ("runner", runner), ("body", miner));
-
-                // O painel âmbar do M1 só mostrava o Safe Area; sobre o mapa ele atrapalha. O componente fica (layout).
+                // O painel âmbar do M1 só mostrava o Safe Area; sobre o jogo ele atrapalha. O componente fica (layout).
                 var safeArea = GameObject.Find("SafeArea");
                 if (safeArea != null && safeArea.TryGetComponent<Image>(out var tint)) tint.color = Color.clear;
 
                 changed = true;
-                Debug.Log("[Setup] Graybox do mapa criado na cena Game.");
+                Debug.Log("[Setup] Partida (Mining) criada na cena Game.");
             }
 
-            changed |= EnsureTargetLine();
             changed |= EnsureTapInput();
             changed |= EnsureHud();
             changed |= EnsureHudBlocksTaps();
+            changed |= DescentSetup.EnsureInGameScene();
             changed |= FeedbackSetup.EnsureInScene();
             changed |= DebugPanelSetup.Ensure();
             changed |= ShopSetup.EnsureInScene();
 
             if (changed) EditorSceneManager.SaveScene(scene);
-        }
-
-        /// <summary>E5: a linha do anão até o alvo ("Mostrar ordem"), desligada por padrão.</summary>
-        static bool EnsureTargetLine()
-        {
-            var root = GameObject.Find(MiningRootName);
-            if (root == null || root.transform.Find("TargetLine") != null) return false;
-
-            var square = AssetDatabase.LoadAssetAtPath<Sprite>(SquarePath);
-            var line = CreateSprite("TargetLine", root.transform, square, TargetLineColor, Vector3.zero, Vector3.one);
-            line.sortingOrder = TargetLineSortingOrder;
-            line.enabled = false;
-            SetReferences(line.gameObject.AddComponent<TargetLineView>(),
-                          ("runner", root.GetComponent<MiningRunner>()), ("line", line));
-            Debug.Log("[Setup] Linha até o alvo criada na cena Game.");
-            return true;
         }
 
         /// <summary>M5 (E2): o leitor de toque, no objeto "Mining".</summary>

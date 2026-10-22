@@ -22,8 +22,8 @@ namespace MinersIdle.Presentation
 
         [SerializeField] FeedbackTexts texts;
         [SerializeField] TapInput tapInput;
-        [SerializeField] CrystalFieldView crystals;
-        [SerializeField] Transform miner;
+        [Tooltip("A descida (M6): diz onde o cristal e o anão estão na tela e faz o cristal tremer.")]
+        [SerializeField] DescentStage stage;
         [SerializeField] Camera worldCamera;
         [SerializeField] ScreenShake screenShake;
         [SerializeField] SparkBurst sparks;
@@ -84,7 +84,7 @@ namespace MinersIdle.Presentation
         {
             if (!comboText.gameObject.activeSelf) return;
 
-            comboText.transform.position = miner.position + new Vector3(0f, 1.6f, 0f);
+            comboText.transform.position = stage.MinerOnScreen + new Vector3(0f, 0.8f, 0f);
             if (_comboPulse <= 0f) return;
             _comboPulse = Mathf.Max(0f, _comboPulse - Time.unscaledDeltaTime / ComboPulseSeconds);
             comboText.transform.localScale = Vector3.one * (1f + 0.35f * _comboPulse);
@@ -92,15 +92,15 @@ namespace MinersIdle.Presentation
 
         void OnHit(MiningHit hit)
         {
-            var at = TrackToWorld(hit.Crystal.Distance, Simulation.Miner.Distance);
+            var at = stage.CrystalOnScreen(hit.Crystal);
             float calm = Calm();
 
-            crystals.Shake(hit.Crystal, (hit.IsTap ? 0.06f : 0.12f) * calm);
+            stage.Shake(hit.Crystal, (hit.IsTap ? 0.03f : 0.06f) * calm); // metros no corredor
             sparks.Emit(at, hit.IsTap ? 3 : 5, hit.IsTap ? TapSparkColor : HitSparkColor, hit.IsTap ? 3f : 4f);
 
             if (!hit.IsCritical) return;
             sparks.Emit(at, 8, CriticalColor, 6f);
-            var near = miner.position + (Vector3)(Random.insideUnitCircle * 1.2f) + Vector3.up * 0.8f;
+            var near = stage.MinerOnScreen + (Vector3)(Random.insideUnitCircle * 1.2f) + Vector3.up * 0.5f;
             floatingTexts.Show(texts.CriticalLabel, near, CriticalColor, 1.3f, 0.8f, 1.2f);
             screenShake.Shake(criticalShake * calm, criticalShakeSeconds);
         }
@@ -116,7 +116,7 @@ namespace MinersIdle.Presentation
 
         void OnBroken(Crystal crystal)
         {
-            var at = TrackToWorld(crystal.Distance, Simulation.Miner.Distance);
+            var at = stage.CrystalOnScreen(crystal);
             screenShake.Shake(breakShake * Calm(), breakShakeSeconds);
             sparks.Emit(at, 6, HitSparkColor, 5f);
             shardFlight.Launch(at);
@@ -134,7 +134,7 @@ namespace MinersIdle.Presentation
 
         void OnComboMilestone(int combo)
         {
-            floatingTexts.ShowNumber(texts.MilestoneFormat, combo, miner.position + Vector3.up * 2.2f,
+            floatingTexts.ShowNumber(texts.MilestoneFormat, combo, stage.MinerOnScreen + Vector3.up * 1.6f,
                                      MilestoneColor, 1.6f, 0.9f, 1.5f);
             screenShake.Shake(milestoneShake, milestoneShakeSeconds);
         }

@@ -18,7 +18,7 @@ namespace MinersIdle.EditorTools
 {
     /// <summary>
     /// A configuração do projeto, escrita em código para ser reproduzível (Marco 1): identidade, Android (IL2CPP, ARM64,
-    /// retrato), URP, Input System como único input e as cenas (Bootstrap, Game e Descida). O renderer criado no M1
+    /// retrato), URP, Input System como único input e as cenas (Bootstrap e Game). O renderer criado no M1
     /// (<c>URP_2D_Renderer</c>) saiu <b>Universal</b>, apesar do nome (achado no M6): é ele que desenha os sprites do jogo e
     /// a perspectiva da descida.
     ///
@@ -77,7 +77,6 @@ namespace MinersIdle.EditorTools
             EnsureBootstrapScene();
             EnsureGameScene();
             GrayboxSetup.Ensure();
-            DescentSetup.Ensure();
             ConfigureBuildScenes();
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Configuração do projeto aplicada.");
@@ -426,7 +425,7 @@ namespace MinersIdle.EditorTools
 
         internal static void ConfigureBuildScenes()
         {
-            EditorBuildSettings.scenes = new[] { BootstrapScenePath, GameScenePath, DescentSetup.ScenePath }
+            EditorBuildSettings.scenes = new[] { BootstrapScenePath, GameScenePath }
                 .Where(File.Exists)
                 .Select(path => new EditorBuildSettingsScene(path, true))
                 .ToArray();

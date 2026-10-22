@@ -1,23 +1,22 @@
 using System;
+using MinersIdle.Core;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// A cena da descida (M6, E1; D-50, D-51): a câmera de frente para o anão, o corredor de caverna em perspectiva
-    /// passando por ele e a fila de cristais vindo pela frente, renderizados numa textura de baixa resolução (o "3D com
-    /// cara de pixel art" da proposta). O loop é <b>só visual</b> (<see cref="DescentPreview"/>); as regras entram na E2.
+    /// A descida em corrida na cena do jogo (M6; D-50, D-52, D-53): a câmera de frente para o anão, o corredor de caverna
+    /// em perspectiva passando por ele e a fila de cristais da simulação vindo pela frente. Desde a E3, quem dirige é a
+    /// <see cref="MiningSimulation"/>: esta view só lê a distância do anão e dos cristais e desenha (o código é dono do
+    /// tempo e da regra; a animação só ilustra).
     ///
-    /// O anão corre parado: a câmera e o anão não se movem. O que anda é a textura do corredor (rolagem no shader) e os
-    /// objetos da trilha (cristais, esteios, lanternas), desenhados em relação ao anão: z = distância − (posição − corrido).
-    /// Tudo é criado uma vez ao abrir a cena e reaproveitado; um quadro não aloca memória.
+    /// O 3D fica longe da cena 2D (em y = −1000, para a câmera de cima não o ver) e é renderizado numa textura de baixa
+    /// resolução (270 px, D-14), mostrada num quadro atrás de tudo pela câmera da tela, a mesma dos efeitos e do tremor.
+    /// O anão corre parado: o que anda é a textura do corredor (rolagem no shader) e os objetos da trilha, desenhados em
+    /// relação a ele, na escala da D-58. Tudo é criado uma vez e reaproveitado; um quadro não aloca memória.
     /// </summary>
-    public sealed class DescentStage : MonoBehaviour
+    public sealed class DescentStage : MiningViewBase
     {
-        /// <summary>Teto do tempo de um quadro: depois de uma pausa do app a cena não pula metros de uma vez.</summary>
-        public const float MaxFrameSeconds = 0.1f;
-
         public const float WallHeight = 3.2f;
         const float CorridorNear = -1f;
         const float CorridorFar = 36f;
@@ -31,17 +30,27 @@ namespace MinersIdle.Presentation
         const float LanternHeight = 1.5f;
         const int PostSlots = 11;
         const int DecorSlots = 16;
-        const int ParticleSlots = 48;
 
-        /// <summary>Com o estagiário, o anão vai um pouco para a esquerda e ele corre à direita, um pouco atrás.</summary>
-        const float DwarfXWithIntern = -0.3f;
-        const float InternX = 0.55f;
-        const float InternBehind = 0.5f;
+        /// <summary>Cristais desenhados ao mesmo tempo: o máximo da fila mais os que o debug põe além dele.</summary>
+        const int CrystalSlots = 20;
 
-        /// <summary>Radianos de passada por metro corrido (o mesmo do simulador).</summary>
+        /// <summary>Radianos de passada por metro corrido.</summary>
         const double StridePerMeter = 5;
 
-        const float JiggleOnHit = 0.08f;
+        /// <summary>Tremor do cristal ao levar golpe (o feedback chama <see cref="Shake"/>).</summary>
+        const float ShakeSeconds = 0.12f;
+
+        /// <summary>A barra de vida do alvo (REQ-CRY-03), em metros, acima do cristal.</summary>
+        static readonly Vector2 HealthBarSize = new Vector2(0.6f, 0.07f);
+        const float HealthBarHeight = 0.95f;
+        static readonly Color HealthBackColor = new Color32(0x15, 0x19, 0x1C, 0xFF);
+        static readonly Color HealthFillColor = new Color32(0x4C, 0xD9, 0x64, 0xFF);
+
+        /// <summary>
+        /// O quadro da descida sai um pouco maior que a tela, para o tremor de tela não mostrar a borda; o campo de visão
+        /// cresce na mesma proporção, então o enquadramento visível continua o da D-50.
+        /// </summary>
+        const float Overscan = 1.06f;
 
         static readonly int ScrollId = Shader.PropertyToID("_DescentScroll");
         static readonly int FogColorId = Shader.PropertyToID("_DescentFogColor");
@@ -50,69 +59,71 @@ namespace MinersIdle.Presentation
         static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         static readonly int ScrollAxisId = Shader.PropertyToID("_ScrollAxis");
 
-        static readonly Color SparkColor = new Color(1f, 0.82f, 0.48f);
-
         [SerializeField] Shader shader;
+        [Tooltip("Shader do quadro que mostra a descida na tela (URP Unlit).")]
+        [SerializeField] Shader screenShader;
         [SerializeField] Camera sceneCamera;
+        [Tooltip("A câmera da tela (a de cima, ortográfica): o quadro da descida fica atrás de tudo que ela desenha.")]
+        [SerializeField] Camera screenCamera;
 
         [Tooltip("Câmera validada pelo Bruno (D-50). Ajustável no DBG.")]
         [SerializeField] DescentFraming framing = DescentFraming.Validated;
 
-        [Tooltip("Velocidade de corrida na tela, em m/s (D-58: 4 un/s da regra × 0,5 m).")]
-        [SerializeField] float runSpeed = 2f;
+        [Tooltip("Metros do corredor por unidade da regra (D-58).")]
+        [SerializeField] float metersPerUnit = 0.5f;
 
         [Tooltip("Largura da textura de render, em pixels (D-14: 270). 0 = resolução do aparelho.")]
         [SerializeField] int internalWidth = 270;
-
-        [SerializeField] bool showIntern = true;
 
         [SerializeField] Color fogColor = new Color32(0x14, 0x0D, 0x09, 0xFF);
         [SerializeField] float fogStart = 3f;
         [SerializeField] float fogEnd = 25f;
 
-        struct Particle
-        {
-            public double At;
-            public float X, Y, VelocityX, VelocityY, VelocityAt, Life, Size;
-        }
-
         DescentArt _art;
-        DescentPreview _preview;
         Mesh _quad, _flat, _box, _corridor;
-        Material _floor, _wall, _ceiling, _wood, _sprites;
+        Material _floor, _wall, _ceiling, _wood, _sprites, _screenMaterial;
         MeshFilter _corridorFilter;
         bool _corridorHasCeiling;
         float _corridorWidth;
 
-        DescentPiece _dwarf, _dwarfShadow, _intern, _internShadow;
-        readonly DescentPiece[] _crystals = new DescentPiece[DescentPreview.Capacity];
-        readonly DescentPiece[] _crystalShadows = new DescentPiece[DescentPreview.Capacity];
+        Transform _screen;
+        int _screenWidth, _screenHeight;
+        float _screenOrthoSize;
+
+        DescentPiece _dwarf, _dwarfShadow, _healthBack, _healthFill;
+        readonly DescentPiece[] _crystals = new DescentPiece[CrystalSlots];
+        readonly DescentPiece[] _crystalShadows = new DescentPiece[CrystalSlots];
         readonly DescentPiece[] _postsLeft = new DescentPiece[PostSlots];
         readonly DescentPiece[] _postsRight = new DescentPiece[PostSlots];
         readonly DescentPiece[] _beams = new DescentPiece[PostSlots];
         readonly DescentPiece[] _lanterns = new DescentPiece[PostSlots];
         readonly DescentPiece[] _decor = new DescentPiece[DecorSlots];
-        readonly DescentPiece[] _particlePieces = new DescentPiece[ParticleSlots];
-        readonly Particle[] _particles = new Particle[ParticleSlots];
-        int _nextParticle;
 
         RenderTexture _target;
-        float _jiggle;
+        bool _hitThisTarget;
+        Crystal _shaking;
+        float _shake;
+        float _shakeAmplitude;
+        int _drawnCrystals;
 
-        public DescentPreview Preview => _preview;
         public Camera SceneCamera => sceneCamera;
 
-        /// <summary>A imagem da cena (baixa resolução); a interface a mostra na tela inteira.</summary>
+        /// <summary>A imagem da descida (baixa resolução).</summary>
         public RenderTexture Output => _target;
 
         public int TargetWidth => _target != null ? _target.width : 0;
         public int TargetHeight => _target != null ? _target.height : 0;
+
+        /// <summary>Proporção da tela (largura/altura), a que o enquadramento usa.</summary>
         public float Aspect => _target != null ? (float)_target.width / _target.height : DescentFraming.ReferenceAspect;
 
-        /// <summary>Multiplicador do tempo (testes).</summary>
-        public float TimeScale { get; set; } = 1f;
+        /// <summary>Cristais da fila que têm desenho (os que estão atrás da câmera contam: só não aparecem ainda).</summary>
+        public int DrawnCrystals => _drawnCrystals;
 
-        public bool Paused { get; set; }
+        /// <summary>O quadro que mostra a descida na tela (para testes).</summary>
+        public Transform ScreenQuad => _screen;
+
+        public float MetersPerUnit => metersPerUnit;
 
         public DescentFraming Framing
         {
@@ -124,16 +135,6 @@ namespace MinersIdle.Presentation
             }
         }
 
-        public float RunSpeed
-        {
-            get => runSpeed;
-            set
-            {
-                runSpeed = Mathf.Clamp(value, 0.5f, 6f);
-                if (_preview != null) _preview.RunSpeed = runSpeed;
-            }
-        }
-
         /// <summary>Largura da textura de render em pixels; 0 = a do aparelho.</summary>
         public int InternalWidth
         {
@@ -141,31 +142,19 @@ namespace MinersIdle.Presentation
             set => internalWidth = Mathf.Max(0, value);
         }
 
-        public bool ShowIntern
-        {
-            get => showIntern;
-            set => showIntern = value;
-        }
-
-        public void ResetFraming()
-        {
-            Framing = DescentFraming.Validated;
-            RunSpeed = 2f;
-        }
+        public void ResetFraming() => Framing = DescentFraming.Validated;
 
         void Awake()
         {
-            if (shader == null || sceneCamera == null)
+            if (shader == null || screenShader == null || sceneCamera == null || screenCamera == null)
             {
-                Debug.LogError("[Descida] Falta o shader ou a câmera no DescentStage (rodar o setup do projeto).", this);
+                Debug.LogError("[Descida] Faltam shaders ou câmeras no DescentStage (rodar o setup do projeto).", this);
                 enabled = false;
                 return;
             }
 
             framing = framing.Clamped();
             _art = DescentArt.Create();
-            _preview = new DescentPreview { RunSpeed = runSpeed };
-
             _quad = DescentMeshes.Quad();
             _flat = DescentMeshes.FlatQuad();
             _box = DescentMeshes.Box();
@@ -193,22 +182,28 @@ namespace MinersIdle.Presentation
             }
             for (int i = 0; i < DecorSlots; i++)
                 _decor[i] = new DescentPiece(transform, "WallCrystal", _quad, _sprites, _art.Decor[0]);
-            for (int i = 0; i < DescentPreview.Capacity; i++)
+            for (int i = 0; i < CrystalSlots; i++)
             {
                 _crystalShadows[i] = new DescentPiece(transform, "CrystalShadow", _flat, _sprites, _art.Shadow);
                 _crystals[i] = new DescentPiece(transform, "Crystal", _quad, _sprites, _art.Crystals[0]);
+                _crystals[i].Visible = _crystalShadows[i].Visible = false;
             }
             _dwarfShadow = new DescentPiece(transform, "DwarfShadow", _flat, _sprites, _art.Shadow);
             _dwarf = new DescentPiece(transform, "Dwarf", _quad, _sprites, _art.DwarfRun[0]);
-            _internShadow = new DescentPiece(transform, "InternShadow", _flat, _sprites, _art.Shadow);
-            _intern = new DescentPiece(transform, "Intern", _quad, _sprites, _art.InternRun[0]);
-            for (int i = 0; i < ParticleSlots; i++)
-            {
-                _particlePieces[i] = new DescentPiece(transform, "Particle", _quad, _sprites, _art.White);
-                _particlePieces[i].Visible = false;
-            }
+            _healthBack = new DescentPiece(transform, "HealthBack", _quad, _sprites, _art.White);
+            _healthFill = new DescentPiece(transform, "HealthFill", _quad, _sprites, _art.White);
+            _healthBack.SetColor(HealthBackColor);
+            _healthFill.SetColor(HealthFillColor);
 
-            // Diferente do Material.SetColor, o global não converte a cor para o espaço linear: sem isto o fundo sai cinza.
+            _screenMaterial = new Material(screenShader) { name = "DescentScreen" };
+            var screen = new GameObject("DescentScreen", typeof(MeshFilter), typeof(MeshRenderer));
+            _screen = screen.transform;
+            screen.GetComponent<MeshFilter>().sharedMesh = _quad;
+            var screenRenderer = screen.GetComponent<MeshRenderer>();
+            screenRenderer.sharedMaterial = _screenMaterial;
+            screenRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            screenRenderer.sortingOrder = short.MinValue; // atrás de todos os sprites
+
             Shader.SetGlobalColor(FogColorId, QualitySettings.activeColorSpace == ColorSpace.Linear ? fogColor.linear : fogColor);
             Shader.SetGlobalFloat(FogStartId, fogStart);
             Shader.SetGlobalFloat(FogEndId, fogEnd);
@@ -216,7 +211,6 @@ namespace MinersIdle.Presentation
 
             EnsureTarget();
             ApplyFraming();
-            Layout();
         }
 
         void OnDestroy()
@@ -227,44 +221,97 @@ namespace MinersIdle.Presentation
                 _target.Release();
                 Destroy(_target);
             }
+            if (_screen != null) Destroy(_screen.gameObject);
 
-            foreach (var material in new[] { _floor, _wall, _ceiling, _wood, _sprites })
+            foreach (var material in new[] { _floor, _wall, _ceiling, _wood, _sprites, _screenMaterial })
                 if (material != null) Destroy(material);
             foreach (var mesh in new[] { _quad, _flat, _box, _corridor })
                 if (mesh != null) Destroy(mesh);
             _art?.Destroy();
         }
 
-        void Update()
+        protected override void Subscribe(MiningSimulation simulation)
+        {
+            simulation.HitLanded += OnHit;
+            simulation.TargetChanged += OnTargetChanged;
+        }
+
+        protected override void Unsubscribe(MiningSimulation simulation)
+        {
+            simulation.HitLanded -= OnHit;
+            simulation.TargetChanged -= OnTargetChanged;
+        }
+
+        protected override void Rebuild(MiningSimulation simulation)
+        {
+            _hitThisTarget = false;
+            _shaking = null;
+            _shake = 0f;
+        }
+
+        void OnHit(MiningHit hit)
+        {
+            if (!hit.IsTap) _hitThisTarget = true;
+        }
+
+        void OnTargetChanged(Crystal target) => _hitThisTarget = false;
+
+        /// <summary>O cristal treme rápido ao levar um golpe (feedback do M5); só ilustra.</summary>
+        public void Shake(Crystal crystal, float amplitude)
+        {
+            float current = _shaking == crystal && _shake > 0f ? _shakeAmplitude * _shake : 0f;
+            _shaking = crystal;
+            _shakeAmplitude = Mathf.Max(amplitude, current); // golpe fraco não apaga o tremor de um forte
+            _shake = 1f;
+        }
+
+        void LateUpdate()
         {
             EnsureTarget();
-            float dt = Paused ? 0f : Mathf.Min(Time.unscaledDeltaTime, MaxFrameSeconds) * TimeScale;
-            Advance(dt);
+            FitScreen();
+            Draw();
         }
 
-        /// <summary>Um passo da cena: o loop visual, as partículas e a posição de tudo. É o que cada quadro faz.</summary>
-        public void Advance(float dt)
+        /// <summary>Põe tudo no lugar a partir da simulação. É o que cada quadro faz (os testes medem que não aloca).</summary>
+        public void Draw()
         {
-            var step = _preview.Step(dt);
-            float dwarfX = showIntern ? DwarfXWithIntern : 0f;
+            if (Simulation == null) return;
 
-            if (step.Hit)
-            {
-                _jiggle = JiggleOnHit;
-                Burst(7, _preview.CrystalAt(0), dwarfX, 0.5f, 2f, 1f, 1.5f, 0.4f, 0.05f, SparkColor);
-            }
-
-            if (step.Broke)
-            {
-                _jiggle = 0f;
-                Color shard = DescentArt.CrystalColors[step.BrokeColor, 0];
-                Burst(16, step.BrokeAt, dwarfX, 0.35f, 3f, 1f, 2.5f, 0.7f, 0.08f, shard);
-            }
-
-            _jiggle *= Mathf.Pow(0.02f, dt);
-            UpdateParticles(dt);
+            if (_shake > 0f) _shake = Mathf.Max(0f, _shake - Time.unscaledDeltaTime / ShakeSeconds);
             Layout();
         }
+
+        // -------------------------------------------------------------------------------------------------------------
+        // Posições
+
+        /// <summary>Metros do anão até o cristal (z do cristal = distância da câmera ao anão − isto).</summary>
+        float Ahead(double crystalDistance) =>
+            (float)((crystalDistance - Simulation.Miner.Distance) * metersPerUnit);
+
+        /// <summary>Onde um cristal está no corredor (coordenadas locais do palco).</summary>
+        public Vector3 CrystalLocalPosition(Crystal crystal) =>
+            new Vector3(0f, 0f, framing.distance - (Simulation != null ? Ahead(crystal.Distance) : 0f));
+
+        /// <summary>
+        /// Um ponto do corredor na tela do jogo (no mundo 2D da câmera de cima, z = 0), para os efeitos 2D (faíscas,
+        /// textos, a lasca voando) saírem do lugar certo.
+        /// </summary>
+        public Vector3 ToScreenWorld(Vector3 localPosition)
+        {
+            var viewport = sceneCamera.WorldToViewportPoint(transform.TransformPoint(localPosition));
+            var size = _screen.localScale;
+            var bottom = _screen.position; // o quadro tem o pivô no meio da base
+            return new Vector3(bottom.x + (viewport.x - 0.5f) * size.x, bottom.y + viewport.y * size.y, 0f);
+        }
+
+        /// <summary>O meio de um cristal na tela do jogo (efeitos de golpe e de quebra).</summary>
+        public Vector3 CrystalOnScreen(Crystal crystal) => ToScreenWorld(CrystalLocalPosition(crystal) + Vector3.up * 0.35f);
+
+        /// <summary>O alto do capacete do anão na tela do jogo (combo e crítico aparecem em volta dele).</summary>
+        public Vector3 MinerOnScreen => ToScreenWorld(new Vector3(0f, DescentFraming.DwarfHeight, framing.distance));
+
+        // -------------------------------------------------------------------------------------------------------------
+        // Câmera, textura e quadro na tela
 
         Material CreateMaterial(string name, Texture texture, Vector2 scrollAxis)
         {
@@ -278,10 +325,11 @@ namespace MinersIdle.Presentation
         {
             if (sceneCamera == null) return;
 
-            sceneCamera.transform.SetPositionAndRotation(new Vector3(0f, framing.height, 0f), Quaternion.Euler(framing.tilt, 0f, 0f));
-            sceneCamera.fieldOfView = framing.VerticalFieldOfView(Aspect);
+            sceneCamera.transform.localPosition = new Vector3(0f, framing.height, 0f);
+            sceneCamera.transform.localRotation = Quaternion.Euler(framing.tilt, 0f, 0f);
+            sceneCamera.fieldOfView = RenderFieldOfView();
 
-            // O teto some quando a câmera sobe acima dele (o preset "de cima" do simulador).
+            // O teto some quando a câmera sobe acima dele.
             bool ceiling = framing.height < WallHeight - 0.1f;
             if (_corridorFilter != null && (_corridor == null || ceiling != _corridorHasCeiling || !Mathf.Approximately(_corridorWidth, framing.corridorWidth)))
             {
@@ -291,6 +339,13 @@ namespace MinersIdle.Presentation
                 _corridorHasCeiling = ceiling;
                 _corridorWidth = framing.corridorWidth;
             }
+        }
+
+        /// <summary>O campo de visão da D-50 para esta tela, aumentado pela margem do tremor (<see cref="Overscan"/>).</summary>
+        float RenderFieldOfView()
+        {
+            float halfTan = Mathf.Tan(framing.VerticalFieldOfView(Aspect) * 0.5f * Mathf.Deg2Rad) * Overscan;
+            return 2f * Mathf.Atan(halfTan) * Mathf.Rad2Deg;
         }
 
         /// <summary>A textura de render acompanha a proporção da tela; recriada só quando o tamanho muda.</summary>
@@ -312,50 +367,103 @@ namespace MinersIdle.Presentation
             _target = new RenderTexture(width, height, 24) { name = "DescentTarget", filterMode = FilterMode.Point };
             _target.Create();
             sceneCamera.targetTexture = _target;
-            sceneCamera.fieldOfView = framing.VerticalFieldOfView(Aspect);
+            sceneCamera.fieldOfView = RenderFieldOfView();
+            _screenMaterial.SetTexture(BaseMapId, _target);
         }
+
+        /// <summary>O quadro cobre a tela da câmera de cima (com a margem), atrás de todos os sprites.</summary>
+        void FitScreen()
+        {
+            if (Screen.width == _screenWidth && Screen.height == _screenHeight && Mathf.Approximately(screenCamera.orthographicSize, _screenOrthoSize))
+                return;
+
+            _screenWidth = Screen.width;
+            _screenHeight = Screen.height;
+            _screenOrthoSize = screenCamera.orthographicSize;
+
+            float height = screenCamera.orthographicSize * 2f * Overscan;
+            float width = height * Screen.width / Mathf.Max(1, Screen.height);
+            var cameraPosition = screenCamera.transform.position;
+            // O quadro tem o pivô no meio da base: desce meia altura para ficar centrado.
+            _screen.position = new Vector3(cameraPosition.x, cameraPosition.y - height * 0.5f, screenCamera.farClipPlane * 0.5f);
+            _screen.localScale = new Vector3(width, height, 1f);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------
+        // Desenho
 
         void Layout()
         {
+            var simulation = Simulation;
+            var miner = simulation.Miner;
             float distance = framing.distance;
-            double progress = _preview.Progress;
-            double front = progress + distance; // posição na trilha que está em z = 0 (a câmera)
+            double run = miner.Distance * metersPerUnit;
+            double front = run + distance; // posição na trilha (em metros) que está em z = 0, a câmera
             Shader.SetGlobalFloat(ScrollId, (float)(front % ScrollPeriod));
 
-            float dwarfX = showIntern ? DwarfXWithIntern : 0f;
-            bool mining = _preview.Mining;
-            int runFrame = (int)Math.Floor(progress * StridePerMeter / (Math.PI * 0.5)) & 3;
-            int swingFrame = _preview.SwingFrame;
-
-            _dwarf.SetTexture(mining ? _art.DwarfMine[swingFrame] : _art.DwarfRun[runFrame]);
-            _dwarf.Place(new Vector3(dwarfX, 0f, distance), DescentArt.DwarfSize);
-            PlaceShadow(_dwarfShadow, dwarfX, distance, DescentArt.ShadowSize.x);
-
-            _intern.Visible = _internShadow.Visible = showIntern;
-            if (showIntern)
+            if (miner.State == MinerState.Mining)
             {
-                _intern.SetTexture(mining ? _art.InternMine[(swingFrame + 1) & 3] : _art.InternRun[runFrame]);
-                _intern.Place(new Vector3(InternX, 0f, distance + InternBehind), DescentArt.DwarfSize);
-                PlaceShadow(_internShadow, InternX, distance + InternBehind, DescentArt.ShadowSize.x);
+                _dwarf.SetTexture(_art.DwarfMine[SwingFrame(miner, simulation.Stats.HitInterval)]);
             }
-
-            for (int i = 0; i < DescentPreview.Capacity; i++)
+            else
             {
-                float z = i < _preview.CrystalCount ? (float)(front - _preview.CrystalAt(i)) : float.NegativeInfinity;
+                int runFrame = (int)Math.Floor(run * StridePerMeter / (Math.PI * 0.5)) & 3;
+                _dwarf.SetTexture(_art.DwarfRun[runFrame]);
+            }
+            _dwarf.Place(new Vector3(0f, 0f, distance), DescentArt.DwarfSize);
+            PlaceShadow(_dwarfShadow, 0f, distance, DescentArt.ShadowSize.x);
+
+            var crystals = simulation.Crystals;
+            _drawnCrystals = Mathf.Min(crystals.Count, CrystalSlots);
+            for (int i = 0; i < CrystalSlots; i++)
+            {
+                float z = i < crystals.Count ? distance - Ahead(crystals[i].Distance) : float.NegativeInfinity;
                 if (z < CorridorNear)
                 {
                     _crystals[i].Visible = _crystalShadows[i].Visible = false;
                     continue;
                 }
 
-                float shake = i == 0 && mining ? Mathf.Sin(Time.unscaledTime * 45f) * _jiggle : 0f;
-                _crystals[i].SetTexture(_art.Crystals[_preview.CrystalColor(i)]);
-                _crystals[i].Place(new Vector3(dwarfX + shake, 0f, z), DescentArt.CrystalSize);
-                PlaceShadow(_crystalShadows[i], dwarfX, z, DescentArt.ShadowSize.x * 1.1f);
+                var crystal = crystals[i];
+                float shake = crystal == _shaking && _shake > 0f ? Mathf.Sin(Time.unscaledTime * 90f) * _shakeAmplitude * _shake : 0f;
+                _crystals[i].SetTexture(_art.Crystals[crystal.Id % DescentArt.CrystalColorCount]);
+                _crystals[i].Place(new Vector3(shake, 0f, z), DescentArt.CrystalSize);
+                PlaceShadow(_crystalShadows[i], 0f, z, DescentArt.ShadowSize.x * 1.1f);
             }
 
+            LayoutHealthBar(miner.Target, distance);
             LayoutPosts(front);
             LayoutDecor(front);
+        }
+
+        /// <summary>
+        /// Quadro do golpe pelo relógio do golpe da simulação: a picareta desce no instante do golpe (quadro 2), volta
+        /// (3), fica erguida (0) e começa a descer pouco antes do próximo (1). Antes do primeiro golpe no cristal, fica
+        /// erguida esperando.
+        /// </summary>
+        int SwingFrame(Miner miner, double hitInterval)
+        {
+            float phase = hitInterval > 0 ? (float)(miner.HitTimer / hitInterval) : 0f;
+            if (phase >= 0.87f) return 1;
+            if (!_hitThisTarget) return 0;
+            if (phase < 0.15f) return 2;
+            if (phase < 0.35f) return 3;
+            return 0;
+        }
+
+        /// <summary>A barra de vida só no alvo (REQ-CRY-03), acima dele; encolhe da direita para a esquerda.</summary>
+        void LayoutHealthBar(Crystal target, float distance)
+        {
+            float z = target != null ? distance - Ahead(target.Distance) - 0.05f : float.NegativeInfinity; // na frente do cristal
+            bool show = z >= CorridorNear;
+            _healthBack.Visible = _healthFill.Visible = show;
+            if (!show) return;
+
+            float ratio = Mathf.Clamp01((float)(target.Health / target.MaxHealth));
+            _healthBack.Place(new Vector3(0f, HealthBarHeight, z), HealthBarSize);
+            float width = HealthBarSize.x * ratio;
+            _healthFill.Place(new Vector3(-(HealthBarSize.x - width) * 0.5f, HealthBarHeight, z - 0.01f),
+                              new Vector2(Mathf.Max(0.001f, width), HealthBarSize.y));
         }
 
         void PlaceShadow(DescentPiece shadow, float x, float z, float width) =>
@@ -390,7 +498,7 @@ namespace MinersIdle.Presentation
             }
         }
 
-        /// <summary>Cristais incrustados nas paredes, em ~1 de cada 5 metros (sorteio fixo por metro, como no simulador).</summary>
+        /// <summary>Cristais incrustados nas paredes, em ~1 de cada 5 metros (sorteio fixo por metro).</summary>
         void LayoutDecor(double front)
         {
             float halfWidth = framing.corridorWidth * 0.5f;
@@ -410,54 +518,6 @@ namespace MinersIdle.Presentation
             }
 
             for (int i = used; i < DecorSlots; i++) _decor[i].Visible = false;
-        }
-
-        void Burst(int count, double at, float x, float y, float spreadX, float minUp, float extraUp, float life, float size, Color color)
-        {
-            for (int n = 0; n < count; n++)
-            {
-                int i = _nextParticle;
-                _nextParticle = (_nextParticle + 1) % ParticleSlots;
-                _particles[i] = new Particle
-                {
-                    At = at,
-                    X = x + (Random.value - 0.5f) * 0.3f,
-                    Y = y,
-                    VelocityX = (Random.value - 0.5f) * spreadX,
-                    VelocityY = minUp + Random.value * extraUp,
-                    VelocityAt = (Random.value - 0.5f) * 1.5f,
-                    Life = life,
-                    Size = size,
-                };
-                _particlePieces[i].SetColor(color);
-            }
-        }
-
-        void UpdateParticles(float dt)
-        {
-            double front = _preview.Progress + framing.distance;
-            for (int i = 0; i < ParticleSlots; i++)
-            {
-                ref var p = ref _particles[i];
-                if (p.Life <= 0f)
-                {
-                    _particlePieces[i].Visible = false;
-                    continue;
-                }
-
-                p.X += p.VelocityX * dt;
-                p.Y += p.VelocityY * dt;
-                p.VelocityY -= 6f * dt;
-                p.At += p.VelocityAt * dt;
-                p.Life -= dt;
-                if (p.Y < 0f)
-                {
-                    p.Y = 0f;
-                    p.VelocityY *= -0.3f;
-                }
-
-                _particlePieces[i].Place(new Vector3(p.X, p.Y, (float)(front - p.At)), new Vector2(p.Size, p.Size));
-            }
         }
     }
 }
