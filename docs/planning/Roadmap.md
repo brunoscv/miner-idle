@@ -37,7 +37,7 @@ M1b Art Spike (paralelo) ─────┤                            │
                               ▼                            ▼
 M2  Protótipo do loop no mapa (graybox) ✅ ← 1º jogável  [arte: caverna 1 assinatura]
                               ▼
-M3  Regras e economia (calculadores, simulador, spec do estagiário)  ← Marco B
+M3  Regras e economia (calculadores, simulador, spec do estagiário) ✅ ← Marco B
                               ▼
 M4  Loja, melhorias, HUD, save mínimo
                               ▼

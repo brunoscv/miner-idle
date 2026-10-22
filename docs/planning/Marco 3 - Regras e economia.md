@@ -1,6 +1,7 @@
 # Marco 3 — Regras e economia (melhorias)
 
 > **Plano aprovado pelo Bruno em 2026-10-21**, incluindo a interpretação do C-04 (nível = compras feitas).
+> **✅ Marco aprovado pelo Bruno em 2026-10-21 (D-40).**
 
 > Plano de 2026-10-21, escrito depois da aprovação do M2 (D-33). Roadmap: [M3](Roadmap.md). Decisões que definem este marco: **D-35** (fórmulas do GDD com base ajustável), **D-36** (escopo), **D-37** (compras pelo debug), **D-34** (caminhada aprovada) — ver [Decisões e Riscos](Decisoes%20e%20Riscos.md). Requisitos: REQ-ECO-02, 03, 04, 07, 08, 10; REQ-INT-* (só a spec).
 
@@ -81,12 +82,12 @@ Cada etapa termina com algo que roda e só fica ✅ depois da sua validação.
 
 ## Critério de pronto
 
-- [ ] E0: testes da E5 rodados no Unity.
-- [ ] Custo e efeito de todos os níveis de todas as linhas cobertos por teste, inclusive limites.
-- [ ] Compras pelo debug mudam o jogo e o HUD; nenhuma compra deixa saldo negativo ou passa do limite.
-- [ ] Relatório de economia rodando; 1ª compra do protótipo < 3 min (senão, ajustar os valores do asset).
-- [ ] Spec do estagiário aprovada.
-- [ ] Rodou no Moto G75; README e registro de decisões atualizados; você validou o marco.
+- [x] E0: testes da E5 rodados no Unity.
+- [x] Custo e efeito de todos os níveis de todas as linhas cobertos por teste, inclusive limites.
+- [x] Compras pelo debug mudam o jogo e o HUD; nenhuma compra deixa saldo negativo ou passa do limite.
+- [x] Relatório de economia rodando; 1ª compra do protótipo < 3 min (~112 s).
+- [x] Spec do estagiário aprovada (D-39).
+- [x] Rodou no Moto G75; README e registro de decisões atualizados; você validou o marco (D-40).
 
 ## Fora deste marco
 
@@ -115,7 +116,7 @@ Loja de verdade e save (M4) · toque, crítico, combo, feedback e arte (M5) · c
 | E3 Assets, HUD e debug | ✅ validada pelo Bruno em 2026-10-21 | `MiningRulesAsset` ganhou as cinco linhas (`UpgradeLineValues`: custo inicial, crescimento, limite, efeito) e o intervalo mínimo; os padrões são a tabela de protótipo deste plano. O setup cria `Data/Balance_GDD_v1` com os números do GDD (Botas desligadas). `MiningRunner` passa a economia do asset para a simulação. HUD: DANO e VELOCIDADE são os atributos atuais e mudam a cada compra. Painel DBG refeito (o setup troca o painel da E5): mais alto, linha de melhorias com nível e próximo custo ("máx." no limite), 5 botões **Comprar …**. Teste PlayMode `BuyButtons_ApplyTheUpgrade_AndTheHudFollows`. Em batch: setup ok, EditMode **80/80**, PlayMode **4/4** |
 | E4 Relatório de economia | ✅ validada pelo Bruno em 2026-10-21 (menu e testes rodados no Editor) | Core: `EconomyReport.Run` (partida sem cena; a cada segundo junta para a melhoria mais barata e compra assim que der; mede 1ª compra, ritmo em lascas/min na média dos 5 min anteriores, compras, ganho, gasto e níveis). Editor: menu `Tools → Miners Idle → Debug → Relatório de economia` (protótipo e GDD v1, sementes 1–3, 30 min). Testes: `EconomyReportTests` (5, um deles com 3 sementes: **meta de D-35**, 1ª compra do `Balance_Prototipo` < 3 min). Rodado fora do Unity com os mesmos valores dos assets; compila sem erros |
 | E5 Spec do estagiário | ✅ aprovada pelo Bruno em 2026-10-21 (D-39) | [Spec - Estagiario no mapa.md](../design/Spec%20-%20Estagiario%20no%20mapa.md): mesma regra de alvo com **reserva** (ninguém pega o alvo do outro; o principal escolhe primeiro quando empata no tempo), três estados iguais aos do principal, sem a "espera" do GDD, matriz de 10 testes para o M6 e 4 decisões pedidas (E-1…E-4) |
-| E6 No celular | ⏳ | |
+| E6 No celular | ✅ Bruno jogou no Moto G75 comprando pelo DBG em 2026-10-21: tudo ok | |
 
 **Como testar a E1:** `Window → General → Test Runner → EditMode → Run All` (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado): 71 verdes. Os que provam a regra estão em `UpgradeEconomyTests`:
 - `Cost_OfEveryLevel_…` e `BuyingEveryLevel_…`: custo de cada nível de cada linha (protótipo e GDD v1), compra até o limite exato gastando a soma dos custos, e nada além.

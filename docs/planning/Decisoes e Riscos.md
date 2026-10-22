@@ -44,6 +44,7 @@
 | **D-37** | **Compras do M3 visíveis pelo painel de debug** (botões "comprar" e níveis/custos nas estatísticas); o HUD já reflete DANO e VELOCIDADE. A loja de verdade continua no M4. |
 | **D-38** | **C-04 resolvido (2026-10-21):** o nível de uma melhoria é o **número de compras feitas** (começa em 0); a próxima compra custa `custo inicial × crescimento^nível` (a 1ª compra custa o custo inicial). Plano do M3 aprovado. |
 | **D-39** | **Spec do estagiário no mapa aprovada (2026-10-21)**, com as recomendações: **E-1** escolhe o próximo alvo na hora (sem a "espera" do REQ-INT-04, que fica superado no mapa); **E-2** Botas valem para o estagiário; **E-3** reserva vale para os dois (o principal não rouba o alvo do estagiário); **E-4** um estagiário no MVP. Resolve o C-08. Ver [Spec - Estagiario no mapa](../design/Spec%20-%20Estagiario%20no%20mapa.md). |
+| **D-40** | **M3 aprovado (2026-10-21)**: melhorias (Picareta, Velocidade, Mineração, Picareta Dupla, Botas) nas regras, compras pelo DBG, relatório de economia e spec do estagiário; validado no Moto G75. Próximo: plano do M4. |
 | **Ferramenta de arte** | Testar o **PixelLab** (IA que gera pixel art e animações por MCP) para o anão; viabilidade de créditos gratuitos **a confirmar** (ver [Arte](../design/Direcao%20de%20Arte%20e%20Assets.md) §5). |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
