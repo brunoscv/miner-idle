@@ -1,18 +1,25 @@
 using System;
 using MinersIdle.Core;
+using MinersIdle.Persistence;
 using UnityEngine;
 
 namespace MinersIdle.Game
 {
     /// <summary>
-    /// Dono da partida na cena Game (M2): monta a <see cref="MiningSimulation"/> com os valores e as melhorias do asset (M3) e a avança a cada
-    /// quadro. As views só leem a simulação e escutam os eventos dela. Quando o save chegar (M4), o estado inicial passa a
-    /// vir do <c>GameBootstrap</c>.
+    /// Dono da partida na cena Game (M2): monta a <see cref="MiningSimulation"/> com os valores e as melhorias do asset
+    /// (M3) e a avança a cada quadro. As views só leem a simulação e escutam os eventos dela.
+    ///
+    /// Save (M4): o <c>GameBootstrap</c> entrega o <see cref="SaveService"/> (<see cref="UseSave"/>); daí em diante o
+    /// progresso é carregado e salvo depois de cada compra, a cada 30 s, ao minimizar e ao sair. Aberta direto (Play na
+    /// cena Game, testes PlayMode), a cena roda sem save: os testes nunca mexem no progresso de quem joga.
     /// </summary>
     public sealed class MiningRunner : MonoBehaviour
     {
         /// <summary>Teto do tempo de um quadro: depois de uma pausa do app não se simulam minutos de uma vez.</summary>
         public const float MaxFrameSeconds = 0.25f;
+
+        /// <summary>Segundos reais entre salvamentos automáticos (reais: o ×20 do debug não multiplica as gravações).</summary>
+        public const float AutosaveSeconds = 30f;
 
         [SerializeField] MiningRulesAsset rules;
 
@@ -20,28 +27,84 @@ namespace MinersIdle.Game
         [SerializeField] bool useFixedSeed;
         [SerializeField] int fixedSeed = 1;
 
+        SaveService _save;
+        float _autosaveTimer;
+
         /// <summary>Multiplicador do tempo de jogo (o ×5/×20 do painel de debug).</summary>
         public float TimeScale { get; set; } = 1f;
 
         public MiningSimulation Simulation { get; private set; }
         public ulong Seed { get; private set; }
 
+        /// <summary>Se esta partida grava o progresso (só quando veio pelo <c>GameBootstrap</c>).</summary>
+        public bool HasSave => _save != null;
+
         /// <summary>Uma partida começou (no início da cena ou ao reiniciar). Quem desenha refaz tudo a partir dela.</summary>
         public event Action<MiningSimulation> SimulationStarted;
 
         void Awake()
         {
-            StartNew(useFixedSeed ? (ulong)fixedSeed : NewSeed());
+            Begin(useFixedSeed ? (ulong)fixedSeed : NewSeed(), new GameState());
         }
 
         void Update()
         {
             if (Simulation == null) return;
             Simulation.Tick(Math.Min(Time.unscaledDeltaTime, MaxFrameSeconds) * (double)TimeScale);
+
+            if (_save == null) return;
+            _autosaveTimer += Time.unscaledDeltaTime;
+            if (_autosaveTimer < AutosaveSeconds) return;
+            _autosaveTimer = 0f;
+            SaveNow();
         }
 
-        /// <summary>Começa uma partida nova com a semente dada (a mesma semente repete a partida).</summary>
-        public void StartNew(ulong seed)
+        void OnApplicationPause(bool paused)
+        {
+            if (paused) SaveNow();
+        }
+
+        void OnApplicationQuit() => SaveNow();
+
+        void OnDestroy()
+        {
+            if (Simulation != null) Simulation.UpgradePurchased -= OnUpgradePurchased;
+        }
+
+        /// <summary>Liga o save: carrega o progresso e recomeça a partida com ele (chamado pelo <c>GameBootstrap</c>).</summary>
+        public void UseSave(SaveService save)
+        {
+            _save = save ?? throw new ArgumentNullException(nameof(save));
+            var state = save.Load(rules.ToEconomy(), out var status);
+            Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas.");
+            Begin(Seed, state);
+        }
+
+        /// <summary>Refaz o mapa com a semente dada, <b>mantendo o progresso</b> (o "Reiniciar" do debug, M4).</summary>
+        public void StartNew(ulong seed) => Begin(seed, Simulation?.State ?? new GameState());
+
+        /// <summary>Apaga o save e começa do zero (o "Apagar save" do debug).</summary>
+        public void ResetProgress()
+        {
+            _save?.Delete();
+            Begin(useFixedSeed ? (ulong)fixedSeed : NewSeed(), new GameState());
+        }
+
+        /// <summary>Grava o progresso agora (sem save ligado, não faz nada). Um erro de disco vai para o log, não derruba o jogo.</summary>
+        public void SaveNow()
+        {
+            if (_save == null || Simulation == null) return;
+            try
+            {
+                _save.Save(Simulation.State);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, this);
+            }
+        }
+
+        void Begin(ulong seed, GameState state)
         {
             if (rules == null)
             {
@@ -50,10 +113,15 @@ namespace MinersIdle.Game
                 return;
             }
 
+            if (Simulation != null) Simulation.UpgradePurchased -= OnUpgradePurchased;
+
             Seed = seed;
-            Simulation = new MiningSimulation(rules.ToRules(), new SeededRandom(seed), economy: rules.ToEconomy());
+            Simulation = new MiningSimulation(rules.ToRules(), new SeededRandom(seed), state, rules.ToEconomy());
+            Simulation.UpgradePurchased += OnUpgradePurchased;
             NotifyStarted();
         }
+
+        void OnUpgradePurchased(UpgradeId id, int level) => SaveNow();
 
         /// <summary>
         /// Avisa cada view separadamente: uma view com erro não pode impedir as outras de se conectarem. Sem isso, um erro

@@ -31,9 +31,9 @@ namespace MinersIdle.EditorTools
             "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9})";
         const string MaxedLabel = "máx.";
 
-        const float ContentHeight = 220f;
-        const float TopBand = 0.66f;      // estatísticas e diagnóstico acima disto
-        const float ButtonsBand = 0.46f;  // botões abaixo disto; melhorias no meio
+        const float ContentHeight = 244f;
+        const float TopBand = 0.69f;      // estatísticas e diagnóstico acima disto
+        const float ButtonsBand = 0.51f;  // botões abaixo disto (6 fileiras); melhorias no meio
 
         static readonly Color PanelColor = new Color(0f, 0f, 0f, 0.8f);
         static readonly Color ButtonColor = new Color32(0x3A, 0x2A, 0x1E, 0xFF);
@@ -49,12 +49,12 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.transform.Find(PanelName);
             if (existing != null)
             {
-                if (existing.Find("Content/Buttons/BuyPickaxe") != null) return changed;
+                if (existing.Find("Content/Buttons/DeleteSave") != null) return changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
                 Object.DestroyImmediate(existing.gameObject);
-                Debug.Log("[Setup] Painel de debug de versão anterior removido para ser refeito com as compras.");
+                Debug.Log("[Setup] Painel de debug de versão anterior removido para ser refeito.");
             }
 
             var root = new GameObject(PanelName, typeof(RectTransform));
@@ -133,6 +133,8 @@ namespace MinersIdle.EditorTools
                 ("buyMining", CreateButton(grid.transform, "BuyMining", "Comprar Mineração")),
                 ("buyDoublePickaxe", CreateButton(grid.transform, "BuyDoublePickaxe", "Comprar P. Dupla")),
                 ("buyBoots", CreateButton(grid.transform, "BuyBoots", "Comprar Botas")),
+                ("saveNow", CreateButton(grid.transform, "SaveNow", "Salvar agora")),
+                ("deleteSave", CreateButton(grid.transform, "DeleteSave", "Apagar save")),
                 ("upgrades", upgrades));
 
             var serialized = new SerializedObject(panel);

@@ -57,7 +57,7 @@ Duas coisas que fazem o protótipo virar jogo:
 - **O que guarda (D-43):** versão do arquivo, lascas, golpes, quebras e nível de cada melhoria (pelo nome da linha, não pela posição, para o arquivo sobreviver a uma linha nova).
 - **Onde:** `Application.persistentDataPath/save.json` (JSON legível).
 - **Como (D-44):** grava em `save.json.tmp` e só então troca pelo `save.json`. Se o app morrer no meio, o save anterior continua inteiro.
-- **Quando grava:** depois de cada compra, a cada 30 s de jogo, ao minimizar o app (`OnApplicationPause`) e ao sair.
+- **Quando grava:** depois de cada compra, a cada 30 s (reais: o ×20 do debug não multiplica as gravações), ao minimizar o app (`OnApplicationPause`) e ao sair.
 - **Ao abrir:** carrega o progresso e começa um mapa novo com ele. Sem arquivo → jogo novo. **Arquivo ilegível ou de versão desconhecida → jogo novo**, o arquivo ruim é renomeado para `save.json.bad` (para não ser sobrescrito sem chance de análise) e sai um aviso no log. Valores fora do lugar são corrigidos ao carregar: lascas negativas viram 0, nível acima do limite da linha cai para o limite.
 - **Reiniciar no DBG** passa a manter o progresso (só refaz o mapa). Atalhos novos: **Salvar agora** e **Apagar save** (zera o progresso e começa de novo).
 
@@ -124,8 +124,8 @@ Progresso offline (M8, D-04) · backup e migração do save (M8) · engrenagem e
 |---|---|---|
 | E1 Prévia das melhorias | ✅ validada pelo Bruno em 2026-10-21 (testes verdes no Editor) | Core: `UpgradePreview` (nível, limite, custo da próxima, estado do botão Comprável/Sem lascas/Máx., valor do efeito agora e depois da compra; `IsSinglePurchase` para a Dupla mostrar "comprada"; `IsEnabled` para linha desligada) e `MiningSimulation.Preview(id)`. `MinerStats` calcula também "com esta linha um nível acima"; `Purchases.CanAfford` é a mesma folga da compra, então a loja nunca mostra "sem lascas" quando a compra aceitaria. Testes: `UpgradePreviewTests` (6), incluindo "o que a prévia promete é o que a compra entrega" em todos os níveis de todas as linhas. Rodado fora do Unity: 82/82 do núcleo; compila. **No Unity ainda não rodou** (Editor aberto) |
 | E2 Tela da loja | ✅ validada pelo Bruno no Moto G75 em 2026-10-21 (comprou pela loja, viu "Em breve", mineração seguiu com a loja aberta). **Pendente: rodar os `ShopTests` no Unity** | Game: `ShopCatalog` (textos pt-BR, ordem, linhas bloqueadas, formatos de nível/efeito/bônus; asset `Data/ShopCatalog`). UI: `UpgradeRowView` (prefab `Prefabs/UI/UpgradeRow`), `ShopView` (botão LOJA com selo "!", fundo que escurece e bloqueia o mapa sem pausar nada, painel com saldo, linhas e VOLTAR; atualiza só por evento). O botão LOJA e o selo ficaram dentro da `ShopView` (o `ShopButtonView` do plano não precisou existir à parte). Editor: `ShopSetup`. Teste PlayMode `ShopTests` (3: abrir/comprar/fechar, Dupla "comprada", mineração continua com a loja aberta). Compila fora do Unity |
-| E3 Save mínimo | ⏳ | |
-| E4 No celular | ⏳ | |
+| E3 Save mínimo | ✅ validada pelo Bruno no Moto G75 em 2026-10-21 (logcat: `[Save] Loaded: 38 lascas.` ao reabrir, sem exceções). **Pendente: rodar `SaveServiceTests`, `SaveFlowTests` e `ShopTests` no Unity** | Core: `GameState.Restore` (corrige valores fora do lugar e corta níveis no limite do asset). Persistence: `SaveData` v1 (JSON do `JsonUtility`, níveis pelo nome da linha), `ISaveStore` + `FileSaveStore` (`save.json.tmp` → troca; `.tmp` que sobrou é descartado; arquivo ruim vira `save.json.bad`), `SaveService` (Load → NewGame/Loaded/Recovered). Game: o `GameBootstrap` carrega a cena Game e entrega o save ao `MiningRunner` (composição no Bootstrap); o runner carrega, salva depois de cada compra, a cada 30 s reais, ao minimizar e ao sair. Cena Game aberta direto (Play nela, testes) roda **sem save**: os testes nunca tocam no seu progresso. "Reiniciar" mantém o progresso. DBG: **Salvar agora** e **Apagar save** (o setup refaz o painel, um pouco mais alto). Testes: `SaveServiceTests` (8, EditMode, pasta temporária), `SaveFlowTests` (2, PlayMode) e `DebugPanelTests` ajustado ao "Reiniciar mantém o progresso". Compila fora do Unity |
+| E4 No celular | ✅ 2026-10-21: Bruno comprou, fechou o app pelos recentes e reabriu; progresso de volta | |
 
 **Como testar a E1:** Test Runner → EditMode → Run All (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado): os 6 de `UpgradePreviewTests` verdes, junto com os anteriores. Nada visível no jogo ainda: a tela da loja é a E2.
 
@@ -140,4 +140,16 @@ Progresso offline (M8, D-04) · backup e migração do save (M8) · engrenagem e
 8. Test Runner → PlayMode: `ShopTests` (3) verdes, junto com os anteriores.
 
 *Criados:* `Data/ShopCatalog.asset`, `Prefabs/UI/UpgradeRow.prefab` e `Canvas/SafeArea/Shop` (botão, selo, tela, painel) na cena Game. Tamanhos e cores são de graybox.
+
+**Como testar a E3:**
+1. **Rodar no celular** (o build aplica o setup: o painel DBG é refeito com os botões novos).
+2. Junte lascas (ou **+100 lascas** no DBG) e compre algo na **LOJA**.
+3. **Feche o app de verdade**: botão de apps recentes → deslize o Miners Idle para fora.
+4. Abra de novo: LASCAS e os níveis (DANO, VELOCIDADE no HUD; "nv" na loja) estão como antes. O mapa é novo (cristais em outras posições, lote 1).
+5. Jogue ~1 min sem comprar e minimize o app (botão Home); feche pelos recentes e abra: as lascas desse minuto também voltaram (salvou ao minimizar).
+6. DBG → **Reiniciar (nova)**: o mapa muda, as lascas ficam. DBG → **Apagar save**: tudo volta a zero; fechar e abrir confirma que não há mais save.
+7. No Editor: Play na **`Bootstrap`** usa o save (o mesmo arquivo entre uma sessão e outra); Play direto na cena **`Game`** roda sem save. O Console mostra `[Save] NewGame/Loaded …` ao abrir pela `Bootstrap`.
+8. Test Runner: EditMode (com `SaveServiceTests`) e PlayMode (com `SaveFlowTests`, `ShopTests`) verdes.
+
+*Onde fica o arquivo:* no Windows, `%USERPROFILE%\AppData\LocalLow\Bruno Carvalho\Miners Idle\save.json`; no Android, na pasta privada do app.
 

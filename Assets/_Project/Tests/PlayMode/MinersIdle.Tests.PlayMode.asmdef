@@ -1,7 +1,7 @@
 {
   "name": "MinersIdle.Tests.PlayMode",
   "rootNamespace": "MinersIdle.Tests",
-  "references": ["MinersIdle.Core", "MinersIdle.Game", "MinersIdle.Presentation", "MinersIdle.UI", "UnityEngine.UI", "Unity.TextMeshPro", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": ["MinersIdle.Core", "MinersIdle.Game", "MinersIdle.Persistence", "MinersIdle.Presentation", "MinersIdle.UI", "UnityEngine.UI", "Unity.TextMeshPro", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

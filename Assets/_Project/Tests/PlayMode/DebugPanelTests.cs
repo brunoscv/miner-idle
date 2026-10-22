@@ -78,12 +78,17 @@ namespace MinersIdle.Tests
             Assert.That(line.IsDrawn, Is.True, "linha até o alvo");
 
             ulong seed = runner.Seed;
+            double progress = simulation.State.Shards;
             Click("Content/Buttons/RestartSameSeed");
             Assert.That(runner.Seed, Is.EqualTo(seed));
-            Assert.That(runner.Simulation, Is.Not.SameAs(simulation), "partida nova");
-            Assert.That(runner.Simulation.State.Shards, Is.EqualTo(0));
+            Assert.That(runner.Simulation, Is.Not.SameAs(simulation), "mapa novo");
+            Assert.That(runner.Simulation.State.Shards, Is.EqualTo(progress), "Reiniciar mantém o progresso (M4)");
             Assert.That(field.ActiveCount, Is.EqualTo(runner.Simulation.Crystals.Count));
             Assert.That(field.ActiveViews.All(v => v.IsShowingBatch), Is.True, "\"Mostrar ordem\" continua ligado");
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(progress)));
+
+            Click("Content/Buttons/DeleteSave");
+            Assert.That(runner.Simulation.State.Shards, Is.EqualTo(0), "Apagar save zera o progresso");
             Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(0)));
 
             Click("Content/Buttons/RestartNewSeed");

@@ -10,7 +10,8 @@ namespace MinersIdle.UI
     /// <summary>
     /// Painel de debug do Marco 2 (E5): tempo ×1/×5/×20, gerar cristal, quebrar o alvo, +100 lascas, reiniciar com a
     /// mesma semente ou com uma nova, "Mostrar ordem" e estatísticas. Desde o M3 (E3, D-37): comprar cada melhoria e ver
-    /// nível e próximo custo. Os atalhos chamam os mesmos comandos das regras.
+    /// nível e próximo custo. Desde o M4 (E3): salvar agora e apagar o save; "Reiniciar" mantém o progresso. Os atalhos
+    /// chamam os mesmos comandos das regras.
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
     /// Os textos (rótulos e o modelo das estatísticas) ficam na cena.
     /// </summary>
@@ -50,6 +51,8 @@ namespace MinersIdle.UI
         [SerializeField] Button buyMining;
         [SerializeField] Button buyDoublePickaxe;
         [SerializeField] Button buyBoots;
+        [SerializeField] Button saveNow;
+        [SerializeField] Button deleteSave;
 
         readonly object[] _upgradeArgs = new object[10];
 
@@ -86,6 +89,8 @@ namespace MinersIdle.UI
             buyMining.onClick.AddListener(BuyMining);
             buyDoublePickaxe.onClick.AddListener(BuyDoublePickaxe);
             buyBoots.onClick.AddListener(BuyBoots);
+            saveNow.onClick.AddListener(SaveNow);
+            deleteSave.onClick.AddListener(DeleteSave);
         }
 
         void OnDisable()
@@ -105,6 +110,8 @@ namespace MinersIdle.UI
             buyMining.onClick.RemoveListener(BuyMining);
             buyDoublePickaxe.onClick.RemoveListener(BuyDoublePickaxe);
             buyBoots.onClick.RemoveListener(BuyBoots);
+            saveNow.onClick.RemoveListener(SaveNow);
+            deleteSave.onClick.RemoveListener(DeleteSave);
         }
 
         void Update()
@@ -131,6 +138,9 @@ namespace MinersIdle.UI
         void AddShards() => runner.Simulation?.AddShards(ShardsToAdd);
         void RestartSameSeed() => runner.StartNew(runner.Seed);
         void RestartNewSeed() => runner.StartNew(MiningRunner.NewSeed());
+
+        void SaveNow() => runner.SaveNow();
+        void DeleteSave() => runner.ResetProgress();
 
         void BuyPickaxe() => Buy(UpgradeId.Pickaxe);
         void BuySpeed() => Buy(UpgradeId.Speed);
