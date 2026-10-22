@@ -19,7 +19,7 @@ namespace MinersIdle.EditorTools
     {
         const string SpriteFolder = "Assets/_Project/Art/Graybox";
         internal const string SquarePath = SpriteFolder + "/Square.png";
-        const string DiamondPath = SpriteFolder + "/Diamond.png";
+        internal const string DiamondPath = SpriteFolder + "/Diamond.png";
         internal const string CirclePath = SpriteFolder + "/Circle.png";
         const string CrystalPrefabPath = "Assets/_Project/Prefabs/Graybox/CrystalView.prefab";
         const string MiningRootName = "Mining";
@@ -50,6 +50,7 @@ namespace MinersIdle.EditorTools
             EnsureSprite(CirclePath, (x, y) => (x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f) <= 64f);
             EnsureCrystalPrefab(square, diamond);
             ShopSetup.EnsureAssets(square);
+            FeedbackSetup.EnsureTexts();
             EnsureMiningInGameScene();
         }
 
@@ -190,6 +191,7 @@ namespace MinersIdle.EditorTools
             changed |= EnsureTapInput();
             changed |= EnsureHud();
             changed |= EnsureHudBlocksTaps();
+            changed |= FeedbackSetup.EnsureInScene();
             changed |= DebugPanelSetup.Ensure();
             changed |= ShopSetup.EnsureInScene();
 

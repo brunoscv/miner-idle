@@ -103,7 +103,7 @@ Não bloqueia este marco. É com você, no seu ritmo: paleta-mestre, o anão (Pi
 | E0 Testes pendentes do M4 | ✅ 2026-10-21 | Em batch: EditMode **112/112**, PlayMode **15/15** (loja, save, toque e todos os anteriores). Falta só a sua aprovação do M4 |
 | E1 Regras no núcleo | ✅ validada pelo Bruno em 2026-10-21 (testes verdes no Editor) | Core: `StrikeRules` (crítico 5% ×2, toque 10%, combo 1 s; valores no asset, seção "Golpe e toque"), `MiningHit` (o evento `HitLanded` diz se foi toque e se foi crítico), `MiningSimulation.Tap()`, crítico no golpe automático e no toque com **gerador próprio** (o `MiningRunner` deriva a semente da partida), combo com `ComboChanged`/`ComboMilestone` e reset por tempo de jogo, `ForceCritical` para o DBG. **Achado:** 0,1 × 10 em `double` dá 0,9999999999999999; um cristal de vida 1 nunca quebraria só com toques. O `Crystal` passou a tratar uma vida desprezível (≤ 10⁻⁹ da máxima) como zero. Testes: `StrikeTests` (11), incluindo **100.000 golpes ≈ 5% de crítico** (REQ-PRO-02). Fora do Unity: 93/93 do núcleo; tudo compila. **No Unity ainda não rodou** (Editor aberto). Nada visível no jogo ainda: o toque na tela é a E2 |
 | E2 Toque na tela | ✅ validada em 2026-10-21. No Moto G75, 300 toques simulados pelo `adb` (~8 s de jogo) quebraram 6 cristais sem nenhum golpe do anão; o Bruno não percebia o toque porque ainda não há reação visual (é a E3). `TapInputTests` verdes no Unity | Presentation: `TapInput` (Input System: cada dedo que encosta é um toque; no Editor, clique do mouse; filtra a interface com um raycast de UI reaproveitando lista e evento, sem alocar; evento `Tapped(posição)` para o feedback da E3). `MiningRunner.ForceCritical` (vale depois de reiniciar). Setup: leitor de toque no objeto `Mining`; painéis do HUD passam a bloquear o toque (antes não recebiam raycast); DBG refeito com **Toques auto** (5/s no centro da tela) e **Crítico sempre** (18 botões). Teste PlayMode `TapInputTests` (mapa conta; LOJA, HUD e DBG não; toques automáticos; crítico sempre após reiniciar). Compila fora do Unity |
-| E3 Feedback visual | ⏳ | |
+| E3 Feedback visual | ✅ validada pelo Bruno no Moto G75 em 2026-10-21. Ajuste pedido por ele: tremor de câmera mais forte no crítico (0,4 por 0,3 s), na quebra (0,3 por 0,25 s) e no marco do combo (0,25 por 0,2 s); amortecimento por toques rápidos só até 60%. Valores no Inspector (`Mining/Effects` → Mining Feedback View → "Tremor de tela") | Presentation/Effects: `ScreenShake` (câmera; desligável), `SparkBurst` (faíscas em pool), `FloatingTexts` ("CRÍTICO!" e marcos do combo, TMP de mundo em pool), `ShardFlight` (lasca voando devagar até LASCAS; avisa a chegada), `MiningFeedbackView` (liga cada evento à reação; tremores diminuem com toques muito rápidos). `CrystalView.Shake`. HUD: LASCAS pulsa na chegada da lasca; HUD treme no marco do combo. Textos em dados: `Data/FeedbackTexts` ("CRÍTICO!", "x{0}", "x{0}!"). DBG refeito com **Tremor on/off** (19 botões, 7 fileiras). Teste PlayMode `FeedbackTests` (5). Em batch: setup ok, EditMode **112/112**, PlayMode **20/20** |
 | E4 Som provisório | ⏳ | |
 | E5 Desempenho e celular | ⏳ | |
 
@@ -115,4 +115,14 @@ Não bloqueia este marco. É com você, no seu ritmo: paleta-mestre, o anão (Pi
 3. Toque no HUD, no botão LOJA e no botão DBG: nada acontece no mapa (só o botão faz o que faz).
 4. DBG → **Toques auto**: o anão quebra mais rápido sozinho; toque de novo para desligar. DBG → **Crítico sempre**: o anão quebra em metade dos golpes; vale mesmo depois de **Reiniciar**.
 5. Test Runner → PlayMode: `TapInputTests` verdes.
+
+**Como testar a E3:**
+1. **Rodar no celular** (o build aplica o setup).
+2. Toque no mapa: o cristal alvo treme, saem faíscas brancas no cristal e no ponto do dedo.
+3. Toque várias vezes seguidas: aparece **"x2", "x3"…** sobre o anão, pulsando a cada toque; pare 1 s e ele some. No **x10**, um **"x10!"** grande em âmbar sobe e o HUD treme.
+4. De vez em quando (5%) aparece **"CRÍTICO!"** amarelo perto do anão, com faíscas amarelas e tremor de tela. DBG → **Crítico sempre** para ver toda hora.
+5. Golpe automático do anão: o cristal treme e solta faíscas laranja (mesmo sem tocar).
+6. Quando o cristal quebra: a tela treme de leve e uma **lasca roxa sobe em arco até LASCAS**, que dá um pulso ao chegar.
+7. DBG → **Tremor on/off** desliga os tremores de tela e do HUD.
+8. Diga se está "bater gostoso" ou o que falta (intensidade, tamanho, duração, cores — tudo é graybox e fácil de ajustar).
 

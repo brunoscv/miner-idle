@@ -94,6 +94,12 @@ namespace MinersIdle.Presentation
             _pool.Release(view);
         }
 
+        /// <summary>Faz o desenho do cristal tremer (feedback do M5); nada se ele não está mais no mapa.</summary>
+        public void Shake(Crystal crystal, float amplitude)
+        {
+            if (_active.TryGetValue(crystal.Id, out var view)) view.Shake(amplitude);
+        }
+
         void OnHit(MiningHit hit)
         {
             if (_active.TryGetValue(hit.Crystal.Id, out var view)) view.RefreshHealth();

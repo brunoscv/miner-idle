@@ -20,6 +20,11 @@ namespace MinersIdle.Presentation
         [SerializeField] TMP_Text batchLabel;
 
         float _fillWidth;
+        float _shake;
+        float _shakeAmplitude;
+
+        /// <summary>Duração do tremor do cristal ao levar um golpe (M5, E3).</summary>
+        const float ShakeSeconds = 0.12f;
 
         public Crystal Crystal { get; private set; }
 
@@ -44,6 +49,23 @@ namespace MinersIdle.Presentation
 
         public void SetTargeted(bool targeted) => healthBar.SetActive(targeted);
 
+        /// <summary>O cristal treme rápido ao levar um golpe; só ilustra.</summary>
+        public void Shake(float amplitude)
+        {
+            float current = _shake > 0f ? _shakeAmplitude * _shake : 0f;
+            _shakeAmplitude = Mathf.Max(amplitude, current); // golpe fraco não apaga o tremor de um forte
+            _shake = 1f;
+        }
+
+        void Update()
+        {
+            if (_shake <= 0f) return;
+
+            _shake = Mathf.Max(0f, _shake - Time.unscaledDeltaTime / ShakeSeconds);
+            var offset = _shake > 0f ? Random.insideUnitCircle * (_shakeAmplitude * _shake) : Vector2.zero;
+            body.transform.localPosition = new Vector3(offset.x, offset.y, 0f);
+        }
+
         public void SetShowBatch(bool show) => batchLabel.gameObject.SetActive(show);
 
         public void RefreshHealth()
@@ -55,6 +77,11 @@ namespace MinersIdle.Presentation
             fill.localPosition = new Vector3(-_fillWidth * (1f - ratio) * 0.5f, fill.localPosition.y, 0f);
         }
 
-        public void Clear() => Crystal = null;
+        public void Clear()
+        {
+            Crystal = null;
+            _shake = 0f;
+            body.transform.localPosition = Vector3.zero;
+        }
     }
 }

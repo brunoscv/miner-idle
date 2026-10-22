@@ -31,9 +31,9 @@ namespace MinersIdle.EditorTools
             "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9})";
         const string MaxedLabel = "máx.";
 
-        const float ContentHeight = 244f;
-        const float TopBand = 0.69f;      // estatísticas e diagnóstico acima disto
-        const float ButtonsBand = 0.51f;  // botões abaixo disto (6 fileiras); melhorias no meio
+        const float ContentHeight = 264f;
+        const float TopBand = 0.70f;      // estatísticas e diagnóstico acima disto
+        const float ButtonsBand = 0.53f;  // botões abaixo disto (7 fileiras); melhorias no meio
 
         static readonly Color PanelColor = new Color(0f, 0f, 0f, 0.8f);
         static readonly Color ButtonColor = new Color32(0x3A, 0x2A, 0x1E, 0xFF);
@@ -49,7 +49,7 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.transform.Find(PanelName);
             if (existing != null)
             {
-                if (existing.Find("Content/Buttons/ForceCritical") != null) return changed;
+                if (existing.Find("Content/Buttons/Shake") != null) return changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
@@ -117,6 +117,7 @@ namespace MinersIdle.EditorTools
                 ("crystals", Object.FindAnyObjectByType<CrystalFieldView>()),
                 ("targetLine", Object.FindAnyObjectByType<TargetLineView>()),
                 ("tapInput", Object.FindAnyObjectByType<TapInput>()),
+                ("screenShake", Object.FindAnyObjectByType<ScreenShake>()),
                 ("toggleButton", toggle),
                 ("content", content),
                 ("stats", stats),
@@ -138,6 +139,7 @@ namespace MinersIdle.EditorTools
                 ("deleteSave", CreateButton(grid.transform, "DeleteSave", "Apagar save")),
                 ("autoTap", CreateButton(grid.transform, "AutoTap", "Toques auto")),
                 ("forceCritical", CreateButton(grid.transform, "ForceCritical", "Crítico sempre")),
+                ("shake", CreateButton(grid.transform, "Shake", "Tremor on/off")),
                 ("upgrades", upgrades));
 
             var serialized = new SerializedObject(panel);

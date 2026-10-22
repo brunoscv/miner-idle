@@ -24,6 +24,7 @@ namespace MinersIdle.UI
         [SerializeField] CrystalFieldView crystals;
         [SerializeField] TargetLineView targetLine;
         [SerializeField] TapInput tapInput;
+        [SerializeField] ScreenShake screenShake;
 
         [SerializeField] Button toggleButton;
         [SerializeField] GameObject content;
@@ -56,6 +57,7 @@ namespace MinersIdle.UI
         [SerializeField] Button deleteSave;
         [SerializeField] Button autoTap;
         [SerializeField] Button forceCritical;
+        [SerializeField] Button shake;
 
         readonly object[] _upgradeArgs = new object[10];
 
@@ -96,6 +98,7 @@ namespace MinersIdle.UI
             deleteSave.onClick.AddListener(DeleteSave);
             autoTap.onClick.AddListener(ToggleAutoTap);
             forceCritical.onClick.AddListener(ToggleForceCritical);
+            shake.onClick.AddListener(ToggleShake);
         }
 
         void OnDisable()
@@ -119,6 +122,7 @@ namespace MinersIdle.UI
             deleteSave.onClick.RemoveListener(DeleteSave);
             autoTap.onClick.RemoveListener(ToggleAutoTap);
             forceCritical.onClick.RemoveListener(ToggleForceCritical);
+            shake.onClick.RemoveListener(ToggleShake);
         }
 
         void Update()
@@ -150,6 +154,7 @@ namespace MinersIdle.UI
         void DeleteSave() => runner.ResetProgress();
         void ToggleAutoTap() => tapInput.AutoTap = !tapInput.AutoTap;
         void ToggleForceCritical() => runner.ForceCritical = !runner.ForceCritical;
+        void ToggleShake() => screenShake.ShakeEnabled = !screenShake.ShakeEnabled;
 
         void BuyPickaxe() => Buy(UpgradeId.Pickaxe);
         void BuySpeed() => Buy(UpgradeId.Speed);
