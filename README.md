@@ -13,7 +13,8 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | M1b Art Spike | ⏳ (em paralelo) |
 | M2 Protótipo do loop no mapa | ✅ aprovado em 2026-10-21 (E6 reduzida, D-32; testes da E5 no Unity rodam no início do M3) — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
 | M3 Regras e economia | ✅ aprovado em 2026-10-21 — [plano do M3](docs/planning/Marco%203%20-%20Regras%20e%20economia.md) |
-| **M4 Loja, HUD e save mínimo** | 🚧 plano aprovado em 2026-10-21 — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |
+| **M4 Loja, HUD e save mínimo** | 🔎 E1–E4 validadas no Moto G75; **faltam os testes da loja e do save no Unity e a aprovação** — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |
+| **M5 Toque, crítico, combo e feedback** (graybox) | 🚧 plano aprovado em 2026-10-21 — [plano do M5](docs/planning/Marco%205%20-%20Toque%20e%20feedback.md) |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
 

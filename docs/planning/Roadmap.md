@@ -115,6 +115,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **DoD:** REQ-ECO-02…05,07,08; REQ-UI-01,02,04,06 verificados. **Riscos:** `Canvas` e *rebuilds*; formato de números (D-11). **Fora:** estagiário, Letrado, AD, polimento. **Esforço:** 40–50 h.
 
 ### M5 — Feedback de mineração e arte final da caverna 1
+- **Plano detalhado (2026-10-21):** [Marco 5 - Toque e feedback.md](Marco%205%20-%20Toque%20e%20feedback.md). Pela D-46, o M5 é em **graybox** (toque, crítico, combo, feedback, som provisório); a **arte da caverna 1 sai deste marco** e entra depois do Art Spike (M1b), que corre em paralelo. Regras do toque: D-47. O texto abaixo é o escopo original (histórico).
 - **Objetivo:** **fazer bater gostoso.** **Jogador:** crítico, combo, impacto, lasca voando, caverna 1 bonita.
 - **Tarefas:** T-M5-01…T-M5-12. **Dependências:** M3/M4, M1b (estilo aprovado).
 - **Entregáveis:** crítico (REQ-MIN-03), combo `xN` + ×10, vibração do cristal e do cenário, *shake* de tela, lasca que voa lentamente ao HUD, faíscas, quebra do cristal, SFX finais da caverna 1, **arte final da caverna 1** (anão, picareta [5 faixas], cristal "Vidro", lasca, fundo, UI base), dicas de primeiro uso (toque), *pooling* dos números flutuantes.

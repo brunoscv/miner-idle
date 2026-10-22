@@ -50,6 +50,9 @@
 | **D-43** | **Save mínimo do M4 guarda só o progresso:** lascas, níveis das melhorias, golpes e quebras. Ao reabrir, o mapa nasce de novo (cristais novos, lote 1). Posição de cristais e do anão não são salvas. |
 | **D-44** | **Escrita segura do save desde o M4:** arquivo com número de versão, gravado num temporário e trocado no fim (escrita atômica). Backup, migração entre versões e progresso offline continuam no M8. |
 | **D-45** | **D-13 decidida (2026-10-21): interface em uGUI + TextMeshPro** (o que o HUD e o DBG já usam). Plano do M4 aprovado. |
+| **D-46** | **M5 em graybox, com o Art Spike (M1b) em paralelo (2026-10-21).** O M5 entrega toque, crítico, combo e feedback com as formas atuais; a arte da caverna 1 entra depois que o Art Spike for aprovado. |
+| **D-47** | **D-08 decidida (2026-10-21): toque em qualquer ponto da tela que não seja menu ou botão** (HUD, LOJA, DBG e painéis não contam como toque no mapa). O toque **pode dar crítico** e **não tem limite** de toques por segundo. Dano do toque: 10% de um golpe do principal (REQ-MIN-02, com a Picareta Dupla). |
+| **D-48** | **Detalhes do toque e do M5 (2026-10-21):** (a) o toque conta **mesmo com o anão andando**, no alvo atual dele; (b) o combo é **só visual**, não muda dano (como no GDD); (c) sons do M5 são **bipes gerados no código**, trocados pelos reais junto com a arte. Plano do M5 aprovado. |
 | **Ferramenta de arte** | Testar o **PixelLab** (IA que gera pixel art e animações por MCP) para o anão; viabilidade de créditos gratuitos **a confirmar** (ver [Arte](../design/Direcao%20de%20Arte%20e%20Assets.md) §5). |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
@@ -78,7 +81,7 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | D-04 | **Progressão offline** no MVP? | Sim, analítica: teto 2–4 h, 50% (Economia §6) **[rec.]** · Não, só pós-MVP | M8 |
 | D-06 | **Linhas de melhoria:** 6 (sem *Crítico*) ou 7? "Letrado" ou "Pesquisador"? | **6 linhas, nome "Letrado"**, crítico fixo 5% **[rec.]**; ou adicionar *Crítico* (custo/limite a definir) | M2 |
 | D-07 | **"Quebrar a parede"** para passar de caverna, ou só o botão? | **Botão + animação de parede quebrando como efeito** (sem vida/estado) **[rec.]** · Parede com vida (novo sistema) · Só botão | M7 |
-| D-08 | **Regras do toque** (bloqueia o **M5** desde D-36): área (qualquer ponto × só o cristal), taxa máxima, crítico no toque? | **Qualquer ponto**, sem limite rígido, **crítico vale no toque**, tremor reduzido em alta taxa **[rec.]**; decidir após ver o simulador | M3 |
+| ~~D-08~~ | ~~Regras do toque: área (qualquer ponto × só o cristal), taxa máxima, crítico no toque?~~ → **decidido em D-47** | **Qualquer ponto**, sem limite rígido, **crítico vale no toque**, tremor reduzido em alta taxa **[rec.]**; decidir após ver o simulador | M3 |
 | D-09 | **Boost:** o mínimo de 0,5 s vale com boost? Recarga igual à duração é intencional? | **Boost pode passar do mínimo (piso 0,2 s)**; recarga **60 s** após o fim **[rec.]** (ou manter 30 s se for proposital) | M8 |
 | D-10 | **Ferramenta de pixel art** e origem da arte | Aseprite (pago, ~US$ 20 [verificar]) **[rec.]** · LibreSprite/Pixelorama (grátis) · só IA+retoque; **fallback**: pacotes CC0 de ambiente | M1b |
 | ~~D-11~~ | ~~Formato numérico (`1.234,00` pt-BR × `1,234.00` do mockup) e abreviações~~ → **decidido em D-41** | **pt-BR** com abreviações K/M/B/T acima de 1 M **[rec.]** | M4 |
