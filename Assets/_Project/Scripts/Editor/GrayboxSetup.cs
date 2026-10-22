@@ -18,9 +18,9 @@ namespace MinersIdle.EditorTools
     static class GrayboxSetup
     {
         const string SpriteFolder = "Assets/_Project/Art/Graybox";
-        const string SquarePath = SpriteFolder + "/Square.png";
+        internal const string SquarePath = SpriteFolder + "/Square.png";
         const string DiamondPath = SpriteFolder + "/Diamond.png";
-        const string CirclePath = SpriteFolder + "/Circle.png";
+        internal const string CirclePath = SpriteFolder + "/Circle.png";
         const string CrystalPrefabPath = "Assets/_Project/Prefabs/Graybox/CrystalView.prefab";
         const string MiningRootName = "Mining";
         const string HudName = "Hud";
@@ -49,6 +49,7 @@ namespace MinersIdle.EditorTools
             var diamond = EnsureSprite(DiamondPath, (x, y) => Mathf.Abs(x - 7.5f) + Mathf.Abs(y - 7.5f) <= 8f);
             EnsureSprite(CirclePath, (x, y) => (x - 7.5f) * (x - 7.5f) + (y - 7.5f) * (y - 7.5f) <= 64f);
             EnsureCrystalPrefab(square, diamond);
+            ShopSetup.EnsureAssets(square);
             EnsureMiningInGameScene();
         }
 
@@ -188,6 +189,7 @@ namespace MinersIdle.EditorTools
             changed |= EnsureTargetLine();
             changed |= EnsureHud();
             changed |= DebugPanelSetup.Ensure();
+            changed |= ShopSetup.EnsureInScene();
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

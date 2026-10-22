@@ -123,9 +123,21 @@ Progresso offline (M8, D-04) · backup e migração do save (M8) · engrenagem e
 | Etapa | Estado | Notas |
 |---|---|---|
 | E1 Prévia das melhorias | ✅ validada pelo Bruno em 2026-10-21 (testes verdes no Editor) | Core: `UpgradePreview` (nível, limite, custo da próxima, estado do botão Comprável/Sem lascas/Máx., valor do efeito agora e depois da compra; `IsSinglePurchase` para a Dupla mostrar "comprada"; `IsEnabled` para linha desligada) e `MiningSimulation.Preview(id)`. `MinerStats` calcula também "com esta linha um nível acima"; `Purchases.CanAfford` é a mesma folga da compra, então a loja nunca mostra "sem lascas" quando a compra aceitaria. Testes: `UpgradePreviewTests` (6), incluindo "o que a prévia promete é o que a compra entrega" em todos os níveis de todas as linhas. Rodado fora do Unity: 82/82 do núcleo; compila. **No Unity ainda não rodou** (Editor aberto) |
-| E2 Tela da loja | ⏳ | |
+| E2 Tela da loja | ✅ validada pelo Bruno no Moto G75 em 2026-10-21 (comprou pela loja, viu "Em breve", mineração seguiu com a loja aberta). **Pendente: rodar os `ShopTests` no Unity** | Game: `ShopCatalog` (textos pt-BR, ordem, linhas bloqueadas, formatos de nível/efeito/bônus; asset `Data/ShopCatalog`). UI: `UpgradeRowView` (prefab `Prefabs/UI/UpgradeRow`), `ShopView` (botão LOJA com selo "!", fundo que escurece e bloqueia o mapa sem pausar nada, painel com saldo, linhas e VOLTAR; atualiza só por evento). O botão LOJA e o selo ficaram dentro da `ShopView` (o `ShopButtonView` do plano não precisou existir à parte). Editor: `ShopSetup`. Teste PlayMode `ShopTests` (3: abrir/comprar/fechar, Dupla "comprada", mineração continua com a loja aberta). Compila fora do Unity |
 | E3 Save mínimo | ⏳ | |
 | E4 No celular | ⏳ | |
 
 **Como testar a E1:** Test Runner → EditMode → Run All (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado): os 6 de `UpgradePreviewTests` verdes, junto com os anteriores. Nada visível no jogo ainda: a tela da loja é a E2.
+
+**Como testar a E2:**
+1. **Rodar no celular** (o build aplica o setup) ou, no Editor, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` e Play na `Bootstrap`. Linhas `[Setup]` esperadas: catálogo da loja, prefab da linha, loja na cena.
+2. À direita, logo abaixo do HUD, o botão **LOJA**. Quando der para comprar algo (10 lascas), aparece o selo vermelho **"!"**.
+3. Toque em **LOJA**: o mapa escurece, o painel mostra "LOJA" e "LASCAS …" no topo e 7 linhas. Picareta, Velocidade, Mineração, Picareta Dupla e Botas mostram "nv 0/…", o efeito ("Dano 1 → 2", "Golpe a cada 1,00s → 0,95s", "Lascas +0% → +1%", "Caminhada 4 → 4,4") e o custo no botão. Estagiário e Letrado aparecem apagados, com "Em breve".
+4. Com a loja aberta, o saldo no topo continua subindo: o anão não parou.
+5. Compre **Picareta**: o saldo cai, a linha vira "nv 1/19" e "Dano 2 → 4", e o DANO do HUD vira 2. Botões sem lasca ficam apagados.
+6. **+100 lascas** pelo DBG (antes de abrir a loja) e compre **Picareta Dupla**: o botão passa a mostrar "comprada".
+7. **VOLTAR** fecha a loja.
+8. Test Runner → PlayMode: `ShopTests` (3) verdes, junto com os anteriores.
+
+*Criados:* `Data/ShopCatalog.asset`, `Prefabs/UI/UpgradeRow.prefab` e `Canvas/SafeArea/Shop` (botão, selo, tela, painel) na cena Game. Tamanhos e cores são de graybox.
 
