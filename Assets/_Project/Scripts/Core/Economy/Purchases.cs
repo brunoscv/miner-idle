@@ -29,12 +29,18 @@ namespace MinersIdle.Core
             return line.IsMaxed(level) ? (double?)null : line.CostAt(level);
         }
 
+        /// <summary>Se o saldo paga o custo, com a folga de arredondamento.</summary>
+        public static bool CanAfford(double shards, double cost)
+        {
+            double tolerance = System.Math.Max(CostTolerance, cost * RelativeCostTolerance);
+            return shards >= cost - tolerance;
+        }
+
         public static PurchaseResult TryPurchase(GameState state, EconomyRules economy, UpgradeId id)
         {
             double? cost = NextCost(state, economy, id);
             if (cost == null) return PurchaseResult.MaxLevel;
-            double tolerance = System.Math.Max(CostTolerance, cost.Value * RelativeCostTolerance);
-            if (state.Shards < cost.Value - tolerance) return PurchaseResult.NotEnoughShards;
+            if (!CanAfford(state.Shards, cost.Value)) return PurchaseResult.NotEnoughShards;
 
             state.SpendShards(cost.Value);
             state.RaiseLevel(id);

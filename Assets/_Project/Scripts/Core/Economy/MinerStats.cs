@@ -32,22 +32,30 @@ namespace MinersIdle.Core
         /// </summary>
         public static MinerStats Compute(MiningRules rules, EconomyRules economy, GameState state)
         {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            return Compute(rules, economy, state, raised: null);
+        }
+
+        /// <summary>
+        /// Os atributos com os níveis de <paramref name="state"/>, mas com a linha <paramref name="raised"/> um nível acima:
+        /// é o "depois da compra" da prévia da loja (<see cref="UpgradePreview"/>).
+        /// </summary>
+        internal static MinerStats Compute(MiningRules rules, EconomyRules economy, GameState state, UpgradeId? raised)
+        {
             if (rules == null) throw new ArgumentNullException(nameof(rules));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
-            if (state == null) throw new ArgumentNullException(nameof(state));
 
-            int pickaxe = state.LevelOf(UpgradeId.Pickaxe);
-            int doublePickaxe = state.LevelOf(UpgradeId.DoublePickaxe);
+            int Level(UpgradeId id) => state.LevelOf(id) + (raised == id ? 1 : 0);
 
-            double damage = rules.Damage * Math.Pow(economy.Get(UpgradeId.Pickaxe).Effect, pickaxe);
-            if (doublePickaxe > 0) damage *= economy.Get(UpgradeId.DoublePickaxe).Effect;
+            double damage = rules.Damage * Math.Pow(economy.Get(UpgradeId.Pickaxe).Effect, Level(UpgradeId.Pickaxe));
+            if (Level(UpgradeId.DoublePickaxe) > 0) damage *= economy.Get(UpgradeId.DoublePickaxe).Effect;
 
             double interval = Math.Max(
                 economy.MinHitInterval,
-                rules.HitInterval - economy.Get(UpgradeId.Speed).Effect * state.LevelOf(UpgradeId.Speed));
+                rules.HitInterval - economy.Get(UpgradeId.Speed).Effect * Level(UpgradeId.Speed));
 
-            double walk = rules.WalkSpeed * (1 + economy.Get(UpgradeId.Boots).Effect * state.LevelOf(UpgradeId.Boots));
-            double reward = 1 + economy.Get(UpgradeId.Mining).Effect * state.LevelOf(UpgradeId.Mining);
+            double walk = rules.WalkSpeed * (1 + economy.Get(UpgradeId.Boots).Effect * Level(UpgradeId.Boots));
+            double reward = 1 + economy.Get(UpgradeId.Mining).Effect * Level(UpgradeId.Mining);
 
             return new MinerStats(damage, interval, walk, reward);
         }

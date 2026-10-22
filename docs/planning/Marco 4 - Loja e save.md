@@ -117,3 +117,15 @@ Progresso offline (M8, D-04) · backup e migração do save (M8) · engrenagem e
 ## Esforço
 
 **30–45 h** de desenvolvimento focado (a regra de compra já existe desde o M3; o grosso é a tela e o save).
+
+## Estado
+
+| Etapa | Estado | Notas |
+|---|---|---|
+| E1 Prévia das melhorias | ✅ validada pelo Bruno em 2026-10-21 (testes verdes no Editor) | Core: `UpgradePreview` (nível, limite, custo da próxima, estado do botão Comprável/Sem lascas/Máx., valor do efeito agora e depois da compra; `IsSinglePurchase` para a Dupla mostrar "comprada"; `IsEnabled` para linha desligada) e `MiningSimulation.Preview(id)`. `MinerStats` calcula também "com esta linha um nível acima"; `Purchases.CanAfford` é a mesma folga da compra, então a loja nunca mostra "sem lascas" quando a compra aceitaria. Testes: `UpgradePreviewTests` (6), incluindo "o que a prévia promete é o que a compra entrega" em todos os níveis de todas as linhas. Rodado fora do Unity: 82/82 do núcleo; compila. **No Unity ainda não rodou** (Editor aberto) |
+| E2 Tela da loja | ⏳ | |
+| E3 Save mínimo | ⏳ | |
+| E4 No celular | ⏳ | |
+
+**Como testar a E1:** Test Runner → EditMode → Run All (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado): os 6 de `UpgradePreviewTests` verdes, junto com os anteriores. Nada visível no jogo ainda: a tela da loja é a E2.
+

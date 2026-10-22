@@ -153,6 +153,9 @@ namespace MinersIdle.Core
             return result;
         }
 
+        /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
+        public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id);
+
         /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, escolha de alvo, golpe.</summary>
         void ProcessDueEvents()
         {
