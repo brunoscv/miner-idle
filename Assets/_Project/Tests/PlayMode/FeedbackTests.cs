@@ -125,5 +125,31 @@ namespace MinersIdle.Tests
             Assert.That(_shake.IsShaking, Is.False);
             Assert.That(camera.localPosition, Is.EqualTo(before));
         }
+
+        /// <summary>
+        /// M6 (E4): na vista de frente a quebra ganha clarão e estilhaços, e o ajuste "Intensidade dos efeitos" do DBG
+        /// multiplica as peças.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Break_FlashesAndBursts_StrongerWithIntensity()
+        {
+            yield return LoadGame();
+
+            _feedback.Intensity = 1f;
+            _runner.Simulation.BreakTarget();
+            int normal = _sparks.ActiveCount;
+            Assert.That(_feedback.IsFlashing, Is.True, "clarão na quebra");
+            Assert.That(_shake.IsShaking, Is.True, "a tela treme");
+
+            yield return new WaitForSecondsRealtime(1f); // as peças voltam ao pool
+            Assert.That(_sparks.ActiveCount, Is.EqualTo(0));
+
+            _feedback.Intensity = 2f;
+            _runner.Simulation.BreakTarget();
+            Assert.That(_sparks.ActiveCount, Is.EqualTo(normal * 2), "intensidade ×2, o dobro de peças");
+
+            _feedback.Intensity = 10f;
+            Assert.That(_feedback.Intensity, Is.EqualTo(3f), "a intensidade tem teto");
+        }
     }
 }

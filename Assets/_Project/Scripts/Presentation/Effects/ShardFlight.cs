@@ -12,6 +12,8 @@ namespace MinersIdle.Presentation
     public sealed class ShardFlight : MonoBehaviour
     {
         const float Duration = 0.9f;
+        const float BaseSize = 0.5f;
+        const float BaseArc = 1.2f;
         const int SortingOrder = 31500;
 
         [SerializeField] SpriteRenderer shardTemplate;
@@ -24,6 +26,7 @@ namespace MinersIdle.Presentation
             public SpriteRenderer Renderer;
             public Vector3 From;
             public float Age;
+            public float Arc;
         }
 
         readonly List<Shard> _active = new List<Shard>();
@@ -50,12 +53,15 @@ namespace MinersIdle.Presentation
                 defaultCapacity: 8);
         }
 
-        public void Launch(Vector3 from)
+        /// <param name="scale">Tamanho da lasca e altura do arco (1 = o da vista de cima; a vista de frente usa mais, M6).</param>
+        public void Launch(Vector3 from, float scale = 1f)
         {
             var shard = _pool.Get();
             shard.From = new Vector3(from.x, from.y, 0f);
             shard.Age = 0f;
+            shard.Arc = BaseArc * scale;
             shard.Renderer.transform.position = shard.From;
+            shard.Renderer.transform.localScale = new Vector3(BaseSize * scale, BaseSize * scale, 1f);
             _active.Add(shard);
         }
 
@@ -72,7 +78,7 @@ namespace MinersIdle.Presentation
                 float t = Mathf.Clamp01(shard.Age / Duration);
                 // Sai devagar e acelera no fim, com um arco para cima.
                 float eased = t * t;
-                Vector3 position = Vector3.Lerp(shard.From, to, eased) + Vector3.up * (Mathf.Sin(t * Mathf.PI) * 1.2f);
+                Vector3 position = Vector3.Lerp(shard.From, to, eased) + Vector3.up * (Mathf.Sin(t * Mathf.PI) * shard.Arc);
                 shard.Renderer.transform.position = position;
 
                 if (t < 1f) continue;

@@ -10,8 +10,11 @@ namespace MinersIdle.Presentation
     /// </summary>
     public sealed class SparkBurst : MonoBehaviour
     {
-        const float Lifetime = 0.35f;
-        const float Gravity = 9f;
+        public const float DefaultLifetime = 0.35f;
+        public const float DefaultSize = 0.15f;
+
+        /// <summary>Gravidade por unidade de tamanho: faíscas maiores (vista de frente, M6) caem na mesma proporção.</summary>
+        const float GravityPerSize = 60f;
         const int SortingOrder = 30500;
 
         [SerializeField] SpriteRenderer sparkTemplate;
@@ -21,6 +24,8 @@ namespace MinersIdle.Presentation
             public SpriteRenderer Renderer;
             public Vector3 Velocity;
             public float Age;
+            public float Lifetime;
+            public float Gravity;
             public Color Color;
         }
 
@@ -40,7 +45,8 @@ namespace MinersIdle.Presentation
                 defaultCapacity: 32);
         }
 
-        public void Emit(Vector3 position, int count, Color color, float speed)
+        /// <param name="size">Lado da faísca, em unidades de mundo.</param>
+        public void Emit(Vector3 position, int count, Color color, float speed, float size = DefaultSize, float lifetime = DefaultLifetime)
         {
             for (int i = 0; i < count; i++)
             {
@@ -48,9 +54,12 @@ namespace MinersIdle.Presentation
                 Vector2 direction = Random.insideUnitCircle.normalized;
                 spark.Velocity = new Vector3(direction.x, Mathf.Abs(direction.y) + 0.3f, 0f) * (speed * Random.Range(0.6f, 1f));
                 spark.Age = 0f;
+                spark.Lifetime = lifetime;
+                spark.Gravity = GravityPerSize * size;
                 spark.Color = color;
                 var t = spark.Renderer.transform;
                 t.position = new Vector3(position.x, position.y, 0f);
+                t.localScale = new Vector3(size, size, 1f);
                 spark.Renderer.color = color;
                 spark.Renderer.sortingOrder = SortingOrder;
                 _active.Add(spark);
@@ -64,17 +73,17 @@ namespace MinersIdle.Presentation
             {
                 var spark = _active[i];
                 spark.Age += dt;
-                if (spark.Age >= Lifetime)
+                if (spark.Age >= spark.Lifetime)
                 {
                     _active.RemoveAt(i);
                     _pool.Release(spark);
                     continue;
                 }
 
-                spark.Velocity.y -= Gravity * dt;
+                spark.Velocity.y -= spark.Gravity * dt;
                 spark.Renderer.transform.position += spark.Velocity * dt;
                 var color = spark.Color;
-                color.a = 1f - spark.Age / Lifetime;
+                color.a = 1f - spark.Age / spark.Lifetime;
                 spark.Renderer.color = color;
             }
         }

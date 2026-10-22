@@ -25,6 +25,9 @@ namespace MinersIdle.EditorTools
         const string StageName = "Descent";
         const string CameraPanelName = "CameraPanel";
 
+        /// <summary>O último objeto que a versão atual do painel de câmera cria (a linha da intensidade dos efeitos, E4).</summary>
+        const string CameraPanelMarker = "Content/Rows/Row5";
+
         /// <summary>O 3D fica bem abaixo da cena 2D, fora da vista da câmera de cima.</summary>
         static readonly Vector3 StagePosition = new Vector3(0f, -1000f, 0f);
 
@@ -43,6 +46,7 @@ namespace MinersIdle.EditorTools
             "Distância até o anão: {0} m",
             "Campo de visão: {0}°",
             "Largura do corredor: {0} m",
+            "Intensidade dos efeitos: ×{0}",
         };
 
         /// <summary>Modelo da linha de medidas (ver o Tooltip de <c>DescentCameraPanel.readoutFormat</c>).</summary>
@@ -143,7 +147,15 @@ namespace MinersIdle.EditorTools
         static bool EnsureCameraPanel()
         {
             var safeArea = GameObject.Find("SafeArea");
-            if (safeArea == null || safeArea.transform.Find(CameraPanelName) != null) return false;
+            if (safeArea == null) return false;
+
+            var existing = safeArea.transform.Find(CameraPanelName);
+            if (existing != null)
+            {
+                if (existing.Find(CameraPanelMarker) != null) return false;
+                Object.DestroyImmediate(existing.gameObject);
+                Debug.Log("[Setup] Painel de câmera de versão anterior removido para ser refeito.");
+            }
 
             var root = new GameObject(CameraPanelName, typeof(RectTransform));
             root.transform.SetParent(safeArea.transform, false);
@@ -156,7 +168,7 @@ namespace MinersIdle.EditorTools
             contentRect.anchorMax = new Vector2(1f, 1f);
             contentRect.pivot = new Vector2(0.5f, 1f);
             contentRect.anchoredPosition = new Vector2(0f, -42f); // logo abaixo do HUD
-            contentRect.sizeDelta = new Vector2(-8f, 150f);
+            contentRect.sizeDelta = new Vector2(-8f, 166f);
             content.GetComponent<Image>().color = PanelColor; // recebe raycast: tocar no painel não vira toque no jogo
 
             var readout = GrayboxSetup.CreateHudText(content.transform, "Readout", "", 7f, TextColor,
@@ -201,6 +213,7 @@ namespace MinersIdle.EditorTools
             GrayboxSetup.SetReferences(panel,
                 ("stage", Object.FindAnyObjectByType<DescentStage>()),
                 ("runner", Object.FindAnyObjectByType<MiningRunner>()),
+                ("feedback", Object.FindAnyObjectByType<MiningFeedbackView>()),
                 ("content", content),
                 ("readout", readout),
                 ("resolution", DebugPanelSetup.CreateButton(grid.transform, "Resolution", "Resolução")),
@@ -222,6 +235,11 @@ namespace MinersIdle.EditorTools
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             content.SetActive(false);
+
+            // O DBG aponta para o painel: um painel refeito precisa ser ligado de novo.
+            var debugPanel = Object.FindAnyObjectByType<DebugPanel>();
+            if (debugPanel != null) GrayboxSetup.SetReferences(debugPanel, ("cameraPanel", panel));
+
             Debug.Log("[Setup] Painel de câmera da descida criado na cena Game.");
             return true;
         }

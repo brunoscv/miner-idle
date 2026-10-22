@@ -11,7 +11,8 @@ namespace MinersIdle.UI
 {
     /// <summary>
     /// Controles da câmera da descida no DBG do jogo (M6, E3; D-61): os − e + da E1 para altura, inclinação, distância,
-    /// campo de visão e largura do corredor (mais fáceis de acertar no celular que um slider), Resolução (270/360/aparelho),
+    /// campo de visão e largura do corredor (mais fáceis de acertar no celular que um slider), a intensidade dos efeitos
+    /// (E4), Resolução (270/360/aparelho),
     /// Padrão D-50 e Fechar. Uma linha mostra onde o anão fica na tela e quanto chão se vê à frente dele, para passar os
     /// números adiante. Abre pelo botão "Câmera" do DBG e fica aberto com o DBG fechado, para ajustar olhando o jogo.
     /// Os textos (rótulos e modelos) ficam na cena. Só no Editor e em Development Build.
@@ -26,6 +27,7 @@ namespace MinersIdle.UI
             Distance,
             FieldOfView,
             CorridorWidth,
+            EffectIntensity,
         }
 
         [Serializable]
@@ -39,7 +41,7 @@ namespace MinersIdle.UI
         }
 
         /// <summary>Passo de cada ajuste, na ordem de <see cref="Setting"/>.</summary>
-        static readonly float[] Steps = { 0.1f, 1f, 0.1f, 1f, 0.1f };
+        static readonly float[] Steps = { 0.1f, 1f, 0.1f, 1f, 0.1f, 0.25f };
 
         /// <summary>As resoluções do botão Resolução: a de referência (D-14), a do plano B e a do aparelho (0).</summary>
         static readonly int[] Resolutions = { 270, 360, 0 };
@@ -48,8 +50,9 @@ namespace MinersIdle.UI
 
         [SerializeField] DescentStage stage;
         [SerializeField] MiningRunner runner;
+        [SerializeField] MiningFeedbackView feedback;
         [SerializeField] GameObject content;
-        [SerializeField] Row[] rows = new Row[5];
+        [SerializeField] Row[] rows = new Row[6];
 
         [SerializeField] TMP_Text readout;
         [Tooltip("{0} cabeça (% do topo) · {1} pés · {2} altura do anão (% da tela) · {3} chão à frente (m) · " +
@@ -139,12 +142,13 @@ namespace MinersIdle.UI
                 case Setting.Distance: framing.distance = Round(framing.distance + delta); break;
                 case Setting.FieldOfView: framing.fieldOfView = Round(framing.fieldOfView + delta); break;
                 case Setting.CorridorWidth: framing.corridorWidth = Round(framing.corridorWidth + delta); break;
+                case Setting.EffectIntensity: feedback.Intensity = feedback.Intensity + delta; break;
             }
-            stage.Framing = framing;
+            if (setting != Setting.EffectIntensity) stage.Framing = framing;
             _refresh = 0f;
         }
 
-        /// <summary>Uma casa decimal: somar 0,1 dez vezes não pode virar 2,3999.</summary>
+        /// <summary>Uma casa decimal: somar 0,1 dez vezes não pode virar 2,3999 (a intensidade anda em 0,25, exata em float).</summary>
         static float Round(float value) => Mathf.Round(value * 10f) / 10f;
 
         void NextResolution()
@@ -163,7 +167,10 @@ namespace MinersIdle.UI
         void Refresh()
         {
             var framing = stage.Framing;
-            float[] values = { framing.height, framing.tilt, framing.distance, framing.fieldOfView, framing.corridorWidth };
+            float[] values =
+            {
+                framing.height, framing.tilt, framing.distance, framing.fieldOfView, framing.corridorWidth, feedback.Intensity,
+            };
             for (int i = 0; i < rows.Length && i < values.Length; i++)
                 rows[i].label.text = string.Format(rows[i].format, NumberFormatter.Format(values[i]));
 
