@@ -10,8 +10,8 @@ namespace MinersIdle.UI
     /// <summary>
     /// Painel de debug do Marco 2 (E5): tempo ×1/×5/×20, gerar cristal, quebrar o alvo, +100 lascas, reiniciar com a
     /// mesma semente ou com uma nova, "Mostrar ordem" e estatísticas. Desde o M3 (E3, D-37): comprar cada melhoria e ver
-    /// nível e próximo custo. Desde o M4 (E3): salvar agora e apagar o save; "Reiniciar" mantém o progresso. Os atalhos
-    /// chamam os mesmos comandos das regras.
+    /// nível e próximo custo. Desde o M4 (E3): salvar agora e apagar o save; "Reiniciar" mantém o progresso. Desde o M5
+    /// (E2): toques automáticos e crítico sempre. Os atalhos chamam os mesmos comandos das regras.
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
     /// Os textos (rótulos e o modelo das estatísticas) ficam na cena.
     /// </summary>
@@ -23,6 +23,7 @@ namespace MinersIdle.UI
         [SerializeField] MiningRunner runner;
         [SerializeField] CrystalFieldView crystals;
         [SerializeField] TargetLineView targetLine;
+        [SerializeField] TapInput tapInput;
 
         [SerializeField] Button toggleButton;
         [SerializeField] GameObject content;
@@ -53,6 +54,8 @@ namespace MinersIdle.UI
         [SerializeField] Button buyBoots;
         [SerializeField] Button saveNow;
         [SerializeField] Button deleteSave;
+        [SerializeField] Button autoTap;
+        [SerializeField] Button forceCritical;
 
         readonly object[] _upgradeArgs = new object[10];
 
@@ -91,6 +94,8 @@ namespace MinersIdle.UI
             buyBoots.onClick.AddListener(BuyBoots);
             saveNow.onClick.AddListener(SaveNow);
             deleteSave.onClick.AddListener(DeleteSave);
+            autoTap.onClick.AddListener(ToggleAutoTap);
+            forceCritical.onClick.AddListener(ToggleForceCritical);
         }
 
         void OnDisable()
@@ -112,6 +117,8 @@ namespace MinersIdle.UI
             buyBoots.onClick.RemoveListener(BuyBoots);
             saveNow.onClick.RemoveListener(SaveNow);
             deleteSave.onClick.RemoveListener(DeleteSave);
+            autoTap.onClick.RemoveListener(ToggleAutoTap);
+            forceCritical.onClick.RemoveListener(ToggleForceCritical);
         }
 
         void Update()
@@ -141,6 +148,8 @@ namespace MinersIdle.UI
 
         void SaveNow() => runner.SaveNow();
         void DeleteSave() => runner.ResetProgress();
+        void ToggleAutoTap() => tapInput.AutoTap = !tapInput.AutoTap;
+        void ToggleForceCritical() => runner.ForceCritical = !runner.ForceCritical;
 
         void BuyPickaxe() => Buy(UpgradeId.Pickaxe);
         void BuySpeed() => Buy(UpgradeId.Speed);

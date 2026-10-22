@@ -33,6 +33,19 @@ namespace MinersIdle.Game
         /// <summary>Multiplicador do tempo de jogo (o ×5/×20 do painel de debug).</summary>
         public float TimeScale { get; set; } = 1f;
 
+        bool _forceCritical;
+
+        /// <summary>Atalho do debug: todo golpe e todo toque saem críticos. Vale também depois de reiniciar.</summary>
+        public bool ForceCritical
+        {
+            get => _forceCritical;
+            set
+            {
+                _forceCritical = value;
+                if (Simulation != null) Simulation.ForceCritical = value;
+            }
+        }
+
         public MiningSimulation Simulation { get; private set; }
         public ulong Seed { get; private set; }
 
@@ -118,7 +131,10 @@ namespace MinersIdle.Game
             Seed = seed;
             Simulation = new MiningSimulation(
                 rules.ToRules(), new SeededRandom(seed), state, rules.ToEconomy(),
-                rules.ToStrike(), new SeededRandom(CritSeed(seed)));
+                rules.ToStrike(), new SeededRandom(CritSeed(seed)))
+            {
+                ForceCritical = _forceCritical,
+            };
             Simulation.UpgradePurchased += OnUpgradePurchased;
             NotifyStarted();
         }

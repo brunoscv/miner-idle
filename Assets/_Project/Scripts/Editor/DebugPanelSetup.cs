@@ -49,7 +49,7 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.transform.Find(PanelName);
             if (existing != null)
             {
-                if (existing.Find("Content/Buttons/DeleteSave") != null) return changed;
+                if (existing.Find("Content/Buttons/ForceCritical") != null) return changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
@@ -116,6 +116,7 @@ namespace MinersIdle.EditorTools
                 ("runner", Object.FindAnyObjectByType<MiningRunner>()),
                 ("crystals", Object.FindAnyObjectByType<CrystalFieldView>()),
                 ("targetLine", Object.FindAnyObjectByType<TargetLineView>()),
+                ("tapInput", Object.FindAnyObjectByType<TapInput>()),
                 ("toggleButton", toggle),
                 ("content", content),
                 ("stats", stats),
@@ -135,6 +136,8 @@ namespace MinersIdle.EditorTools
                 ("buyBoots", CreateButton(grid.transform, "BuyBoots", "Comprar Botas")),
                 ("saveNow", CreateButton(grid.transform, "SaveNow", "Salvar agora")),
                 ("deleteSave", CreateButton(grid.transform, "DeleteSave", "Apagar save")),
+                ("autoTap", CreateButton(grid.transform, "AutoTap", "Toques auto")),
+                ("forceCritical", CreateButton(grid.transform, "ForceCritical", "Crítico sempre")),
                 ("upgrades", upgrades));
 
             var serialized = new SerializedObject(panel);

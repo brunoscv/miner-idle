@@ -187,7 +187,9 @@ namespace MinersIdle.EditorTools
             }
 
             changed |= EnsureTargetLine();
+            changed |= EnsureTapInput();
             changed |= EnsureHud();
+            changed |= EnsureHudBlocksTaps();
             changed |= DebugPanelSetup.Ensure();
             changed |= ShopSetup.EnsureInScene();
 
@@ -208,6 +210,37 @@ namespace MinersIdle.EditorTools
                           ("runner", root.GetComponent<MiningRunner>()), ("line", line));
             Debug.Log("[Setup] Linha até o alvo criada na cena Game.");
             return true;
+        }
+
+        /// <summary>M5 (E2): o leitor de toque, no objeto "Mining".</summary>
+        static bool EnsureTapInput()
+        {
+            var root = GameObject.Find(MiningRootName);
+            if (root == null || root.GetComponent<TapInput>() != null) return false;
+
+            SetReferences(root.AddComponent<TapInput>(), ("runner", root.GetComponent<MiningRunner>()));
+            Debug.Log("[Setup] Leitor de toque criado na cena Game.");
+            return true;
+        }
+
+        /// <summary>
+        /// M5 (E2): os painéis do HUD passam a receber raycast, para o toque neles não contar no mapa. O HUD do M4 foi
+        /// criado com o raycast desligado; isto o atualiza uma vez (depois, não muda nada).
+        /// </summary>
+        static bool EnsureHudBlocksTaps()
+        {
+            var hud = GameObject.Find(HudName);
+            if (hud == null) return false;
+
+            bool changed = false;
+            foreach (Transform panel in hud.transform)
+            {
+                if (!panel.TryGetComponent<Image>(out var image) || image.raycastTarget) continue;
+                image.raycastTarget = true;
+                changed = true;
+            }
+            if (changed) Debug.Log("[Setup] HUD passa a bloquear o toque no mapa.");
+            return changed;
         }
 
         /// <summary>
@@ -256,8 +289,7 @@ namespace MinersIdle.EditorTools
             var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(parent, false);
             var image = panel.GetComponent<Image>();
-            image.color = HudPanelColor;
-            image.raycastTarget = false;
+            image.color = HudPanelColor; // raycastTarget ligado: tocar no HUD não vira toque no mapa (M5)
 
             CreateHudText(panel.transform, "Label", label, 7f, HudLabelColor, new Vector2(0f, 0.55f), new Vector2(1f, 1f));
             return CreateHudText(panel.transform, "Value", "0", 12f, HudValueColor, new Vector2(0f, 0f), new Vector2(1f, 0.62f));
