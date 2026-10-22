@@ -82,7 +82,8 @@ namespace MinersIdle.Tests
             for (int i = 0; i < 10; i++) _runner.Simulation.Tap();
 
             Assert.That(_floating.ActiveCount, Is.GreaterThan(0));
-            Assert.That(_floating.LastText, Does.Contain("10"));
+            // Não o último texto: se o 10º toque sair crítico (5%), o "CRÍTICO!" pode vir depois do "x10!".
+            Assert.That(_floating.IsShowing("10"), Is.True, "o \"x10!\" está na tela");
         }
 
         [UnityTest]

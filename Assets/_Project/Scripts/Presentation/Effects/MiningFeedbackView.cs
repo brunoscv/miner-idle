@@ -134,8 +134,8 @@ namespace MinersIdle.Presentation
 
         void OnComboMilestone(int combo)
         {
-            floatingTexts.Show(string.Format(texts.MilestoneFormat, combo), miner.position + Vector3.up * 2.2f,
-                               MilestoneColor, 1.6f, 0.9f, 1.5f);
+            floatingTexts.ShowNumber(texts.MilestoneFormat, combo, miner.position + Vector3.up * 2.2f,
+                                     MilestoneColor, 1.6f, 0.9f, 1.5f);
             screenShake.Shake(milestoneShake, milestoneShakeSeconds);
         }
 

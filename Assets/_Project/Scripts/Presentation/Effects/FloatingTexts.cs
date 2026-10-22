@@ -31,8 +31,18 @@ namespace MinersIdle.Presentation
 
         public int ActiveCount => _active.Count;
 
-        /// <summary>O último texto mostrado (para testes).</summary>
-        public string LastText { get; private set; }
+        TextMeshPro _last;
+
+        /// <summary>O último texto mostrado (para testes; ler o <c>text</c> do TextMeshPro monta uma string).</summary>
+        public string LastText => _last != null ? _last.text : null;
+
+        /// <summary>Se algum texto na tela contém <paramref name="fragment"/> (para testes; monta strings).</summary>
+        public bool IsShowing(string fragment)
+        {
+            foreach (var item in _active)
+                if (item.Text.text.Contains(fragment)) return true;
+            return false;
+        }
 
         void Awake()
         {
@@ -53,8 +63,23 @@ namespace MinersIdle.Presentation
         /// <param name="scale">Tamanho relativo ao modelo (1 = normal).</param>
         public void Show(string text, Vector3 position, Color color, float scale, float duration, float rise)
         {
-            var item = _pool.Get();
+            var item = Spawn(position, color, scale, duration, rise);
             item.Text.text = text;
+        }
+
+        /// <summary>
+        /// Texto com um número, sem montar string (M5, E5): o TextMeshPro escreve o valor direto no formato
+        /// (<c>{0}</c> = <paramref name="value"/>), como o "x10!" dos marcos do combo.
+        /// </summary>
+        public void ShowNumber(string format, float value, Vector3 position, Color color, float scale, float duration, float rise)
+        {
+            var item = Spawn(position, color, scale, duration, rise);
+            item.Text.SetText(format, value);
+        }
+
+        Item Spawn(Vector3 position, Color color, float scale, float duration, float rise)
+        {
+            var item = _pool.Get();
             item.Text.color = color;
             item.Start = new Vector3(position.x, position.y, 0f);
             item.Age = 0f;
@@ -65,7 +90,8 @@ namespace MinersIdle.Presentation
             item.Text.transform.position = item.Start;
             item.Text.transform.localScale = Vector3.one * (scale * 1.4f);
             _active.Add(item);
-            LastText = text;
+            _last = item.Text;
+            return item;
         }
 
         void Update()

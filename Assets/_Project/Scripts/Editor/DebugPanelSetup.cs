@@ -31,6 +31,10 @@ namespace MinersIdle.EditorTools
             "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9})";
         const string MaxedLabel = "máx.";
 
+        /// <summary>Medição do M5 E5 (ver o Tooltip de <c>BuildInfoLabel.statsFormat</c>).</summary>
+        const string FrameStatsFormat =
+            "{0:0} fps (média {2:0})\n{1:1} min · lentos {3:0}\npior quadro {4:0} ms\nGC {5:0} quadros · {6:0} B";
+
         const float ContentHeight = 264f;
         const float TopBand = 0.70f;      // estatísticas e diagnóstico acima disto
         const float ButtonsBand = 0.53f;  // botões abaixo disto (7 fileiras); melhorias no meio
@@ -49,7 +53,7 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.transform.Find(PanelName);
             if (existing != null)
             {
-                if (existing.Find("Content/Buttons/Sound") != null) return changed;
+                if (existing.Find("Content/Buttons/ResetStats") != null) return changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
@@ -82,7 +86,10 @@ namespace MinersIdle.EditorTools
             stats.alignment = TextAlignmentOptions.TopLeft;
             stats.margin = new Vector4(4f, 4f, 2f, 2f);
 
-            // O rótulo de diagnóstico do M1 (versão, resolução, Safe Area, FPS) volta aqui dentro.
+            var frameStats = root.AddComponent<FrameStats>();
+
+            // O rótulo de diagnóstico do M1 (versão, resolução, Safe Area, FPS) volta aqui dentro; desde o M5 (E5) com a
+            // medição de quadros lentos e GC.
             var buildInfo = safeArea.transform.Find("BuildInfo");
             if (buildInfo != null)
             {
@@ -93,6 +100,12 @@ namespace MinersIdle.EditorTools
                 label.alignment = TextAlignmentOptions.TopRight;
                 label.margin = new Vector4(2f, 4f, 4f, 2f);
                 buildInfo.gameObject.SetActive(true);
+
+                var info = buildInfo.GetComponent<BuildInfoLabel>();
+                GrayboxSetup.SetReferences(info, ("frameStats", frameStats));
+                var infoSo = new SerializedObject(info);
+                infoSo.FindProperty("statsFormat").stringValue = FrameStatsFormat;
+                infoSo.ApplyModifiedPropertiesWithoutUndo();
             }
 
             var upgrades = GrayboxSetup.CreateHudText(content.transform, "Upgrades", "", 7f, TextColor,
@@ -142,6 +155,8 @@ namespace MinersIdle.EditorTools
                 ("forceCritical", CreateButton(grid.transform, "ForceCritical", "Crítico sempre")),
                 ("shake", CreateButton(grid.transform, "Shake", "Tremor on/off")),
                 ("sound", CreateButton(grid.transform, "Sound", "Som on/off")),
+                ("resetStats", CreateButton(grid.transform, "ResetStats", "Zerar medição")),
+                ("frameStats", frameStats),
                 ("upgrades", upgrades));
 
             var serialized = new SerializedObject(panel);

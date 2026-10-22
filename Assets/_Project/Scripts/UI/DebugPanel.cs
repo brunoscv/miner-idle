@@ -11,8 +11,8 @@ namespace MinersIdle.UI
     /// Painel de debug do Marco 2 (E5): tempo ×1/×5/×20, gerar cristal, quebrar o alvo, +100 lascas, reiniciar com a
     /// mesma semente ou com uma nova, "Mostrar ordem" e estatísticas. Desde o M3 (E3, D-37): comprar cada melhoria e ver
     /// nível e próximo custo. Desde o M4 (E3): salvar agora e apagar o save; "Reiniciar" mantém o progresso. Desde o M5
-    /// (E2): toques automáticos e crítico sempre; tremor on/off (E3) e som on/off (E4). Os atalhos chamam os mesmos
-    /// comandos das regras.
+    /// (E2): toques automáticos e crítico sempre; tremor on/off (E3), som on/off (E4) e a medição de desempenho
+    /// (<see cref="FrameStats"/>, E5), que só conta com o painel fechado. Os atalhos chamam os mesmos comandos das regras.
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
     /// Os textos (rótulos e o modelo das estatísticas) ficam na cena.
     /// </summary>
@@ -27,6 +27,7 @@ namespace MinersIdle.UI
         [SerializeField] TapInput tapInput;
         [SerializeField] ScreenShake screenShake;
         [SerializeField] SoundBoard soundBoard;
+        [SerializeField] FrameStats frameStats;
 
         [SerializeField] Button toggleButton;
         [SerializeField] GameObject content;
@@ -61,6 +62,7 @@ namespace MinersIdle.UI
         [SerializeField] Button forceCritical;
         [SerializeField] Button shake;
         [SerializeField] Button sound;
+        [SerializeField] Button resetStats;
 
         readonly object[] _upgradeArgs = new object[10];
 
@@ -103,6 +105,7 @@ namespace MinersIdle.UI
             forceCritical.onClick.AddListener(ToggleForceCritical);
             shake.onClick.AddListener(ToggleShake);
             sound.onClick.AddListener(ToggleSound);
+            resetStats.onClick.AddListener(ResetStats);
         }
 
         void OnDisable()
@@ -128,6 +131,7 @@ namespace MinersIdle.UI
             forceCritical.onClick.RemoveListener(ToggleForceCritical);
             shake.onClick.RemoveListener(ToggleShake);
             sound.onClick.RemoveListener(ToggleSound);
+            resetStats.onClick.RemoveListener(ResetStats);
         }
 
         void Update()
@@ -144,6 +148,7 @@ namespace MinersIdle.UI
         {
             content.SetActive(!content.activeSelf);
             _refresh = 0f;
+            if (frameStats != null) frameStats.Measuring = !content.activeSelf; // o painel aberto não conta como jogo
         }
 
         void SetSpeed1() => runner.TimeScale = 1f;
@@ -161,6 +166,7 @@ namespace MinersIdle.UI
         void ToggleForceCritical() => runner.ForceCritical = !runner.ForceCritical;
         void ToggleShake() => screenShake.ShakeEnabled = !screenShake.ShakeEnabled;
         void ToggleSound() => soundBoard.SoundEnabled = !soundBoard.SoundEnabled;
+        void ResetStats() => frameStats.ResetCounts();
 
         void BuyPickaxe() => Buy(UpgradeId.Pickaxe);
         void BuySpeed() => Buy(UpgradeId.Speed);
