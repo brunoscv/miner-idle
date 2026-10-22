@@ -9,6 +9,8 @@
 
 > **Atualização de 2026-10-21 (tarde) — D-25…D-29:** **M1 aprovado.** O jogo passa a ter **mineração no mapa** (o anão anda e minera grupos de cristais que nascem continuamente; regra de alvo "lote, depois mais próximo"). **Novo M2 = Protótipo do loop no mapa** (graybox jogável); o antigo M2 (regras e economia) vira **M3**; o antigo M3 (vertical slice) fica absorvido pelos dois. M4 em diante mantém o número. Nas tabelas de outros documentos anteriores a esta data, "M2" como marco de economia/simulador = **M3**.
 
+> **Atualização de 2026-10-22 — D-50…D-59:** **nova visão aprovada: descida em corrida** (câmera de frente, anão correndo por um corredor de caverna; substitui o mapa aberto da D-26). **M5 aprovado** (D-59). O **novo M6 = Descida em corrida**, antes do Art Spike e do Estagiário; **os marcos seguintes ganham +1** (D-56): Estagiário M7, Letrado/cavernas M8, AD/save/offline M9, arte 2–10 M10, balanceamento M11, RC M12, publicação M13, pós-lançamento M14. Em documentos anteriores a esta data, "M6" = Estagiário e assim por diante. O texto dos marcos abaixo que fala em "mapa" vale para o corredor.
+
 ## 1. Como este roadmap se relaciona com o do RM
 
 | RM (semanas) | Aqui | Mudança e motivo |
@@ -39,19 +41,21 @@ M2  Protótipo do loop no mapa (graybox) ✅ ← 1º jogável  [arte: caverna 1 
                               ▼
 M3  Regras e economia (calculadores, simulador, spec do estagiário) ✅ ← Marco B
                               ▼
-M4  Loja, melhorias, HUD, save mínimo
+M4  Loja, melhorias, HUD, save mínimo ✅
                               ▼
-M5  Feedback de mineração + arte final da caverna 1 (assinatura)
+M5  Toque, crítico, combo e feedback (graybox) ✅
                               ▼
-M6  Estagiário ──► M7  Letrado, penalidade, 10 cavernas ← Marco C parcial
+M6  Descida em corrida (câmera de frente, corredor 3D) ← nova visão, D-52
+                              ▼ ◄─── M1b Art Spike (depois da E1 do M6, para o corredor)
+M7  Estagiário ──► M8  Letrado, penalidade, 10 cavernas ← Marco C parcial
                               ▼
-M8  AD simulado, save completo, offline, config ← Marco C
-                              ▼ ◄─── (paralelo desde M5) M9  arte das cavernas 2–10 e UI final
-M10 Balanceamento, desempenho, playtest
+M9  AD simulado, save completo, offline, config ← Marco C
+                              ▼ ◄─── (paralelo) M10 arte das cavernas 2–10 e UI final
+M11 Balanceamento, desempenho, playtest
                               ▼
-M11 Regressão e Release Candidate ← Marco D
+M12 Regressão e Release Candidate ← Marco D
                               ▼
-M12 Publicação  →  M13 Pós-lançamento
+M13 Publicação  →  M14 Pós-lançamento
 ```
 
 ## 3. Marcos
@@ -114,7 +118,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Testes:** compra processada uma vez (duplo-toque); sem lascas = sem compra; limites; mineração continua com a loja aberta (REQ-UI-04, P0); estado salvo e relido; HUD atualiza imediatamente. **Estagiário e Letrado entram nos itens da loja desabilitados** (placeholder).
 - **DoD:** REQ-ECO-02…05,07,08; REQ-UI-01,02,04,06 verificados. **Riscos:** `Canvas` e *rebuilds*; formato de números (D-11). **Fora:** estagiário, Letrado, AD, polimento. **Esforço:** 40–50 h.
 
-### M5 — Feedback de mineração e arte final da caverna 1
+### M5 — Feedback de mineração e arte final da caverna 1 ✅ (aprovado em 2026-10-22, D-59)
 - **Plano detalhado (2026-10-21):** [Marco 5 - Toque e feedback.md](Marco%205%20-%20Toque%20e%20feedback.md). Pela D-46, o M5 é em **graybox** (toque, crítico, combo, feedback, som provisório); a **arte da caverna 1 sai deste marco** e entra depois do Art Spike (M1b), que corre em paralelo. Regras do toque: D-47. O texto abaixo é o escopo original (histórico).
 - **Objetivo:** **fazer bater gostoso.** **Jogador:** crítico, combo, impacto, lasca voando, caverna 1 bonita.
 - **Tarefas:** T-M5-01…T-M5-12. **Dependências:** M3/M4, M1b (estilo aprovado).
@@ -122,55 +126,60 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Testes:** latência toque→resposta < 100 ms (medir), teste estatístico do crítico, *profiler* sem alocação por quadro; **playtest informal de *feel*** com 2–3 pessoas sem explicação.
 - **DoD:** pilares "Toque com impacto" e "Leitura imediata" passam nos testes de aceite do [Vision](../design/Visao%20e%20Escopo%20do%20MVP.md) §3; Bruno aprova o *game feel*. **Riscos:** polir cedo demais (limitar à caverna 1); sincronia animação×golpe (código manda). **Fora:** estagiário, outras cavernas. **Esforço:** 45–65 h.
 
-### M6 — Estagiário
+### M6 — Descida em corrida ← *novo, D-52/D-56*
+- **Objetivo:** trocar o mapa aberto pela **descida em corrida**: câmera de frente (D-50), o anão correndo na direção dela por um corredor de caverna 3D com cara de pixel art (D-53), parando para bater nos cristais da fila. **Jogador:** o mesmo loop (golpe, toque, crítico, combo, loja, save), na tela nova.
+- **Plano detalhado:** [Marco 6 - Descida em corrida.md](Marco%206%20-%20Descida%20em%20corrida.md) (E1 câmera e render ✅ · E2 fila no núcleo · E3 jogo no corredor · E4 feedback e DBG · E5 economia e celular). Proposta e motivos: [Proposta - Descida em corrida](Proposta%20-%20Descida%20em%20corrida.md).
+- **Dependências:** M5 ✅ (D-59). **Fora:** arte de verdade (Art Spike, depois), estagiário (M7). **Esforço:** 40–60 h.
+
+### M7 — Estagiário
 - **Objetivo:** segundo minerador sem estados quebrados. **Jogador:** contrata, vê o estagiário atacar o cristal à frente.
 - **Tarefas:** T-M6-01…T-M6-07. **Dependências:** M5 (arte do principal), **spec do M2**.
 - **Entregáveis:** `MinerAgent` + `CrystalLot` com estados, `InternController`, barra de vida do estagiário, silhueta/capacete distinto, regras REQ-INT-01…06.
 - **Testes:** **matriz** (principal primeiro, estagiário primeiro, simultâneo, 5º cristal, troca de lote, compra no meio do lote, pausa); nenhum alvo duplicado; nenhuma espera infinita (P0); quebra do estagiário não conta p/ penalidade; Dupla não altera estagiário (REQ-INT-05).
 - **DoD:** matriz verde + 30 min de sessão sem travar; **Bruno testa**. **Riscos:** C-08 mal resolvido. **Fora:** mais mineradores. **Esforço:** 35–50 h.
 
-### M7 — Progressão: Letrado, penalidade, passagem e 10 cavernas
+### M8 — Progressão: Letrado, penalidade, passagem e 10 cavernas
 - **Objetivo:** descer de verdade. **Jogador:** compra o Letrado, passa de caverna, vê a cor mudar; sente a penalidade.
 - **Tarefas:** T-M7-01…T-M7-09. **Dependências:** M4, M6, **D-07 (parede?)**.
 - **Entregáveis:** `CaveDefinition[10]` com *recolor* provisório, `Letrado`, `Penalty` (ícone), passagem (botão âmbar ou parede), reset da penalidade, bloqueio após a cave 10, tela "fim da descida", dica do Letrado/penalidade.
 - **Testes:** nova caverna remove a penalidade e gera 5 cristais novos; Letrado *n* só dobra o dano na caverna *n*; bônus não acumula (REQ-ECO-06); progressão 1→10 **alcançável** no simulador e jogando; botão desabilitado/habilitado.
 - **DoD:** **marco C parcial:** caverna 1→10 funcional com arte provisória; REQ-CAVE-01…03. **Riscos:** C-01/C-09 mal calibrados fazem o final inatingível — rodar o simulador em cada alteração. **Fora:** arte final das caves 2–10. **Esforço:** 35–45 h.
 
-### M8 — AD simulado, persistência completa, offline e ajustes
+### M9 — AD simulado, persistência completa, offline e ajustes
 - **Objetivo:** fechar os sistemas. **Jogador:** assiste (simulado) para ganhar boost; fecha e volta sem perder nada.
 - **Tarefas:** T-M8-01…T-M8-10. **Dependências:** M7.
 - **Entregáveis:** modal de AD (5 s, ×2,5, 30 s, recarga), selo do boost, `SaveService` completo (JSON versionado, escrita atômica, backup, migração), pausa/retomada, **offline (se D-04)**, Configurações (volume, tremor, vibração, apagar save com confirmação), créditos mínimos.
 - **Testes:** fechar/minimizar não duplica bônus/compra/moeda (RM sem. 8, P0); save corrompido recupera; versão futura tratada; teste de migração; manipular o relógio do aparelho; sessão longa (2 h).
 - **DoD:** **marco C** (RM): loja, estagiário, penalidade, progressão, boost e save integrados; testes de estados simultâneos feitos. **Riscos:** relógio do aparelho, *backgrounding* do Android. **Fora:** SDK de anúncios real. **Esforço:** 40–55 h.
 
-### M9 — Arte, áudio e integração visual das cavernas 2–10
+### M10 — Arte, áudio e integração visual das cavernas 2–10
 - **Objetivo:** os 10 ambientes e a UI final. **Jogador:** cada caverna parece outro lugar; interface com cara de jogo.
 - **Tarefas:** T-M9-01…T-M9-10. **Dependências:** M5 (assinatura), pode **começar em paralelo desde M5** e rodar até M10.
 - **Entregáveis:** 9 cristais, 9 pisos/paredes/props, UI final (*skin*), VFX completos (boost, penalidade, combo ×10), áudio final, `CREDITS.md` completo, auditoria de paleta/tamanho.
 - **Testes:** prints de cavernas distinguíveis sem HUD (pilar "Descida perceptível"); legibilidade no aparelho; sem *draw calls* explosivos.
 - **DoD:** assets aprovados e licenças registradas (marco do RM sem. 9). **Riscos:** custo de arte (cortar conforme RM §7.1). **Esforço:** 60–90 h.
 
-### M10 — Balanceamento, desempenho e playtest
+### M11 — Balanceamento, desempenho e playtest
 - **Objetivo:** "dar gosto" e rodar bem. **Jogador:** progressão compreensível, sem travadas.
 - **Tarefas:** T-M10-01…T-M10-08. **Entregáveis:** relatório de balanceamento (simulador + playtest), ajustes em `Balance_v2.x` com **registro de cada mudança**, Profiler em aparelho intermediário, **playtest com 5–8 pessoas** (20–30 min), lista de bugs P0–P2.
 - **DoD:** sem P0; loop e progressão compreendidos; metas de ritmo do [Econ](../design/Economia%20e%20Progressao.md) §4 atingidas ou renegociadas. **Riscos:** ajustes em cascata. **Esforço:** 35–50 h.
 
-### M11 — Regressão e Release Candidate
+### M12 — Regressão e Release Candidate
 - **Objetivo:** build confiável. **Entregáveis:** AAB/APK RC, regressão completa, instalação limpa e atualização, sessão longa, remoção do debug, *checklist* do MVP (GDD §14) atendido.
 - **DoD:** **marco D**: P0 zerados, P1 críticos zerados, *build* reproduzível, documentação mínima. **Esforço:** 25–40 h.
 
-### M12 — Publicação
+### M13 — Publicação
 - **Objetivo:** chegar à loja (D-18). **Anúncios reais ficam fora (D-21, 2026-10-21):** o botão AD continua só dando o boost de velocidade; o time ainda vai definir os ads. O boost fica atrás de uma interface (`IBoostSource`) no M8 para a rede de anúncios entrar depois, **sem mexer na regra**.
 - **Entregáveis:** conta de desenvolvedor Google Play (taxa única — **conferir valor/regras atuais**), política de privacidade, ícone, *screenshots*, descrição, classificação etária, assinatura do app (keystore com backup), teste interno → fechado → aberto.
 - **Riscos:** requisitos de loja mudam (verificar na época — D-22); rejeição na revisão. **Esforço:** 15–30 h (voltou à faixa original).
 - **Pós-MVP (quando os ads forem definidos):** SDK da rede, consentimento/LGPD, testes de falha/sem rede, 25–40 h adicionais **[estimativa]**.
 
-### M13 — Pós-lançamento
+### M14 — Pós-lançamento
 Backlog em §6 (P1/P2). Reavaliar com dados reais.
 
 ## 4. Caminho crítico e paralelismo
 
-**Caminho crítico:** aprovações (D-01, D-12) → **M1 ✅ → M2 (protótipo do loop) → M3 (regras e economia) → M4 → M6 → M7 → M8 → M10 → M11 → M12**.
+**Caminho crítico:** aprovações (D-01, D-12) → **M1 ✅ → M2 ✅ → M3 ✅ → M4 ✅ → M5 ✅ → M6 (descida) → M7 → M8 → M9 → M11 → M12 → M13** (renumerado pela D-56).
 
 **Em paralelo (fora do caminho crítico, mas com prazo):**
 
@@ -212,15 +221,15 @@ Prioridade: **P0** = caminho crítico/obrigatório · **P1** = importante · **P
 ### M3 — Regras e economia (antigo M2; resumo; o plano detalhado será escrito no início dele. Os IDs `T-M2-*` abaixo são históricos)
 T-M2-01 spec do estagiário (diagrama) · T-M2-02 `GameState`/`IClock`/`IRandom` · T-M2-03 calculadores de custo/efeito de todas as linhas · T-M2-04 `RewardCalculator` (+ penalidade/Mineração) · T-M2-05 `MiningSimulation` (tick determinístico, crítico, toque) · T-M2-06 `PurchaseService` · T-M2-07 `BalanceConfig` (v1 literal + v2) · T-M2-08 **simulador econômico** (3 perfis) · T-M2-09 **teste estatístico do crítico** · T-M2-10 testes de limites/fora-do-limite · T-M2-11 painel de debug (esqueleto) · T-M2-12 **relatório de calibração** para aprovação (D-01). **P0** todas, exceto T-M2-11 (P1).
 
-### M3–M8 (granularidade de recurso; cada marco ganha plano próprio em `docs/planning/Marco N — …` antes de começar, como nos projetos anteriores)
+### M3–M9 (granularidade de recurso; cada marco ganha plano próprio em `docs/planning/Marco N — …` antes de começar, como nos projetos anteriores)
 - **M3:** cena + câmera + `MiningView` · geração do lote (5 posições aleatórias espaçadas, *seeded*) · `CrystalView` + barra · minerador provisório · `IMiningInput` · HUD básico · avanço/renovação · build + teste em aparelho. (P0)
 - **M4:** `ShopView`/`UpgradeRowView` · bloqueio de toque sem pausar · compras e limites · HUD completo · save mínimo · selo "novo". (P0; selo P1)
 - **M5:** crítico · combo · *shake* · lasca voando · VFX · SFX · arte caverna 1 · dicas · *pooling*. (P0 exceto dicas/pooling P1)
-- **M6:** `MinerAgent` · `CrystalLot` · `InternController` · matriz de testes · arte do estagiário. (P0)
-- **M7:** `CaveDefinition[10]` · Letrado · Penalidade + ícone · passagem · fim da descida · reset. (P0)
-- **M8:** AD · save completo · offline (D-04) · configurações · créditos. (P0, offline P1 se D-04 = não)
+- **M7:** `MinerAgent` · `CrystalLot` · `InternController` · matriz de testes · arte do estagiário. (P0)
+- **M8:** `CaveDefinition[10]` · Letrado · Penalidade + ícone · passagem · fim da descida · reset. (P0)
+- **M9:** AD · save completo · offline (D-04) · configurações · créditos. (P0, offline P1 se D-04 = não)
 
-### M9–M12 (resumo)
+### M10–M13 (resumo)
 Arte cavernas 2–10 · UI final · VFX/áudio finais · `CREDITS.md` · auditoria · balanceamento · Profiler · playtest · regressão · RC · loja.
 
 ## 6. MVP × pós-MVP
@@ -240,13 +249,14 @@ Arte cavernas 2–10 · UI final · VFX/áudio finais · `CREDITS.md` · auditor
 | M3 (regras e economia) | 35–55 |
 | M4 | 40–50 |
 | M5 | 45–65 |
-| M6 | 35–50 |
-| M7 | 35–45 |
-| M8 | 40–55 |
-| M9 | 60–90 |
-| M10 | 35–50 |
-| M11 | 25–40 |
-| M12 | 15–30 |
+| M6 (descida em corrida, D-52) | 40–60 |
+| M7 | 35–50 |
+| M8 | 35–45 |
+| M9 | 40–55 |
+| M10 | 60–90 |
+| M11 | 35–50 |
+| M12 | 25–40 |
+| M13 | 15–30 |
 | **Total** | **≈ 440–650 h** (≈ **22–33 semanas a 20 h/sem**; recalculado em 2026-10-21 com o M2 novo) (o RM estima 420–460 h para M1–M11, sem M1b, M12 e sem a recalibração) |
 
 **Premissas (a validar — C-18, D-17):** (1) horas de desenvolvimento **focado com o Claude escrevendo o código** e o Bruno revisando/testando — em 2026-10-20 não há medida de velocidade neste projeto; (2) **uma pessoa**;

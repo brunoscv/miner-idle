@@ -14,8 +14,8 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | M2 Protótipo do loop no mapa | ✅ aprovado em 2026-10-21 (E6 reduzida, D-32; testes da E5 no Unity rodam no início do M3) — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
 | M3 Regras e economia | ✅ aprovado em 2026-10-21 — [plano do M3](docs/planning/Marco%203%20-%20Regras%20e%20economia.md) |
 | M4 Loja, HUD e save mínimo | ✅ aprovado em 2026-10-21 — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |
-| **M5 Toque, crítico, combo e feedback** (graybox) | 🚧 E0–E4 validadas; E5 com a parte automática pronta, falta o teste de 10 min no Moto G75 — [plano do M5](docs/planning/Marco%205%20-%20Toque%20e%20feedback.md) |
-| **M6 Descida em corrida** (nova visão, [proposta](docs/planning/Proposta%20-%20Descida%20em%20corrida.md)) | 🔨 E1 (câmera e render, cena separada) ✅ validada no Moto G75 em 2026-10-22 (D-51); o resto aguarda a aprovação da proposta — [plano do M6](docs/planning/Marco%206%20-%20Descida%20em%20corrida.md) |
+| M5 Toque, crítico, combo e feedback (graybox) | ✅ aprovado em 2026-10-22 (E5 reduzida, D-59: o teste de 10 min no Moto G75 vai para a E5 do M6) — [plano do M5](docs/planning/Marco%205%20-%20Toque%20e%20feedback.md) |
+| **M6 Descida em corrida** (nova visão, [proposta](docs/planning/Proposta%20-%20Descida%20em%20corrida.md)) | 🔨 proposta aprovada (D-52…D-58); E1 (câmera e render, cena separada) ✅ validada no Moto G75 em 2026-10-22; plano da E2–E5 aprovado (D-60, D-61); E2 em andamento — [plano do M6](docs/planning/Marco%206%20-%20Descida%20em%20corrida.md) |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
 

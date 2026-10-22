@@ -1,6 +1,6 @@
 # Proposta — Descida em corrida (nova visão do jogo)
 
-> **Proposta de 2026-10-22.** A **câmera foi validada pelo Bruno em 2026-10-22** no simulador (§2) e registrada como **D-50**; a **E1 do marco novo foi adiantada** (D-51) e está no [plano do Marco 6](Marco%206%20-%20Descida%20em%20corrida.md). O resto aguarda decisão do Bruno e do dev principal. Os números D-52…D-58 e R-25…R-29 são **propostos**: só entram no [registro de decisões](Decisoes%20e%20Riscos.md) depois da aprovação.
+> **Proposta de 2026-10-22.** **Aprovada pelo Bruno em 2026-10-22**, com todas as recomendações: câmera **D-50**, E1 adiantada **D-51** (validada no Moto G75) e **D-52…D-58**, registradas em [Decisões e Riscos](Decisoes%20e%20Riscos.md) §1.2, com os riscos R-25…R-29. Execução: [plano do Marco 6](Marco%206%20-%20Descida%20em%20corrida.md).
 > Antes da mudança: o Bruno fez uma cópia de segurança do projeto. Recomendação extra: uma **tag no git** no último commit do mapa aberto (ex.: `v0.5-campo-aberto`), para recuperar o código antigo de dentro do próprio repositório.
 > **Revisão de 2026-10-22 (tarde):** a primeira versão propunha uma câmera alta, quase de cima, como o mockup. O Bruno pediu a câmera **de frente**, com pouca inclinação. Isso põe **perspectiva de verdade** na tela e muda a recomendação de projeção de 2D para **3D com cara de pixel art** (§3).
 

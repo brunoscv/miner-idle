@@ -58,12 +58,22 @@
 
 ### 1.2 Decididas pelo Bruno em 2026-10-22
 
-> Contexto: o dev principal propôs mudar a visão do jogo para uma **descida em corrida** (câmera de frente, anão correndo na direção dela por um corredor de caverna). A proposta completa, com as decisões ainda em aberto (D-52…D-58), está em [Proposta - Descida em corrida](Proposta%20-%20Descida%20em%20corrida.md). O código do mapa aberto continua no git (último commit do M5: `7f5183c`) e numa cópia de segurança feita pelo Bruno.
+> Contexto: o dev principal propôs mudar a visão do jogo para uma **descida em corrida** (câmera de frente, anão correndo na direção dela por um corredor de caverna). A proposta completa está em [Proposta - Descida em corrida](Proposta%20-%20Descida%20em%20corrida.md); o Bruno aprovou todas as recomendações (D-52…D-58) depois de validar a E1 no celular. O código do mapa aberto continua no git (último commit do M5: `7f5183c`) e numa cópia de segurança feita pelo Bruno.
 
 | # | Decisão |
 |---|---|
 | **D-50** | **Câmera de frente da descida**, escolhida no simulador: altura **2,4 m**, inclinação para baixo **15°**, distância até o anão **4,8 m**, campo de visão vertical **40°**, corredor de **3,0 m** de largura (o anão tem ~1,3 m). O anão corre parado na tela e o mundo se move em volta dele. Ajuste fino permitido no celular, na E1 do M6. |
 | **D-51** | **Adiantar a E1 do marco novo (M6 — Descida em corrida)** antes de aprovar o M5 e antes de aprovar o resto da proposta, para validar a câmera com o dev principal no aparelho. Exceção consciente à regra "um marco só começa quando o anterior foi aprovado": a E1 fica numa **cena separada** (`Descida`), sem tocar nas regras nem na cena do jogo, e o loop dela é **só visual** (como o simulador). O M5 continua com a E5 pendente (teste de 10 min no Moto G75). Plano: [Marco 6 - Descida em corrida](Marco%206%20-%20Descida%20em%20corrida.md). |
+| **D-52** | **Nova visão: descida em corrida (aprovada em 2026-10-22).** O corredor de caverna visto de frente, com o anão correndo na direção da câmera, **substitui o mapa aberto da D-26**. Ficam superadas a D-27 (alvo "lote, depois mais próximo": o alvo passa a ser o próximo da fila), a D-31 (caminho em linha reta) e a D-34 (feel da caminhada no mapa). A paleta, o tema e o estilo do mockup (D-05) continuam. O código do mapa aberto fica na tag `v0.5-campo-aberto` (commit `7f5183c`) e na cópia de segurança do Bruno. |
+| **D-53** | **Projeção 3D simples com cara de pixel art:** corredor 3D com texturas de pixel art, renderizado em baixa resolução (270 px, D-14) e ampliado sem suavizar; anão, estagiário e cristais como sprites 2D de frente. URP com o renderer Universal (o que o projeto já usa). Validada na E1 do M6. |
+| **D-54** | **Os cristais continuam nascendo por tempo:** os mesmos valores (1 a cada 5 s, no máximo 12 na fila); o cristal novo entra no **fim da fila**. Nenhum valor de regra muda por esta decisão. |
+| **D-55** | **Sem cristal à frente, o anão continua correndo:** a descida nunca para; ele só para para bater. Correr sem alvo não rende nada (é só visual). |
+| **D-56** | **Roadmap: o M6 passa a ser "Descida em corrida"**, antes do Art Spike (M1b) e do Estagiário. Os marcos seguintes ganham +1: Estagiário = **M7**, Letrado/penalidade/cavernas = **M8**, AD/save completo/offline = **M9**, arte das cavernas 2–10 = **M10**, balanceamento = **M11**, regressão/RC = **M12**, publicação = **M13**, pós-lançamento = **M14**. Em documentos anteriores a 2026-10-22, "M6" = Estagiário e assim por diante. |
+| **D-57** | **Estagiário corre ao lado do anão**, um pouco atrás (como na E1 do M6). Se ele bate no mesmo cristal (muda o REQ-INT-03) ou num cristal ao lado (cristais em pares) fica para o marco do estagiário (M7), com a spec revista. |
+| **D-58** | **Escala da trilha: 1 unidade da regra = 0,5 m no corredor** (só apresentação). A corrida de 4 un/s vira 2 m/s na tela, a velocidade validada na E1. |
+| **D-59** | **M5 aprovado (2026-10-22) com a E5 reduzida**, como a D-32 no M2: a parte automática (Profiler, testes de alocação, `FrameStats` no DBG) está pronta e commitada; o teste de 10 min no Moto G75 passa para a **E5 do M6**, que já mede fps e alocação na tela nova. |
+| **D-60** | **Onde o cristal nasce na fila (2026-10-22):** no fim da fila, a pelo menos **12 un (6 m) à frente do anão** (fora da tela, atrás da câmera); substitui a distância mínima do anão do mapa (1,5 un). O espaço entre cristais continua **2 un**. Os **10 cristais iniciais** começam na tela: o primeiro a **3 un** do anão, os outros a cada 2 un. Plano da E2–E5 do M6 aprovado. |
+| **D-61** | **Limpeza na E3 do M6:** a cena de teste `Descida`, o loop só visual e as views do mapa aberto (mapa, cristais espalhados, linha até o alvo, "Mostrar ordem") saem quando a cena `Game` passar a ser o corredor; os controles da câmera vão para o DBG do jogo. O código antigo fica na tag `v0.5-campo-aberto`. |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
@@ -155,6 +165,11 @@ Probabilidade/Impacto: B(aixo) · M(édio) · A(lto). Dono: Bruno, salvo indica�
 | R-20 | Dois outros jogos em andamento disputam as horas do Bruno | A | M | Trabalhar 1 marco por vez; estimar com horas reais (D-17) | Marco atrasado 2× |
 | R-23 | **Tempo de caminhada** (D-26/D-27) vira parte da economia: andar longe pela ordem do lote reduz lascas/min e pode parecer "burro" ao jogador | M | M | Caminhada no núcleo (medível no simulador); velocidade de caminhada como valor ajustável; avaliar o *feel* no M2 com o debug de ordem ligado | Bruno acha o vaivém irritante no M2 |
 | R-24 | Mapa com nascimento contínuo + estagiário (M6) aumenta a chance de alvo duplicado ou espera infinita | M | A | Seletor de alvo isolado e testado desde o M2; reserva de alvo entra junto com o estagiário | Qualquer P0 do estagiário |
+| R-25 | Texturas de pixel art "dançam" (shimmer) na perspectiva em baixa resolução (D-53) | M | M | Render de 270 px com filtro *point* e mipmaps; densidade de pixel das texturas decidida no Art Spike | Bruno ou playtester nota cintilação no corredor |
+| R-26 | O cristal na frente tapa o anão no golpe | M | B | Cristal baixo; o anão para a uma distância que deixa o cristal abaixo do peito; conferido na E1 | Rosto ou picareta escondidos no aparelho |
+| R-27 | O cristal aparece por pouco tempo (menos de 1 s com a câmera da D-50) e o jogador não o vê chegando | M | M | Escala da trilha (D-58); câmera ajustável no DBG; aviso na borda de baixo antes de o cristal entrar | Playtester não percebe o cristal chegando |
+| R-28 | O 3D com cara de pixel art se afasta do visual do mockup | M | M | Paleta e tema do mockup nas texturas; validar um quadro da caverna 1 no Art Spike antes de produzir as outras | Art Spike reprovado |
+| R-29 | O cristal minerado (~69–90% da tela) fica colado no botão PASSAR DE CAVERNA | B | B | O toque vale na tela toda; subir ou reduzir o botão se atrapalhar | Toques no botão por engano |
 
 ## 5. Premissas a validar
 
