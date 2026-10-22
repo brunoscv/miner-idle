@@ -11,12 +11,14 @@ namespace MinersIdle.EditorTools
     /// <summary>
     /// Parte do <see cref="GrayboxSetup"/> para o feedback de mineração (M5, E3), na cena Game já aberta: os textos em
     /// dados (<c>Data/FeedbackTexts</c>), o tremor na câmera e o objeto "Effects" (faíscas, textos flutuantes, lasca
-    /// voadora, "xN" e o <see cref="MiningFeedbackView"/>). Só cria o que falta.
+    /// voadora, "xN" e o <see cref="MiningFeedbackView"/>) e, desde a E4, o som provisório (<see cref="SoundBoard"/>).
+    /// Só cria o que falta.
     /// </summary>
     static class FeedbackSetup
     {
         const string TextsPath = "Assets/_Project/Data/FeedbackTexts.asset";
         const string EffectsName = "Effects";
+        const string SoundName = "Sound";
 
         static readonly Color ShardColor = new Color32(0xC2, 0x3C, 0xFF, 0xFF);
         static readonly Color ComboColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
@@ -87,6 +89,16 @@ namespace MinersIdle.EditorTools
                     ("sparks", sparks), ("floatingTexts", floating), ("shardFlight", flight), ("comboText", combo));
 
                 Debug.Log("[Setup] Efeitos de feedback criados na cena Game.");
+                changed = true;
+            }
+
+            // E4: o som mora em "Effects/Sound" (cenas da E3 ganham só ele).
+            var effectsObject = mining.transform.Find(EffectsName);
+            if (effectsObject != null && effectsObject.Find(SoundName) == null)
+            {
+                var sound = Child(effectsObject.gameObject, SoundName).AddComponent<SoundBoard>();
+                GrayboxSetup.SetReferences(sound, ("runner", mining.GetComponent<MiningRunner>()));
+                Debug.Log("[Setup] Som provisório criado na cena Game.");
                 changed = true;
             }
 

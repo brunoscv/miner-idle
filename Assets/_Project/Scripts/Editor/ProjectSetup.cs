@@ -69,6 +69,7 @@ namespace MinersIdle.EditorTools
             ConfigureAndroid();
             ConfigureUrp();
             ConfigureInputSystem();
+            ConfigureAudio();
             EnsurePrototypeBalance();
             EnsureGddBalance();
             EnsureBootstrapScene();
@@ -235,6 +236,32 @@ namespace MinersIdle.EditorTools
                 handler.intValue = InputSystemOnly;
                 serialized.ApplyModifiedProperties();
                 Debug.Log("[Setup] Active Input Handling = Input System (vale ao reabrir o Editor).");
+            }
+        }
+
+        // Project Settings → Audio → DSP Buffer Size: 256 = "Best latency" (0 é o padrão, ~1024 amostras no Android).
+        const int BestLatencyDspBuffer = 256;
+
+        /// <summary>
+        /// M5, E4: buffer de áudio pequeno, para o bipe do toque sair junto com o dedo. Com o padrão (1024 amostras a
+        /// 48 kHz), cada buffer segura ~16 ms a mais, o que já se sente num jogo de toque.
+        /// </summary>
+        static void ConfigureAudio()
+        {
+            var audioManager = Unsupported.GetSerializedAssetInterfaceSingleton("AudioManager");
+            var serialized = new SerializedObject(audioManager);
+            var buffer = serialized.FindProperty("m_RequestedDSPBufferSize");
+            if (buffer == null)
+            {
+                Debug.LogWarning("[Setup] m_RequestedDSPBufferSize não encontrado; definir à mão em Audio → DSP Buffer Size = Best latency.");
+                return;
+            }
+
+            if (buffer.intValue != BestLatencyDspBuffer)
+            {
+                buffer.intValue = BestLatencyDspBuffer;
+                serialized.ApplyModifiedProperties();
+                Debug.Log("[Setup] Áudio: DSP Buffer Size = Best latency.");
             }
         }
 
