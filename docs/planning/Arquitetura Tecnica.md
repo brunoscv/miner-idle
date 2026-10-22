@@ -4,7 +4,7 @@
 > Não há código nesta fase; pseudocódigo e diagramas só onde esclarecem. Princípio-mestre herdado do we-had-a-plan: *"não implementar hoje o que queremos amanhã; garantir que o de hoje
 > não impeça o amanhã."* Requisitos: REQ-TEC-xx em [Requisitos](../design/Requisitos%20e%20Restricoes.md).
 
-> **Nota de 2026-10-21 (D-26/D-27):** o lote fixo de 5 virou **mineração no mapa** (o anão anda; cristais nascem continuamente; alvo por "lote, depois mais próximo"). Onde este documento fala em `CrystalLot` de 5 slots (D-T7) ou "5 cristais" (D-T13), vale o desenho do [Marco 2](Marco%202%20-%20Prototipo%20do%20loop.md); a máquina do estagiário será revista no M3. O projeto Unity já existe (M1).
+> **Nota de 2026-10-21 (D-26/D-27):** o lote fixo de 5 virou **mineração no mapa** (o anão anda; cristais nascem continuamente; alvo por "lote, depois mais próximo"). Onde este documento fala em `CrystalLot` de 5 slots (D-T7) ou "5 cristais" (D-T13), vale o desenho do [Marco 2](Marco%202%20-%20Prototipo%20do%20loop.md); a máquina do estagiário está em [Spec - Estagiario no mapa](../design/Spec%20-%20Estagiario%20no%20mapa.md) (M3, E5). O projeto Unity já existe (M1).
 
 ## 1. Estado atual do ambiente (verificado)
 

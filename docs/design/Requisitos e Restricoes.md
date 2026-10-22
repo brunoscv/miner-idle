@@ -70,7 +70,7 @@
 | REQ-INT-01 | 1ª compra cria um segundo minerador no cristal imediatamente à frente; compras seguintes só melhoram | GDD §5.1 | OK |
 | REQ-INT-02 | Mesmo intervalo de golpe do principal (inclui nível de Velocidade) | GDD §5.1 | OK |
 | REQ-INT-03 | Nunca ocupa o cristal do principal; barra de vida própria; recebe as mesmas lascas | GDD §5.2 | OK |
-| REQ-INT-04 | Depois de quebrar seu alvo, **espera**; só avança quando o principal avança | GDD §5.2 | AMB (C-08) |
+| REQ-INT-04 | ~~Depois de quebrar seu alvo, **espera**; só avança quando o principal avança~~ → no mapa, escolhe o próximo alvo na hora, com reserva de alvo | GDD §5.2 | **SUPERADO** (D-39) |
 | REQ-INT-05 | Dano de referência: **uma** picareta do principal (Dupla não afeta); bônus de Letrado da caverna atual pode se aplicar antes do percentual | GDD §5.3 | OK |
 | REQ-INT-06 | Silhueta semelhante à do principal, com variação de escala/cor/capacete | GDD §8.3 | OK |
 
