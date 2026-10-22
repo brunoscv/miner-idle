@@ -11,8 +11,7 @@ namespace MinersIdle.Tests
 
         static MiningRules Rules() =>
             new MiningRules(
-                new Vec2(-7.5, -11), new Vec2(7.5, 10), new Vec2(0, -0.5),
-                initialCrystals: 0, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, minDistanceFromMiner: 1.5,
+                initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: 10, crystalReward: 1, damage: 1, hitInterval: 1, walkSpeed: 4, miningRange: 1);
 
         /// <summary>A tabela de protótipo do plano do Marco 3.</summary>

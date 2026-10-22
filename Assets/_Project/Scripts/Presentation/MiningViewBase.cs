@@ -53,10 +53,18 @@ namespace MinersIdle.Presentation
         /// <summary>Desenha o estado atual da partida (chamado ao conectar e a cada reinício).</summary>
         protected abstract void Rebuild(MiningSimulation simulation);
 
-        /// <summary>Unidade do Núcleo = unidade de mundo (16 px).</summary>
-        protected static Vector3 ToWorld(Vec2 position) => new Vector3((float)position.X, (float)position.Y, 0f);
+        /// <summary>Altura de mundo em que o anão fica parado na vista de cima (M6, E2).</summary>
+        public const float MinerY = 8f;
+
+        /// <summary>
+        /// M6 (E2): enquanto a cena é vista de cima, a fila da descida é desenhada numa linha vertical. O anão fica parado
+        /// em <see cref="MinerY"/>; os cristais ficam abaixo dele e sobem conforme ele corre (1 un da trilha = 1 unidade de
+        /// mundo). O corredor 3D entra na E3.
+        /// </summary>
+        public static Vector3 TrackToWorld(double distance, double minerDistance) =>
+            new Vector3(0f, MinerY - (float)(distance - minerDistance), 0f);
 
         /// <summary>Visão de cima em 3/4: quem está mais embaixo na tela fica na frente.</summary>
-        protected static int SortingOrderFor(Vec2 position) => -(int)System.Math.Round(position.Y * 100);
+        protected static int SortingOrderFor(float worldY) => -(int)System.Math.Round(worldY * 100);
     }
 }

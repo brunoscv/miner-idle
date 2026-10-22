@@ -5,8 +5,8 @@ using UnityEngine;
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Um grupo de cristais em graybox, reaproveitado pelo pool do <see cref="CrystalFieldView"/>. A barra de vida só
-    /// aparece no alvo atual (REQ-CRY-03). O número do lote só aparece com "Mostrar ordem" do debug (D-27).
+    /// Um cristal em graybox, reaproveitado pelo pool do <see cref="CrystalFieldView"/>. A barra de vida só aparece no
+    /// alvo atual (REQ-CRY-03). O número do cristal só aparece com "Mostrar ordem" do debug.
     /// </summary>
     public sealed class CrystalView : MonoBehaviour
     {
@@ -37,14 +37,19 @@ namespace MinersIdle.Presentation
             healthFill.sortingOrder = HealthBarSortingOrder + 1;
         }
 
-        public void Show(Crystal crystal, int sortingOrder)
+        public void Show(Crystal crystal)
         {
             Crystal = crystal;
-            transform.position = new Vector3((float)crystal.Position.X, (float)crystal.Position.Y, 0f);
-            body.sortingOrder = sortingOrder;
-            batchLabel.SetText("{0}", crystal.Batch);
+            batchLabel.SetText("{0}", crystal.Id);
             SetTargeted(false);
             RefreshHealth();
+        }
+
+        /// <summary>Põe o cristal no lugar (muda a cada quadro: a fila anda em relação ao anão).</summary>
+        public void Place(Vector3 position, int sortingOrder)
+        {
+            transform.position = position;
+            body.sortingOrder = sortingOrder;
         }
 
         public void SetTargeted(bool targeted) => healthBar.SetActive(targeted);

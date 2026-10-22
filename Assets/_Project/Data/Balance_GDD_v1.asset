@@ -12,14 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0e0439bc883c8d45a7a6ddc24196157, type: 3}
   m_Name: Balance_GDD_v1
   m_EditorClassIdentifier: MinersIdle.Game::MinersIdle.Game.MiningRulesAsset
-  mapMin: {x: -7.5, y: -11}
-  mapMax: {x: 7.5, y: 10}
-  minerStart: {x: 0, y: -0.5}
   initialCrystals: 10
+  firstCrystalDistance: 3
   maxCrystals: 12
   spawnInterval: 5
   minCrystalSpacing: 2
-  minDistanceFromMiner: 1.5
+  spawnDistance: 12
   crystalHealth: 10
   crystalReward: 1
   damage: 0.5

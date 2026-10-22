@@ -1622,7 +1622,7 @@ MonoBehaviour:
   toggleButton: {fileID: 626696413}
   content: {fileID: 2138739016}
   stats: {fileID: 135781472}
-  statsFormat: "Semente {0}\nTempo \xD7{1} \xB7 {2} min de jogo\nGolpes {3} \xB7 Quebras {4}\nLascas/min {5}\nCristais {6}/{7} \xB7 Alvo #{8} (lote {9})"
+  statsFormat: "Semente {0}\nTempo \xD7{1} \xB7 {2} min de jogo\nGolpes {3} \xB7 Quebras {4}\nLascas/min {5}\nCristais {6}/{7} \xB7 Alvo #{8} \xB7 Descida {9} un"
   upgrades: {fileID: 342568698}
   upgradesFormat: "Picareta nv {0} (pr\xF3x. {1}) \xB7 Velocidade nv {2} (pr\xF3x. {3}) \xB7 Minera\xE7\xE3o nv {4} (pr\xF3x. {5}) \xB7 Dupla nv {6} (pr\xF3x. {7}) \xB7 Botas nv {8} (pr\xF3x. {9})"
   maxedLabel: "m\xE1x."
@@ -9014,7 +9014,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MinersIdle.Presentation::MinersIdle.Presentation.MapView
   runner: {fileID: 1673760089}
-  padding: 1
+  size: {x: 4, y: 34}
 --- !u!212 &1569776037
 SpriteRenderer:
   serializedVersion: 3

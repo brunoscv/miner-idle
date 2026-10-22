@@ -13,20 +13,19 @@ namespace MinersIdle.Game
     [CreateAssetMenu(menuName = "Miners Idle/Valores de mineração", fileName = "Balance_Prototipo")]
     public sealed class MiningRulesAsset : ScriptableObject
     {
-        [Header("Mapa (unidades de mundo; 1 = 16 px)")]
-        [SerializeField] Vector2 mapMin = new Vector2(-7.5f, -11f);
-        [SerializeField] Vector2 mapMax = new Vector2(7.5f, 10f);
-        [SerializeField] Vector2 minerStart = new Vector2(0f, -0.5f);
-
-        [Header("Nascimento de cristais")]
-        [Tooltip("Cristais na tela no início (lote 1).")]
+        [Header("Fila de cristais (unidades da trilha; 1 un = 0,5 m na tela, D-58)")]
+        [Tooltip("Cristais na fila no início, já na tela.")]
         [SerializeField] int initialCrystals = 10;
-        [Tooltip("Com este número na tela, para de nascer até alguém quebrar.")]
+        [Tooltip("Distância do anão ao primeiro cristal inicial (D-60).")]
+        [SerializeField] double firstCrystalDistance = 3;
+        [Tooltip("Com este número na fila, para de nascer até alguém quebrar.")]
         [SerializeField] int maxCrystals = 12;
         [Tooltip("Segundos entre nascimentos.")]
         [SerializeField] double spawnInterval = 5;
+        [Tooltip("Espaço mínimo entre dois cristais da fila (D-60).")]
         [SerializeField] double minCrystalSpacing = 2;
-        [SerializeField] double minDistanceFromMiner = 1.5;
+        [Tooltip("O cristal novo nasce no fim da fila, a pelo menos esta distância à frente do anão: fora da tela (D-60).")]
+        [SerializeField] double spawnDistance = 12;
 
         [Header("Cristal")]
         [SerializeField] double crystalHealth = 10;
@@ -37,9 +36,9 @@ namespace MinersIdle.Game
         [SerializeField] double damage = 1;
         [Tooltip("Segundos entre golpes, sem melhorias.")]
         [SerializeField] double hitInterval = 1;
-        [Tooltip("Unidades de mundo por segundo.")]
+        [Tooltip("Corrida, em unidades da trilha por segundo.")]
         [SerializeField] double walkSpeed = 4;
-        [Tooltip("Distância do centro do cristal em que o anão para e começa a bater.")]
+        [Tooltip("Distância do cristal em que o anão para e começa a bater.")]
         [SerializeField] double miningRange = 1;
 
         [Header("Melhorias (custo da próxima compra = inicial × crescimento^nível; nível = compras feitas)")]
@@ -51,7 +50,7 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues mining = new UpgradeLineValues(10, 1.2, 100, 0.01);
         [Tooltip("Efeito: multiplicador do dano depois da compra (compra única).")]
         [SerializeField] UpgradeLineValues doublePickaxe = new UpgradeLineValues(500, 1, 1, 2);
-        [Tooltip("Efeito: fração a mais de caminhada a cada nível (0,1 = 10%). Limite 0 desliga a linha.")]
+        [Tooltip("Efeito: fração a mais de corrida a cada nível (0,1 = 10%). Limite 0 desliga a linha.")]
         [SerializeField] UpgradeLineValues boots = new UpgradeLineValues(10, 2, 10, 0.1);
         [Tooltip("Intervalo mínimo entre golpes, em segundos.")]
         [SerializeField] double minHitInterval = 0.5;
@@ -67,9 +66,8 @@ namespace MinersIdle.Game
         [SerializeField] double comboWindow = 1;
 
         public MiningRules ToRules() => new MiningRules(
-            new Vec2(mapMin.x, mapMin.y), new Vec2(mapMax.x, mapMax.y), new Vec2(minerStart.x, minerStart.y),
-            initialCrystals, maxCrystals, spawnInterval,
-            minCrystalSpacing, minDistanceFromMiner,
+            initialCrystals, firstCrystalDistance, maxCrystals, spawnInterval,
+            minCrystalSpacing, spawnDistance,
             crystalHealth, crystalReward,
             damage, hitInterval,
             walkSpeed, miningRange);

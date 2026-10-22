@@ -6,7 +6,7 @@ using UnityEngine;
 namespace MinersIdle.Game
 {
     /// <summary>
-    /// Dono da partida na cena Game (M2): monta a <see cref="MiningSimulation"/> com os valores e as melhorias do asset
+    /// Dono da partida na cena Game (M2; a fila da descida desde o M6): monta a <see cref="MiningSimulation"/> com os valores e as melhorias do asset
     /// (M3) e a avança a cada quadro. As views só leem a simulação e escutam os eventos dela.
     ///
     /// Save (M4): o <c>GameBootstrap</c> entrega o <see cref="SaveService"/> (<see cref="UseSave"/>); daí em diante o
@@ -130,8 +130,7 @@ namespace MinersIdle.Game
 
             Seed = seed;
             Simulation = new MiningSimulation(
-                rules.ToRules(), new SeededRandom(seed), state, rules.ToEconomy(),
-                rules.ToStrike(), new SeededRandom(CritSeed(seed)))
+                rules.ToRules(), new SeededRandom(CritSeed(seed)), state, rules.ToEconomy(), rules.ToStrike())
             {
                 ForceCritical = _forceCritical,
             };

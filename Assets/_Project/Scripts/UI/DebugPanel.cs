@@ -34,7 +34,7 @@ namespace MinersIdle.UI
         [SerializeField] GameObject content;
         [SerializeField] TMP_Text stats;
         [Tooltip("{0} semente · {1} escala do tempo · {2} minutos de jogo · {3} golpes · {4} quebras · {5} lascas/min · " +
-                 "{6} cristais na tela · {7} máximo · {8} alvo (id) · {9} lote do alvo")]
+                 "{6} cristais na fila · {7} máximo · {8} alvo (id) · {9} distância descida (un)")]
         [SerializeField, TextArea(3, 8)] string statsFormat;
         [SerializeField] TMP_Text upgrades;
         [Tooltip("Pares nível/próximo custo, na ordem: {0}/{1} Picareta · {2}/{3} Velocidade · {4}/{5} Mineração · " +
@@ -215,7 +215,7 @@ namespace MinersIdle.UI
                 simulation.Crystals.Count,
                 simulation.Rules.MaxCrystals,
                 target != null ? target.Id.ToString() : "-",
-                target != null ? target.Batch.ToString() : "-");
+                NumberFormatter.Format(simulation.Miner.Distance));
 
             var economy = simulation.Economy;
             int i = 0;

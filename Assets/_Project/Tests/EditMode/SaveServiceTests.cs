@@ -25,8 +25,7 @@ namespace MinersIdle.Tests
 
         static MiningRules Rules() =>
             new MiningRules(
-                new Vec2(-7.5, -11), new Vec2(7.5, 10), new Vec2(0, -0.5),
-                initialCrystals: 0, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, minDistanceFromMiner: 1.5,
+                initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: 1, crystalReward: 1, damage: 1, hitInterval: 1, walkSpeed: 4, miningRange: 1);
 
         [SetUp]
@@ -48,7 +47,7 @@ namespace MinersIdle.Tests
         {
             var state = new GameState();
             var sim = new MiningSimulation(Rules(), new SeededRandom(1), state, Prototype());
-            sim.SpawnCrystalAt(new Vec2(1, -0.5));
+            sim.SpawnCrystalAt(1);
             sim.Tick(1); // 1 golpe, 1 quebra
             sim.AddShards(1234.56);
             sim.Purchase(UpgradeId.Pickaxe);

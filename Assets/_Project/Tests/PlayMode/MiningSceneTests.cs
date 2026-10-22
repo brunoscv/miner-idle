@@ -11,7 +11,7 @@ using UnityEngine.TestTools;
 
 namespace MinersIdle.Tests
 {
-    /// <summary>Marco 2, E3: a cena Game roda o loop sozinha e o desenho acompanha a simulação.</summary>
+    /// <summary>Marco 2, E3 (na fila desde o M6, E2): a cena Game roda o loop sozinha e o desenho acompanha a simulação.</summary>
     public class MiningSceneTests
     {
         const string GameScenePath = "Assets/_Project/Scenes/Game.unity";
@@ -32,7 +32,7 @@ namespace MinersIdle.Tests
             Assert.That(runner.Simulation, Is.Not.Null);
 
             var simulation = runner.Simulation;
-            var start = simulation.Miner.Position;
+            double start = simulation.Miner.Distance;
             runner.TimeScale = 20f;
 
             // ~3 s reais × 20 = ~1 min de jogo: dá para quebrar alguns cristais (~12 s cada).
@@ -45,12 +45,16 @@ namespace MinersIdle.Tests
             Assert.That(simulation.Elapsed, Is.GreaterThan(20), "o tempo de jogo andou");
             Assert.That(simulation.State.Breaks, Is.GreaterThan(0), "quebrou cristais sem nenhum toque");
             Assert.That(simulation.State.Shards, Is.EqualTo(simulation.State.Breaks * simulation.Rules.CrystalReward));
-            Assert.That(Vec2.Distance(simulation.Miner.Position, start), Is.GreaterThan(0), "o anão saiu do lugar");
+            Assert.That(simulation.Miner.Distance, Is.GreaterThan(start), "o anão correu pela fila");
             Assert.That(field.ActiveCount, Is.EqualTo(simulation.Crystals.Count), "um desenho por cristal vivo");
 
-            var drawn = minerView.transform.position;
-            Assert.That(drawn.x, Is.EqualTo((float)simulation.Miner.Position.X).Within(1e-3f));
-            Assert.That(drawn.y, Is.EqualTo((float)simulation.Miner.Position.Y).Within(1e-3f));
+            // M6 (E2): o anão corre parado na tela; quem anda é a fila, desenhada em relação a ele.
+            Assert.That(minerView.transform.position, Is.EqualTo(MiningViewBase.TrackToWorld(0, 0)));
+            foreach (var view in field.ActiveViews)
+            {
+                var expected = MiningViewBase.TrackToWorld(view.Crystal.Distance, simulation.Miner.Distance);
+                Assert.That(view.transform.position.y, Is.EqualTo(expected.y).Within(1e-3f), "cristal " + view.Crystal.Id);
+            }
 
             var hud = Object.FindAnyObjectByType<HudView>();
             Assert.That(hud, Is.Not.Null, "a cena Game precisa do HUD (rode o setup do projeto)");

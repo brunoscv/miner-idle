@@ -6,46 +6,44 @@ using NUnit.Framework;
 
 namespace MinersIdle.Tests
 {
-    /// <summary>O loop de mineração no mapa (Marco 2, E2): andar, bater, quebrar, nascer, determinismo.</summary>
+    /// <summary>
+    /// O loop de mineração (Marco 2, E2), na fila da descida desde o M6 (E2, D-52…D-55, D-60): correr, bater, quebrar,
+    /// nascer, determinismo. Até o M5 estes testes mediam o mapa aberto; foram reescritos para medir a fila.
+    /// </summary>
     public class MiningSimulationTests
     {
-        /// <summary>Valores próximos da tabela do Marco 2, escritos aqui para os testes não dependerem do asset.</summary>
+        /// <summary>Os valores do asset de protótipo, escritos aqui para os testes não dependerem dele.</summary>
         static MiningRules Rules(
-            double mapHalfWidth = 7.5, double mapBottom = -11, double mapTop = 10, double startX = 0, double startY = -0.5,
-            int initial = 10, int max = 12, double spawnInterval = 5, double spacing = 2, double fromMiner = 1.5,
-            double health = 10, double reward = 1, double damage = 1, double hitInterval = 1,
+            int initial = 10, double first = 3, int max = 12, double spawnInterval = 5, double spacing = 2,
+            double spawnDistance = 12, double health = 10, double reward = 1, double damage = 1, double hitInterval = 1,
             double walkSpeed = 4, double range = 1) =>
-            new MiningRules(
-                new Vec2(-mapHalfWidth, mapBottom), new Vec2(mapHalfWidth, mapTop), new Vec2(startX, startY),
-                initial, max, spawnInterval, spacing, fromMiner, health, reward, damage, hitInterval, walkSpeed, range);
+            new MiningRules(initial, first, max, spawnInterval, spacing, spawnDistance, health, reward, damage, hitInterval,
+                            walkSpeed, range);
 
-        /// <summary>Mapa vazio e sem nascimento: os testes põem cada cristal à mão.</summary>
-        static MiningSimulation EmptyMap(double health = 3) =>
-            new MiningSimulation(
-                Rules(mapHalfWidth: 20, mapBottom: -20, mapTop: 20, startY: 0, initial: 0, spawnInterval: 1e9, health: health),
-                new SeededRandom(1));
+        /// <summary>Fila vazia e sem nascimento: os testes põem cada cristal à mão.</summary>
+        static MiningSimulation EmptyTrack(double health = 3) =>
+            new MiningSimulation(Rules(initial: 0, spawnInterval: 1e9, health: health), new SeededRandom(1));
 
         [Test]
-        public void Miner_WalksAtWalkSpeed_AndStopsAtMiningRange()
+        public void Miner_RunsAtWalkSpeed_AndStopsAtMiningRange()
         {
-            var sim = EmptyMap();
-            sim.SpawnCrystalAt(new Vec2(10, 0));
+            var sim = EmptyTrack();
+            sim.SpawnCrystalAt(10);
 
             sim.Tick(2.0);
-            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Walking));
-            Assert.That(sim.Miner.Position.X, Is.EqualTo(8).Within(1e-9));
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running));
+            Assert.That(sim.Miner.Distance, Is.EqualTo(8).Within(1e-9));
 
             sim.Tick(0.25); // 9 unidades a 4/s = 2,25 s
             Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Mining));
-            Assert.That(sim.Miner.Position.X, Is.EqualTo(9).Within(1e-9));
-            Assert.That(sim.Miner.Position.Y, Is.EqualTo(0).Within(1e-9));
+            Assert.That(sim.Miner.Distance, Is.EqualTo(9).Within(1e-9));
         }
 
         [Test]
         public void Hits_StartOnlyAfterArrival_OneEveryInterval_AndBreakPaysOnce()
         {
-            var sim = EmptyMap(health: 3);
-            var crystal = sim.SpawnCrystalAt(new Vec2(10, 0));
+            var sim = EmptyTrack(health: 3);
+            var crystal = sim.SpawnCrystalAt(10);
             int broken = 0, shardsEvents = 0;
             sim.CrystalBroken += _ => broken++;
             sim.ShardsChanged += _ => shardsEvents++;
@@ -63,7 +61,7 @@ namespace MinersIdle.Tests
             Assert.That(sim.State.Breaks, Is.EqualTo(1));
             Assert.That(sim.State.Shards, Is.EqualTo(1));
             Assert.That(sim.Crystals, Is.Empty);
-            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Idle));
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running), "volta a correr");
             Assert.That(sim.Miner.Target, Is.Null);
 
             sim.Tick(30);
@@ -73,93 +71,111 @@ namespace MinersIdle.Tests
             Assert.That(shardsEvents, Is.EqualTo(1));
         }
 
+        /// <summary>D-55: a descida nunca para; sem cristal, o anão corre na velocidade de corrida, sem ganhar nada.</summary>
         [Test]
-        public void NoCrystals_MinerStaysIdleWhereItIs()
+        public void NoCrystals_MinerKeepsRunning()
         {
-            var sim = EmptyMap();
+            var sim = EmptyTrack();
             sim.Tick(10);
 
-            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Idle));
-            Assert.That(sim.Miner.Position, Is.EqualTo(sim.Rules.MinerStart));
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running));
+            Assert.That(sim.Miner.Distance, Is.EqualTo(40).Within(1e-9));
             Assert.That(sim.State.Hits, Is.EqualTo(0));
+            Assert.That(sim.State.Shards, Is.EqualTo(0));
         }
 
         [Test]
-        public void Target_DoesNotChange_WhenACloserCrystalAppearsDuringTheWalk()
+        public void RunningWithoutCrystals_StopsAtTheOneThatIsBorn()
         {
-            var sim = EmptyMap();
-            var first = sim.SpawnCrystalAt(new Vec2(10, 0));
+            var sim = new MiningSimulation(Rules(initial: 0, spawnInterval: 5, health: 1e9), new SeededRandom(1));
+
+            sim.Tick(5); // 20 un corridas; nasce um cristal a 20 + 12 = 32
+            Assert.That(sim.Crystals.Single().Distance, Is.EqualTo(32).Within(1e-9));
+
+            sim.Tick(11 / 4.0); // faltam 32 − 1 − 20 = 11 un
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Mining));
+            Assert.That(sim.Miner.Distance, Is.EqualTo(31).Within(1e-9));
+        }
+
+        [Test]
+        public void Target_DoesNotChange_WhenACrystalIsPutInFrontOfIt()
+        {
+            var sim = EmptyTrack();
+            var first = sim.SpawnCrystalAt(10);
             var targets = new List<Crystal>();
             sim.TargetChanged += t => targets.Add(t);
 
             sim.Tick(1);
-            sim.SpawnCrystalAt(sim.Miner.Position + new Vec2(0.5, 0));
+            var inFront = sim.SpawnCrystalAt(sim.Miner.Distance + 0.5);
             sim.Tick(1);
 
-            Assert.That(sim.Miner.Target, Is.SameAs(first));
+            Assert.That(sim.Crystals.First(), Is.SameAs(inFront), "o novo entra no seu lugar da fila");
+            Assert.That(sim.Miner.Target, Is.SameAs(first), "mas o alvo só muda depois de quebrar");
             Assert.That(targets, Is.EqualTo(new[] { first }));
         }
 
         [Test]
-        public void AfterBreaking_GoesToTheNextByBatchThenDistance()
+        public void AfterBreaking_GoesToTheNextOfTheQueue_InDistanceOrder()
         {
-            var sim = EmptyMap(health: 1);
-            var far = sim.SpawnCrystalAt(new Vec2(-10, 0));   // lote 1
-            var near = sim.SpawnCrystalAt(new Vec2(2, 0));    // lote 2, mais perto
+            var sim = EmptyTrack(health: 1);
+            var far = sim.SpawnCrystalAt(10);  // nasceu primeiro, mais longe
+            var near = sim.SpawnCrystalAt(4);  // nasceu depois, mais perto
             var order = new List<int>();
             sim.CrystalBroken += c => order.Add(c.Id);
 
             sim.Tick(60);
 
-            Assert.That(order, Is.EqualTo(new[] { far.Id, near.Id }));
+            Assert.That(order, Is.EqualTo(new[] { near.Id, far.Id }), "a fila vai do mais perto ao mais longe");
         }
 
+        /// <summary>D-60: a fila inicial já está na tela (a partir de 3 un, a cada 2 un); os novos entram no fim, a 12 un ou mais.</summary>
         [Test]
-        public void InitialCrystals_AreBatch1_LaterOnesGetTheirOwnBatchInBirthOrder()
+        public void InitialCrystals_StartOnScreen_AndNewOnesJoinTheEndOfTheQueue()
         {
             var sim = new MiningSimulation(Rules(initial: 3, max: 10, spawnInterval: 1, health: 1e9), new SeededRandom(3));
-            Assert.That(sim.Crystals.Select(c => c.Batch), Is.EqualTo(new[] { 1, 1, 1 }));
+            Assert.That(sim.Crystals.Select(c => c.Distance), Is.EqualTo(new[] { 3.0, 5.0, 7.0 }));
 
-            sim.Tick(5.5);
+            sim.Tick(5.5); // o anão chega ao 1º (para em 2) em 0,5 s e bate; nascem 5
 
             Assert.That(sim.Crystals.Select(c => c.Id), Is.EqualTo(new[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
-            Assert.That(sim.Crystals.Select(c => c.Batch), Is.EqualTo(new[] { 1, 1, 1, 2, 3, 4, 5, 6 }));
+            Assert.That(sim.Crystals.Select(c => c.Distance), Is.EqualTo(new[] { 3.0, 5.0, 7.0, 14.0, 16.0, 18.0, 20.0, 22.0 }),
+                        "o 1º novo a 2 + 12 = 14; os seguintes a 2 un do último");
         }
 
         [Test]
-        public void Spawning_RespectsMaximumAreaAndSpacing()
+        public void Spawning_RespectsMaximum_SpacingAndDistanceAhead()
         {
             var rules = Rules(initial: 10, max: 12, spawnInterval: 0.1, health: 1e9);
             var sim = new MiningSimulation(rules, new SeededRandom(42));
-            var tooCloseToMiner = 0;
+            int tooClose = 0;
             sim.CrystalSpawned += c =>
             {
-                if (Vec2.Distance(c.Position, sim.Miner.Position) < rules.MinDistanceFromMiner) tooCloseToMiner++;
+                if (c.Distance < sim.Miner.Distance + rules.SpawnDistance - 1e-9) tooClose++;
             };
-            Assert.That(sim.Crystals.All(c => Vec2.Distance(c.Position, rules.MinerStart) >= rules.MinDistanceFromMiner));
 
             sim.Tick(60);
 
             Assert.That(sim.Crystals.Count, Is.EqualTo(rules.MaxCrystals));
-            Assert.That(tooCloseToMiner, Is.EqualTo(0));
-            foreach (var c in sim.Crystals)
-            {
-                Assert.That(c.Position.X, Is.InRange(rules.MapMin.X, rules.MapMax.X));
-                Assert.That(c.Position.Y, Is.InRange(rules.MapMin.Y, rules.MapMax.Y));
-                foreach (var other in sim.Crystals.Where(o => o != c))
-                    Assert.That(Vec2.Distance(c.Position, other.Position), Is.GreaterThanOrEqualTo(rules.MinCrystalSpacing));
-            }
+            Assert.That(tooClose, Is.EqualTo(0), "nenhum nasce à vista (perto demais do anão)");
+            for (int i = 1; i < sim.Crystals.Count; i++)
+                Assert.That(sim.Crystals[i].Distance - sim.Crystals[i - 1].Distance, Is.GreaterThanOrEqualTo(rules.MinCrystalSpacing - 1e-9));
         }
 
         [Test]
-        public void CrowdedMap_SkipsSpawnsInsteadOfOverlapping()
+        public void FullQueue_WaitsAndSpawnsRightAfterABreak()
         {
-            var rules = Rules(mapHalfWidth: 1, mapBottom: -1, mapTop: 1, startY: 0, initial: 5, max: 50,
-                              spawnInterval: 0.1, spacing: 2, fromMiner: 0, health: 1e9);
+            var rules = Rules(initial: 12, max: 12, spawnInterval: 5, health: 1e9);
             var sim = new MiningSimulation(rules, new SeededRandom(8));
 
-            Assert.DoesNotThrow(() => sim.Tick(10));
-            Assert.That(sim.Crystals.Count, Is.InRange(1, 4), "num quadrado 2×2 com espaçamento 2 cabem no máximo 4");
+            sim.Tick(20);
+            Assert.That(sim.Crystals.Count, Is.EqualTo(12), "cheia: não nasce");
+
+            double last = sim.Crystals.Last().Distance;
+            sim.BreakTarget();
+            sim.Tick(0);
+
+            Assert.That(sim.Crystals.Count, Is.EqualTo(12), "o relógio esperou no limite e nasce logo depois da quebra");
+            Assert.That(sim.Crystals.Last().Distance, Is.EqualTo(last + rules.MinCrystalSpacing).Within(1e-9));
         }
 
         [Test]
@@ -173,7 +189,7 @@ namespace MinersIdle.Tests
                 b.Tick(1.0 / 60);
             }
 
-            AssertSameGame(a, b, positionTolerance: 0);
+            AssertSameGame(a, b, distanceTolerance: 0);
             Assert.That(a.State.Breaks, Is.GreaterThan(0));
         }
 
@@ -198,8 +214,8 @@ namespace MinersIdle.Tests
                 left -= dt;
             }
 
-            AssertSameGame(frames, oneShot, positionTolerance: 1e-6);
-            AssertSameGame(frames, irregular, positionTolerance: 1e-6);
+            AssertSameGame(frames, oneShot, distanceTolerance: 1e-6);
+            AssertSameGame(frames, irregular, distanceTolerance: 1e-6);
         }
 
         [Test]
@@ -207,26 +223,29 @@ namespace MinersIdle.Tests
         {
             var rules = Rules();
             var sim = new MiningSimulation(rules, new SeededRandom(7));
+            double lastDistance = 0;
 
             for (int i = 0; i < 36000; i++)
             {
                 sim.Tick(0.1);
                 Assert.That(sim.Crystals.Count, Is.LessThanOrEqualTo(rules.MaxCrystals));
+                Assert.That(sim.Miner.Distance, Is.GreaterThanOrEqualTo(lastDistance), "o anão nunca volta");
+                lastDistance = sim.Miner.Distance;
             }
 
             var state = sim.State;
             Assert.That(state.Breaks, Is.GreaterThan(100));
             Assert.That(state.Shards, Is.EqualTo(state.Breaks * rules.CrystalReward));
             Assert.That(state.Hits, Is.GreaterThanOrEqualTo(state.Breaks * (long)Math.Ceiling(rules.CrystalHealth / rules.Damage)));
-            Assert.That(sim.Miner.Position.X, Is.InRange(rules.MapMin.X, rules.MapMax.X));
-            Assert.That(sim.Miner.Position.Y, Is.InRange(rules.MapMin.Y, rules.MapMax.Y));
+            for (int i = 1; i < sim.Crystals.Count; i++)
+                Assert.That(sim.Crystals[i].Distance, Is.GreaterThan(sim.Crystals[i - 1].Distance), "a fila continua em ordem");
             Assert.That(sim.Elapsed, Is.EqualTo(3600).Within(1e-6));
         }
 
         [Test]
         public void Tick_RejectsNegativeOrInvalidTime()
         {
-            var sim = EmptyMap();
+            var sim = EmptyTrack();
             Assert.Throws<ArgumentOutOfRangeException>(() => sim.Tick(-1));
             Assert.Throws<ArgumentOutOfRangeException>(() => sim.Tick(double.NaN));
             Assert.DoesNotThrow(() => sim.Tick(0));
@@ -238,11 +257,11 @@ namespace MinersIdle.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => Rules(initial: 13, max: 12));
             Assert.Throws<ArgumentOutOfRangeException>(() => Rules(hitInterval: 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => Rules(walkSpeed: 0));
-            Assert.Throws<ArgumentException>(() => Rules(startX: 50));
-            Assert.Throws<ArgumentException>(() => Rules(mapBottom: 10, mapTop: 10));
+            Assert.Throws<ArgumentOutOfRangeException>(() => Rules(first: -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => Rules(spawnDistance: -1));
         }
 
-        static void AssertSameGame(MiningSimulation a, MiningSimulation b, double positionTolerance)
+        static void AssertSameGame(MiningSimulation a, MiningSimulation b, double distanceTolerance)
         {
             Assert.That(b.State.Hits, Is.EqualTo(a.State.Hits), "golpes");
             Assert.That(b.State.Breaks, Is.EqualTo(a.State.Breaks), "quebras");
@@ -250,13 +269,12 @@ namespace MinersIdle.Tests
             Assert.That(b.Crystals.Select(c => c.Id), Is.EqualTo(a.Crystals.Select(c => c.Id)), "cristais vivos");
             for (int i = 0; i < a.Crystals.Count; i++)
             {
-                Assert.That(b.Crystals[i].Position.X, Is.EqualTo(a.Crystals[i].Position.X).Within(positionTolerance));
-                Assert.That(b.Crystals[i].Position.Y, Is.EqualTo(a.Crystals[i].Position.Y).Within(positionTolerance));
+                Assert.That(b.Crystals[i].Distance, Is.EqualTo(a.Crystals[i].Distance).Within(distanceTolerance));
                 Assert.That(b.Crystals[i].Health, Is.EqualTo(a.Crystals[i].Health), "vida do cristal " + a.Crystals[i].Id);
             }
             Assert.That(b.Miner.State, Is.EqualTo(a.Miner.State), "estado do anão");
             Assert.That(b.Miner.Target?.Id, Is.EqualTo(a.Miner.Target?.Id), "alvo do anão");
-            Assert.That(Vec2.Distance(a.Miner.Position, b.Miner.Position), Is.LessThanOrEqualTo(positionTolerance), "posição do anão");
+            Assert.That(Math.Abs(a.Miner.Distance - b.Miner.Distance), Is.LessThanOrEqualTo(distanceTolerance), "distância do anão");
         }
     }
 }

@@ -15,8 +15,7 @@ namespace MinersIdle.Tests
 
         static MiningRules BaseRules(double damage = 1, double hitInterval = 1) =>
             new MiningRules(
-                new Vec2(-7.5, -11), new Vec2(7.5, 10), new Vec2(0, -0.5),
-                initialCrystals: 0, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, minDistanceFromMiner: 1.5,
+                initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: 10, crystalReward: 1, damage: damage, hitInterval: hitInterval, walkSpeed: 4, miningRange: 1);
 
         static EconomyRules Prototype() => new EconomyRules(

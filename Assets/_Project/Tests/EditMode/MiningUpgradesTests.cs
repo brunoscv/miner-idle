@@ -6,15 +6,14 @@ using NUnit.Framework;
 
 namespace MinersIdle.Tests
 {
-    /// <summary>Marco 3, E2: a simulação usa as melhorias, inclusive compradas no meio de um golpe ou de uma caminhada.</summary>
+    /// <summary>Marco 3, E2: a simulação usa as melhorias, inclusive compradas no meio de um golpe ou de uma corrida (a fila do M6).</summary>
     public class MiningUpgradesTests
     {
         static readonly UpgradeId[] AllLines = (UpgradeId[])Enum.GetValues(typeof(UpgradeId));
 
         static MiningRules Rules(int initial = 0, double spawnInterval = 1e9, double health = 10) =>
             new MiningRules(
-                new Vec2(-20, -20), new Vec2(20, 20), new Vec2(0, 0),
-                initial, maxCrystals: 12, spawnInterval: spawnInterval, minCrystalSpacing: 2, minDistanceFromMiner: 1.5,
+                initial, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: spawnInterval, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: health, crystalReward: 1, damage: 1, hitInterval: 1, walkSpeed: 4, miningRange: 1);
 
         /// <summary>Efeitos grandes e custo 1 para os testes lerem fácil.</summary>
@@ -90,7 +89,7 @@ namespace MinersIdle.Tests
             var sim = Sim(BigSteps(), health: 10);
             sim.AddShards(1);
             sim.Purchase(UpgradeId.Pickaxe); // dano 2
-            sim.SpawnCrystalAt(new Vec2(1, 0)); // já no alcance: começa a bater na hora
+            sim.SpawnCrystalAt(1); // já no alcance: começa a bater na hora
 
             sim.Tick(4.99);
             Assert.That(sim.State.Breaks, Is.EqualTo(0));
@@ -103,7 +102,7 @@ namespace MinersIdle.Tests
         public void FasterSpeed_BoughtMidSwing_HitsOnTheNextTick_ExactlyOnce()
         {
             var sim = Sim(BigSteps(), health: 100);
-            sim.SpawnCrystalAt(new Vec2(1, 0));
+            sim.SpawnCrystalAt(1);
             sim.Tick(0.7); // 0,7 s acumulados de um golpe de 1 s
             Assert.That(sim.State.Hits, Is.EqualTo(0));
 
@@ -120,20 +119,20 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Boots_BoughtMidWalk_SpeedUpFromWhereTheMinerIs()
+        public void Boots_BoughtMidRun_SpeedUpFromWhereTheMinerIs()
         {
             var sim = Sim(BigSteps());
-            sim.SpawnCrystalAt(new Vec2(10, 0));
-            sim.Tick(1); // 4 unidades andadas, faltam 5 até o alcance
-            Assert.That(sim.Miner.Position.X, Is.EqualTo(4).Within(1e-9));
+            sim.SpawnCrystalAt(10);
+            sim.Tick(1); // 4 unidades corridas, faltam 5 até o alcance
+            Assert.That(sim.Miner.Distance, Is.EqualTo(4).Within(1e-9));
 
             sim.AddShards(1);
-            sim.Purchase(UpgradeId.Boots); // caminhada 4 → 8
+            sim.Purchase(UpgradeId.Boots); // corrida 4 → 8
             sim.Tick(0.62);
-            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Walking));
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running));
             sim.Tick(0.005); // 5 ÷ 8 = 0,625 s
             Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Mining));
-            Assert.That(sim.Miner.Position.X, Is.EqualTo(9).Within(1e-9));
+            Assert.That(sim.Miner.Distance, Is.EqualTo(9).Within(1e-9));
         }
 
         [Test]
@@ -142,7 +141,7 @@ namespace MinersIdle.Tests
             var sim = Sim(BigSteps(), health: 1);
             sim.AddShards(1);
             sim.Purchase(UpgradeId.Mining); // ×1,5
-            sim.SpawnCrystalAt(new Vec2(1, 0));
+            sim.SpawnCrystalAt(1);
 
             sim.Tick(1);
 
@@ -178,7 +177,7 @@ namespace MinersIdle.Tests
             Assert.That(a.State.Shards, Is.EqualTo(b.State.Shards).Within(1e-9));
             foreach (var id in AllLines) Assert.That(a.State.LevelOf(id), Is.EqualTo(b.State.LevelOf(id)));
             Assert.That(a.Crystals.Select(c => c.Id), Is.EqualTo(b.Crystals.Select(c => c.Id)));
-            Assert.That(Vec2.Distance(a.Miner.Position, b.Miner.Position), Is.LessThan(1e-6));
+            Assert.That(Math.Abs(a.Miner.Distance - b.Miner.Distance), Is.LessThan(1e-6));
         }
 
         /// <summary>Uma hora comprando sempre a mais barata que der: nada quebra e nenhuma regra é violada.</summary>
@@ -187,7 +186,7 @@ namespace MinersIdle.Tests
         {
             var economy = Prototype();
             var sim = new MiningSimulation(
-                new MiningRules(new Vec2(-7.5, -11), new Vec2(7.5, 10), new Vec2(0, -0.5), 10, 12, 5, 2, 1.5, 10, 1, 1, 1, 4, 1),
+                new MiningRules(10, 3, 12, 5, 2, 12, 10, 1, 1, 1, 4, 1),
                 new SeededRandom(5), economy: economy);
             int purchases = 0;
 

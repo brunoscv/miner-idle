@@ -11,8 +11,7 @@ namespace MinersIdle.Tests
     {
         static MiningRules Rules(double health = 10, int initial = 0) =>
             new MiningRules(
-                new Vec2(-20, -20), new Vec2(20, 20), new Vec2(0, 0),
-                initial, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, minDistanceFromMiner: 1.5,
+                initial, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: health, crystalReward: 1, damage: 1, hitInterval: 1, walkSpeed: 4, miningRange: 1);
 
         static EconomyRules Economy() => new EconomyRules(
@@ -27,15 +26,14 @@ namespace MinersIdle.Tests
         static StrikeRules Gdd() => new StrikeRules(0.05, 2, 0.1, 1);
         static StrikeRules NoCrit() => new StrikeRules(0, 2, 0.1, 1);
 
-        static MiningSimulation Sim(StrikeRules strike, double health = 10, int initial = 0, ulong seed = 1, ulong critSeed = 7) =>
-            new MiningSimulation(Rules(health, initial), new SeededRandom(seed), economy: Economy(),
-                                 strike: strike, critRandom: new SeededRandom(critSeed));
+        static MiningSimulation Sim(StrikeRules strike, double health = 10, int initial = 0, ulong critSeed = 7) =>
+            new MiningSimulation(Rules(health, initial), new SeededRandom(critSeed), economy: Economy(), strike: strike);
 
         [Test]
         public void Tap_TakesTenPercentOfAHit_FromTheCurrentTarget()
         {
             var sim = Sim(NoCrit());
-            var crystal = sim.SpawnCrystalAt(new Vec2(1, 0));
+            var crystal = sim.SpawnCrystalAt(1);
             sim.Tick(0); // escolhe o alvo
             var hits = new List<MiningHit>();
             sim.HitLanded += hits.Add;
@@ -55,7 +53,7 @@ namespace MinersIdle.Tests
             sim.AddShards(2);
             sim.Purchase(UpgradeId.Pickaxe);       // dano 2
             sim.Purchase(UpgradeId.DoublePickaxe); // dano 4
-            var crystal = sim.SpawnCrystalAt(new Vec2(1, 0));
+            var crystal = sim.SpawnCrystalAt(1);
             sim.Tick(0);
 
             sim.Tap();
@@ -67,14 +65,14 @@ namespace MinersIdle.Tests
         public void Tap_WorksWhileTheMinerIsStillWalking()
         {
             var sim = Sim(NoCrit());
-            var crystal = sim.SpawnCrystalAt(new Vec2(10, 0));
+            var crystal = sim.SpawnCrystalAt(10);
             sim.Tick(0.5);
-            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Walking));
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running));
 
             sim.Tap();
 
             Assert.That(crystal.Health, Is.EqualTo(9.9).Within(1e-12));
-            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Walking), "o anão continua andando");
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running), "o anão continua correndo");
         }
 
         [Test]
@@ -94,7 +92,7 @@ namespace MinersIdle.Tests
         public void TenTaps_BreakACrystalOfOneHealth_AndPayOnce()
         {
             var sim = Sim(NoCrit(), health: 1);
-            sim.SpawnCrystalAt(new Vec2(10, 0)); // longe: só os toques quebram
+            sim.SpawnCrystalAt(10); // longe: só os toques quebram
             sim.Tick(0);
             int broken = 0;
             sim.CrystalBroken += _ => broken++;
@@ -115,7 +113,7 @@ namespace MinersIdle.Tests
         public void HundredThousandHits_AboutFivePercentCritical()
         {
             var sim = Sim(Gdd(), health: 1e12);
-            sim.SpawnCrystalAt(new Vec2(1, 0));
+            sim.SpawnCrystalAt(1);
             int hits = 0, critical = 0;
             sim.HitLanded += hit =>
             {
@@ -135,7 +133,7 @@ namespace MinersIdle.Tests
         public void Tap_CanBeCritical()
         {
             var sim = Sim(NoCrit());
-            var crystal = sim.SpawnCrystalAt(new Vec2(1, 0));
+            var crystal = sim.SpawnCrystalAt(1);
             sim.Tick(0);
             sim.ForceCritical = true; // atalho do debug
 
@@ -187,26 +185,25 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// O sorteio do crítico é separado do sorteio dos nascimentos: com ou sem toques e críticos, o cristal N nasce no
-        /// mesmo lugar. Para isolar isso, os nascimentos aqui não dependem do mapa (sem espaçamento, sem máximo).
+        /// Os nascimentos são do relógio do jogo (D-54): com ou sem toques e críticos, o cristal N nasce no mesmo instante.
+        /// (No mapa aberto, até o M5, o teste conferia o lugar sorteado; na fila, o lugar acompanha o anão, D-60, e quem
+        /// toca corre mais, então só o instante é o mesmo.) Sem máximo, para a fila cheia não segurar nascimentos.
         /// </summary>
         [Test]
-        public void TapsAndCriticals_DoNotChangeWhereCrystalsAreBorn()
+        public void TapsAndCriticals_DoNotChangeWhenCrystalsAreBorn()
         {
             MiningRules FreeSpawning() => new MiningRules(
-                new Vec2(-20, -20), new Vec2(20, 20), new Vec2(0, 0),
-                initialCrystals: 0, maxCrystals: 1000, spawnInterval: 1, minCrystalSpacing: 0, minDistanceFromMiner: 0,
+                initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 1000, spawnInterval: 1, minCrystalSpacing: 0, spawnDistance: 0,
                 crystalHealth: 3, crystalReward: 1, damage: 1, hitInterval: 1, walkSpeed: 4, miningRange: 1);
 
             var calm = new MiningSimulation(FreeSpawning(), new SeededRandom(3), economy: Economy(), strike: NoCrit());
-            var tapping = new MiningSimulation(FreeSpawning(), new SeededRandom(3), economy: Economy(), strike: Gdd(),
-                                               critRandom: new SeededRandom(99));
-            var born = new Dictionary<int, Vec2>();
-            calm.CrystalSpawned += c => born[c.Id] = c.Position;
+            var tapping = new MiningSimulation(FreeSpawning(), new SeededRandom(99), economy: Economy(), strike: Gdd());
+            var born = new Dictionary<int, double>();
+            calm.CrystalSpawned += c => born[c.Id] = calm.Elapsed;
             int compared = 0;
             tapping.CrystalSpawned += c =>
             {
-                Assert.That(c.Position, Is.EqualTo(born[c.Id]), $"cristal {c.Id}");
+                Assert.That(tapping.Elapsed, Is.EqualTo(born[c.Id]).Within(1e-9), $"cristal {c.Id}");
                 compared++;
             };
 

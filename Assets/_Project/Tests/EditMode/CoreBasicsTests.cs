@@ -71,7 +71,7 @@ namespace MinersIdle.Tests
         [Test]
         public void Crystal_BreaksOnce_AndHealthNeverGoesNegative()
         {
-            var c = new Crystal(1, 1, Vec2.Zero, 10, 1);
+            var c = new Crystal(1, 0, 10, 1);
 
             Assert.That(c.ApplyDamage(4), Is.False);
             Assert.That(c.Health, Is.EqualTo(6));
@@ -84,10 +84,10 @@ namespace MinersIdle.Tests
         [Test]
         public void Crystal_RejectsInvalidValues()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, 0, Vec2.Zero, 10, 1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, 1, Vec2.Zero, 0, 1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, 1, Vec2.Zero, 10, -1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, 1, Vec2.Zero, 10, 1).ApplyDamage(-1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, double.NaN, 10, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, 0, 0, 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, 0, 10, -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Crystal(1, 0, 10, 1).ApplyDamage(-1));
         }
     }
 }

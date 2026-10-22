@@ -25,23 +25,24 @@ namespace MinersIdle.Presentation
         protected override void Rebuild(MiningSimulation simulation)
         {
             _punch = 0f;
-            Place(simulation.Miner.Position);
+            Place();
         }
 
         void LateUpdate()
         {
             if (Simulation == null) return;
 
-            Place(Simulation.Miner.Position);
+            Place();
 
             if (_punch > 0f) _punch = Mathf.Max(0f, _punch - Time.unscaledDeltaTime / PunchSeconds);
             transform.localScale = _baseScale * (1f + PunchScale * _punch);
         }
 
-        void Place(Vec2 position)
+        /// <summary>O anão corre parado: a fila é que se move em relação a ele (M6).</summary>
+        void Place()
         {
-            transform.position = ToWorld(position);
-            body.sortingOrder = SortingOrderFor(position);
+            transform.position = TrackToWorld(0, 0);
+            body.sortingOrder = SortingOrderFor(MinerY);
         }
 
         void OnHit(MiningHit hit)

@@ -6,8 +6,9 @@ using UnityEngine.Pool;
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Desenha os cristais do mapa: um <see cref="CrystalView"/> por cristal vivo, reaproveitados por pool porque cristais
-    /// nascem e somem o tempo todo (Arquitetura Técnica, D-T13). Só reage a eventos da simulação.
+    /// Desenha os cristais da fila: um <see cref="CrystalView"/> por cristal vivo, reaproveitados por pool porque cristais
+    /// nascem e somem o tempo todo (Arquitetura Técnica, D-T13). Reage aos eventos da simulação e, a cada quadro, põe
+    /// cada cristal no lugar em relação ao anão (M6, E2: a fila sobe conforme ele corre).
     /// </summary>
     public sealed class CrystalFieldView : MiningViewBase
     {
@@ -22,7 +23,7 @@ namespace MinersIdle.Presentation
         /// <summary>Cristais desenhados agora (para testes: deve bater com a simulação).</summary>
         public int ActiveCount => _active.Count;
 
-        /// <summary>"Mostrar ordem" do debug: o número do lote em cada cristal.</summary>
+        /// <summary>"Mostrar ordem" do debug: o número de cada cristal (ordem de nascimento).</summary>
         public bool ShowOrder
         {
             get => _showOrder;
@@ -66,6 +67,18 @@ namespace MinersIdle.Presentation
             simulation.TargetChanged -= OnTargetChanged;
         }
 
+        void LateUpdate()
+        {
+            if (Simulation == null) return;
+
+            double miner = Simulation.Miner.Distance;
+            foreach (var view in _active.Values)
+            {
+                var position = TrackToWorld(view.Crystal.Distance, miner);
+                view.Place(position, SortingOrderFor(position.y));
+            }
+        }
+
         protected override void Rebuild(MiningSimulation simulation)
         {
             foreach (var view in _active.Values) _pool.Release(view);
@@ -80,7 +93,9 @@ namespace MinersIdle.Presentation
         void OnSpawned(Crystal crystal)
         {
             var view = _pool.Get();
-            view.Show(crystal, SortingOrderFor(crystal.Position));
+            view.Show(crystal);
+            var position = TrackToWorld(crystal.Distance, Simulation?.Miner.Distance ?? 0);
+            view.Place(position, SortingOrderFor(position.y));
             view.SetShowBatch(_showOrder);
             _active[crystal.Id] = view;
         }
@@ -94,7 +109,7 @@ namespace MinersIdle.Presentation
             _pool.Release(view);
         }
 
-        /// <summary>Faz o desenho do cristal tremer (feedback do M5); nada se ele não está mais no mapa.</summary>
+        /// <summary>Faz o desenho do cristal tremer (feedback do M5); nada se ele não está mais na fila.</summary>
         public void Shake(Crystal crystal, float amplitude)
         {
             if (_active.TryGetValue(crystal.Id, out var view)) view.Shake(amplitude);

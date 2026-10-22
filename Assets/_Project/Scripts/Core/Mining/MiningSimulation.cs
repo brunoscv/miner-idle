@@ -4,10 +4,12 @@ using System.Collections.Generic;
 namespace MinersIdle.Core
 {
     /// <summary>
-    /// O loop de mineração no mapa (M2): o anão escolhe o alvo (D-27), anda até ele, bate a cada intervalo, quebra,
-    /// soma lascas e escolhe o próximo; cristais nascem a cada intervalo até o máximo. Desde o M3, dano, intervalo,
-    /// caminhada e lascas vêm dos atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram.
-    /// Desde o M5: o toque do jogador (<see cref="Tap"/>), o crítico e o combo (<see cref="StrikeRules"/>).
+    /// O loop de mineração da descida (M6, D-52): o anão corre até o primeiro cristal da fila, bate a cada intervalo,
+    /// quebra, soma lascas e corre para o próximo; sem cristal, continua correndo (D-55). Cristais nascem a cada
+    /// intervalo no fim da fila, até o máximo (D-54, D-60). Desde o M3, dano, intervalo, corrida e lascas vêm dos
+    /// atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram. Desde o M5: o toque do
+    /// jogador (<see cref="Tap"/>), o crítico e o combo (<see cref="StrikeRules"/>). (Até o M5, o anão andava num mapa
+    /// aberto; esse código está na tag <c>v0.5-campo-aberto</c>.)
     ///
     /// O tempo é do código (Arquitetura Técnica, D-T2): <see cref="Tick"/> avança de evento em evento (chegada, golpe,
     /// nascimento), então um <c>Tick(600)</c> dá o mesmo resultado que 36.000 <c>Tick(1/60)</c>. É o que permite o
@@ -22,7 +24,7 @@ namespace MinersIdle.Core
         const int MaxStepsPerTick = 10_000_000;
 
         readonly MiningRules _rules;
-        readonly CrystalField _field;
+        readonly CrystalTrack _track;
         readonly Miner _miner;
         readonly GameState _state;
         readonly EconomyRules _economy;
@@ -34,30 +36,25 @@ namespace MinersIdle.Core
         int _combo;
         double _lastTapTime;
 
-        /// <summary>Semente do sorteio de crítico quando ninguém passa um gerador (testes); o jogo passa o seu.</summary>
-        const ulong DefaultCritSeed = 0x5EED_C417;
-
+        /// <param name="random">
+        /// Sorteio do crítico, o único da partida: desde a fila (M6) os cristais nascem em lugares fixos, então com ou sem
+        /// toques a fila é a mesma.
+        /// </param>
         /// <param name="economy">Melhorias à venda. Sem ela, nenhuma linha vende e os atributos são os valores base (o jogo do M2).</param>
         /// <param name="strike">Crítico, toque e combo. Sem elas, não há crítico (o jogo do M2–M4).</param>
-        /// <param name="critRandom">
-        /// Sorteio do crítico, separado do <paramref name="random"/> dos nascimentos: com ou sem toques, os cristais nascem
-        /// nos mesmos lugares.
-        /// </param>
         public MiningSimulation(MiningRules rules, IRandom random, GameState state = null, EconomyRules economy = null,
-                                StrikeRules strike = null, IRandom critRandom = null)
+                                StrikeRules strike = null)
         {
-            _strike = strike ?? StrikeRules.NoCritical();
-            _critRandom = critRandom ?? new SeededRandom(DefaultCritSeed);
             _rules = rules ?? throw new ArgumentNullException(nameof(rules));
+            _critRandom = random ?? throw new ArgumentNullException(nameof(random));
+            _strike = strike ?? StrikeRules.NoCritical();
             _state = state ?? new GameState();
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
             _stats = MinerStats.Compute(_rules, _economy, _state);
-            _miner = new Miner(rules.MinerStart);
-            _field = new CrystalField(rules, random);
-
-            if (rules.InitialCrystals > 0)
-                _field.SpawnBatch(rules.InitialCrystals, _miner.Position);
+            _miner = new Miner();
+            _track = new CrystalTrack(rules);
+            _track.SpawnInitial(_miner.Distance);
         }
 
         /// <summary>Um cristal nasceu. Os do início já existem ao construir: quem desenha lê <see cref="Crystals"/> primeiro.</summary>
@@ -94,8 +91,8 @@ namespace MinersIdle.Core
         public GameState State => _state;
         public Miner Miner => _miner;
 
-        /// <summary>Cristais inteiros no mapa, na ordem de nascimento.</summary>
-        public IReadOnlyList<Crystal> Crystals => _field.Crystals;
+        /// <summary>Cristais inteiros na fila, do primeiro (o alvo) ao último.</summary>
+        public IReadOnlyList<Crystal> Crystals => _track.Crystals;
 
         /// <summary>Segundos de jogo simulados.</summary>
         public double Elapsed { get; private set; }
@@ -121,22 +118,22 @@ namespace MinersIdle.Core
             }
         }
 
-        /// <summary>Cria um cristal na posição dada, com lote próprio, ignorando espaço e máximo (testes e debug).</summary>
-        public Crystal SpawnCrystalAt(Vec2 position)
+        /// <summary>
+        /// Cria um cristal na distância dada da trilha, no seu lugar da fila, ignorando espaço e máximo (testes e debug).
+        /// Um cristal posto à frente do alvo atual não troca o alvo: ele só muda depois de quebrar.
+        /// </summary>
+        public Crystal SpawnCrystalAt(double distance)
         {
-            var crystal = _field.SpawnAt(position);
+            var crystal = _track.SpawnAt(distance);
             CrystalSpawned?.Invoke(crystal);
             return crystal;
         }
 
-        /// <summary>
-        /// Atalho do debug: um cristal agora, num lugar livre e com lote próprio, sem esperar o relógio e ignorando o
-        /// máximo. <c>null</c> se não houver lugar livre.
-        /// </summary>
+        /// <summary>Atalho do debug: um cristal agora, no fim da fila, sem esperar o relógio e ignorando o máximo.</summary>
         public Crystal SpawnCrystalNow()
         {
-            var crystal = _field.TrySpawn(_miner.Position, ignoreMax: true);
-            if (crystal != null) CrystalSpawned?.Invoke(crystal);
+            var crystal = _track.TrySpawn(_miner.Distance, ignoreMax: true);
+            CrystalSpawned?.Invoke(crystal);
             return crystal;
         }
 
@@ -181,7 +178,7 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// Toque do jogador (REQ-MIN-02, D-47, D-48): soma 1 no combo e, se o anão tem alvo (batendo ou andando até ele),
+        /// Toque do jogador (REQ-MIN-02, D-47, D-48): soma 1 no combo e, se o anão tem alvo (batendo ou correndo até ele),
         /// tira dele 10% de um golpe (com a Picareta Dupla), podendo ser crítico. Quebra pelo toque paga como qualquer
         /// quebra. Sem alvo, só o combo conta.
         /// </summary>
@@ -208,7 +205,7 @@ namespace MinersIdle.Core
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id);
 
-        /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, escolha de alvo, golpe.</summary>
+        /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, alvo (o primeiro da fila), golpe.</summary>
         void ProcessDueEvents()
         {
             bool changed;
@@ -222,22 +219,19 @@ namespace MinersIdle.Core
                     ComboChanged?.Invoke(0);
                 }
 
-                if (!_field.IsFull && _spawnTimer >= _rules.SpawnInterval - Epsilon)
+                if (!_track.IsFull && _spawnTimer >= _rules.SpawnInterval - Epsilon)
                 {
                     _spawnTimer = Math.Max(0, _spawnTimer - _rules.SpawnInterval);
-                    var crystal = _field.TrySpawn(_miner.Position); // sem lugar livre: o nascimento é pulado
-                    if (crystal != null) CrystalSpawned?.Invoke(crystal);
+                    // Nasce antes de avisar: com "?.Invoke(TrySpawn())", sem ninguém escutando, o nascimento seria pulado.
+                    var crystal = _track.TrySpawn(_miner.Distance);
+                    CrystalSpawned?.Invoke(crystal);
                     changed = true;
                 }
 
-                if (_miner.State == MinerState.Idle)
+                if (_miner.Target == null && _track.Front != null)
                 {
-                    var target = TargetSelector.Select(_field.Crystals, _miner.Position);
-                    if (target != null)
-                    {
-                        StartTarget(target);
-                        changed = true;
-                    }
+                    StartTarget(_track.Front);
+                    changed = true;
                 }
 
                 if (_miner.State == MinerState.Mining && _miner.HitTimer >= _stats.HitInterval - Epsilon)
@@ -253,7 +247,7 @@ namespace MinersIdle.Core
         {
             double next = double.PositiveInfinity;
 
-            if (!_field.IsFull)
+            if (!_track.IsFull)
                 next = Math.Max(0, _rules.SpawnInterval - _spawnTimer);
 
             if (_combo > 0)
@@ -261,9 +255,8 @@ namespace MinersIdle.Core
 
             switch (_miner.State)
             {
-                case MinerState.Walking:
-                    double toGo = Vec2.Distance(_miner.Position, _miner.Target.Position) - _rules.MiningRange;
-                    next = Math.Min(next, Math.Max(0, toGo / _stats.WalkSpeed));
+                case MinerState.Running when _miner.Target != null:
+                    next = Math.Min(next, Math.Max(0, ToGo() / _stats.WalkSpeed));
                     break;
                 case MinerState.Mining:
                     next = Math.Min(next, Math.Max(0, _stats.HitInterval - _miner.HitTimer));
@@ -279,13 +272,13 @@ namespace MinersIdle.Core
 
             Elapsed += step;
 
-            // Mapa cheio: o relógio de nascimento espera no limite e nasce assim que alguém quebra.
-            _spawnTimer = _field.IsFull ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;
+            // Fila cheia: o relógio de nascimento espera no limite e nasce assim que alguém quebra.
+            _spawnTimer = _track.IsFull ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;
 
             switch (_miner.State)
             {
-                case MinerState.Walking:
-                    Walk(step);
+                case MinerState.Running:
+                    Run(step);
                     break;
                 case MinerState.Mining:
                     _miner.HitTimer += step;
@@ -293,23 +286,29 @@ namespace MinersIdle.Core
             }
         }
 
-        void Walk(double step)
-        {
-            var toTarget = _miner.Target.Position - _miner.Position;
-            double distance = toTarget.Length;
-            double toGo = distance - _rules.MiningRange;
-            double travel = _stats.WalkSpeed * step;
+        /// <summary>Quanto falta correr até parar no alcance do alvo (negativo: já passou do ponto).</summary>
+        double ToGo() => _miner.Target.Distance - _rules.MiningRange - _miner.Distance;
 
+        void Run(double step)
+        {
+            double travel = _stats.WalkSpeed * step;
+            if (_miner.Target == null)
+            {
+                _miner.Distance += travel; // sem cristal, a descida continua (D-55)
+                return;
+            }
+
+            double toGo = ToGo();
             if (travel >= toGo - Epsilon)
             {
-                // Chegou: para exatamente no alcance, do lado de onde veio (linha reta, D-31).
-                _miner.Position = _miner.Target.Position - toTarget * (_rules.MiningRange / distance);
+                // Chegou: para exatamente no alcance (nunca volta para trás, se o cristal foi posto atrás dele).
+                _miner.Distance = Math.Max(_miner.Distance, _miner.Target.Distance - _rules.MiningRange);
                 _miner.State = MinerState.Mining;
                 _miner.HitTimer = 0;
             }
             else
             {
-                _miner.Position += toTarget * (travel / distance);
+                _miner.Distance += travel;
             }
         }
 
@@ -317,8 +316,7 @@ namespace MinersIdle.Core
         {
             _miner.Target = target;
             _miner.HitTimer = 0;
-            bool inRange = Vec2.Distance(_miner.Position, target.Position) <= _rules.MiningRange + Epsilon;
-            _miner.State = inRange ? MinerState.Mining : MinerState.Walking;
+            _miner.State = ToGo() <= Epsilon ? MinerState.Mining : MinerState.Running;
             TargetChanged?.Invoke(target);
         }
 
@@ -337,10 +335,10 @@ namespace MinersIdle.Core
 
         void Break(Crystal target)
         {
-            _field.Remove(target);
+            _track.Remove(target);
             _state.RegisterBreak(target.Reward * _stats.RewardMultiplier);
             _miner.Target = null;
-            _miner.State = MinerState.Idle;
+            _miner.State = MinerState.Running;
 
             CrystalBroken?.Invoke(target);
             ShardsChanged?.Invoke(_state.Shards);

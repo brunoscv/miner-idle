@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// "Mostrar ordem" do debug: uma linha do anão até o alvo atual, para conferir a regra D-27 de olho. É um sprite
-    /// quadrado esticado e girado (sem material extra). Desligada por padrão.
+    /// "Mostrar ordem" do debug: uma linha do anão até o alvo atual (o primeiro da fila). É um sprite quadrado esticado
+    /// e girado (sem material extra). Desligada por padrão.
     /// </summary>
     public sealed class TargetLineView : MiningViewBase
     {
@@ -26,13 +26,13 @@ namespace MinersIdle.Presentation
             line.enabled = Visible && target != null;
             if (!line.enabled) return;
 
-            var from = Simulation.Miner.Position;
-            var delta = target.Position - from;
-            var middle = from + delta * 0.5;
+            double miner = Simulation.Miner.Distance;
+            var from = TrackToWorld(miner, miner);
+            var delta = TrackToWorld(target.Distance, miner) - from;
 
-            transform.position = new Vector3((float)middle.X, (float)middle.Y, 0f);
-            transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2((float)delta.Y, (float)delta.X) * Mathf.Rad2Deg);
-            transform.localScale = new Vector3((float)delta.Length, Thickness, 1f);
+            transform.position = from + delta * 0.5f;
+            transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+            transform.localScale = new Vector3(delta.magnitude, Thickness, 1f);
         }
     }
 }

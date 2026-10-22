@@ -92,7 +92,7 @@ namespace MinersIdle.Presentation
 
         void OnHit(MiningHit hit)
         {
-            var at = new Vector3((float)hit.Crystal.Position.X, (float)hit.Crystal.Position.Y, 0f);
+            var at = TrackToWorld(hit.Crystal.Distance, Simulation.Miner.Distance);
             float calm = Calm();
 
             crystals.Shake(hit.Crystal, (hit.IsTap ? 0.06f : 0.12f) * calm);
@@ -116,7 +116,7 @@ namespace MinersIdle.Presentation
 
         void OnBroken(Crystal crystal)
         {
-            var at = new Vector3((float)crystal.Position.X, (float)crystal.Position.Y, 0f);
+            var at = TrackToWorld(crystal.Distance, Simulation.Miner.Distance);
             screenShake.Shake(breakShake * Calm(), breakShakeSeconds);
             sparks.Emit(at, 6, HitSparkColor, 5f);
             shardFlight.Launch(at);

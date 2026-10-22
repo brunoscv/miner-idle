@@ -1,33 +1,32 @@
 using System;
+using System.Globalization;
 
 namespace MinersIdle.Core
 {
     /// <summary>
-    /// Um grupo de cristais no mapa: um alvo, com uma vida e uma recompensa (D-26).
-    /// <see cref="Id"/> é a ordem de nascimento; <see cref="Batch"/> é o número do lote da regra de alvo (D-27).
+    /// Um cristal da fila da descida (M6, D-52): um alvo, com uma vida e uma recompensa. <see cref="Id"/> é a ordem de
+    /// nascimento; <see cref="Distance"/> é onde ele está na trilha, em unidades (1 un = 0,5 m na tela, D-58).
     /// </summary>
     public sealed class Crystal
     {
         /// <summary>Vida abaixo desta fração da vida máxima conta como zero (arredondamento de <c>double</c>).</summary>
         const double BrokenFraction = 1e-9;
 
-        public Crystal(int id, int batch, Vec2 position, double maxHealth, double reward)
+        public Crystal(int id, double distance, double maxHealth, double reward)
         {
-            if (batch < 1) throw new ArgumentOutOfRangeException(nameof(batch), "O lote começa em 1.");
+            if (double.IsNaN(distance) || double.IsInfinity(distance)) throw new ArgumentOutOfRangeException(nameof(distance));
             if (maxHealth <= 0) throw new ArgumentOutOfRangeException(nameof(maxHealth), "A vida precisa ser positiva.");
             if (reward < 0) throw new ArgumentOutOfRangeException(nameof(reward), "A recompensa não pode ser negativa.");
 
             Id = id;
-            Batch = batch;
-            Position = position;
+            Distance = distance;
             MaxHealth = maxHealth;
             Health = maxHealth;
             Reward = reward;
         }
 
         public int Id { get; }
-        public int Batch { get; }
-        public Vec2 Position { get; }
+        public double Distance { get; }
         public double MaxHealth { get; }
         public double Health { get; private set; }
         public double Reward { get; }
@@ -46,6 +45,7 @@ namespace MinersIdle.Core
             return IsBroken;
         }
 
-        public override string ToString() => $"Crystal#{Id} (lote {Batch}) {Position} {Health}/{MaxHealth}";
+        public override string ToString() =>
+            string.Format(CultureInfo.InvariantCulture, "Crystal#{0} a {1:0.###} un {2}/{3}", Id, Distance, Health, MaxHealth);
     }
 }

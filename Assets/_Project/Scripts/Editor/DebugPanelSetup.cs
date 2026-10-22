@@ -24,7 +24,7 @@ namespace MinersIdle.EditorTools
         /// <summary>Modelo das estatísticas (ver o Tooltip de <c>DebugPanel.statsFormat</c>).</summary>
         const string StatsFormat =
             "Semente {0}\nTempo ×{1} · {2} min de jogo\nGolpes {3} · Quebras {4}\nLascas/min {5}\n" +
-            "Cristais {6}/{7} · Alvo #{8} (lote {9})";
+            "Cristais {6}/{7} · Alvo #{8} · Descida {9} un";
 
         /// <summary>Modelo do nível e próximo custo das melhorias (ver o Tooltip de <c>DebugPanel.upgradesFormat</c>).</summary>
         const string UpgradesFormat =
@@ -54,7 +54,7 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.transform.Find(PanelName);
             if (existing != null)
             {
-                if (existing.Find("Content/Buttons/Descent") != null) return changed;
+                if (existing.Find("Content/Buttons/Descent") != null) return UpdateStatsFormat(existing) || changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
@@ -169,6 +169,19 @@ namespace MinersIdle.EditorTools
 
             content.SetActive(false);
             Debug.Log("[Setup] Painel de debug criado na cena Game.");
+            return true;
+        }
+
+        /// <summary>M6 (E2): o modelo das estatísticas mudou (lote → distância descida); atualiza o texto da cena.</summary>
+        static bool UpdateStatsFormat(Transform panel)
+        {
+            var serialized = new SerializedObject(panel.GetComponent<DebugPanel>());
+            var format = serialized.FindProperty("statsFormat");
+            if (format.stringValue == StatsFormat) return false;
+
+            format.stringValue = StatsFormat;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] Estatísticas do painel de debug atualizadas para a fila.");
             return true;
         }
 

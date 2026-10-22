@@ -10,12 +10,12 @@ namespace MinersIdle.Tests
     {
         static MiningRules Rules(int initial = 3, int max = 3) =>
             new MiningRules(
-                new Vec2(-7.5, -11), new Vec2(7.5, 10), new Vec2(0, -0.5),
-                initial, max, spawnInterval: 1e9, minCrystalSpacing: 2, minDistanceFromMiner: 1.5,
+                initial, firstCrystalDistance: 3, max, spawnInterval: 1e9, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: 10, crystalReward: 1, damage: 1, hitInterval: 1, walkSpeed: 4, miningRange: 1);
 
+        /// <summary>Desde a fila (M6): o cristal do debug entra no fim da fila, como um nascimento normal.</summary>
         [Test]
-        public void SpawnCrystalNow_IgnoresTheMaximum_ButKeepsSpacingAndGetsItsOwnBatch()
+        public void SpawnCrystalNow_IgnoresTheMaximum_AndJoinsTheEndOfTheQueue()
         {
             var sim = new MiningSimulation(Rules(initial: 3, max: 3), new SeededRandom(11));
             Crystal spawned = null;
@@ -26,16 +26,15 @@ namespace MinersIdle.Tests
             Assert.That(crystal, Is.Not.Null);
             Assert.That(spawned, Is.SameAs(crystal));
             Assert.That(sim.Crystals.Count, Is.EqualTo(4));
-            Assert.That(crystal.Batch, Is.EqualTo(2));
-            foreach (var other in sim.Crystals.Where(c => c != crystal))
-                Assert.That(Vec2.Distance(crystal.Position, other.Position), Is.GreaterThanOrEqualTo(2));
+            Assert.That(sim.Crystals.Last(), Is.SameAs(crystal), "no fim da fila");
+            Assert.That(crystal.Distance, Is.EqualTo(12), "a 12 un do anão (a fila inicial vai de 3 a 7)");
         }
 
         [Test]
         public void BreakTarget_PaysLikeANormalBreak_WithoutCountingAHit()
         {
             var sim = new MiningSimulation(Rules(), new SeededRandom(12));
-            sim.Tick(0.1); // escolhe o alvo e começa a andar
+            sim.Tick(0.1); // escolhe o alvo e começa a correr
             var target = sim.Miner.Target;
             int broken = 0;
             sim.CrystalBroken += c => broken++;
