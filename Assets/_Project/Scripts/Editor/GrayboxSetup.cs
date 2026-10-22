@@ -286,7 +286,7 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>Um painel do HUD; devolve o texto do valor.</summary>
-        static TMP_Text CreateHudPanel(Transform parent, string name, string label)
+        internal static TMP_Text CreateHudPanel(Transform parent, string name, string label)
         {
             var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(parent, false);

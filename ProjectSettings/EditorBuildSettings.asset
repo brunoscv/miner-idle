@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/Game.unity
     guid: 1ed045c302a168c4c84c470b3e1c5748
+  - enabled: 1
+    path: Assets/_Project/Scenes/Descida.unity
+    guid: a04e6805f3a272d4da590e05eb32d1c1
   m_configObjects: {}

@@ -11,7 +11,11 @@ namespace MinersIdle.Game
     /// </summary>
     public class GameBootstrap : MonoBehaviour
     {
+        public const string BootstrapSceneName = "Bootstrap";
         public const string GameSceneName = "Game";
+
+        /// <summary>A cena da descida em corrida (M6, E1): só visual, aberta pelo DBG do jogo.</summary>
+        public const string DescentSceneName = "Descida";
 
         /// <summary>Meta de quadros: o padrão do Unity no Android é 30 fps (medido no Moto G75, 2026-10-21).</summary>
         public const int TargetFrameRate = 60;

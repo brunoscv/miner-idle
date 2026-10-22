@@ -11,7 +11,8 @@ using UnityEngine.UI;
 namespace MinersIdle.EditorTools
 {
     /// <summary>
-    /// Parte do <see cref="GrayboxSetup"/> para o painel de debug (M2 E5; compras desde o M3 E3), na cena Game já aberta:
+    /// Parte do <see cref="GrayboxSetup"/> para o painel de debug (M2 E5; compras desde o M3 E3; botão da descida desde o
+    /// M6 E1), na cena Game já aberta:
     /// o EventSystem (sem ele nenhum botão recebe toque) e o painel com o botão "DBG" no canto de baixo. Os rótulos e os
     /// modelos de texto são dados da cena. Só cria o que falta; um painel de versão anterior (sem os botões de compra) é
     /// refeito do zero, porque é todo gerado aqui.
@@ -35,9 +36,9 @@ namespace MinersIdle.EditorTools
         const string FrameStatsFormat =
             "{0:0} fps (média {2:0})\n{1:1} min · lentos {3:0}\npior quadro {4:0} ms\nGC {5:0} quadros · {6:0} B";
 
-        const float ContentHeight = 264f;
-        const float TopBand = 0.70f;      // estatísticas e diagnóstico acima disto
-        const float ButtonsBand = 0.53f;  // botões abaixo disto (7 fileiras); melhorias no meio
+        const float ContentHeight = 288f;
+        const float TopBand = 0.72f;      // estatísticas e diagnóstico acima disto
+        const float ButtonsBand = 0.555f; // botões abaixo disto (8 fileiras); melhorias no meio
 
         static readonly Color PanelColor = new Color(0f, 0f, 0f, 0.8f);
         static readonly Color ButtonColor = new Color32(0x3A, 0x2A, 0x1E, 0xFF);
@@ -53,7 +54,7 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.transform.Find(PanelName);
             if (existing != null)
             {
-                if (existing.Find("Content/Buttons/ResetStats") != null) return changed;
+                if (existing.Find("Content/Buttons/Descent") != null) return changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
@@ -156,6 +157,7 @@ namespace MinersIdle.EditorTools
                 ("shake", CreateButton(grid.transform, "Shake", "Tremor on/off")),
                 ("sound", CreateButton(grid.transform, "Sound", "Som on/off")),
                 ("resetStats", CreateButton(grid.transform, "ResetStats", "Zerar medição")),
+                ("descent", CreateButton(grid.transform, "Descent", "Descida (teste)")),
                 ("frameStats", frameStats),
                 ("upgrades", upgrades));
 
@@ -170,17 +172,17 @@ namespace MinersIdle.EditorTools
             return true;
         }
 
-        static bool EnsureEventSystem()
+        internal static bool EnsureEventSystem()
         {
             if (Object.FindAnyObjectByType<EventSystem>() != null) return false;
 
             var go = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             go.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
-            Debug.Log("[Setup] EventSystem (Input System) criado na cena Game.");
+            Debug.Log("[Setup] EventSystem (Input System) criado na cena aberta.");
             return true;
         }
 
-        static Button CreateButton(Transform parent, string name, string label)
+        internal static Button CreateButton(Transform parent, string name, string label)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
@@ -189,7 +191,7 @@ namespace MinersIdle.EditorTools
             return go.GetComponent<Button>();
         }
 
-        static void Stretch(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax)
+        internal static void Stretch(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax)
         {
             rect.anchorMin = anchorMin;
             rect.anchorMax = anchorMax;

@@ -18,7 +18,9 @@ namespace MinersIdle.EditorTools
 {
     /// <summary>
     /// A configuração do projeto, escrita em código para ser reproduzível (Marco 1): identidade, Android (IL2CPP, ARM64,
-    /// retrato), URP com o Renderer 2D, Input System como único input e as cenas de base (Bootstrap e Game).
+    /// retrato), URP, Input System como único input e as cenas (Bootstrap, Game e Descida). O renderer criado no M1
+    /// (<c>URP_2D_Renderer</c>) saiu <b>Universal</b>, apesar do nome (achado no M6): é ele que desenha os sprites do jogo e
+    /// a perspectiva da descida.
     ///
     /// Só cria o que falta: rodar de novo não apaga ajustes feitos à mão.
     ///
@@ -29,7 +31,7 @@ namespace MinersIdle.EditorTools
     public static class ProjectSetup
     {
         const string RenderingFolder = "Assets/_Project/Settings/Rendering";
-        const string UrpAssetPath = RenderingFolder + "/URP_2D.asset";
+        internal const string UrpAssetPath = RenderingFolder + "/URP_2D.asset";
         const string RendererDataPath = RenderingFolder + "/URP_2D_Renderer.asset";
 
         public const string BootstrapScenePath = "Assets/_Project/Scenes/Bootstrap.unity";
@@ -75,6 +77,7 @@ namespace MinersIdle.EditorTools
             EnsureBootstrapScene();
             EnsureGameScene();
             GrayboxSetup.Ensure();
+            DescentSetup.Ensure();
             ConfigureBuildScenes();
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Configuração do projeto aplicada.");
@@ -180,43 +183,54 @@ namespace MinersIdle.EditorTools
 
         /// <summary>
         /// Cria o Renderer 2D pelo mesmo caminho do menu "Create → Rendering → URP Asset (with 2D Renderer)", que já liga
-        /// os dados padrão. O método é interno no URP, por isso a reflexão; se sumir, cai na criação direta.
+        /// os dados padrão; se o caminho interno do URP sumir, cai na criação direta.
         /// </summary>
-        static ScriptableRendererData Create2DRendererData()
+        static ScriptableRendererData Create2DRendererData() =>
+            CreateRendererData("_2DRenderer", "Renderer") ?? CreateRendererDirect<Renderer2DData>(RendererDataPath);
+
+        /// <summary>
+        /// Cria um renderer do URP ao lado do <see cref="UrpAssetPath"/> (o arquivo ganha o sufixo
+        /// <paramref name="suffix"/>) pelo método interno que o menu do URP usa, por isso a reflexão. <c>null</c> se o
+        /// método não existir mais ou falhar.
+        /// </summary>
+        internal static ScriptableRendererData CreateRendererData(string rendererType, string suffix)
         {
             var method = typeof(UniversalRenderPipelineAsset).GetMethod(
                 "CreateRendererAsset", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            if (method != null)
-            {
-                var parameters = method.GetParameters();
-                var args = new object[parameters.Length];
-                for (int i = 0; i < parameters.Length; i++)
-                {
-                    var type = parameters[i].ParameterType;
-                    if (i == 0) args[i] = UrpAssetPath;
-                    else if (type.IsEnum) args[i] = Enum.Parse(type, "_2DRenderer");
-                    else if (type == typeof(bool)) args[i] = true;
-                    else if (type == typeof(string)) args[i] = "Renderer";
-                    else args[i] = parameters[i].HasDefaultValue ? parameters[i].DefaultValue : null;
-                }
+            if (method == null) return null;
 
-                try
-                {
-                    if (method.Invoke(null, args) is ScriptableRendererData created)
-                    {
-                        Debug.Log($"[Setup] Renderer 2D criado em {AssetDatabase.GetAssetPath(created)}.");
-                        return created;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"[Setup] CreateRendererAsset falhou ({e.GetBaseException().Message}); criando direto.");
-                }
+            var parameters = method.GetParameters();
+            var args = new object[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var type = parameters[i].ParameterType;
+                if (i == 0) args[i] = UrpAssetPath;
+                else if (type.IsEnum) args[i] = Enum.Parse(type, rendererType);
+                else if (type == typeof(bool)) args[i] = true;
+                else if (type == typeof(string)) args[i] = suffix;
+                else args[i] = parameters[i].HasDefaultValue ? parameters[i].DefaultValue : null;
             }
 
-            Debug.LogWarning("[Setup] Criando o Renderer2DData direto; conferir o renderer no Inspector.");
-            var data = ScriptableObject.CreateInstance<Renderer2DData>();
-            AssetDatabase.CreateAsset(data, RendererDataPath);
+            try
+            {
+                if (method.Invoke(null, args) is ScriptableRendererData created)
+                {
+                    Debug.Log($"[Setup] Renderer criado em {AssetDatabase.GetAssetPath(created)}.");
+                    return created;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Setup] CreateRendererAsset falhou ({e.GetBaseException().Message}); criando direto.");
+            }
+            return null;
+        }
+
+        internal static T CreateRendererDirect<T>(string path) where T : ScriptableRendererData
+        {
+            Debug.LogWarning($"[Setup] Criando {typeof(T).Name} direto em {path}; conferir o renderer no Inspector.");
+            var data = ScriptableObject.CreateInstance<T>();
+            AssetDatabase.CreateAsset(data, path);
             return data;
         }
 
@@ -412,7 +426,7 @@ namespace MinersIdle.EditorTools
 
         internal static void ConfigureBuildScenes()
         {
-            EditorBuildSettings.scenes = new[] { BootstrapScenePath, GameScenePath }
+            EditorBuildSettings.scenes = new[] { BootstrapScenePath, GameScenePath, DescentSetup.ScenePath }
                 .Where(File.Exists)
                 .Select(path => new EditorBuildSettingsScene(path, true))
                 .ToArray();

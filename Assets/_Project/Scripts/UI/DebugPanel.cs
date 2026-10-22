@@ -3,6 +3,7 @@ using MinersIdle.Game;
 using MinersIdle.Presentation;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace MinersIdle.UI
@@ -12,7 +13,7 @@ namespace MinersIdle.UI
     /// mesma semente ou com uma nova, "Mostrar ordem" e estatísticas. Desde o M3 (E3, D-37): comprar cada melhoria e ver
     /// nível e próximo custo. Desde o M4 (E3): salvar agora e apagar o save; "Reiniciar" mantém o progresso. Desde o M5
     /// (E2): toques automáticos e crítico sempre; tremor on/off (E3), som on/off (E4) e a medição de desempenho
-    /// (<see cref="FrameStats"/>, E5), que só conta com o painel fechado. Os atalhos chamam os mesmos comandos das regras.
+    /// (<see cref="FrameStats"/>, E5), que só conta com o painel fechado. Desde o M6 (E1): abrir a cena da descida. Os atalhos chamam os mesmos comandos das regras.
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
     /// Os textos (rótulos e o modelo das estatísticas) ficam na cena.
     /// </summary>
@@ -63,6 +64,7 @@ namespace MinersIdle.UI
         [SerializeField] Button shake;
         [SerializeField] Button sound;
         [SerializeField] Button resetStats;
+        [SerializeField] Button descent;
 
         readonly object[] _upgradeArgs = new object[10];
 
@@ -106,6 +108,7 @@ namespace MinersIdle.UI
             shake.onClick.AddListener(ToggleShake);
             sound.onClick.AddListener(ToggleSound);
             resetStats.onClick.AddListener(ResetStats);
+            descent.onClick.AddListener(OpenDescent);
         }
 
         void OnDisable()
@@ -132,6 +135,7 @@ namespace MinersIdle.UI
             shake.onClick.RemoveListener(ToggleShake);
             sound.onClick.RemoveListener(ToggleSound);
             resetStats.onClick.RemoveListener(ResetStats);
+            descent.onClick.RemoveListener(OpenDescent);
         }
 
         void Update()
@@ -167,6 +171,13 @@ namespace MinersIdle.UI
         void ToggleShake() => screenShake.ShakeEnabled = !screenShake.ShakeEnabled;
         void ToggleSound() => soundBoard.SoundEnabled = !soundBoard.SoundEnabled;
         void ResetStats() => frameStats.ResetCounts();
+
+        /// <summary>M6 (E1): salva o progresso e abre a cena da descida; o "Voltar ao jogo" de lá reabre pelo Bootstrap.</summary>
+        void OpenDescent()
+        {
+            runner.SaveNow();
+            SceneManager.LoadScene(GameBootstrap.DescentSceneName);
+        }
 
         void BuyPickaxe() => Buy(UpgradeId.Pickaxe);
         void BuySpeed() => Buy(UpgradeId.Speed);

@@ -56,6 +56,15 @@
 | **D-49** | **M4 aprovado (2026-10-21)**: loja com prévia "de → para", Estagiário e Letrado bloqueados, save do progresso com escrita atômica; validado no Moto G75 (fechar e reabrir) e com testes verdes no Unity (EditMode 112/112, PlayMode 15/15). |
 | **Ferramenta de arte** | Testar o **PixelLab** (IA que gera pixel art e animações por MCP) para o anão; viabilidade de créditos gratuitos **a confirmar** (ver [Arte](../design/Direcao%20de%20Arte%20e%20Assets.md) §5). |
 
+### 1.2 Decididas pelo Bruno em 2026-10-22
+
+> Contexto: o dev principal propôs mudar a visão do jogo para uma **descida em corrida** (câmera de frente, anão correndo na direção dela por um corredor de caverna). A proposta completa, com as decisões ainda em aberto (D-52…D-58), está em [Proposta - Descida em corrida](Proposta%20-%20Descida%20em%20corrida.md). O código do mapa aberto continua no git (último commit do M5: `7f5183c`) e numa cópia de segurança feita pelo Bruno.
+
+| # | Decisão |
+|---|---|
+| **D-50** | **Câmera de frente da descida**, escolhida no simulador: altura **2,4 m**, inclinação para baixo **15°**, distância até o anão **4,8 m**, campo de visão vertical **40°**, corredor de **3,0 m** de largura (o anão tem ~1,3 m). O anão corre parado na tela e o mundo se move em volta dele. Ajuste fino permitido no celular, na E1 do M6. |
+| **D-51** | **Adiantar a E1 do marco novo (M6 — Descida em corrida)** antes de aprovar o M5 e antes de aprovar o resto da proposta, para validar a câmera com o dev principal no aparelho. Exceção consciente à regra "um marco só começa quando o anterior foi aprovado": a E1 fica numa **cena separada** (`Descida`), sem tocar nas regras nem na cena do jogo, e o loop dela é **só visual** (como o simulador). O M5 continua com a E5 pendente (teste de 10 min no Moto G75). Plano: [Marco 6 - Descida em corrida](Marco%206%20-%20Descida%20em%20corrida.md). |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.
