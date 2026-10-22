@@ -35,6 +35,9 @@ namespace MinersIdle.EditorTools
         const string RendererDataPath = RenderingFolder + "/URP_2D_Renderer.asset";
 
         public const string BootstrapScenePath = "Assets/_Project/Scenes/Bootstrap.unity";
+
+        /// <summary>A arte de abertura do jogo (pedida pelo Bruno em 2026-10-22).</summary>
+        const string SplashPath = "Assets/_Project/Art/Splash/Splash.jpg";
         public const string GameScenePath = "Assets/_Project/Scenes/Game.unity";
 
         /// <summary>Valores de protótipo do loop de mineração (Marco 2, D-29).</summary>
@@ -75,6 +78,7 @@ namespace MinersIdle.EditorTools
             EnsurePrototypeBalance();
             EnsureGddBalance();
             EnsureBootstrapScene();
+            EnsureSplash();
             EnsureGameScene();
             GrayboxSetup.Ensure();
             ConfigureBuildScenes();
@@ -354,6 +358,57 @@ namespace MinersIdle.EditorTools
             serialized.FindProperty(line + ".costGrowth").doubleValue = costGrowth;
             serialized.FindProperty(line + ".maxLevel").intValue = maxLevel;
             serialized.FindProperty(line + ".effect").doubleValue = effect;
+        }
+
+        /// <summary>
+        /// A arte de abertura na cena Bootstrap: uma imagem que cobre a tela inteira (corta as sobras, sem distorcer)
+        /// enquanto o jogo carrega. O splash do Unity sai, para a arte ser a primeira coisa que aparece.
+        /// </summary>
+        static void EnsureSplash()
+        {
+            if (!File.Exists(SplashPath)) return;
+
+            PlayerSettings.SplashScreen.show = false;
+            PlayerSettings.SplashScreen.showUnityLogo = false;
+
+            if (AssetImporter.GetAtPath(SplashPath) == null) AssetDatabase.ImportAsset(SplashPath);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(SplashPath);
+            if (importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.mipmapEnabled = false;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.maxTextureSize = 2048;
+                importer.SaveAndReimport();
+            }
+
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.OpenScene(BootstrapScenePath, OpenSceneMode.Single);
+            var bootstrap = UnityEngine.Object.FindAnyObjectByType<GameBootstrap>();
+            if (bootstrap == null || GameObject.Find("Splash") != null) return;
+
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SplashPath);
+            var canvasObject = new GameObject("Splash", typeof(Canvas), typeof(CanvasScaler), typeof(CanvasGroup));
+            var canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 100;
+
+            var imageObject = new GameObject("Art", typeof(RectTransform), typeof(Image), typeof(AspectRatioFitter));
+            imageObject.transform.SetParent(canvasObject.transform, false);
+            var image = imageObject.GetComponent<Image>();
+            image.sprite = sprite;
+            image.raycastTarget = false;
+            var fitter = imageObject.GetComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent; // cobre a tela; corta o que sobrar
+            fitter.aspectRatio = sprite.rect.width / sprite.rect.height;
+
+            var serialized = new SerializedObject(bootstrap);
+            serialized.FindProperty("splash").objectReferenceValue = canvasObject.GetComponent<CanvasGroup>();
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[Setup] Arte de abertura (splash) criada na cena Bootstrap; splash do Unity desligado.");
         }
 
         static void EnsureBootstrapScene()
