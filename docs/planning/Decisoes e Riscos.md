@@ -53,6 +53,7 @@
 | **D-46** | **M5 em graybox, com o Art Spike (M1b) em paralelo (2026-10-21).** O M5 entrega toque, crítico, combo e feedback com as formas atuais; a arte da caverna 1 entra depois que o Art Spike for aprovado. |
 | **D-47** | **D-08 decidida (2026-10-21): toque em qualquer ponto da tela que não seja menu ou botão** (HUD, LOJA, DBG e painéis não contam como toque no mapa). O toque **pode dar crítico** e **não tem limite** de toques por segundo. Dano do toque: 10% de um golpe do principal (REQ-MIN-02, com a Picareta Dupla). |
 | **D-48** | **Detalhes do toque e do M5 (2026-10-21):** (a) o toque conta **mesmo com o anão andando**, no alvo atual dele; (b) o combo é **só visual**, não muda dano (como no GDD); (c) sons do M5 são **bipes gerados no código**, trocados pelos reais junto com a arte. Plano do M5 aprovado. |
+| **D-49** | **M4 aprovado (2026-10-21)**: loja com prévia "de → para", Estagiário e Letrado bloqueados, save do progresso com escrita atômica; validado no Moto G75 (fechar e reabrir) e com testes verdes no Unity (EditMode 112/112, PlayMode 15/15). |
 | **Ferramenta de arte** | Testar o **PixelLab** (IA que gera pixel art e animações por MCP) para o anão; viabilidade de créditos gratuitos **a confirmar** (ver [Arte](../design/Direcao%20de%20Arte%20e%20Assets.md) §5). |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)

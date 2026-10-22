@@ -100,12 +100,19 @@ Não bloqueia este marco. É com você, no seu ritmo: paleta-mestre, o anão (Pi
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| E0 Testes pendentes do M4 | ⏳ aguarda o Editor fechado | |
+| E0 Testes pendentes do M4 | ✅ 2026-10-21 | Em batch: EditMode **112/112**, PlayMode **15/15** (loja, save, toque e todos os anteriores). Falta só a sua aprovação do M4 |
 | E1 Regras no núcleo | ✅ validada pelo Bruno em 2026-10-21 (testes verdes no Editor) | Core: `StrikeRules` (crítico 5% ×2, toque 10%, combo 1 s; valores no asset, seção "Golpe e toque"), `MiningHit` (o evento `HitLanded` diz se foi toque e se foi crítico), `MiningSimulation.Tap()`, crítico no golpe automático e no toque com **gerador próprio** (o `MiningRunner` deriva a semente da partida), combo com `ComboChanged`/`ComboMilestone` e reset por tempo de jogo, `ForceCritical` para o DBG. **Achado:** 0,1 × 10 em `double` dá 0,9999999999999999; um cristal de vida 1 nunca quebraria só com toques. O `Crystal` passou a tratar uma vida desprezível (≤ 10⁻⁹ da máxima) como zero. Testes: `StrikeTests` (11), incluindo **100.000 golpes ≈ 5% de crítico** (REQ-PRO-02). Fora do Unity: 93/93 do núcleo; tudo compila. **No Unity ainda não rodou** (Editor aberto). Nada visível no jogo ainda: o toque na tela é a E2 |
-| E2 Toque na tela | ⏳ | |
+| E2 Toque na tela | 🔎 implementada em 2026-10-21, **aguarda validação do Bruno** (setup aplicado; `TapInputTests` verdes no Unity) | Presentation: `TapInput` (Input System: cada dedo que encosta é um toque; no Editor, clique do mouse; filtra a interface com um raycast de UI reaproveitando lista e evento, sem alocar; evento `Tapped(posição)` para o feedback da E3). `MiningRunner.ForceCritical` (vale depois de reiniciar). Setup: leitor de toque no objeto `Mining`; painéis do HUD passam a bloquear o toque (antes não recebiam raycast); DBG refeito com **Toques auto** (5/s no centro da tela) e **Crítico sempre** (18 botões). Teste PlayMode `TapInputTests` (mapa conta; LOJA, HUD e DBG não; toques automáticos; crítico sempre após reiniciar). Compila fora do Unity |
 | E3 Feedback visual | ⏳ | |
 | E4 Som provisório | ⏳ | |
 | E5 Desempenho e celular | ⏳ | |
 
 **Como testar a E1:** Test Runner → EditMode → Run All: os 11 de `StrikeTests` verdes, junto com os anteriores. Os principais: `Tap_TakesTenPercentOfAHit_…` (o toque tira 0,1 de um golpe de 1), `Tap_WorksWhileTheMinerIsStillWalking`, `TenTaps_BreakACrystalOfOneHealth_AndPayOnce`, `HundredThousandHits_AboutFivePercentCritical`, `Combo_GrowsWithTaps_AndResetsAfterOneSecondWithout` e `TapsAndCriticals_DoNotChangeWhereCrystalsAreBorn`.
+
+**Como testar a E2:**
+1. **Rodar no celular** (o build aplica o setup) ou, no Editor, setup pelo menu e Play na `Bootstrap`. Linhas `[Setup]` esperadas: leitor de toque, "HUD passa a bloquear o toque", painel de debug refeito.
+2. Toque várias vezes no mapa: a barra do alvo cai mais rápido (cada toque tira 10% de um golpe). Ainda **sem reação visual própria do toque** (é a E3); dá para ver pela barra e pelo DBG.
+3. Toque no HUD, no botão LOJA e no botão DBG: nada acontece no mapa (só o botão faz o que faz).
+4. DBG → **Toques auto**: o anão quebra mais rápido sozinho; toque de novo para desligar. DBG → **Crítico sempre**: o anão quebra em metade dos golpes; vale mesmo depois de **Reiniciar**.
+5. Test Runner → PlayMode: `TapInputTests` verdes.
 

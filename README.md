@@ -13,16 +13,17 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | M1b Art Spike | ⏳ (em paralelo) |
 | M2 Protótipo do loop no mapa | ✅ aprovado em 2026-10-21 (E6 reduzida, D-32; testes da E5 no Unity rodam no início do M3) — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
 | M3 Regras e economia | ✅ aprovado em 2026-10-21 — [plano do M3](docs/planning/Marco%203%20-%20Regras%20e%20economia.md) |
-| **M4 Loja, HUD e save mínimo** | 🔎 E1–E4 validadas no Moto G75; **faltam os testes da loja e do save no Unity e a aprovação** — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |
+| M4 Loja, HUD e save mínimo | ✅ aprovado em 2026-10-21 — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |
 | **M5 Toque, crítico, combo e feedback** (graybox) | 🚧 plano aprovado em 2026-10-21 — [plano do M5](docs/planning/Marco%205%20-%20Toque%20e%20feedback.md) |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
 
-## O que já roda (até o M3, graybox)
+## O que já roda (até o M4, graybox)
 
 - O anão anda pelo mapa e quebra cristais sozinho, na ordem "lote, depois mais próximo" (D-27); cristais nascem até 12 na tela.
 - HUD de cima: LASCAS, DANO, CAVERNA e VELOCIDADE.
-- Melhorias nas regras: Picareta, Velocidade, Mineração, Picareta Dupla e Botas, compradas pelo painel **DBG** (a loja de verdade é o M4).
+- Melhorias: Picareta, Velocidade, Mineração, Picareta Dupla e Botas, compradas na **LOJA** (botão à direita, com o selo "!"); Estagiário e Letrado aparecem como "Em breve".
+- **Save** do progresso (lascas e níveis): fechar e reabrir o app mantém tudo; o mapa nasce de novo.
 - Painel **DBG** (só em build de desenvolvimento): tempo ×1/×5/×20, gerar cristal, quebrar alvo, +100 lascas, reiniciar com semente, "Mostrar ordem", compras e estatísticas.
 - Menus em `Tools → Miners Idle → Debug`: **Simular 10 minutos** e **Relatório de economia**.
 - Tudo em formas simples (graybox); arte e animações vêm depois.

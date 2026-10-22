@@ -1,6 +1,7 @@
 # Marco 4 — Loja, HUD e save mínimo
 
 > **Plano aprovado pelo Bruno em 2026-10-21**, incluindo uGUI + TextMeshPro (D-45).
+> **✅ Marco aprovado pelo Bruno em 2026-10-21 (D-49).**
 
 > Plano de 2026-10-21, escrito depois da aprovação do M3 (D-40). Roadmap: [M4](Roadmap.md). Decisões que definem este marco: **D-41** (formato de números), **D-42** (Estagiário e Letrado bloqueados na loja), **D-43** (o save guarda só o progresso), **D-44** (escrita segura desde já) — ver [Decisões e Riscos](Decisoes%20e%20Riscos.md). Tela: S03 em [Interface - Telas](../design/Interface%20-%20Telas.md). Requisitos: REQ-UI-01, 02, 04, 06; REQ-ECO-08; REQ-TEC-04 (parte do progresso).
 
@@ -94,12 +95,12 @@ A loja só se atualiza quando chega um evento (`ShardsChanged`, `StatsChanged`, 
 
 ## Critério de pronto
 
-- [ ] Loja com as 5 linhas e os 5 estados do botão; Estagiário e Letrado bloqueados.
-- [ ] A mineração não pausa com a loja aberta (teste PlayMode, P0).
-- [ ] Um toque = no máximo uma compra; sem lascas = sem compra; limites respeitados.
-- [ ] Save com versão e escrita atômica; progresso volta ao reabrir; arquivo ruim não trava o jogo.
-- [ ] Atalhos do DBG: Salvar agora, Apagar save; Reiniciar mantém o progresso.
-- [ ] Rodou no Moto G75 (fechar e reabrir o app); README e decisões atualizados; você validou o marco.
+- [x] Loja com as 5 linhas e os 5 estados do botão; Estagiário e Letrado bloqueados.
+- [x] A mineração não pausa com a loja aberta (teste PlayMode, P0).
+- [x] Um toque = no máximo uma compra; sem lascas = sem compra; limites respeitados.
+- [x] Save com versão e escrita atômica; progresso volta ao reabrir; arquivo ruim não trava o jogo.
+- [x] Atalhos do DBG: Salvar agora, Apagar save; Reiniciar mantém o progresso.
+- [x] Rodou no Moto G75 (fechar e reabrir o app); README e decisões atualizados; você validou o marco.
 
 ## Fora deste marco
 
@@ -123,8 +124,8 @@ Progresso offline (M8, D-04) · backup e migração do save (M8) · engrenagem e
 | Etapa | Estado | Notas |
 |---|---|---|
 | E1 Prévia das melhorias | ✅ validada pelo Bruno em 2026-10-21 (testes verdes no Editor) | Core: `UpgradePreview` (nível, limite, custo da próxima, estado do botão Comprável/Sem lascas/Máx., valor do efeito agora e depois da compra; `IsSinglePurchase` para a Dupla mostrar "comprada"; `IsEnabled` para linha desligada) e `MiningSimulation.Preview(id)`. `MinerStats` calcula também "com esta linha um nível acima"; `Purchases.CanAfford` é a mesma folga da compra, então a loja nunca mostra "sem lascas" quando a compra aceitaria. Testes: `UpgradePreviewTests` (6), incluindo "o que a prévia promete é o que a compra entrega" em todos os níveis de todas as linhas. Rodado fora do Unity: 82/82 do núcleo; compila. **No Unity ainda não rodou** (Editor aberto) |
-| E2 Tela da loja | ✅ validada pelo Bruno no Moto G75 em 2026-10-21 (comprou pela loja, viu "Em breve", mineração seguiu com a loja aberta). **Pendente: rodar os `ShopTests` no Unity** | Game: `ShopCatalog` (textos pt-BR, ordem, linhas bloqueadas, formatos de nível/efeito/bônus; asset `Data/ShopCatalog`). UI: `UpgradeRowView` (prefab `Prefabs/UI/UpgradeRow`), `ShopView` (botão LOJA com selo "!", fundo que escurece e bloqueia o mapa sem pausar nada, painel com saldo, linhas e VOLTAR; atualiza só por evento). O botão LOJA e o selo ficaram dentro da `ShopView` (o `ShopButtonView` do plano não precisou existir à parte). Editor: `ShopSetup`. Teste PlayMode `ShopTests` (3: abrir/comprar/fechar, Dupla "comprada", mineração continua com a loja aberta). Compila fora do Unity |
-| E3 Save mínimo | ✅ validada pelo Bruno no Moto G75 em 2026-10-21 (logcat: `[Save] Loaded: 38 lascas.` ao reabrir, sem exceções). **Pendente: rodar `SaveServiceTests`, `SaveFlowTests` e `ShopTests` no Unity** | Core: `GameState.Restore` (corrige valores fora do lugar e corta níveis no limite do asset). Persistence: `SaveData` v1 (JSON do `JsonUtility`, níveis pelo nome da linha), `ISaveStore` + `FileSaveStore` (`save.json.tmp` → troca; `.tmp` que sobrou é descartado; arquivo ruim vira `save.json.bad`), `SaveService` (Load → NewGame/Loaded/Recovered). Game: o `GameBootstrap` carrega a cena Game e entrega o save ao `MiningRunner` (composição no Bootstrap); o runner carrega, salva depois de cada compra, a cada 30 s reais, ao minimizar e ao sair. Cena Game aberta direto (Play nela, testes) roda **sem save**: os testes nunca tocam no seu progresso. "Reiniciar" mantém o progresso. DBG: **Salvar agora** e **Apagar save** (o setup refaz o painel, um pouco mais alto). Testes: `SaveServiceTests` (8, EditMode, pasta temporária), `SaveFlowTests` (2, PlayMode) e `DebugPanelTests` ajustado ao "Reiniciar mantém o progresso". Compila fora do Unity |
+| E2 Tela da loja | ✅ validada pelo Bruno no Moto G75 em 2026-10-21 (comprou pela loja, viu "Em breve", mineração seguiu com a loja aberta). `ShopTests` verdes no Unity em 2026-10-21 | Game: `ShopCatalog` (textos pt-BR, ordem, linhas bloqueadas, formatos de nível/efeito/bônus; asset `Data/ShopCatalog`). UI: `UpgradeRowView` (prefab `Prefabs/UI/UpgradeRow`), `ShopView` (botão LOJA com selo "!", fundo que escurece e bloqueia o mapa sem pausar nada, painel com saldo, linhas e VOLTAR; atualiza só por evento). O botão LOJA e o selo ficaram dentro da `ShopView` (o `ShopButtonView` do plano não precisou existir à parte). Editor: `ShopSetup`. Teste PlayMode `ShopTests` (3: abrir/comprar/fechar, Dupla "comprada", mineração continua com a loja aberta). Compila fora do Unity |
+| E3 Save mínimo | ✅ validada pelo Bruno no Moto G75 em 2026-10-21 (logcat: `[Save] Loaded: 38 lascas.` ao reabrir, sem exceções). `SaveServiceTests`, `SaveFlowTests` e `ShopTests` verdes no Unity em 2026-10-21 (EditMode 112/112, PlayMode 15/15) | Core: `GameState.Restore` (corrige valores fora do lugar e corta níveis no limite do asset). Persistence: `SaveData` v1 (JSON do `JsonUtility`, níveis pelo nome da linha), `ISaveStore` + `FileSaveStore` (`save.json.tmp` → troca; `.tmp` que sobrou é descartado; arquivo ruim vira `save.json.bad`), `SaveService` (Load → NewGame/Loaded/Recovered). Game: o `GameBootstrap` carrega a cena Game e entrega o save ao `MiningRunner` (composição no Bootstrap); o runner carrega, salva depois de cada compra, a cada 30 s reais, ao minimizar e ao sair. Cena Game aberta direto (Play nela, testes) roda **sem save**: os testes nunca tocam no seu progresso. "Reiniciar" mantém o progresso. DBG: **Salvar agora** e **Apagar save** (o setup refaz o painel, um pouco mais alto). Testes: `SaveServiceTests` (8, EditMode, pasta temporária), `SaveFlowTests` (2, PlayMode) e `DebugPanelTests` ajustado ao "Reiniciar mantém o progresso". Compila fora do Unity |
 | E4 No celular | ✅ 2026-10-21: Bruno comprou, fechou o app pelos recentes e reabriu; progresso de volta | |
 
 **Como testar a E1:** Test Runner → EditMode → Run All (ou `bash tools/ci/run-tests.sh EditMode` com o Editor fechado): os 6 de `UpgradePreviewTests` verdes, junto com os anteriores. Nada visível no jogo ainda: a tela da loja é a E2.
