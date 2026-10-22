@@ -24,7 +24,15 @@ namespace MinersIdle.Presentation
 
         const float AttackSeconds = 0.003f; // sem ataque, o começo da onda estala
 
-        enum Wave { Square, Triangle, Noise }
+        /// <summary>
+        /// <see cref="Wave.Whoosh"/>: ruído com o grave cortado e o brilho subindo de <c>FromHz</c> a <c>ToHz</c>, num
+        /// volume que cresce e some: o "shiiiu" da picareta cortando o ar (M6, pedido do Bruno: o "tum" soava como uma
+        /// bolinha quicando).
+        /// </summary>
+        enum Wave { Square, Triangle, Noise, Whoosh }
+
+        /// <summary>Abaixo disto o "shiiiu" fica sem grave (é o que o separa de um sopro abafado).</summary>
+        const double WhooshLowCutHz = 700;
 
         readonly struct Note
         {
@@ -53,17 +61,16 @@ namespace MinersIdle.Presentation
         {
             switch (sfx)
             {
-                case Sfx.Hit: // "tum" grave da picareta do anão
+                case Sfx.Hit: // "shiiiu" da picareta do anão, com um "tim" fraquinho do cristal
                     return new[]
                     {
-                        new Note(0f, 0.08f, Wave.Square, 200f, 90f, 0.18f),
-                        new Note(0f, 0.04f, Wave.Noise, 0f, 0f, 0.22f),
+                        new Note(0f, 0.22f, Wave.Whoosh, 1400f, 5000f, 1.1f),
+                        new Note(0f, 0.04f, Wave.Triangle, 2600f, 2400f, 0.06f),
                     };
-                case Sfx.Tap: // "tic" agudo e curto do dedo
+                case Sfx.Tap: // "shiu" curto e mais agudo do dedo
                     return new[]
                     {
-                        new Note(0f, 0.045f, Wave.Triangle, 1100f, 800f, 0.35f),
-                        new Note(0f, 0.02f, Wave.Noise, 0f, 0f, 0.12f),
+                        new Note(0f, 0.13f, Wave.Whoosh, 2500f, 7000f, 0.85f),
                     };
                 case Sfx.Critical: // duas notas subindo, com estalo
                     return new[]
@@ -109,6 +116,8 @@ namespace MinersIdle.Presentation
                 int first = (int)(note.Start * sampleRate);
                 int count = (int)(note.Duration * sampleRate);
                 double phase = 0;
+                double bright = 0, dull = 0; // filtros do Whoosh (passa-baixa de um polo)
+                double dullCoefficient = 1 - Math.Exp(-2 * Math.PI * WhooshLowCutHz / sampleRate);
                 for (int i = 0; i < count && first + i < samples.Length; i++)
                 {
                     float t = i / (float)count;
@@ -121,6 +130,17 @@ namespace MinersIdle.Presentation
                     {
                         case Wave.Square: value = phase < 0.5 ? 1f : -1f; break;
                         case Wave.Triangle: value = (float)(4 * Math.Abs(phase - 0.5) - 1); break;
+                        case Wave.Whoosh:
+                        {
+                            noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5; // xorshift32
+                            double white = noise / (double)uint.MaxValue * 2 - 1;
+                            // Passa-baixa com o corte subindo (o brilho abre), menos um passa-baixa fixo (sem grave).
+                            bright += (1 - Math.Exp(-2 * Math.PI * hz / sampleRate)) * (white - bright);
+                            dull += dullCoefficient * (white - dull);
+                            value = (float)(bright - dull);
+                            samples[first + i] += value * note.Volume * Swell(t);
+                            continue;
+                        }
                         default:
                             noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5; // xorshift32
                             value = noise / (float)uint.MaxValue * 2f - 1f;
@@ -134,6 +154,9 @@ namespace MinersIdle.Presentation
             for (int i = 0; i < samples.Length; i++) samples[i] = Math.Max(-1f, Math.Min(1f, samples[i]));
             return samples;
         }
+
+        /// <summary>Volume do "shiiiu": sobe rápido até um terço da nota e cai devagar até zero.</summary>
+        static float Swell(float t) => t < 0.3f ? t / 0.3f : (1f - t) / 0.7f * ((1f - t) / 0.7f);
 
         /// <summary>Ataque curto e queda até zero no fim da nota (sem estalo no corte).</summary>
         static float Envelope(float seconds, float t)
