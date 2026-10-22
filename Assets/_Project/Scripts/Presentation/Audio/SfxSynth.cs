@@ -79,11 +79,16 @@ namespace MinersIdle.Presentation
                         new Note(0.06f, 0.12f, Wave.Square, 1320f, 1400f, 0.15f),
                         new Note(0f, 0.05f, Wave.Noise, 0f, 0f, 0.2f),
                     };
-                case Sfx.Break: // estouro: ruído e um tom despencando
+                case Sfx.Break: // só os cacos do cristal tilintando (o golpe já tem o próprio som)
                     return new[]
                     {
-                        new Note(0f, 0.2f, Wave.Noise, 0f, 0f, 0.3f),
-                        new Note(0f, 0.22f, Wave.Square, 420f, 70f, 0.18f),
+                        new Note(0f, 0.12f, Wave.Triangle, 3100f, 3000f, 0.2f),
+                        new Note(0.03f, 0.1f, Wave.Triangle, 4200f, 4150f, 0.17f),
+                        new Note(0.06f, 0.14f, Wave.Triangle, 2650f, 2600f, 0.17f),
+                        new Note(0.1f, 0.1f, Wave.Triangle, 5200f, 5150f, 0.13f),
+                        new Note(0.14f, 0.12f, Wave.Triangle, 3700f, 3650f, 0.12f),
+                        new Note(0.2f, 0.1f, Wave.Triangle, 4600f, 4550f, 0.09f),
+                        new Note(0.26f, 0.08f, Wave.Triangle, 3300f, 3250f, 0.07f),
                     };
                 case Sfx.Purchase: // "moeda": si e mi
                     return new[]
