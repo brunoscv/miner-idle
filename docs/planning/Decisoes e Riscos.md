@@ -45,6 +45,11 @@
 | **D-38** | **C-04 resolvido (2026-10-21):** o nível de uma melhoria é o **número de compras feitas** (começa em 0); a próxima compra custa `custo inicial × crescimento^nível` (a 1ª compra custa o custo inicial). Plano do M3 aprovado. |
 | **D-39** | **Spec do estagiário no mapa aprovada (2026-10-21)**, com as recomendações: **E-1** escolhe o próximo alvo na hora (sem a "espera" do REQ-INT-04, que fica superado no mapa); **E-2** Botas valem para o estagiário; **E-3** reserva vale para os dois (o principal não rouba o alvo do estagiário); **E-4** um estagiário no MVP. Resolve o C-08. Ver [Spec - Estagiario no mapa](../design/Spec%20-%20Estagiario%20no%20mapa.md). |
 | **D-40** | **M3 aprovado (2026-10-21)**: melhorias (Picareta, Velocidade, Mineração, Picareta Dupla, Botas) nas regras, compras pelo DBG, relatório de economia e spec do estagiário; validado no Moto G75. Próximo: plano do M4. |
+| **D-41** | **D-11 decidida (2026-10-21): números em pt-BR com abreviação.** Milhar com ponto e decimal com vírgula, casas decimais só quando há fração ("1.234,5"); a partir de 1 milhão, três algarismos e M/B/T ("1,23M", "12,3B", "123T"); tempo com duas casas ("1,00s"). É o `NumberFormatter` atual, que deixa de ser provisório. Supera o "2 casas decimais" do REQ-UI-01. |
+| **D-42** | **Loja do M4 mostra Estagiário e Letrado como linhas bloqueadas** ("Em breve") até existirem (M6/M7), para o jogador já ver o que vem. |
+| **D-43** | **Save mínimo do M4 guarda só o progresso:** lascas, níveis das melhorias, golpes e quebras. Ao reabrir, o mapa nasce de novo (cristais novos, lote 1). Posição de cristais e do anão não são salvas. |
+| **D-44** | **Escrita segura do save desde o M4:** arquivo com número de versão, gravado num temporário e trocado no fim (escrita atômica). Backup, migração entre versões e progresso offline continuam no M8. |
+| **D-45** | **D-13 decidida (2026-10-21): interface em uGUI + TextMeshPro** (o que o HUD e o DBG já usam). Plano do M4 aprovado. |
 | **Ferramenta de arte** | Testar o **PixelLab** (IA que gera pixel art e animações por MCP) para o anão; viabilidade de créditos gratuitos **a confirmar** (ver [Arte](../design/Direcao%20de%20Arte%20e%20Assets.md) §5). |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
@@ -76,8 +81,8 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | D-08 | **Regras do toque** (bloqueia o **M5** desde D-36): área (qualquer ponto × só o cristal), taxa máxima, crítico no toque? | **Qualquer ponto**, sem limite rígido, **crítico vale no toque**, tremor reduzido em alta taxa **[rec.]**; decidir após ver o simulador | M3 |
 | D-09 | **Boost:** o mínimo de 0,5 s vale com boost? Recarga igual à duração é intencional? | **Boost pode passar do mínimo (piso 0,2 s)**; recarga **60 s** após o fim **[rec.]** (ou manter 30 s se for proposital) | M8 |
 | D-10 | **Ferramenta de pixel art** e origem da arte | Aseprite (pago, ~US$ 20 [verificar]) **[rec.]** · LibreSprite/Pixelorama (grátis) · só IA+retoque; **fallback**: pacotes CC0 de ambiente | M1b |
-| D-11 | Formato numérico (`1.234,00` pt-BR × `1,234.00` do mockup) e abreviações | **pt-BR** com abreviações K/M/B/T acima de 1 M **[rec.]** | M4 |
-| D-13 | **UI:** uGUI+TMP [DOC] × UI Toolkit (usado no Underworld Towers) | **uGUI+TMP** **[rec.]** (mundo em pixel art, números flutuantes) | M4 |
+| ~~D-11~~ | ~~Formato numérico (`1.234,00` pt-BR × `1,234.00` do mockup) e abreviações~~ → **decidido em D-41** | **pt-BR** com abreviações K/M/B/T acima de 1 M **[rec.]** | M4 |
+| ~~D-13~~ | ~~**UI:** uGUI+TMP [DOC] × UI Toolkit (usado no Underworld Towers)~~ → **decidido em D-45** | **uGUI+TMP** **[rec.]** (mundo em pixel art, números flutuantes) | M4 |
 | D-14 | **Resolução de referência e PPU** | **270×480, ×4, PPU 16** **[rec., a validar no Art Spike]**; plano B 360×640 ×3 | M1b |
 | D-15 | **Rastreador de tarefas** | Checklist nos planos + GitHub Issues/Projects (mostrar a lista antes de criar) **[rec.]** · só docs | M1 |
 | D-16 | **Git LFS e ramos:** LFS só para áudio/binários grandes (não para PNG pixel art, cenas ou prefabs); *main* + ramos curtos | **[rec.]** como em Qualidade §2–3 | M1 |

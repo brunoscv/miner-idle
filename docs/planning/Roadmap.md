@@ -107,6 +107,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Riscos:** posicionamento aleatório sobrepondo (requisito de espaçamento); *Safe Area*; "o 1º cristal demora 100 s" (C-01) — usar balanço v2. **Fora:** loja, crítico, combo, estagiário, arte final. **Esforço:** 40–55 h.
 
 ### M4 — Loja, melhorias, HUD e save mínimo
+- **Plano detalhado (2026-10-21):** [Marco 4 - Loja e save.md](Marco%204%20-%20Loja%20e%20save.md). Decisões D-41…D-44: números pt-BR com M/B/T; Estagiário e Letrado bloqueados na loja; save só do progresso, com versão e escrita atômica. O texto abaixo é o escopo original (histórico).
 - **Objetivo:** gastar lascas e sentir o efeito. **Jogador:** compra Picareta/Velocidade/Mineração/Picareta Dupla; HUD reflete.
 - **Tarefas:** T-M4-01…T-M4-09. **Dependências:** M3, M2.
 - **Entregáveis:** `ShopView` + `UpgradeRowView` reutilizável, botão Loja com selo, **camada de bloqueio de toque** que **não** pausa a mineração, HUD completo (4 indicadores), compras com validação/limite, **save mínimo** (estado do GDD §11.1 sem migração), atualização imediata do HUD.

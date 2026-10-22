@@ -13,7 +13,7 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | M1b Art Spike | ⏳ (em paralelo) |
 | M2 Protótipo do loop no mapa | ✅ aprovado em 2026-10-21 (E6 reduzida, D-32; testes da E5 no Unity rodam no início do M3) — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
 | M3 Regras e economia | ✅ aprovado em 2026-10-21 — [plano do M3](docs/planning/Marco%203%20-%20Regras%20e%20economia.md) |
-| **M4 Loja, melhorias, HUD e save mínimo** | 📝 plano a escrever |
+| **M4 Loja, HUD e save mínimo** | 🚧 plano aprovado em 2026-10-21 — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
 
