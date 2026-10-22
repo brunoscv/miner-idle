@@ -94,9 +94,9 @@ namespace MinersIdle.Presentation
             _pool.Release(view);
         }
 
-        void OnHit(Crystal crystal, double damage)
+        void OnHit(MiningHit hit)
         {
-            if (_active.TryGetValue(crystal.Id, out var view)) view.RefreshHealth();
+            if (_active.TryGetValue(hit.Crystal.Id, out var view)) view.RefreshHealth();
         }
 
         void OnTargetChanged(Crystal target)

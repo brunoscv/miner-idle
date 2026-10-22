@@ -52,13 +52,15 @@ namespace MinersIdle.Core
 
         static readonly UpgradeId[] Lines = (UpgradeId[])Enum.GetValues(typeof(UpgradeId));
 
+        /// <param name="strike">Crítico do golpe automático (o relatório não toca). Sem ela, sem crítico.</param>
         public static EconomyReportResult Run(
-            MiningRules rules, EconomyRules economy, ulong seed, double seconds, IReadOnlyList<double> checkpoints)
+            MiningRules rules, EconomyRules economy, ulong seed, double seconds, IReadOnlyList<double> checkpoints,
+            StrikeRules strike = null)
         {
             if (seconds <= 0) throw new ArgumentOutOfRangeException(nameof(seconds));
             if (checkpoints == null) throw new ArgumentNullException(nameof(checkpoints));
 
-            var simulation = new MiningSimulation(rules, new SeededRandom(seed), economy: economy);
+            var simulation = new MiningSimulation(rules, new SeededRandom(seed), economy: economy, strike: strike);
             int steps = (int)Math.Ceiling(seconds / DecisionSeconds);
             var earnedAt = new double[steps + 1]; // lascas ganhas até o fim de cada segundo
             double spent = 0;

@@ -7,6 +7,7 @@ namespace MinersIdle.Core
     /// O loop de mineração no mapa (M2): o anão escolhe o alvo (D-27), anda até ele, bate a cada intervalo, quebra,
     /// soma lascas e escolhe o próximo; cristais nascem a cada intervalo até o máximo. Desde o M3, dano, intervalo,
     /// caminhada e lascas vêm dos atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram.
+    /// Desde o M5: o toque do jogador (<see cref="Tap"/>), o crítico e o combo (<see cref="StrikeRules"/>).
     ///
     /// O tempo é do código (Arquitetura Técnica, D-T2): <see cref="Tick"/> avança de evento em evento (chegada, golpe,
     /// nascimento), então um <c>Tick(600)</c> dá o mesmo resultado que 36.000 <c>Tick(1/60)</c>. É o que permite o
@@ -25,13 +26,28 @@ namespace MinersIdle.Core
         readonly Miner _miner;
         readonly GameState _state;
         readonly EconomyRules _economy;
+        readonly StrikeRules _strike;
+        readonly IRandom _critRandom;
 
         MinerStats _stats;
         double _spawnTimer;
+        int _combo;
+        double _lastTapTime;
+
+        /// <summary>Semente do sorteio de crítico quando ninguém passa um gerador (testes); o jogo passa o seu.</summary>
+        const ulong DefaultCritSeed = 0x5EED_C417;
 
         /// <param name="economy">Melhorias à venda. Sem ela, nenhuma linha vende e os atributos são os valores base (o jogo do M2).</param>
-        public MiningSimulation(MiningRules rules, IRandom random, GameState state = null, EconomyRules economy = null)
+        /// <param name="strike">Crítico, toque e combo. Sem elas, não há crítico (o jogo do M2–M4).</param>
+        /// <param name="critRandom">
+        /// Sorteio do crítico, separado do <paramref name="random"/> dos nascimentos: com ou sem toques, os cristais nascem
+        /// nos mesmos lugares.
+        /// </param>
+        public MiningSimulation(MiningRules rules, IRandom random, GameState state = null, EconomyRules economy = null,
+                                StrikeRules strike = null, IRandom critRandom = null)
         {
+            _strike = strike ?? StrikeRules.NoCritical();
+            _critRandom = critRandom ?? new SeededRandom(DefaultCritSeed);
             _rules = rules ?? throw new ArgumentNullException(nameof(rules));
             _state = state ?? new GameState();
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
@@ -48,8 +64,8 @@ namespace MinersIdle.Core
         public event Action<Crystal> CrystalSpawned;
         /// <summary>O alvo do anão mudou (<c>null</c> = ficou sem alvo).</summary>
         public event Action<Crystal> TargetChanged;
-        /// <summary>Golpe no cristal, com o dano dado.</summary>
-        public event Action<Crystal, double> HitLanded;
+        /// <summary>Golpe no cristal: automático ou toque, com o dano e se foi crítico.</summary>
+        public event Action<MiningHit> HitLanded;
         /// <summary>O cristal quebrou e saiu do mapa; a recompensa já foi somada.</summary>
         public event Action<Crystal> CrystalBroken;
         /// <summary>O total de lascas mudou.</summary>
@@ -58,9 +74,20 @@ namespace MinersIdle.Core
         public event Action<UpgradeId, int> UpgradePurchased;
         /// <summary>Os atributos do anão mudaram (DANO e VELOCIDADE do HUD).</summary>
         public event Action<MinerStats> StatsChanged;
+        /// <summary>O combo mudou (0 = zerou depois da janela sem toque).</summary>
+        public event Action<int> ComboChanged;
+        /// <summary>O combo chegou a um múltiplo de 10 (o "pop" especial).</summary>
+        public event Action<int> ComboMilestone;
 
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
+        public StrikeRules Strike => _strike;
+
+        /// <summary>Toques seguidos, cada um a menos de <see cref="StrikeRules.ComboWindow"/> do anterior.</summary>
+        public int Combo => _combo;
+
+        /// <summary>Atalho do debug: todo golpe e todo toque saem críticos.</summary>
+        public bool ForceCritical { get; set; }
 
         /// <summary>Atributos atuais do anão: valores base + melhorias.</summary>
         public MinerStats Stats => _stats;
@@ -153,6 +180,31 @@ namespace MinersIdle.Core
             return result;
         }
 
+        /// <summary>
+        /// Toque do jogador (REQ-MIN-02, D-47, D-48): soma 1 no combo e, se o anão tem alvo (batendo ou andando até ele),
+        /// tira dele 10% de um golpe (com a Picareta Dupla), podendo ser crítico. Quebra pelo toque paga como qualquer
+        /// quebra. Sem alvo, só o combo conta.
+        /// </summary>
+        public void Tap()
+        {
+            _combo++;
+            _lastTapTime = Elapsed;
+            ComboChanged?.Invoke(_combo);
+            if (_combo % 10 == 0) ComboMilestone?.Invoke(_combo);
+
+            var target = _miner.Target;
+            if (target == null) return;
+
+            bool critical = RollCritical();
+            double damage = _stats.Damage * _strike.TapFraction * (critical ? _strike.CritMultiplier : 1);
+            bool broke = target.ApplyDamage(damage);
+            HitLanded?.Invoke(new MiningHit(target, damage, isTap: true, isCritical: critical));
+            if (broke) Break(target);
+        }
+
+        bool RollCritical() =>
+            ForceCritical || (_strike.CritChance > 0 && _critRandom.NextDouble() < _strike.CritChance);
+
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id);
 
@@ -163,6 +215,12 @@ namespace MinersIdle.Core
             do
             {
                 changed = false;
+
+                if (_combo > 0 && Elapsed >= _lastTapTime + _strike.ComboWindow - Epsilon)
+                {
+                    _combo = 0;
+                    ComboChanged?.Invoke(0);
+                }
 
                 if (!_field.IsFull && _spawnTimer >= _rules.SpawnInterval - Epsilon)
                 {
@@ -197,6 +255,9 @@ namespace MinersIdle.Core
 
             if (!_field.IsFull)
                 next = Math.Max(0, _rules.SpawnInterval - _spawnTimer);
+
+            if (_combo > 0)
+                next = Math.Min(next, Math.Max(0, _lastTapTime + _strike.ComboWindow - Elapsed));
 
             switch (_miner.State)
             {
@@ -264,11 +325,12 @@ namespace MinersIdle.Core
         void Hit()
         {
             var target = _miner.Target;
-            double damage = _stats.Damage;
+            bool critical = RollCritical();
+            double damage = _stats.Damage * (critical ? _strike.CritMultiplier : 1);
 
             _state.RegisterHit();
             bool broke = target.ApplyDamage(damage);
-            HitLanded?.Invoke(target, damage);
+            HitLanded?.Invoke(new MiningHit(target, damage, isTap: false, isCritical: critical));
 
             if (broke) Break(target);
         }

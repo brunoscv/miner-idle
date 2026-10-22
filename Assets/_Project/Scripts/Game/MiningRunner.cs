@@ -116,7 +116,9 @@ namespace MinersIdle.Game
             if (Simulation != null) Simulation.UpgradePurchased -= OnUpgradePurchased;
 
             Seed = seed;
-            Simulation = new MiningSimulation(rules.ToRules(), new SeededRandom(seed), state, rules.ToEconomy());
+            Simulation = new MiningSimulation(
+                rules.ToRules(), new SeededRandom(seed), state, rules.ToEconomy(),
+                rules.ToStrike(), new SeededRandom(CritSeed(seed)));
             Simulation.UpgradePurchased += OnUpgradePurchased;
             NotifyStarted();
         }
@@ -140,5 +142,8 @@ namespace MinersIdle.Game
         }
 
         public static ulong NewSeed() => (ulong)DateTime.UtcNow.Ticks;
+
+        /// <summary>Semente do sorteio de crítico, derivada da partida (mesma semente = mesmos críticos).</summary>
+        static ulong CritSeed(ulong seed) => unchecked(seed * 0x9E3779B97F4A7C15UL + 1);
     }
 }

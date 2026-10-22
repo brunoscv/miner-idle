@@ -44,6 +44,9 @@ namespace MinersIdle.Presentation
             body.sortingOrder = SortingOrderFor(position);
         }
 
-        void OnHit(Crystal crystal, double damage) => _punch = 1f;
+        void OnHit(MiningHit hit)
+        {
+            if (!hit.IsTap) _punch = 1f; // o "soco" é do golpe do anão; o toque ganha a própria reação no M5 (E3)
+        }
     }
 }

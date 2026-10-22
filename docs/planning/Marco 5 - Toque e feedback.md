@@ -95,3 +95,17 @@ Não bloqueia este marco. É com você, no seu ritmo: paleta-mestre, o anão (Pi
 ## Esforço
 
 **35–50 h** de desenvolvimento focado (sem a arte, que saiu deste marco).
+
+## Estado
+
+| Etapa | Estado | Notas |
+|---|---|---|
+| E0 Testes pendentes do M4 | ⏳ aguarda o Editor fechado | |
+| E1 Regras no núcleo | ✅ validada pelo Bruno em 2026-10-21 (testes verdes no Editor) | Core: `StrikeRules` (crítico 5% ×2, toque 10%, combo 1 s; valores no asset, seção "Golpe e toque"), `MiningHit` (o evento `HitLanded` diz se foi toque e se foi crítico), `MiningSimulation.Tap()`, crítico no golpe automático e no toque com **gerador próprio** (o `MiningRunner` deriva a semente da partida), combo com `ComboChanged`/`ComboMilestone` e reset por tempo de jogo, `ForceCritical` para o DBG. **Achado:** 0,1 × 10 em `double` dá 0,9999999999999999; um cristal de vida 1 nunca quebraria só com toques. O `Crystal` passou a tratar uma vida desprezível (≤ 10⁻⁹ da máxima) como zero. Testes: `StrikeTests` (11), incluindo **100.000 golpes ≈ 5% de crítico** (REQ-PRO-02). Fora do Unity: 93/93 do núcleo; tudo compila. **No Unity ainda não rodou** (Editor aberto). Nada visível no jogo ainda: o toque na tela é a E2 |
+| E2 Toque na tela | ⏳ | |
+| E3 Feedback visual | ⏳ | |
+| E4 Som provisório | ⏳ | |
+| E5 Desempenho e celular | ⏳ | |
+
+**Como testar a E1:** Test Runner → EditMode → Run All: os 11 de `StrikeTests` verdes, junto com os anteriores. Os principais: `Tap_TakesTenPercentOfAHit_…` (o toque tira 0,1 de um golpe de 1), `Tap_WorksWhileTheMinerIsStillWalking`, `TenTaps_BreakACrystalOfOneHealth_AndPayOnce`, `HundredThousandHits_AboutFivePercentCritical`, `Combo_GrowsWithTaps_AndResetsAfterOneSecondWithout` e `TapsAndCriticals_DoNotChangeWhereCrystalsAreBorn`.
+

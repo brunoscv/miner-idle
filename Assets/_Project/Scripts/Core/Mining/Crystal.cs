@@ -8,6 +8,9 @@ namespace MinersIdle.Core
     /// </summary>
     public sealed class Crystal
     {
+        /// <summary>Vida abaixo desta fração da vida máxima conta como zero (arredondamento de <c>double</c>).</summary>
+        const double BrokenFraction = 1e-9;
+
         public Crystal(int id, int batch, Vec2 position, double maxHealth, double reward)
         {
             if (batch < 1) throw new ArgumentOutOfRangeException(nameof(batch), "O lote começa em 1.");
@@ -38,6 +41,8 @@ namespace MinersIdle.Core
             if (IsBroken) return false;
 
             Health = Math.Max(0, Health - damage);
+            // Toques de 10% somados em double deixam restos como 1e-16 (0,1 × 10 ≠ 1): resto desprezível conta como zero.
+            if (Health <= MaxHealth * BrokenFraction) Health = 0;
             return IsBroken;
         }
 

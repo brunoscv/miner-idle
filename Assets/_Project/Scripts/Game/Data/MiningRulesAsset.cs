@@ -56,6 +56,16 @@ namespace MinersIdle.Game
         [Tooltip("Intervalo mínimo entre golpes, em segundos.")]
         [SerializeField] double minHitInterval = 0.5;
 
+        [Header("Golpe e toque (valores do GDD: 5%, ×2, 10%, 1 s)")]
+        [Tooltip("Chance de crítico por golpe e por toque (0–1).")]
+        [SerializeField] double critChance = 0.05;
+        [Tooltip("Quanto o dano multiplica no crítico.")]
+        [SerializeField] double critMultiplier = 2;
+        [Tooltip("Fração de um golpe que o toque dá (0,1 = 10%).")]
+        [SerializeField] double tapFraction = 0.1;
+        [Tooltip("Segundos sem toque até o combo zerar.")]
+        [SerializeField] double comboWindow = 1;
+
         public MiningRules ToRules() => new MiningRules(
             new Vec2(mapMin.x, mapMin.y), new Vec2(mapMax.x, mapMax.y), new Vec2(minerStart.x, minerStart.y),
             initialCrystals, maxCrystals, spawnInterval,
@@ -63,6 +73,8 @@ namespace MinersIdle.Game
             crystalHealth, crystalReward,
             damage, hitInterval,
             walkSpeed, miningRange);
+
+        public StrikeRules ToStrike() => new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow);
 
         public EconomyRules ToEconomy() => new EconomyRules(
             pickaxe.ToDefinition(), speed.ToDefinition(), mining.ToDefinition(),

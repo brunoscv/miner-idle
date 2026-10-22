@@ -64,7 +64,7 @@ namespace MinersIdle.EditorTools
                 text.AppendLine($"  {asset.name}:");
                 foreach (var seed in ReportSeeds)
                 {
-                    var result = EconomyReport.Run(asset.ToRules(), asset.ToEconomy(), seed, ReportSeconds, ReportCheckpoints);
+                    var result = EconomyReport.Run(asset.ToRules(), asset.ToEconomy(), seed, ReportSeconds, ReportCheckpoints, asset.ToStrike());
                     text.AppendLine("    " + Describe(result, seed));
                 }
             }
