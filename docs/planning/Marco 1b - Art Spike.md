@@ -108,11 +108,12 @@ O "Em breve" da engrenagem e do AD é um texto curto sobre o botão, que some so
 - **Pronto quando:** você aprova o HUD no aparelho.
 - **Achado:** o teste `DescentTests.Dwarf_RunsStopsBreaksAndRunsAgain` falhava às vezes (corrida entre a partida criar um cristal e a descida desenhar); corrigido para parar a partida e esperar um quadro antes de comparar.
 
-### E3 — Loja
+### E3 — Loja ✅ (validada no Moto G75 em 2026-10-23)
 
 - Janela, linhas, molduras coloridas com os ícones, botão rubi/cinza, VOLTAR.
 - **Como testar:** abrir a loja; uma melhoria que dá para comprar fica rubi, uma sem lascas fica cinza; comprar (botão afunda, preço sobe, linha atualiza); Picareta Dupla vira "comprada"; as duas bloqueadas aparecem escurecidas; VOLTAR fecha. Usar o DBG para ganhar lascas e testar rápido.
 - **Pronto quando:** você aprova a loja no aparelho.
+- **Achados:** a tábua da barra de título da janela tem só 8 px (linhas 6 a 13 do sprite): "LOJA" e o saldo vão em 8,25 px e em cor clara (âmbar sobre essa madeira tinha pouco contraste). A descrição longa das linhas bloqueadas quebra em duas linhas antes do botão. O catálogo aponta para ícones e molduras dos packs; num clone sem eles, as referências ficam vazias e a linha volta ao quadrado colorido.
 
 ## Testes
 
@@ -124,13 +125,15 @@ O "Em breve" da engrenagem e do AD é um texto curto sobre o botão, que some so
 
 ## Critério de pronto da parte 1
 
-- [ ] Packs fora do git, importados por código; `CREDITS.md` criado.
-- [ ] Textos do jogo na Pixelify Sans, com acentos, nítidos no Moto G75.
-- [ ] HUD com ícones, LOJA, AD e loja com a pele nova; estados (pressionado, sem lascas, comprada, máx., bloqueada, em breve) visíveis.
-- [ ] Ícones da LOJA e do AD do Bruno encaixados (se chegarem durante o marco).
-- [ ] Clone sem os packs ainda abre e roda (graybox).
-- [ ] Testes verdes.
-- [ ] Você aprova no aparelho.
+> **Parte 1 concluída e aprovada pelo Bruno em 2026-10-23** (E1 `96707c3`, E2 `318d43a`, E3).
+
+- [x] Packs fora do git, importados por código; `CREDITS.md` criado.
+- [x] Textos do jogo na Pixelify Sans, com acentos, nítidos no Moto G75.
+- [x] HUD com ícones, LOJA, AD e loja com a pele nova; estados (pressionado, sem lascas, comprada, máx., bloqueada, em breve) visíveis.
+- [ ] Ícones da LOJA, do AD e de AJUSTES do Bruno: **ainda não chegaram**. Quando estiverem em `Art/UI` (`icon_shop.png`, `icon_ad.png`, `icon_settings.png`), o próximo setup encaixa.
+- [ ] Clone sem os packs: **não verificado, e não cai mais no graybox colorido.** Depois da pele, a cena e o prefab apontam para sprites dos packs com cor branca: sem eles, molduras e botões aparecem como retângulos brancos (o jogo roda). Para trabalhar noutra máquina, copiar `Assets/_Vendor/AssetStore/` do backup.
+- [x] Testes verdes (EditMode 123, PlayMode 42).
+- [x] Você aprova no aparelho.
 
 ## Esforço
 

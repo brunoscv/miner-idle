@@ -58,6 +58,7 @@ namespace MinersIdle.EditorTools
 
         public static void EnsureAssets()
         {
+            ShopSkinSetup.EnsureGeneratedIcons();
             ConfigureUiSprites();
             EnsureGameFont();
         }
@@ -213,8 +214,9 @@ namespace MinersIdle.EditorTools
         /// </summary>
         public static bool EnsureInScene()
         {
-            // E2: a pele do HUD e da coluna da direita cria textos novos; a fonte vem depois, para pegá-los também.
+            // E2/E3: a pele do HUD, da coluna da direita e da loja cria textos novos; a fonte vem depois, para pegá-los.
             bool skinned = HudSkinSetup.EnsureInScene();
+            skinned |= ShopSkinSetup.EnsureInScene();
 
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(GameFontPath);
             if (font == null) return skinned;

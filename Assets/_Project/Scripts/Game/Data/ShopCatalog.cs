@@ -32,8 +32,12 @@ namespace MinersIdle.Game
             [Tooltip("{0} = valor agora, {1} = depois da compra. Em linha bloqueada, a descrição.")]
             [SerializeField] string effectFormat;
             [SerializeField] EffectStyle style;
-            [Tooltip("Cor do ícone provisório (graybox).")]
+            [Tooltip("Cor do ícone provisório (graybox), usada quando não há ícone.")]
             [SerializeField] Color iconColor = Color.white;
+            [Tooltip("Ícone da melhoria (M1b E3). Vazio = quadrado na cor acima.")]
+            [SerializeField] Sprite icon;
+            [Tooltip("Moldura do ícone, na cor de raridade da melhoria (M1b E3). Vazio = sem moldura.")]
+            [SerializeField] Sprite frame;
 
             public bool Locked => locked;
             public UpgradeId Upgrade => upgrade;
@@ -41,6 +45,8 @@ namespace MinersIdle.Game
             public string EffectFormat => effectFormat;
             public EffectStyle Style => style;
             public Color IconColor => iconColor;
+            public Sprite Icon => icon;
+            public Sprite Frame => frame;
         }
 
         [SerializeField] string shopTitle;
