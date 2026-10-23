@@ -67,7 +67,7 @@ namespace MinersIdle.Tests
             Assert.That(reopened.Stats.Damage, Is.GreaterThan(reopened.Rules.Damage), "atributos recalculados do save");
 
             var hud = UnityEngine.Object.FindAnyObjectByType<HudView>();
-            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(shards)));
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.FormatShards(shards)));
             Assert.That(hud.DamageText, Is.EqualTo(NumberFormatter.Format(reopened.Stats.Damage)));
         }
 

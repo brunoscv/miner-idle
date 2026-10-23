@@ -58,7 +58,7 @@ namespace MinersIdle.Tests
             double shards = simulation.State.Shards;
             Click("Content/Buttons/AddShards");
             Assert.That(simulation.State.Shards, Is.EqualTo(shards + DebugPanel.ShardsToAdd));
-            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(simulation.State.Shards)));
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.FormatShards(simulation.State.Shards)));
 
             int count = simulation.Crystals.Count;
             Click("Content/Buttons/SpawnCrystal");
@@ -87,11 +87,11 @@ namespace MinersIdle.Tests
             stage.Draw();
             Assert.That(stage.DrawnCrystals, Is.EqualTo(runner.Simulation.Crystals.Count), "o corredor segue a partida nova");
             Assert.That(cameraPanel.IsOpen, Is.True, "os controles da câmera continuam abertos");
-            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(progress)));
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.FormatShards(progress)));
 
             Click("Content/Buttons/DeleteSave");
             Assert.That(runner.Simulation.State.Shards, Is.EqualTo(0), "Apagar save zera o progresso");
-            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(0)));
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.FormatShards(0)));
 
             Click("Content/Buttons/RestartNewSeed");
             Assert.That(runner.Seed, Is.Not.EqualTo(seed));
@@ -132,7 +132,7 @@ namespace MinersIdle.Tests
             Assert.That(simulation.State.Shards, Is.EqualTo(shards - pickaxeCost).Within(1e-9));
             Assert.That(simulation.Stats.Damage, Is.GreaterThan(damage));
             Assert.That(hud.DamageText, Is.EqualTo(NumberFormatter.Format(simulation.Stats.Damage)));
-            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(simulation.State.Shards)));
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.FormatShards(simulation.State.Shards)));
 
             double interval = simulation.Stats.HitInterval;
             Click("Content/Buttons/BuySpeed");

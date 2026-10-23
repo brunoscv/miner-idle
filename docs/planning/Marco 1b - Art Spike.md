@@ -5,7 +5,7 @@
 > - **Parte 1 — Interface** (este plano): HUD, botão LOJA e loja com os packs de UI que o Bruno escolheu, e uma fonte pixel com acentos.
 > - **Parte 2 — Anão, cristais e biomas**: plano escrito quando a parte 1 for aprovada.
 >
-> Decisões deste plano: **D-62…D-68** em [Decisões e Riscos](Decisoes%20e%20Riscos.md) §1.3. **Aguardando aprovação do Bruno.**
+> Decisões deste plano: **D-62…D-68** em [Decisões e Riscos](Decisoes%20e%20Riscos.md) §1.3. **Plano aprovado pelo Bruno em 2026-10-23.**
 
 ## Objetivo (parte 1)
 
@@ -30,7 +30,7 @@ O tema madeira é a base (combina com a mina e com o mockup). Do fantasy entram 
 | Onde | Ícone | De onde |
 |---|---|---|
 | HUD: LASCAS · DANO · CAVERNA · VELOCIDADE | cristal · picareta · caverna · cronômetro | Bruno (`Art/Crystals/icon_crystal`, `Art/UI/icon_pickaxe-export`, `icon_cave`, `icon_speed`) |
-| Botão AJUSTES (abaixo do AD) | engrenagem | **Bruno vai fazer** junto com a loja e o raio (`icon_settings.png`), mesmo formato. Até lá, a engrenagem do kit de madeira ampliada 2× (pixel mais grosso que os outros ícones). |
+| Botão AJUSTES (abaixo do AD) | engrenagem | **Bruno vai fazer** junto com a loja e o raio (`icon_settings.png`), mesmo formato. Até lá, a engrenagem do kit de madeira em 16 px, no tamanho original (ampliada 2× ela invadia o nome; achado da E2). |
 | Loja: Picareta · Velocidade | picareta · cronômetro | Bruno (os mesmos do HUD) |
 | Loja: Mineração | saco de lascas (`Icon288`) | Ponk |
 | Loja: Picareta Dupla | duas picaretas cruzadas | montado a partir da picareta do Bruno (cópia espelhada por cima) |
@@ -101,11 +101,12 @@ O "Em breve" da engrenagem e do AD é um texto curto sobre o botão, que some so
 - **Como testar:** rodar no celular; ler "Mineração", "Estagiário" e os números do HUD: acentos certos, letras nítidas, nada cortado. Abrir a loja e o DBG.
 - **Pronto quando:** você aprova a fonte no aparelho (ou pede outro tamanho).
 
-### E2 — HUD, LOJA e AD
+### E2 — HUD, LOJA e AD ✅ (validada no Moto G75 em 2026-10-23)
 
 - Painéis do HUD em madeira (nome em cima, ícone e valor embaixo), ocupando toda a largura; LASCAS inteiro (D-68); na coluna da direita, de cima para baixo e do mesmo tamanho: LOJA (estado pressionado e selo "!"), AD desligado e AJUSTES.
 - **Como testar:** rodar no celular; ver os 4 painéis com ícone; tocar LOJA (afunda e abre a loja); comprar algo para o "!" aparecer/sumir; tocar AD e a engrenagem ("Em breve"). Tocar nesses botões não conta como toque no cristal. O tremor do HUD no combo ×10 e o pulso de LASCAS continuam.
 - **Pronto quando:** você aprova o HUD no aparelho.
+- **Achado:** o teste `DescentTests.Dwarf_RunsStopsBreaksAndRunsAgain` falhava às vezes (corrida entre a partida criar um cristal e a descida desenhar); corrigido para parar a partida e esperar um quadro antes de comparar.
 
 ### E3 — Loja
 

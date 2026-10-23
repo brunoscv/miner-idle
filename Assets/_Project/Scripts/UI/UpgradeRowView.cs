@@ -75,7 +75,7 @@ namespace MinersIdle.UI
             }
 
             effect.text = string.Format(_entry.EffectFormat, Format(preview.CurrentValue), Format(preview.NextValue));
-            buyLabel.text = NumberFormatter.Format(preview.NextCost.Value);
+            buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
         }
 
         string Format(double value)

@@ -58,7 +58,7 @@ namespace MinersIdle.Tests
 
             var hud = Object.FindAnyObjectByType<HudView>();
             Assert.That(hud, Is.Not.Null, "a cena Game precisa do HUD (rode o setup do projeto)");
-            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.Format(simulation.State.Shards)), "LASCAS no HUD = lascas do jogo");
+            Assert.That(hud.ShardsText, Is.EqualTo(NumberFormatter.FormatShards(simulation.State.Shards)), "LASCAS no HUD = lascas do jogo");
         }
     }
 }

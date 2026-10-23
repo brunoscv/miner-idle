@@ -103,7 +103,7 @@ namespace MinersIdle.UI
 
             if (!IsOpen) return;
 
-            balance.text = string.Format(catalog.BalanceFormat, NumberFormatter.Format(simulation.State.Shards));
+            balance.text = string.Format(catalog.BalanceFormat, NumberFormatter.FormatShards(simulation.State.Shards));
             foreach (var row in _rows)
                 if (!row.IsLocked) row.Refresh(simulation.Preview(row.Upgrade));
         }

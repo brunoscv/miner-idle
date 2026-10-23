@@ -108,6 +108,11 @@ namespace MinersIdle.Tests
             Assert.That(sawMining, Is.True, "parou para bater");
             Assert.That(simulation.State.Breaks, Is.GreaterThanOrEqualTo(2), "quebrou cristais");
             Assert.That(simulation.Miner.Distance, Is.GreaterThan(start), "correu entre eles");
+
+            // A corrotina volta depois do Update da partida (que pode criar um cristal) e antes do LateUpdate que desenha:
+            // para a partida e espera um quadro, para comparar o desenho com a mesma fila.
+            _runner.enabled = false;
+            yield return null;
             Assert.That(_stage.DrawnCrystals, Is.EqualTo(Mathf.Min(simulation.Crystals.Count, 20)), "a fila inteira desenhada");
         }
 

@@ -207,18 +207,24 @@ namespace MinersIdle.EditorTools
             Debug.Log($"[Setup] Fonte do jogo criada em {GameFontPath} ({asset.characterTable.Count} caracteres).");
         }
 
-        /// <summary>Na cena Game (já aberta) e no prefab da linha da loja: a fonte do jogo nos textos. Devolve se mudou a cena.</summary>
+        /// <summary>
+        /// Na cena Game (já aberta): a pele do HUD e da coluna da direita (E2, <see cref="HudSkinSetup"/>) e a fonte do jogo
+        /// nos textos, também no prefab da linha da loja. Devolve se mudou a cena.
+        /// </summary>
         public static bool EnsureInScene()
         {
+            // E2: a pele do HUD e da coluna da direita cria textos novos; a fonte vem depois, para pegá-los também.
+            bool skinned = HudSkinSetup.EnsureInScene();
+
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(GameFontPath);
-            if (font == null) return false;
+            if (font == null) return skinned;
 
             int changed = 0;
             foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects())
                 changed += ApplyFont(root.transform, font);
             if (changed > 0) Debug.Log($"[Setup] Fonte do jogo aplicada a {changed} texto(s) da cena Game.");
 
-            if (!File.Exists(RowPrefabPath)) return changed > 0;
+            if (!File.Exists(RowPrefabPath)) return skinned || changed > 0;
             var prefab = PrefabUtility.LoadPrefabContents(RowPrefabPath);
             int rowChanged = ApplyFont(prefab.transform, font);
             if (rowChanged > 0)
@@ -228,7 +234,7 @@ namespace MinersIdle.EditorTools
             }
             PrefabUtility.UnloadPrefabContents(prefab);
 
-            return changed > 0;
+            return skinned || changed > 0;
         }
 
         static int ApplyFont(Transform node, TMP_FontAsset font)

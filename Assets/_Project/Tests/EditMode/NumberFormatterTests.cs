@@ -33,6 +33,16 @@ namespace MinersIdle.Tests
             Assert.That(NumberFormatter.Format(value), Is.EqualTo(expected));
         }
 
+        [TestCase(0, "0")]
+        [TestCase(0.99, "0")]
+        [TestCase(12234.5, "12.234")]
+        [TestCase(1234.999, "1.234")]
+        [TestCase(1234567.8, "1,23M")]
+        public void Shards_AreWholeNumbers_RoundedDown(double shards, string expected)
+        {
+            Assert.That(NumberFormatter.FormatShards(shards), Is.EqualTo(expected));
+        }
+
         [Test]
         public void BeyondTrillions_UsesScientificNotation()
         {

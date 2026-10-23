@@ -49,6 +49,12 @@ namespace MinersIdle.Core
             return sign + digits + Suffixes[suffix];
         }
 
+        /// <summary>
+        /// Lascas (D-68): sempre inteiro, arredondado para baixo ("12.234"), para a tela nunca mostrar mais lascas do que
+        /// se tem. A fração continua no estado. Acima de 1 milhão, a abreviação de <see cref="Format"/>.
+        /// </summary>
+        public static string FormatShards(double shards) => Format(Math.Floor(shards));
+
         /// <summary>Tempo em segundos com duas casas ("1,00s"), como a VELOCIDADE do HUD.</summary>
         public static string FormatSeconds(double seconds) => seconds.ToString("0.00", PtBr) + "s";
 

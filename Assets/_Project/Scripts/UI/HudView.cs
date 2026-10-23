@@ -96,7 +96,7 @@ namespace MinersIdle.UI
             caveValue.text = NumberFormatter.Format(CurrentCave);
         }
 
-        void OnShardsChanged(double shards) => shardsValue.text = NumberFormatter.Format(shards);
+        void OnShardsChanged(double shards) => shardsValue.text = NumberFormatter.FormatShards(shards);
 
         void OnStatsChanged(MinerStats stats)
         {

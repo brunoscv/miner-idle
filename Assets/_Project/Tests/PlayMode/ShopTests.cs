@@ -52,7 +52,7 @@ namespace MinersIdle.Tests
 
             var pickaxe = Row(UpgradeId.Pickaxe);
             Assert.That(pickaxe.CanBuy, Is.False, "sem lascas: apagado");
-            Assert.That(pickaxe.ButtonText, Is.EqualTo(NumberFormatter.Format(simulation.Preview(UpgradeId.Pickaxe).NextCost.Value)));
+            Assert.That(pickaxe.ButtonText, Is.EqualTo(NumberFormatter.FormatShards(simulation.Preview(UpgradeId.Pickaxe).NextCost.Value)));
 
             simulation.AddShards(1000);
             Assert.That(_shop.IsBadgeShown, Is.True, "com lascas, selo \"!\"");
