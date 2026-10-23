@@ -60,11 +60,11 @@ namespace MinersIdle.EditorTools
 
             var entries = so.FindProperty("entries");
             entries.arraySize = 0;
-            AddEntry(entries, false, UpgradeId.Pickaxe, "Picareta", "Dano {0} → {1}", ShopCatalog.EffectStyle.Number, new Color32(0xB0, 0xB7, 0xBD, 0xFF));
-            AddEntry(entries, false, UpgradeId.Speed, "Velocidade", "Golpe a cada {0} → {1}", ShopCatalog.EffectStyle.Seconds, new Color32(0x4F, 0xC3, 0xF7, 0xFF));
-            AddEntry(entries, false, UpgradeId.Mining, "Mineração", "Lascas {0} → {1}", ShopCatalog.EffectStyle.BonusPercent, new Color32(0xC2, 0x3C, 0xFF, 0xFF));
-            AddEntry(entries, false, UpgradeId.DoublePickaxe, "Picareta Dupla", "Dano {0} → {1}", ShopCatalog.EffectStyle.Number, new Color32(0xF2, 0xA9, 0x00, 0xFF));
-            AddEntry(entries, false, UpgradeId.Boots, "Botas", "Caminhada {0} → {1}", ShopCatalog.EffectStyle.Number, new Color32(0x8D, 0x6E, 0x63, 0xFF));
+            AddEntry(entries, false, UpgradeId.Pickaxe, "Picareta", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0xB0, 0xB7, 0xBD, 0xFF));
+            AddEntry(entries, false, UpgradeId.Speed, "Velocidade", "Golpe a cada {0} » {1}", ShopCatalog.EffectStyle.Seconds, new Color32(0x4F, 0xC3, 0xF7, 0xFF));
+            AddEntry(entries, false, UpgradeId.Mining, "Mineração", "Lascas {0} » {1}", ShopCatalog.EffectStyle.BonusPercent, new Color32(0xC2, 0x3C, 0xFF, 0xFF));
+            AddEntry(entries, false, UpgradeId.DoublePickaxe, "Picareta Dupla", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0xF2, 0xA9, 0x00, 0xFF));
+            AddEntry(entries, false, UpgradeId.Boots, "Botas", "Caminhada {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0x8D, 0x6E, 0x63, 0xFF));
             AddEntry(entries, true, UpgradeId.Pickaxe, "Estagiário", "Um ajudante que minera junto", ShopCatalog.EffectStyle.Number, new Color32(0x9E, 0x9E, 0x9E, 0xFF));
             AddEntry(entries, true, UpgradeId.Pickaxe, "Letrado", "Libera a próxima caverna", ShopCatalog.EffectStyle.Number, new Color32(0x9E, 0x9E, 0x9E, 0xFF));
             so.ApplyModifiedPropertiesWithoutUndo();

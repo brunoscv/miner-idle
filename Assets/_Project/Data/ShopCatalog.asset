@@ -23,31 +23,31 @@ MonoBehaviour:
   - locked: 0
     upgrade: 0
     title: Picareta
-    effectFormat: "Dano {0} \u2192 {1}"
+    effectFormat: "Dano {0} \xBB {1}"
     style: 0
     iconColor: {r: 0.6901961, g: 0.7176471, b: 0.7411765, a: 1}
   - locked: 0
     upgrade: 1
     title: Velocidade
-    effectFormat: "Golpe a cada {0} \u2192 {1}"
+    effectFormat: "Golpe a cada {0} \xBB {1}"
     style: 1
     iconColor: {r: 0.30980393, g: 0.7647059, b: 0.96862745, a: 1}
   - locked: 0
     upgrade: 2
     title: "Minera\xE7\xE3o"
-    effectFormat: "Lascas {0} \u2192 {1}"
+    effectFormat: "Lascas {0} \xBB {1}"
     style: 2
     iconColor: {r: 0.7607843, g: 0.23529412, b: 1, a: 1}
   - locked: 0
     upgrade: 3
     title: Picareta Dupla
-    effectFormat: "Dano {0} \u2192 {1}"
+    effectFormat: "Dano {0} \xBB {1}"
     style: 0
     iconColor: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
   - locked: 0
     upgrade: 4
     title: Botas
-    effectFormat: "Caminhada {0} \u2192 {1}"
+    effectFormat: "Caminhada {0} \xBB {1}"
     style: 0
     iconColor: {r: 0.5529412, g: 0.43137255, b: 0.3882353, a: 1}
   - locked: 1

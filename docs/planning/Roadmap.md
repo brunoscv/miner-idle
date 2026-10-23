@@ -11,6 +11,8 @@
 
 > **Atualização de 2026-10-22 — D-50…D-59:** **nova visão aprovada: descida em corrida** (câmera de frente, anão correndo por um corredor de caverna; substitui o mapa aberto da D-26). **M5 aprovado** (D-59). O **novo M6 = Descida em corrida**, antes do Art Spike e do Estagiário; **os marcos seguintes ganham +1** (D-56): Estagiário M7, Letrado/cavernas M8, AD/save/offline M9, arte 2–10 M10, balanceamento M11, RC M12, publicação M13, pós-lançamento M14. Em documentos anteriores a esta data, "M6" = Estagiário e assim por diante. O texto dos marcos abaixo que fala em "mapa" vale para o corredor.
 
+> **Atualização de 2026-10-23 — D-62…D-67:** a E5 do M6 fica pausada e o **Art Spike (M1b)** começa, primeiro pela **interface** (packs de UI em madeira, ícones, fonte Pixelify Sans, botões LOJA e AD) e depois anão, cristais e biomas. Plano: [Marco 1b - Art Spike](Marco%201b%20-%20Art%20Spike.md).
+
 ## 1. Como este roadmap se relaciona com o do RM
 
 | RM (semanas) | Aqui | Mudança e motivo |

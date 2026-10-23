@@ -75,6 +75,20 @@
 | **D-60** | **Onde o cristal nasce na fila (2026-10-22):** no fim da fila, a pelo menos **12 un (6 m) à frente do anão** (fora da tela, atrás da câmera); substitui a distância mínima do anão do mapa (1,5 un). O espaço entre cristais continua **2 un**. Os **10 cristais iniciais** começam na tela: o primeiro a **3 un** do anão, os outros a cada 2 un. Plano da E2–E5 do M6 aprovado. |
 | **D-61** | **Limpeza na E3 do M6:** a cena de teste `Descida`, o loop só visual e as views do mapa aberto (mapa, cristais espalhados, linha até o alvo, "Mostrar ordem") saem quando a cena `Game` passar a ser o corredor; os controles da câmera vão para o DBG do jogo. O código antigo fica na tag `v0.5-campo-aberto`. |
 
+### 1.3 Decididas pelo Bruno em 2026-10-23
+
+> Contexto: o Bruno pausou a E5 do M6 e quer a cara de jogo primeiro (UI, depois anão, cristais e biomas). Escolhas feitas sobre uma prévia com os sprites reais dos packs. Plano: [Marco 1b - Art Spike](Marco%201b%20-%20Art%20Spike.md).
+
+| # | Decisão |
+|---|---|
+| **D-62** | **Art Spike (M1b) agora, começando pela interface.** A E5 do M6 (relatório da economia e teste de 10 min) fica pausada e o M6 continua sem aprovação; exceção consciente à regra "um marco só começa quando o anterior foi aprovado", como a D-51. A parte 2 (anão, cristais, biomas) vem depois da UI aprovada. |
+| **D-63** | **Kit de UI:** base = *Pixel UI Kit* (REEBOO Labs, tema madeira, amostra grátis); do *Fantasy UI Kit Lite* (Willosuna) só o **botão rubi** de comprar e o selo **"!"**. Painéis do HUD com `panel` (opção A). Sprites em escala 1:1 com a referência 270 px. |
+| **D-64** | **Fonte dos textos do jogo: Pixelify Sans** (Google Fonts, OFL), porque a fonte do kit não tem acentos. O DBG fica na fonte atual. |
+| **D-65** | **Assets com licença que proíbe redistribuir ficam fora do git** em `Assets/_Vendor/AssetStore/` (o repositório é público). Backup dos originais com o Bruno; `CREDITS.md` registra todos. O jogo sem eles cai no visual graybox. |
+| **D-66** | **Ícones:** HUD com os 4 ícones do Bruno; na loja, Picareta e Velocidade com os do Bruno, Picareta Dupla montada com duas picaretas dele cruzadas, Mineração/Botas/Estagiário/Letrado do pack *Anvil's RPG icons* (Ponk, baixado em 2026-10-23, fora do git). Os ícones da **LOJA** (lojinha com toldo) e do **AD** (raio) o Bruno faz na ferramenta dele, no formato dos outros (64×64, arte 32×32). |
+| **D-67** | **Engrenagem e botão AD aparecem já**, desligados: o AD fica cinza e os dois mostram "Em breve" ao tocar. Funcionam de verdade no M9. Exceção consciente à regra *jogável antes de sistema*, para a tela já ter a cara final. A engrenagem sai do HUD e vira o botão **AJUSTES na coluna da direita, abaixo do AD**, do mesmo tamanho e estilo da LOJA e do AD, para os 4 painéis do HUD ganharem a largura toda (pedido do Bruno). Cada painel do HUD: **nome sozinho em cima, ícone e valor embaixo**. |
+| **D-68** | **LASCAS aparece sempre como número inteiro** ("12.234"), arredondado para baixo, no HUD e na loja (saldo e preços); a fração continua no estado, só não é exibida. Ajusta a D-41 só para lascas; DANO, VELOCIDADE e os textos flutuantes de ganho seguem a D-41. |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.
