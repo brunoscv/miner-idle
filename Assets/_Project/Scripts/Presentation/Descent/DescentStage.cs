@@ -76,8 +76,9 @@ namespace MinersIdle.Presentation
         [Tooltip("Largura da textura de render, em pixels (D-14: 270). 0 = resolução do aparelho.")]
         [SerializeField] int internalWidth = 270;
 
-        [Tooltip("Imagem opcional para todos os cristais da fila. Vazio = usar o cristal provisório gerado pelo jogo.")]
-        [SerializeField] Texture2D crystalTexture;
+        [Tooltip("Uma imagem por cor de cristal, na ordem de DescentArt.CrystalColors (branco, dourado, azul, roxo, " +
+                 "vermelho; a mesma dos estilhaços). Vazio = o cristal gerado por código (M1b E5, D-70).")]
+        [SerializeField] Texture2D[] crystalTextures;
 
         [Tooltip("Largura e altura dos cristais da fila, em unidades do jogo.")]
         [SerializeField] Vector2 crystalSize = new Vector2(0.84f, 0.8f);
@@ -497,9 +498,7 @@ namespace MinersIdle.Presentation
                 var crystal = crystals[i];
                 float shake = crystal == _shaking && _shake > 0f ? Mathf.Sin(Time.unscaledTime * 90f) * _shakeAmplitude * _shake : 0f;
                 // Uma textura atribuída no Inspector substitui o cristal provisório; mantém-se a arte antiga como fallback.
-                _crystals[i].SetTexture(crystalTexture != null
-                    ? crystalTexture
-                    : _art.Crystals[crystal.Id % DescentArt.CrystalColorCount]);
+                _crystals[i].SetTexture(CrystalTexture(crystal.Id));
                 _crystals[i].Place(new Vector3(shake, 0f, z), crystalSize);
                 PlaceShadow(_crystalShadows[i], 0f, z, DescentArt.ShadowSize.x * 1.1f);
             }
@@ -507,6 +506,15 @@ namespace MinersIdle.Presentation
             LayoutHealthBar(miner.Target, distance);
             LayoutPosts(front);
             LayoutDecor(front);
+        }
+
+        /// <summary>A textura do cristal pela cor do seu id (a mesma regra dos estilhaços da quebra).</summary>
+        public Texture CrystalTexture(int id)
+        {
+            int color = id % DescentArt.CrystalColorCount;
+            return crystalTextures != null && color < crystalTextures.Length && crystalTextures[color] != null
+                ? crystalTextures[color]
+                : _art.Crystals[color];
         }
 
         static Sprite FrameAt(Sprite[] frames, int index) =>

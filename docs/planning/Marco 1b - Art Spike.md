@@ -184,9 +184,10 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 - **Como testar:** rodar no celular; ver o corredor de rocha, a fila em coluna e o anão sempre à vista; 60 fps no Moto G75.
 - **Como ficou:** `CorridorArtSetup` (Editor) gera `rock_dark`, `cobble` e `support_portal` em `_Vendor/AssetStore/PixelFantasyCaves/Generated/` e preenche os campos novos do `DescentStage` (texturas de chão/parede/teto a 64 px/m, tinta da parede 1,35, esteio em sprite 3,4 × 4,5 m, gemas do Nasha). A cena migrou da D-50 para a F1 e o botão do DBG virou "Padrão F1". `Art/Cave` foi para `_Vendor/AssetStore/CaveMix` (com `LICENSES.txt` das três origens).
 
-### E5 — Cristais
+### E5 — Cristais ✅ (validada no Moto G75 em 2026-10-23)
 - 5 cores geradas do `icon_crystal`; cada cristal da fila usa a cor do seu tipo; barra de vida acima; estilhaços e faíscas na cor do cristal.
 - **Como testar:** ver as 5 cores na fila; bater e quebrar; conferir que o cristal não esconde o anão.
+- **Como ficou:** `CrystalArtSetup` (Editor) gera `Art/Crystals/crystal_{white,gold,blue,purple,red}.png` do `icon_crystal` (rampas de uma cor, no git) e põe na lista `crystalTextures` do `DescentStage`, na ordem de `DescentArt.CrystalColors`: a cor do cristal é a mesma dos estilhaços da quebra. Cristal de 0,7 m. O campo de textura única do trabalho em andamento saiu.
 
 ### E6 — Anão em recorte animado
 - Peças recortadas do `dwarf-idle` (o recorte fica em `ArtSource/characters/miner_main/` e as peças em `Art/Character/rig/`); animação de correr e de minerar em código, presa ao relógio do jogo; Picareta Dupla com a segunda picareta.
