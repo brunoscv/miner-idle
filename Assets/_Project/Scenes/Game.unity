@@ -9336,7 +9336,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Padr\xE3o D-50"
+  m_text: "Padr\xE3o F1"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ee2dfa4c89687654d86e8cd1df8ee8af, type: 2}
   m_sharedMaterial: {fileID: -4624264490274306166, guid: ee2dfa4c89687654d86e8cd1df8ee8af, type: 2}
@@ -10873,13 +10873,31 @@ MonoBehaviour:
   sceneCamera: {fileID: 289084163}
   screenCamera: {fileID: 825664067}
   framing:
-    height: 2.4
-    tilt: 15
-    distance: 4.8
+    height: 3.6
+    tilt: 30
+    distance: 5
     fieldOfView: 40
     corridorWidth: 3
   metersPerUnit: 0.5
   internalWidth: 270
+  crystalTexture: {fileID: 2800000, guid: e56f4d0c376a2c24d9556bba499a6aac, type: 3}
+  crystalSize: {x: 0.84, y: 0.8}
+  dwarfRunFrames: []
+  dwarfMineFrames: []
+  dwarfSize: {x: 2.4, y: 2}
+  runAnimationFps: 8
+  runBounceHeight: 0.04
+  floorTexture: {fileID: 2800000, guid: 8004d7e11a5be384984c6721f7a06f04, type: 3}
+  wallTexture: {fileID: 2800000, guid: a78070a9d9af0c540817df3c35a54cc4, type: 3}
+  ceilingTexture: {fileID: 2800000, guid: a78070a9d9af0c540817df3c35a54cc4, type: 3}
+  texturePixelsPerMeter: 64
+  wallTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
+  supportTexture: {fileID: 2800000, guid: 0abbcfe89fea7df43b98208baedc1937, type: 3}
+  supportSize: {x: 3.4, y: 4.5}
+  decorTextures:
+  - {fileID: 2800000, guid: a6ec5162653f9e54c9def4088612e133, type: 3}
+  - {fileID: 2800000, guid: a6c1fb70f7772de43bee21a4030b7df3, type: 3}
+  - {fileID: 2800000, guid: 5dec772c394d0b2428f2d0f408bcfea8, type: 3}
   fogColor: {r: 0.078431375, g: 0.050980393, b: 0.03529412, a: 1}
   fogStart: 3
   fogEnd: 25

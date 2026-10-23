@@ -4,8 +4,9 @@ using UnityEngine;
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Enquadramento da câmera da descida (M6, D-50): a câmera fica à frente do anão, um pouco acima da cabeça, olhando
-    /// para ele com uma inclinação pequena. Valores de apresentação (não são regra), ajustáveis no DBG.
+    /// Enquadramento da câmera da descida (M6, D-50; desde o M1b, D-69): a câmera fica à frente do anão, acima dele,
+    /// olhando para baixo de modo que a fila de cristais apareça em coluna, sem esconder o anão. Valores de apresentação
+    /// (não são regra), ajustáveis no DBG.
     ///
     /// Coordenadas: a câmera está em (0, altura, 0) olhando para +z; o anão corre parado em (x, 0, distância), de frente
     /// para ela. O campo de visão vale para uma tela 9:16 (a do simulador); numa tela mais alta a largura vista é a mesma
@@ -31,12 +32,15 @@ namespace MinersIdle.Presentation
         [Tooltip("Largura do corredor, em metros.")]
         public float corridorWidth;
 
-        /// <summary>A câmera validada pelo Bruno no simulador (D-50, 2026-10-22).</summary>
+        /// <summary>
+        /// A câmera F1, escolhida pelo Bruno sobre prévias do jogo com arte (D-69, 2026-10-23). Supera a D-50 (2,4 m, 15°,
+        /// 4,8 m), em que os cristais da fila escondiam o anão.
+        /// </summary>
         public static DescentFraming Validated => new DescentFraming
         {
-            height = 2.4f,
-            tilt = 15f,
-            distance = 4.8f,
+            height = 3.6f,
+            tilt = 30f,
+            distance = 5f,
             fieldOfView = 40f,
             corridorWidth = 3f,
         };

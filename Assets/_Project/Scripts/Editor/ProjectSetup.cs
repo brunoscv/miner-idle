@@ -81,6 +81,7 @@ namespace MinersIdle.EditorTools
             EnsureSplash();
             EnsureGameScene();
             UiSkinSetup.EnsureAssets();
+            CorridorArtSetup.EnsureAssets();
             GrayboxSetup.Ensure();
             ConfigureBuildScenes();
             AssetDatabase.SaveAssets();

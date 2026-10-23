@@ -118,6 +118,7 @@ namespace MinersIdle.Presentation
     {
         static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        static readonly int BaseMapSTId = Shader.PropertyToID("_BaseMap_ST");
 
         readonly MeshRenderer _renderer;
         readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
@@ -156,6 +157,23 @@ namespace MinersIdle.Presentation
         {
             if (texture == _texture) return;
             _texture = texture;
+            _block.SetVector(BaseMapSTId, new Vector4(1f, 1f, 0f, 0f));
+            Apply();
+        }
+
+        /// <summary>Usa um recorte de spritesheet sem criar uma textura ou material por quadro.</summary>
+        public void SetSprite(Sprite sprite)
+        {
+            if (sprite == null) return;
+            _texture = sprite.texture;
+            var rect = sprite.textureRect;
+            float width = sprite.texture.width;
+            float height = sprite.texture.height;
+            _block.SetVector(BaseMapSTId, new Vector4(
+                rect.width / width,
+                rect.height / height,
+                rect.x / width,
+                rect.y / height));
             Apply();
         }
 

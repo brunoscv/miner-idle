@@ -13,7 +13,7 @@ namespace MinersIdle.UI
     /// Controles da câmera da descida no DBG do jogo (M6, E3; D-61): os − e + da E1 para altura, inclinação, distância,
     /// campo de visão e largura do corredor (mais fáceis de acertar no celular que um slider), a intensidade dos efeitos
     /// (E4), Resolução (270/360/aparelho),
-    /// Padrão D-50 e Fechar. Uma linha mostra onde o anão fica na tela e quanto chão se vê à frente dele, para passar os
+    /// Padrão (F1, D-69) e Fechar. Uma linha mostra onde o anão fica na tela e quanto chão se vê à frente dele, para passar os
     /// números adiante. Abre pelo botão "Câmera" do DBG e fica aberto com o DBG fechado, para ajustar olhando o jogo.
     /// Os textos (rótulos e modelos) ficam na cena. Só no Editor e em Development Build.
     /// </summary>

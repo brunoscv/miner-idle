@@ -138,3 +138,72 @@ O "Em breve" da engrenagem e do AD é um texto curto sobre o botão, que some so
 ## Esforço
 
 10–16 h.
+
+---
+
+# Parte 2 — Corredor, cristais, anão, estagiário e biomas
+
+> Plano de 2026-10-23, depois de prévias tiradas do próprio jogo (câmera da descida em 270×600) com a arte candidata. Decisões do Bruno: **D-69…D-74** em [Decisões e Riscos](Decisoes%20e%20Riscos.md) §1.3. **Aguardando aprovação do Bruno.**
+
+## Objetivo
+
+Trocar o desenho por código do corredor, dos cristais e do anão por arte de verdade, no estilo do mockup, e deixar os biomas das 10 cavernas prontos como **dados**, sem mudar nenhuma regra.
+
+**Para você:** abrir o jogo e ver o anão do seu desenho correndo e minerando de verdade, num corredor de rocha com esteios, lanternas e gemas nas paredes, com a fila de cristais em coluna (como no mockup). No DBG, trocar o bioma para ver como cada caverna vai ficar.
+
+## O que as prévias mostraram
+
+| Tema | Achado |
+|---|---|
+| **Corredor** | A rocha do pack de `Art/Cave` (`cave_rock_floor`/`cave_rock_wall`, 32 px, tileável) no chão, parede e teto já deixa o jogo muito melhor que o tijolo gerado por código. A lanterna (`gear/hand_lantern`) e as gemas (`rough_amethyst`, `rough_ruby`, `pyrite_cube`) funcionam como decoração das paredes. |
+| **Câmera** | Na câmera D-50, os cristais da fila ficam entre a câmera e o anão e **escondem o anão** (com arte de verdade, fica gritante). Na **F1** (3,6 m, 30°) a fila aparece em coluna e o anão fica à vista. Câmeras mais altas atravessam as vigas e achatam os cristais (placas em pé vistas de cima). |
+| **Cristais** | O seu `icon_crystal` em 5 cores (uma rampa por cor, mantendo o claro/escuro do desenho) é o que mais lembra o mockup. Girar o matiz não serve (o desenho mistura rosa e ciano). |
+| **Anão** | O `dwarf-idle` (parado) é ótimo. A folha `dwarf-mining` não serve para animar: os 13 quadros mudam de ângulo (frente/3-4), de tamanho e de lugar, um tem uma picareta gigante. Não existe anão grátis de frente com correr e minerar (os bons, como o do Elthen, são de lado e pagos). |
+| **Biomas** | A mesma rocha, tingida, com a neblina do fundo na cor do bioma, já dá 4 climas bem diferentes (mina, gelo, lava, fungos): barato para 10 cavernas. |
+| **Tiles** | `free_walls&doors_TileSheet` é vista de cima: não serve para o corredor. O PK texturepack (CC0) não é pixel art (ruído/pintado): destoa. |
+| **Parede × chão** | Pedra em tudo cansa, e tiles pequenos repetidos (Tilecraft, 32 px) parecem "pano de mesa". O que funcionou: **texturas grandes (8 m de corredor) montadas por carimbos sorteados**, com emenda nas bordas, a partir dos blocos naturais do **Pixel Fantasy Caves** (Szadi art.), a **64 px por metro** (perto da densidade do anão). Escolhida a **N2**: rocha escura na parede e calçamento de pedra no chão. |
+| **Esteios** | Sprite de portal no lugar das caixas de madeira é muito mais bonito. O `mine_support` do Afterwork é só não comercial; o **portal de madeira com cintas de ferro do Pixel Fantasy Caves** (com o miolo escuro removido) faz o mesmo papel e é liberado. **Nenhum esteio pode ficar entre a câmera e o anão** (o mais próximo cobria o anão inteiro): só do anão para o fundo. |
+
+## Decisões (D-69…D-74)
+
+- **D-69 — Câmera F1:** altura 3,6 m, inclinação 30°, distância 5 m (campo de visão 40° e corredor 3 m como na D-50). Supera a D-50. As vigas sobem para não cruzar a tela e os sprites (cristais, anão) passam a ficar virados para a câmera.
+- **D-70 — Cristal da fila:** o `icon_crystal` do Bruno em 5 cores (branco, dourado, azul, roxo, vermelho), geradas pelo setup em `Art/Crystals/` (rampas de uma cor). Os estilhaços da quebra usam a cor do cristal.
+- **D-71 — Anão em recorte animado:** a partir do `dwarf-idle`, o anão é separado em peças (corpo, cabeça, braço com picareta, pernas) e animado por código: correr = passada alternando as pernas + balanço; minerar = a picareta gira para trás e desce no instante do golpe (o relógio do golpe é do núcleo). A Picareta Dupla põe a segunda picareta na mão esquerda. O estagiário é o mesmo boneco recolorido.
+- **D-72 — Biomas em dados:** cada caverna é um asset (`BiomeDefinition`): textura e tinta de chão/parede/teto, cor da neblina, decoração das paredes, cor das lanternas e nome. As 10 ficam definidas aqui; a troca de caverna no jogo é do M8 (passagem de caverna).
+- **D-74 — Caverna 1 (N2):** parede e teto de **rocha escura** e chão de **calçamento de pedra**, as duas texturas geradas pelo setup com carimbos sorteados do *Pixel Fantasy Caves* (blocos de rocha 169/193; calçamento 201 girado e espelhado), 256 px a 64 px/m; esteios = **portal de madeira do Pixel Fantasy** (sem miolo), só do anão para o fundo. O pack e as texturas derivadas ficam fora do git (`_Vendor/AssetStore/PixelFantasyCaves`). Tilecraft e Nature ficam como fonte para os outros biomas.
+- **D-73 — Pack de `Art/Cave` = Afterwork Dungeon Pixel Assets (bbig0104):** o sampler grátis é **só não comercial**; para publicar, comprar a Full library (US$ 4,99+) ou trocar a arte. Arte gerada com IA (declarado pelo autor). Fica fora do git.
+
+## Etapas
+
+### E4 — Corredor de rocha e câmera F1 ✅ (validada no Moto G75 em 2026-10-23)
+- Rocha escura na parede e no teto, calçamento no chão, geradas pelo setup a partir do Pixel Fantasy Caves (D-74; o gerador fica no `Editor/`, as texturas geradas em `_Vendor`); portais de madeira do Pixel Fantasy como esteios, só do anão para o fundo; lanterna e gemas de parede como sprites; câmera F1 (D-69); sprites virados para a câmera. Rocha um pouco mais clara (tinta do material), porque na F1 a parede aparece pouco atrás dos esteios.
+- O pack de `Art/Cave` vai para `Assets/_Vendor/AssetStore/AfterworkDungeon/` (fora do git, D-73): mesmo com a Full library, a licença proíbe redistribuir os arquivos.
+- O trabalho em andamento no `DescentStage` (textura única de cristal, quadros de anão) é absorvido aqui e substituído pelo que as próximas etapas pedem.
+- Importação dos PNGs de `Art/Cave` e `Art/Character` como pixel art (Point, sem compressão; repetição nas texturas de chão/parede).
+- **Testes:** os de enquadramento da descida passam a medir a F1 (onde ficam cabeça e pés do anão na tela); um quadro continua sem alocação.
+- **Como testar:** rodar no celular; ver o corredor de rocha, a fila em coluna e o anão sempre à vista; 60 fps no Moto G75.
+- **Como ficou:** `CorridorArtSetup` (Editor) gera `rock_dark`, `cobble` e `support_portal` em `_Vendor/AssetStore/PixelFantasyCaves/Generated/` e preenche os campos novos do `DescentStage` (texturas de chão/parede/teto a 64 px/m, tinta da parede 1,35, esteio em sprite 3,4 × 4,5 m, gemas do Nasha). A cena migrou da D-50 para a F1 e o botão do DBG virou "Padrão F1". `Art/Cave` foi para `_Vendor/AssetStore/CaveMix` (com `LICENSES.txt` das três origens).
+
+### E5 — Cristais
+- 5 cores geradas do `icon_crystal`; cada cristal da fila usa a cor do seu tipo; barra de vida acima; estilhaços e faíscas na cor do cristal.
+- **Como testar:** ver as 5 cores na fila; bater e quebrar; conferir que o cristal não esconde o anão.
+
+### E6 — Anão em recorte animado
+- Peças recortadas do `dwarf-idle` (o recorte fica em `ArtSource/characters/miner_main/` e as peças em `Art/Character/rig/`); animação de correr e de minerar em código, presa ao relógio do jogo; Picareta Dupla com a segunda picareta.
+- Antes de recortar tudo, um **teste curto**: o golpe e a corrida com as peças mínimas, em GIF, para você aprovar o movimento.
+- **Como testar:** ver o anão correr entre os cristais e bater no ritmo da VELOCIDADE; comprar a Picareta Dupla e ver as duas picaretas; DBG ×5 para ver o golpe rápido.
+
+### E7 — Estagiário
+- O mesmo boneco recolorido (capacete de aço, barba castanha), correndo ao lado (D-57). O estagiário de verdade é do M7; aqui ele aparece só pelo DBG, para aprovar o visual.
+
+### E8 — Biomas
+- `BiomeDefinition` (D-72) com as 10 cavernas (nomes e cores propostos para você aprovar); a caverna 1 é a mina. DBG → **Bioma** troca na hora para ver cada uma.
+- **Como testar:** DBG → Bioma, passar pelas 10.
+
+## O que fica de fora
+- **Troca de caverna jogando** (Letrado, PASSAR DE CAVERNA): M8.
+- **Novas regras:** nada muda em valores de regra; o espaço entre cristais (2 un) continua.
+- **Animações extras** (comemorar, sofrer penalidade): depois.
+
+## Esforço
+25–40 h (E6, o anão, é a maior: 10–16 h).

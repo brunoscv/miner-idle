@@ -53,15 +53,15 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void ValidatedFraming_PutsTheDwarfWhereTheSimulatorDid()
+        public void ValidatedFraming_PutsTheDwarfAboveTheQueue()
         {
             var framing = DescentFraming.Validated;
             const float aspect = DescentFraming.ReferenceAspect;
 
             Assert.That(framing.VerticalFieldOfView(aspect), Is.EqualTo(40f).Within(0.01f), "9:16: o campo de visão é o validado");
-            Assert.That(framing.FromTop(DescentFraming.DwarfHeight, framing.distance, aspect), Is.EqualTo(0.44f).Within(0.01f), "cabeça");
-            Assert.That(framing.FromTop(0f, framing.distance, aspect), Is.EqualTo(0.78f).Within(0.01f), "pés");
-            Assert.That(framing.GroundAhead(aspect), Is.EqualTo(1.37f).Within(0.05f), "chão à frente dos pés");
+            Assert.That(framing.FromTop(DescentFraming.DwarfHeight, framing.distance, aspect), Is.EqualTo(0.37f).Within(0.01f), "cabeça (F1, D-69)");
+            Assert.That(framing.FromTop(0f, framing.distance, aspect), Is.EqualTo(0.64f).Within(0.01f), "pés (F1, D-69)");
+            Assert.That(framing.GroundAhead(aspect), Is.EqualTo(1.98f).Within(0.05f), "chão à frente dos pés");
             Assert.That(framing.VerticalFieldOfView(9f / 20f), Is.GreaterThan(40f), "tela mais alta: mesma largura, mais altura");
         }
 
@@ -161,7 +161,7 @@ namespace MinersIdle.Tests
 
         /// <summary>M6 (E3): os controles da câmera da E1 vivem no DBG do jogo (D-61).</summary>
         [UnityTest]
-        public IEnumerator CameraPanel_ChangesTheFraming_AndResetsToD50()
+        public IEnumerator CameraPanel_ChangesTheFraming_AndResetsToValidated()
         {
             yield return Load();
             var panel = Object.FindAnyObjectByType<DescentCameraPanel>();
@@ -174,9 +174,10 @@ namespace MinersIdle.Tests
 
             Click("Content/Rows/Row0/Plus"); // altura + 0,1
             Click("Content/Rows/Row1/Minus"); // inclinação − 1
-            Assert.That(_stage.Framing.height, Is.EqualTo(2.5f).Within(1e-5f));
-            Assert.That(_stage.Framing.tilt, Is.EqualTo(14f).Within(1e-5f));
-            Assert.That(_stage.SceneCamera.transform.localPosition.y, Is.EqualTo(2.5f).Within(1e-5f), "a câmera mudou na hora");
+            var validated = DescentFraming.Validated;
+            Assert.That(_stage.Framing.height, Is.EqualTo(validated.height + 0.1f).Within(1e-5f));
+            Assert.That(_stage.Framing.tilt, Is.EqualTo(validated.tilt - 1f).Within(1e-5f));
+            Assert.That(_stage.SceneCamera.transform.localPosition.y, Is.EqualTo(validated.height + 0.1f).Within(1e-5f), "a câmera mudou na hora");
 
             Click("Content/Buttons/ResetFraming");
             Assert.That(_stage.Framing.height, Is.EqualTo(DescentFraming.Validated.height));

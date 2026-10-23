@@ -31,11 +31,11 @@ namespace MinersIdle.Presentation
         const int PostSlots = 11;
         const int DecorSlots = 16;
 
+        /// <summary>Folga, em metros, entre o anão e o esteio mais próximo da câmera que ainda é desenhado.</summary>
+        const float SupportClearance = 0.6f;
+
         /// <summary>Cristais desenhados ao mesmo tempo: o máximo da fila mais os que o debug põe além dele.</summary>
         const int CrystalSlots = 20;
-
-        /// <summary>Radianos de passada por metro corrido.</summary>
-        const double StridePerMeter = 5;
 
         /// <summary>Tremor do cristal ao levar golpe (o feedback chama <see cref="Shake"/>).</summary>
         const float ShakeSeconds = 0.12f;
@@ -58,6 +58,7 @@ namespace MinersIdle.Presentation
         static readonly int FogEndId = Shader.PropertyToID("_DescentFogEnd");
         static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         static readonly int ScrollAxisId = Shader.PropertyToID("_ScrollAxis");
+        static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         [SerializeField] Shader shader;
         [Tooltip("Shader do quadro que mostra a descida na tela (URP Unlit).")]
@@ -66,7 +67,7 @@ namespace MinersIdle.Presentation
         [Tooltip("A câmera da tela (a de cima, ortográfica): o quadro da descida fica atrás de tudo que ela desenha.")]
         [SerializeField] Camera screenCamera;
 
-        [Tooltip("Câmera validada pelo Bruno (D-50). Ajustável no DBG.")]
+        [Tooltip("Câmera validada pelo Bruno (F1, D-69; antes D-50). Ajustável no DBG.")]
         [SerializeField] DescentFraming framing = DescentFraming.Validated;
 
         [Tooltip("Metros do corredor por unidade da regra (D-58).")]
@@ -74,6 +75,42 @@ namespace MinersIdle.Presentation
 
         [Tooltip("Largura da textura de render, em pixels (D-14: 270). 0 = resolução do aparelho.")]
         [SerializeField] int internalWidth = 270;
+
+        [Tooltip("Imagem opcional para todos os cristais da fila. Vazio = usar o cristal provisório gerado pelo jogo.")]
+        [SerializeField] Texture2D crystalTexture;
+
+        [Tooltip("Largura e altura dos cristais da fila, em unidades do jogo.")]
+        [SerializeField] Vector2 crystalSize = new Vector2(0.84f, 0.8f);
+
+        [Tooltip("Frames de corrida do anão, em ordem. Deixe vazio para usar o desenho provisório.")]
+        [SerializeField] Sprite[] dwarfRunFrames;
+
+        [Tooltip("Frames de mineração do anão, em ordem. Deixe vazio para usar o desenho provisório.")]
+        [SerializeField] Sprite[] dwarfMineFrames;
+
+        [Tooltip("Largura e altura do anão, em unidades do jogo.")]
+        [SerializeField] Vector2 dwarfSize = new Vector2(2.4f, 2f);
+
+        [Tooltip("Quadros de corrida exibidos por segundo. A animação segue o relógio do jogo.")]
+        [SerializeField, Min(1f)] float runAnimationFps = 8f;
+
+        [Tooltip("Altura extra do balanço do anão durante a corrida, em unidades do jogo. Use 0 para desativar.")]
+        [SerializeField, Min(0f)] float runBounceHeight = 0.04f;
+
+        [Header("Arte do corredor (M1b E4; vazio = desenho gerado por código)")]
+        [SerializeField] Texture2D floorTexture;
+        [SerializeField] Texture2D wallTexture;
+        [SerializeField] Texture2D ceilingTexture;
+        [Tooltip("Pixels de textura por metro de corredor (64 = perto da densidade do anão).")]
+        [SerializeField, Min(1f)] float texturePixelsPerMeter = 64f;
+        [Tooltip("Tinta da parede e do teto (acima de 1 clareia).")]
+        [SerializeField] Color wallTint = Color.white;
+        [Tooltip("Esteio inteiro (postes e viga) como sprite, no lugar das caixas de madeira. Vazio = caixas.")]
+        [SerializeField] Texture2D supportTexture;
+        [Tooltip("Largura e altura do esteio em sprite, em metros.")]
+        [SerializeField] Vector2 supportSize = new Vector2(3.4f, 4.5f);
+        [Tooltip("Gemas nas paredes. Vazio = cristais gerados por código.")]
+        [SerializeField] Texture2D[] decorTextures;
 
         [SerializeField] Color fogColor = new Color32(0x14, 0x0D, 0x09, 0xFF);
         [SerializeField] float fogStart = 3f;
@@ -98,6 +135,7 @@ namespace MinersIdle.Presentation
         readonly DescentPiece[] _beams = new DescentPiece[PostSlots];
         readonly DescentPiece[] _lanterns = new DescentPiece[PostSlots];
         readonly DescentPiece[] _decor = new DescentPiece[DecorSlots];
+        readonly DescentPiece[] _supports = new DescentPiece[PostSlots];
 
         RenderTexture _target;
         bool _hitThisTarget;
@@ -160,9 +198,9 @@ namespace MinersIdle.Presentation
             _box = DescentMeshes.Box();
 
             float uvPerMeter = 1f / DescentArt.CorridorTileMeters;
-            _floor = CreateMaterial("DescentFloor", _art.Floor, new Vector2(0f, uvPerMeter));
-            _wall = CreateMaterial("DescentWall", _art.Wall, new Vector2(uvPerMeter, 0f));
-            _ceiling = CreateMaterial("DescentCeiling", _art.Ceiling, new Vector2(0f, uvPerMeter));
+            _floor = CreateSurface("DescentFloor", floorTexture, _art.Floor, new Vector2(0f, uvPerMeter), Color.white);
+            _wall = CreateSurface("DescentWall", wallTexture, _art.Wall, new Vector2(uvPerMeter, 0f), wallTint);
+            _ceiling = CreateSurface("DescentCeiling", ceilingTexture, _art.Ceiling, new Vector2(0f, uvPerMeter), wallTint);
             _wood = CreateMaterial("DescentWood", _art.Wood, Vector2.zero);
             _sprites = CreateMaterial("DescentSprites", _art.White, Vector2.zero);
 
@@ -179,6 +217,9 @@ namespace MinersIdle.Presentation
                 _postsRight[i] = new DescentPiece(transform, "PostRight", _box, _wood, _art.Wood);
                 _beams[i] = new DescentPiece(transform, "Beam", _box, _wood, _art.Wood);
                 _lanterns[i] = new DescentPiece(transform, "Lantern", _quad, _sprites, _art.Lantern);
+                _supports[i] = new DescentPiece(transform, "Support", _quad, _sprites,
+                                                supportTexture != null ? supportTexture : (Texture)_art.White);
+                _supports[i].Visible = false;
             }
             for (int i = 0; i < DecorSlots; i++)
                 _decor[i] = new DescentPiece(transform, "WallCrystal", _quad, _sprites, _art.Decor[0]);
@@ -313,6 +354,23 @@ namespace MinersIdle.Presentation
         // -------------------------------------------------------------------------------------------------------------
         // Câmera, textura e quadro na tela
 
+        /// <summary>
+        /// Chão, parede ou teto: a textura do campo (com a escala de <see cref="texturePixelsPerMeter"/>) ou, se vazio, a
+        /// gerada por código.
+        /// </summary>
+        Material CreateSurface(string name, Texture2D texture, Texture2D fallback, Vector2 scrollAxis, Color tint)
+        {
+            var material = CreateMaterial(name, texture != null ? texture : fallback, scrollAxis);
+            if (texture != null)
+            {
+                // O material repete a cada CorridorTileMeters; a textura cobre width / pixelsPorMetro metros.
+                float scale = DescentArt.CorridorTileMeters * texturePixelsPerMeter / texture.width;
+                material.SetTextureScale(BaseMapId, new Vector2(scale, scale));
+            }
+            material.SetColor(BaseColorId, tint);
+            return material;
+        }
+
         Material CreateMaterial(string name, Texture texture, Vector2 scrollAxis)
         {
             var material = new Material(shader) { name = name };
@@ -398,19 +456,31 @@ namespace MinersIdle.Presentation
             var miner = simulation.Miner;
             float distance = framing.distance;
             double run = miner.Distance * metersPerUnit;
+            bool running = miner.State == MinerState.Running;
             double front = run + distance; // posição na trilha (em metros) que está em z = 0, a câmera
             Shader.SetGlobalFloat(ScrollId, (float)(front % ScrollPeriod));
 
-            if (miner.State == MinerState.Mining)
+            int runFrameCount = dwarfRunFrames != null && dwarfRunFrames.Length > 0
+                ? dwarfRunFrames.Length
+                : DescentArt.Frames;
+            int runFrame = (int)Math.Floor(simulation.Elapsed * Mathf.Max(1f, runAnimationFps));
+            float runPhase = (float)(simulation.Elapsed * Mathf.Max(1f, runAnimationFps) / runFrameCount * Math.PI * 2.0);
+
+            if (!running)
             {
-                _dwarf.SetTexture(_art.DwarfMine[SwingFrame(miner, simulation.Stats.HitInterval)]);
+                int frame = SwingFrame(miner, simulation.Stats.HitInterval);
+                var sprite = FrameAt(dwarfMineFrames, frame);
+                if (sprite != null) _dwarf.SetSprite(sprite);
+                else _dwarf.SetTexture(_art.DwarfMine[frame]);
             }
             else
             {
-                int runFrame = (int)Math.Floor(run * StridePerMeter / (Math.PI * 0.5)) & 3;
-                _dwarf.SetTexture(_art.DwarfRun[runFrame]);
+                var sprite = FrameAt(dwarfRunFrames, runFrame);
+                if (sprite != null) _dwarf.SetSprite(sprite);
+                else _dwarf.SetTexture(_art.DwarfRun[runFrame & 3]);
             }
-            _dwarf.Place(new Vector3(0f, 0f, distance), DescentArt.DwarfSize);
+            float bounce = running ? Mathf.Abs(Mathf.Sin(runPhase)) * Mathf.Max(0f, runBounceHeight) : 0f;
+            _dwarf.Place(new Vector3(0f, bounce, distance), dwarfSize);
             PlaceShadow(_dwarfShadow, 0f, distance, DescentArt.ShadowSize.x);
 
             var crystals = simulation.Crystals;
@@ -426,8 +496,11 @@ namespace MinersIdle.Presentation
 
                 var crystal = crystals[i];
                 float shake = crystal == _shaking && _shake > 0f ? Mathf.Sin(Time.unscaledTime * 90f) * _shakeAmplitude * _shake : 0f;
-                _crystals[i].SetTexture(_art.Crystals[crystal.Id % DescentArt.CrystalColorCount]);
-                _crystals[i].Place(new Vector3(shake, 0f, z), DescentArt.CrystalSize);
+                // Uma textura atribuída no Inspector substitui o cristal provisório; mantém-se a arte antiga como fallback.
+                _crystals[i].SetTexture(crystalTexture != null
+                    ? crystalTexture
+                    : _art.Crystals[crystal.Id % DescentArt.CrystalColorCount]);
+                _crystals[i].Place(new Vector3(shake, 0f, z), crystalSize);
                 PlaceShadow(_crystalShadows[i], 0f, z, DescentArt.ShadowSize.x * 1.1f);
             }
 
@@ -435,6 +508,9 @@ namespace MinersIdle.Presentation
             LayoutPosts(front);
             LayoutDecor(front);
         }
+
+        static Sprite FrameAt(Sprite[] frames, int index) =>
+            frames != null && frames.Length > 0 ? frames[index % frames.Length] : null;
 
         /// <summary>
         /// Quadro do golpe pelo relógio do golpe da simulação: a picareta desce no instante do golpe (quadro 2), volta
@@ -469,11 +545,16 @@ namespace MinersIdle.Presentation
         void PlaceShadow(DescentPiece shadow, float x, float z, float width) =>
             shadow.Place(new Vector3(x, 0.01f, z), new Vector3(width, 1f, DescentArt.ShadowSize.y));
 
-        /// <summary>Esteios e viga a cada 4 m, com uma lanterna alternando de lado.</summary>
+        /// <summary>
+        /// Esteios a cada 4 m (caixas de madeira ou o sprite do esteio inteiro), com uma lanterna alternando de lado.
+        /// Nenhum esteio entre a câmera e o anão (M1b: o mais próximo cobria o anão inteiro).
+        /// </summary>
         void LayoutPosts(double front)
         {
             float halfWidth = framing.corridorWidth * 0.5f;
             bool beams = framing.height < WallHeight + 2f;
+            bool sprite = supportTexture != null;
+            float nearest = framing.distance + SupportClearance;
             double first = Math.Ceiling((front - CorridorFar) / PostSpacing) * PostSpacing;
 
             for (int i = 0; i < PostSlots; i++)
@@ -483,14 +564,24 @@ namespace MinersIdle.Presentation
                 if (z < CorridorNear)
                 {
                     _postsLeft[i].Visible = _postsRight[i].Visible = _beams[i].Visible = _lanterns[i].Visible = false;
+                    _supports[i].Visible = false;
                     continue;
                 }
 
-                var post = new Vector3(PostWidth, WallHeight, PostWidth);
-                _postsLeft[i].Place(new Vector3(-halfWidth + PostWidth * 0.5f, 0f, z), post);
-                _postsRight[i].Place(new Vector3(halfWidth - PostWidth * 0.5f, 0f, z), post);
-                if (beams) _beams[i].Place(new Vector3(0f, WallHeight - BeamHeight, z), new Vector3(framing.corridorWidth, BeamHeight, PostWidth));
-                else _beams[i].Visible = false;
+                bool inFront = z < nearest;
+                if (sprite || inFront)
+                    _postsLeft[i].Visible = _postsRight[i].Visible = _beams[i].Visible = false;
+                if (sprite && !inFront) _supports[i].Place(new Vector3(0f, 0f, z), supportSize);
+                else _supports[i].Visible = false;
+
+                if (!sprite && !inFront)
+                {
+                    var post = new Vector3(PostWidth, WallHeight, PostWidth);
+                    _postsLeft[i].Place(new Vector3(-halfWidth + PostWidth * 0.5f, 0f, z), post);
+                    _postsRight[i].Place(new Vector3(halfWidth - PostWidth * 0.5f, 0f, z), post);
+                    if (beams) _beams[i].Place(new Vector3(0f, WallHeight - BeamHeight, z), new Vector3(framing.corridorWidth, BeamHeight, PostWidth));
+                    else _beams[i].Visible = false;
+                }
 
                 float side = ((long)Math.Round(k / PostSpacing) & 1) == 0 ? -1f : 1f;
                 float lanternX = side * (halfWidth - PostWidth - DescentArt.LanternSize.x * 0.5f);
@@ -511,9 +602,11 @@ namespace MinersIdle.Presentation
 
                 float side = DescentArt.Hash((float)k, 9) < 0.5f ? -1f : 1f;
                 float y = 0.5f + DescentArt.Hash((float)k, 11) * 1.6f;
-                int color = (int)(((long)k % DescentArt.CrystalColorCount + DescentArt.CrystalColorCount) % DescentArt.CrystalColorCount);
+                bool custom = decorTextures != null && decorTextures.Length > 0;
+                int count = custom ? decorTextures.Length : DescentArt.CrystalColorCount;
+                int color = (int)(((long)k % count + count) % count);
                 var piece = _decor[used++];
-                piece.SetTexture(_art.Decor[color]);
+                piece.SetTexture(custom ? decorTextures[color] : _art.Decor[color]);
                 piece.Place(new Vector3(side * (halfWidth - DescentArt.DecorSize.x * 0.5f - 0.01f), y, (float)(front - k - 0.5)), DescentArt.DecorSize);
             }
 

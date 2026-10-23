@@ -106,6 +106,7 @@ namespace MinersIdle.EditorTools
             changed |= EnsureHud();
             changed |= EnsureHudBlocksTaps();
             changed |= DescentSetup.EnsureInGameScene();
+            changed |= CorridorArtSetup.EnsureInScene();
             changed |= FeedbackSetup.EnsureInScene();
             changed |= DebugPanelSetup.Ensure();
             changed |= ShopSetup.EnsureInScene();
