@@ -60,6 +60,17 @@ namespace MinersIdle.EditorTools
         const string SettingsIconPath = ArtFolder + "/UI/icon_settings.png";
 
         static string Wood(string name) => UiSkinSetup.WoodFolder + "/" + name + ".png";
+
+        // Botões desenhados pelo Bruno (D-78): o ícone (com moldura) e o nome em PNG viram um botão só, gerado aqui: a
+        // moldura do ícone esticada (cantos copiados), o desenho em cima e o nome embaixo, dentro do quadrado. A arte é
+        // 2× (32 px salvos em 64); o botão de 104×80 vai a 52×40 px da referência = 2 px de tela por pixel no Moto G75.
+        const string ShopNamePath = ArtFolder + "/UI/name_shop.png";
+        const string SettingsNamePath = ArtFolder + "/UI/name_settings.png";
+        internal const string ShopButtonPath = ArtFolder + "/UI/button_shop.png";
+        internal const string SettingsButtonPath = ArtFolder + "/UI/button_settings.png";
+        const int ArtWidth = 104, ArtHeight = 80, ArtBorder = 6, IconBottom = 44, NameTop = 52;
+        const float ArtButtonWidth = ArtWidth / 2f, ArtButtonHeight = ArtHeight / 2f;
+        static readonly Color PressedTint = new Color(0.72f, 0.72f, 0.72f, 1f);
         static string Fantasy(string name) => UiSkinSetup.FantasyFolder + "/" + name + ".png";
         static Sprite Load(string path) => File.Exists(path) ? AssetDatabase.LoadAssetAtPath<Sprite>(path) : null;
 
@@ -79,7 +90,8 @@ namespace MinersIdle.EditorTools
                                         Load(Wood("buttons/button_square_normal")),
                                         Load(Wood("buttons/button_square_pressed")), LabelColor);
             if (changed) Debug.Log("[Setup] HUD e botões da direita com a pele de madeira (M1b E2).");
-            return PlaceSideIcons(safeArea.transform) | changed;
+            changed |= PlaceSideIcons(safeArea.transform);
+            return ApplyArtButtons(safeArea.transform) | changed;
         }
 
         // ── HUD ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -164,7 +176,8 @@ namespace MinersIdle.EditorTools
         static bool SkinShopButton(Transform safeArea)
         {
             var button = safeArea.Find("Shop/ShopButton");
-            if (button == null || Mathf.Approximately(((RectTransform)button).sizeDelta.x, SideSize)) return false;
+            // Já vestido (madeira ou o botão desenhado pelo Bruno) = tem sprite; o graybox não tinha.
+            if (button == null || button.GetComponent<Image>().sprite != null) return false;
 
             SideButton((RectTransform)button, 0, Load(Wood("buttons/button_square_normal")),
                        Load(Wood("buttons/button_square_pressed")), Load(ShopIconPath),
@@ -221,6 +234,150 @@ namespace MinersIdle.EditorTools
                 label.rectTransform.anchorMax = Vector2.one;
                 label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
             }
+        }
+
+        /// <summary>Gera os botões LOJA e AJUSTES (ícone e nome do Bruno num quadrado só), se os PNGs existirem.</summary>
+        public static void EnsureArtButtonAssets()
+        {
+            int made = BuildArtButton(ShopIconPath, ShopNamePath, ShopButtonPath)
+                       + BuildArtButton(SettingsIconPath, SettingsNamePath, SettingsButtonPath);
+            if (made > 0) Debug.Log($"[Setup] Botões LOJA/AJUSTES gerados com o nome dentro do quadrado: {made} (D-78).");
+        }
+
+        static int BuildArtButton(string iconPath, string namePath, string outPath)
+        {
+            if (!File.Exists(iconPath) || !File.Exists(namePath)) return 0;
+            if (File.Exists(outPath) && File.GetLastWriteTimeUtc(outPath) >= File.GetLastWriteTimeUtc(iconPath)
+                && File.GetLastWriteTimeUtc(outPath) >= File.GetLastWriteTimeUtc(namePath))
+                return 0;
+
+            var icon = Read(iconPath);
+            var name = Read(namePath);
+            int size = icon.width, b = ArtBorder;
+            var out_ = new Texture2D(ArtWidth, ArtHeight, TextureFormat.RGBA32, false);
+            var fill = icon.GetPixel(b + 2, b + 2); // o fundo de dentro da moldura
+            var pixels = new Color[ArtWidth * ArtHeight];
+            for (int i = 0; i < pixels.Length; i++) pixels[i] = fill;
+            out_.SetPixels(pixels);
+
+            // Moldura em 9 partes: cantos copiados; bordas repetem a linha/coluna do meio (são lisas).
+            for (int y = 0; y < ArtHeight; y++)
+            for (int x = 0; x < ArtWidth; x++)
+            {
+                bool edgeX = x < b || x >= ArtWidth - b, edgeY = y < b || y >= ArtHeight - b;
+                if (!edgeX && !edgeY) continue;
+                int sx = x < b ? x : x >= ArtWidth - b ? size - (ArtWidth - x) : size / 2;
+                int sy = y < b ? y : y >= ArtHeight - b ? size - (ArtHeight - y) : size / 2;
+                out_.SetPixel(x, y, icon.GetPixel(sx, sy));
+            }
+
+            // O desenho do ícone (sem a moldura), em cima e centralizado. Coordenadas de textura começam embaixo.
+            int artWidth = size - 2 * b, artHeight = IconBottom - b;
+            int ax = (ArtWidth - artWidth) / 2 / 2 * 2;
+            for (int y = 0; y < artHeight; y++)
+            for (int x = 0; x < artWidth; x++)
+                out_.SetPixel(ax + x, ArtHeight - 1 - (b + y), icon.GetPixel(b + x, size - 1 - (b + y)));
+
+            // O nome (só a parte escrita), centralizado embaixo do desenho.
+            var bounds = Bounds(name);
+            int nx = (ArtWidth - bounds.width) / 2 / 2 * 2;
+            for (int y = 0; y < bounds.height; y++)
+            for (int x = 0; x < bounds.width; x++)
+            {
+                var c = name.GetPixel(bounds.x + x, bounds.y + y);
+                if (c.a <= 0f) continue;
+                out_.SetPixel(nx + x, ArtHeight - NameTop - bounds.height + y, c);
+            }
+
+            out_.Apply();
+            File.WriteAllBytes(outPath, out_.EncodeToPNG());
+            Object.DestroyImmediate(icon);
+            Object.DestroyImmediate(name);
+            Object.DestroyImmediate(out_);
+            AssetDatabase.ImportAsset(outPath);
+            return 1;
+        }
+
+        static Texture2D Read(string path)
+        {
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            texture.LoadImage(File.ReadAllBytes(path));
+            return texture;
+        }
+
+        /// <summary>Retângulo com pixels visíveis (em coordenadas de textura, que começam embaixo).</summary>
+        static RectInt Bounds(Texture2D texture)
+        {
+            int x0 = texture.width, y0 = texture.height, x1 = -1, y1 = -1;
+            for (int y = 0; y < texture.height; y++)
+            for (int x = 0; x < texture.width; x++)
+            {
+                if (texture.GetPixel(x, y).a <= 0f) continue;
+                x0 = Mathf.Min(x0, x); x1 = Mathf.Max(x1, x);
+                y0 = Mathf.Min(y0, y); y1 = Mathf.Max(y1, y);
+            }
+            return x1 < 0 ? new RectInt(0, 0, 0, 0) : new RectInt(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+        }
+
+        /// <summary>
+        /// LOJA e AJUSTES com os botões gerados acima (ícone e nome dentro do mesmo quadrado); o texto some; ao tocar,
+        /// escurece. A coluna (LOJA, AD, AJUSTES) é refeita com esse tamanho. Idempotente. Devolve se mudou algo.
+        /// </summary>
+        static bool ApplyArtButtons(Transform safeArea)
+        {
+            var shop = safeArea.Find("Shop/ShopButton") as RectTransform;
+            var ad = safeArea.Find("AdButton") as RectTransform;
+            var settings = safeArea.Find("SettingsButton") as RectTransform;
+            if (shop == null || ad == null || settings == null) return false;
+
+            bool changed = false;
+            changed |= ArtButton(shop, Load(ShopButtonPath));
+            changed |= ArtButton(settings, Load(SettingsButtonPath));
+            if (!changed) return false;
+
+            var column = new[] { shop, ad, settings };
+            for (int slot = 0; slot < column.Length; slot++)
+            {
+                var rect = column[slot];
+                rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.one;
+                rect.sizeDelta = new Vector2(ArtButtonWidth, ArtButtonHeight);
+                rect.anchoredPosition = new Vector2(-Margin, -SideTop - slot * (ArtButtonHeight + SideGap));
+            }
+            Debug.Log("[Setup] LOJA e AJUSTES com os botões do Bruno (nome dentro do quadrado).");
+            return true;
+        }
+
+        static bool IsOldFace(Transform child) => child.name == "Label" || child.name == "Icon";
+
+        static bool HasVisibleFace(Transform button)
+        {
+            foreach (Transform child in button)
+                if (IsOldFace(child) && child.gameObject.activeSelf) return true;
+            return false;
+        }
+
+        static bool ArtButton(RectTransform button, Sprite face)
+        {
+            if (face == null) return false;
+            var image = button.GetComponent<Image>();
+            if (image.sprite == face && button.Find("Name") == null && !HasVisibleFace(button)) return false;
+
+            image.sprite = face;
+            image.type = Image.Type.Simple;
+            image.color = Color.white;
+            var target = button.GetComponent<Button>();
+            target.transition = Selectable.Transition.ColorTint;
+            var colors = ColorBlock.defaultColorBlock;
+            colors.pressedColor = PressedTint;
+            colors.highlightedColor = colors.selectedColor = Color.white;
+            target.colors = colors;
+
+            // Todos os "Label" e "Icon", não só o primeiro: cenas antigas ficaram com um ícone repetido (setup de antes
+            // vestia o botão de novo), e ele aparecia com a moldura dentro do botão novo.
+            foreach (Transform child in button)
+                if (IsOldFace(child)) child.gameObject.SetActive(false);
+            if (button.Find("Name") is Transform oldName) Object.DestroyImmediate(oldName.gameObject); // versão anterior
+            return true;
         }
 
         static float IconSize(Sprite icon) => icon.rect.width <= 16f ? KitIconSize : SideIconSize;

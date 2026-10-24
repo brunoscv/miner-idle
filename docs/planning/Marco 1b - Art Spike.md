@@ -196,8 +196,28 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 - **Como testar:** ver o anão correr entre os cristais e minerar; o impacto da picareta bate junto com as faíscas e o número; DBG ×5 para golpes rápidos.
 - **Observações:** no golpe o anão agacha e gira um pouco para a direita (é a arte); a barra de vida fica na altura da barriga dele. A Picareta Dupla (segunda picareta) depende de uma folha nova do PixelLab.
 
-### E7 — Estagiário
-- O mesmo boneco recolorido (capacete de aço, barba castanha), correndo ao lado (D-57). O estagiário de verdade é do M7; aqui ele aparece só pelo DBG, para aprovar o visual.
+### E7 — Estagiário (D-76) ✅ (validada no Moto G75 em 2026-10-23)
+- `DwarfVariantsSetup` gera 3 variações de cor do anão (castanho, loiro, grisalho; capacete de aço) das folhas `dwarf-idle`, `dwarf-walking` e `dwarf-mining`, em `Art/Character/Variants/` (no git): ficam guardadas para o **futuro seletor de cor do anão** (ideia do Bruno, sem marco ainda).
+- O estagiário é o **grisalho**: ao lado (0,85 m) e um pouco atrás (0,6 m) do anão, com a corrida defasada 3 quadros e o golpe junto com o do anão (o golpe próprio dele é do M7).
+- **Como testar:** DBG → Câmera → **Estagiário** liga e desliga.
+
+### Ajustes pedidos pelo Bruno durante a E7 (D-77…D-81) ✅ (validados no Moto G75 em 2026-10-23)
+- **Cristais:** a fila reveza os cristais desenhados por ele (glass, sapphire, yellow); o raro fica guardado.
+- **Botões:** LOJA e AJUSTES com ícone e nome desenhados por ele (para validação com o outro dev).
+- **Pedras:** fileira de pedras nas duas beiras do caminho, por todo o corredor.
+- **Botões com o nome dentro do quadrado:** o setup gera `button_shop`/`button_settings` (moldura do ícone esticada, desenho em cima, nome embaixo); 52×40 px.
+- **Picaretada de despedida:** se um toque quebra o cristal antes da picareta descer, o anão faz um golpe completo e rápido (só ilustra).
+- **Corrida fluida:** o ciclo é só a passada (quadros 3–8); o 1 é a pose parada e o 2, a saída dela (davam a "pausinha").
+- **Figuras de frente para a câmera:** anão, estagiário, cristais, barra de vida e gemas se inclinam com a câmera (`spriteLean`); antes a câmera de cima os achatava e o anão parecia largo.
+- **Gemas:** saíram da parede e depois do chão (D-81); ficam só as pedras.
+- **Barra de vida mais discreta** (0,46 × 0,05 m, verde mais suave) e **"CRÍTICO!" ~20% menor.**
+- **Segunda rodada no Moto G75 (D-80, D-81):**
+  - o chão e a parede rolavam **o dobro** da velocidade das pedras e dos esteios (a rolagem entrava depois da escala da textura no shader); agora andam juntos;
+  - o anão e o estagiário se inclinam **em volta dos pés**, em cima da sombra (antes os pés iam para trás dela e ele parecia flutuar);
+  - as pedras descem as linhas transparentes de baixo do desenho e variam menos de lugar e tamanho;
+  - corrida com cada perna 3 quadros (2-3-4 e 6-7-8); crítico sem clarão amarelo; VOLTAR rubi;
+  - o botão "Estagiário" (DBG → Câmera) cabe no painel: os 4 botões numa linha;
+  - a fila de cristais nunca fica abaixo de 4 (D-80).
 
 ### E8 — Biomas
 - `BiomeDefinition` (D-72) com as 10 cavernas (nomes e cores propostos para você aprovar); a caverna 1 é a mina. DBG → **Bioma** troca na hora para ver cada uma.
@@ -207,6 +227,7 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 - **Troca de caverna jogando** (Letrado, PASSAR DE CAVERNA): M8.
 - **Novas regras:** nada muda em valores de regra; o espaço entre cristais (2 un) continua.
 - **Animações extras** (comemorar, sofrer penalidade): depois.
+- **Seletor de cor do anão** (usar as variações guardadas na E7): ideia do Bruno para depois, ainda sem marco.
 
 ## Esforço
 25–40 h (E6, o anão, é a maior: 10–16 h).

@@ -62,6 +62,8 @@ namespace MinersIdle.UI
         [SerializeField] Button resolution;
         [SerializeField] Button resetFraming;
         [SerializeField] Button close;
+        [Tooltip("Liga e desliga o estagiário ao lado do anão (M1b E7; o de verdade é do M7).")]
+        [SerializeField] Button intern;
 
         UnityAction[] _minus;
         UnityAction[] _plus;
@@ -101,6 +103,7 @@ namespace MinersIdle.UI
             resolution.onClick.AddListener(NextResolution);
             resetFraming.onClick.AddListener(ResetFraming);
             close.onClick.AddListener(Toggle);
+            if (intern != null) intern.onClick.AddListener(ToggleIntern);
         }
 
         void OnDisable()
@@ -113,6 +116,7 @@ namespace MinersIdle.UI
             resolution.onClick.RemoveListener(NextResolution);
             resetFraming.onClick.RemoveListener(ResetFraming);
             close.onClick.RemoveListener(Toggle);
+            if (intern != null) intern.onClick.RemoveListener(ToggleIntern);
         }
 
         void Update()
@@ -125,6 +129,8 @@ namespace MinersIdle.UI
         }
 
         /// <summary>Abre ou fecha (o botão "Câmera" do DBG e o "Fechar" daqui).</summary>
+        void ToggleIntern() => stage.ShowIntern = !stage.ShowIntern;
+
         public void Toggle()
         {
             content.SetActive(!content.activeSelf);

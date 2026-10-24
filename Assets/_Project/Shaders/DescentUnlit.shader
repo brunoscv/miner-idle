@@ -62,7 +62,9 @@ Shader "MinersIdle/DescentUnlit"
                 Varyings output;
                 VertexPositionInputs position = GetVertexPositionInputs(input.positionOS.xyz);
                 output.positionCS = position.positionCS;
-                output.uv = TRANSFORM_TEX(input.uv, _BaseMap) + _ScrollAxis.xy * _DescentScroll;
+                // A rolagem entra antes da escala da textura: assim o chão e a parede andam junto com os objetos da
+                // trilha (pedras, esteios). Somada depois, com a textura em escala 0,5, o chão corria o dobro.
+                output.uv = (input.uv + _ScrollAxis.xy * _DescentScroll) * _BaseMap_ST.xy + _BaseMap_ST.zw;
                 output.depth = -position.positionVS.z;
                 return output;
             }

@@ -52,6 +52,7 @@ namespace MinersIdle.Tests
             Assert.That(_floating.ActiveCount, Is.GreaterThan(0), "texto do crítico");
             Assert.That(_floating.LastText, Is.Not.Empty);
             Assert.That(_shake.IsShaking, Is.True, "crítico treme a tela");
+            Assert.That(_feedback.IsFlashing, Is.False, "crítico sem clarão amarelo (só a quebra pisca)");
 
             yield return new WaitForSecondsRealtime(1f);
             Assert.That(_floating.ActiveCount, Is.EqualTo(0), "o texto some sozinho");

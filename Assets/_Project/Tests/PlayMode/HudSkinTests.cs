@@ -63,6 +63,24 @@ namespace MinersIdle.Tests
             Assert.That(ad.position.y, Is.GreaterThan(settings.position.y), "AJUSTES embaixo do AD");
         }
 
+        /// <summary>
+        /// D-78: com o botão desenhado pelo Bruno, nenhum "Icon" ou "Label" antigo aparece por cima (a LOJA tinha um ícone
+        /// repetido e mostrava um botão dentro do outro).
+        /// </summary>
+        [Test]
+        public void ArtButtons_HideEveryOldIconAndLabel()
+        {
+            foreach (var name in new[] { "Shop/ShopButton", "SettingsButton" })
+            {
+                var button = _safeArea.Find(name);
+                var sprite = button.GetComponent<Image>().sprite;
+                if (sprite == null || !sprite.name.StartsWith("button_")) continue;
+                foreach (Transform child in button)
+                    if (child.name == "Icon" || child.name == "Label")
+                        Assert.That(child.gameObject.activeSelf, Is.False, $"{name}/{child.name} visível");
+            }
+        }
+
         [UnityTest]
         public IEnumerator ComingSoonButtons_ShowNotice_ThenHideIt()
         {

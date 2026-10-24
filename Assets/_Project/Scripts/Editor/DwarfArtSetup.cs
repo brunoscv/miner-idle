@@ -29,6 +29,9 @@ namespace MinersIdle.EditorTools
             if (configured > 0) Debug.Log($"[Setup] Folhas do anão configuradas (pixel art): {configured}.");
         }
 
+        /// <summary>O ciclo da corrida é só a passada (3–8): o 1 é a pose parada e o 2, a saída dela (davam a "pausinha").</summary>
+        static readonly int[] RunCycle = { 2, 3, 4, 6, 7, 8 };
+
         public static bool EnsureInScene()
         {
             var stage = Object.FindAnyObjectByType<DescentStage>();
@@ -36,7 +39,7 @@ namespace MinersIdle.EditorTools
 
             var so = new SerializedObject(stage);
             var run = so.FindProperty("dwarfRunSheet");
-            if (run.objectReferenceValue != null) return false;
+            if (run.objectReferenceValue != null) return FixRunCycle(so);
 
             run.objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture2D>(RunPath);
             so.FindProperty("dwarfMineSheet").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture2D>(MinePath);
@@ -50,7 +53,21 @@ namespace MinersIdle.EditorTools
             return true;
         }
 
-        static int Configure(string path)
+        /// <summary>Cena com o ciclo antigo (1–8, passava pela pose parada): troca pelo da passada. Devolve se mudou.</summary>
+        static bool FixRunCycle(SerializedObject so)
+        {
+            var cycle = so.FindProperty("dwarfRunCycle");
+            bool same = cycle.arraySize == RunCycle.Length;
+            for (int i = 0; same && i < RunCycle.Length; i++) same = cycle.GetArrayElementAtIndex(i).intValue == RunCycle[i];
+            if (same) return false;
+            cycle.arraySize = RunCycle.Length;
+            for (int i = 0; i < RunCycle.Length; i++) cycle.GetArrayElementAtIndex(i).intValue = RunCycle[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] Corrida do anão com as duas pernas iguais (2-3-4 e 6-7-8), sem a pose parada.");
+            return true;
+        }
+
+        internal static int Configure(string path)
         {
             if (!(AssetImporter.GetAtPath(path) is TextureImporter importer)) return 0;
             if (importer.textureType == TextureImporterType.Default && importer.filterMode == FilterMode.Point

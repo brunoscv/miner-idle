@@ -14,7 +14,8 @@ namespace MinersIdle.Core
             double minCrystalSpacing, double spawnDistance,
             double crystalHealth, double crystalReward,
             double damage, double hitInterval,
-            double walkSpeed, double miningRange)
+            double walkSpeed, double miningRange,
+            int minCrystals = 0)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -28,6 +29,7 @@ namespace MinersIdle.Core
             if (hitInterval <= 0) throw new ArgumentOutOfRangeException(nameof(hitInterval));
             if (walkSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(walkSpeed));
             if (miningRange < 0) throw new ArgumentOutOfRangeException(nameof(miningRange));
+            if (minCrystals < 0 || minCrystals > maxCrystals) throw new ArgumentOutOfRangeException(nameof(minCrystals));
 
             InitialCrystals = initialCrystals;
             FirstCrystalDistance = firstCrystalDistance;
@@ -41,6 +43,7 @@ namespace MinersIdle.Core
             HitInterval = hitInterval;
             WalkSpeed = walkSpeed;
             MiningRange = miningRange;
+            MinCrystals = minCrystals;
         }
 
         /// <summary>Cristais na fila no início (já na tela).</summary>
@@ -50,6 +53,11 @@ namespace MinersIdle.Core
         /// <summary>Com este número na fila, para de nascer até alguém quebrar.</summary>
         public int MaxCrystals { get; }
         public double SpawnInterval { get; }
+        /// <summary>
+        /// A fila nunca fica com menos que isto (D-80): abaixo, nasce um cristal na hora, sem esperar o relógio. Com o
+        /// anão forte, ele quebra mais rápido do que o relógio repõe, e sem isto ficaria correndo sem cristais. 0 desliga.
+        /// </summary>
+        public int MinCrystals { get; }
         /// <summary>Espaço mínimo entre dois cristais da fila (D-60: 2 un).</summary>
         public double MinCrystalSpacing { get; }
         /// <summary>O cristal novo nasce a pelo menos esta distância à frente do anão, fora da tela (D-60: 12 un).</summary>

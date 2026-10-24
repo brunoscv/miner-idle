@@ -204,10 +204,10 @@ namespace MinersIdle.EditorTools
             DebugPanelSetup.Stretch((RectTransform)grid.transform, Vector2.zero, new Vector2(1f, 0.2f));
             var gridLayout = grid.GetComponent<GridLayoutGroup>();
             gridLayout.padding = new RectOffset(4, 4, 4, 4);
-            gridLayout.cellSize = new Vector2(82f, 16f);
+            gridLayout.cellSize = DwarfVariantsSetup.CameraButtonCell;
             gridLayout.spacing = new Vector2(3f, 3f);
             gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            gridLayout.constraintCount = 3;
+            gridLayout.constraintCount = DwarfVariantsSetup.CameraButtonColumns;
 
             var panel = root.AddComponent<DescentCameraPanel>();
             GrayboxSetup.SetReferences(panel,
@@ -218,7 +218,8 @@ namespace MinersIdle.EditorTools
                 ("readout", readout),
                 ("resolution", DebugPanelSetup.CreateButton(grid.transform, "Resolution", "Resolução")),
                 ("resetFraming", DebugPanelSetup.CreateButton(grid.transform, "ResetFraming", "Padrão F1")),
-                ("close", DebugPanelSetup.CreateButton(grid.transform, "Close", "Fechar")));
+                ("close", DebugPanelSetup.CreateButton(grid.transform, "Close", "Fechar")),
+                ("intern", DebugPanelSetup.CreateButton(grid.transform, "Intern", "Estagiário")));
 
             var serialized = new SerializedObject(panel);
             serialized.FindProperty("readoutFormat").stringValue = ReadoutFormat;

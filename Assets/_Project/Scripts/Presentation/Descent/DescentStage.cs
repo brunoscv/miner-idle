@@ -29,7 +29,14 @@ namespace MinersIdle.Presentation
         const float BeamHeight = 0.28f;
         const float LanternHeight = 1.5f;
         const int PostSlots = 11;
-        const int DecorSlots = 16;
+
+        /// <summary>Pedras da beira do caminho desenhadas ao mesmo tempo (os dois lados, ao longo de todo o corredor).</summary>
+        const int EdgeRockSlots = 120;
+
+        /// <summary>Picaretada de despedida: só se o anão estava junto do cristal (metros), e quanto dura (segundos).</summary>
+        const double FinisherReach = 1.0;
+        const double FinisherFrameSeconds = 0.05;
+        double FinisherSeconds => (dwarfMineWindUp.Length + dwarfMineStrike.Length) * FinisherFrameSeconds;
 
         /// <summary>Folga, em metros, entre o anão e o esteio mais próximo da câmera que ainda é desenhado.</summary>
         const float SupportClearance = 0.6f;
@@ -41,10 +48,10 @@ namespace MinersIdle.Presentation
         const float ShakeSeconds = 0.12f;
 
         /// <summary>A barra de vida do alvo (REQ-CRY-03), em metros, acima do cristal.</summary>
-        static readonly Vector2 HealthBarSize = new Vector2(0.6f, 0.07f);
-        const float HealthBarHeight = 0.95f;
-        static readonly Color HealthBackColor = new Color32(0x15, 0x19, 0x1C, 0xFF);
-        static readonly Color HealthFillColor = new Color32(0x4C, 0xD9, 0x64, 0xFF);
+        static readonly Vector2 HealthBarSize = new Vector2(0.46f, 0.05f); // mais discreta (pedido do Bruno)
+        const float HealthBarHeight = 0.9f;
+        static readonly Color HealthBackColor = new Color32(0x22, 0x26, 0x2A, 0xFF);
+        static readonly Color HealthFillColor = new Color32(0x5F, 0xC4, 0x6E, 0xFF); // verde mais suave
 
         /// <summary>
         /// O quadro da descida sai um pouco maior que a tela, para o tremor de tela não mostrar a borda; o campo de visão
@@ -76,9 +83,10 @@ namespace MinersIdle.Presentation
         [Tooltip("Largura da textura de render, em pixels (D-14: 270). 0 = resolução do aparelho.")]
         [SerializeField] int internalWidth = 270;
 
-        [Tooltip("Uma imagem por cor de cristal, na ordem de DescentArt.CrystalColors (branco, dourado, azul, roxo, " +
-                 "vermelho; a mesma dos estilhaços). Vazio = o cristal gerado por código (M1b E5, D-70).")]
+        [Tooltip("Os cristais da fila, em revezamento pelo id (D-77: os do Bruno). Vazio = o cristal gerado por código.")]
         [SerializeField] Texture2D[] crystalTextures;
+        [Tooltip("A cor dos estilhaços de cada cristal da lista acima (mesma ordem).")]
+        [SerializeField] Color[] crystalShardColors;
 
         [Tooltip("Largura e altura dos cristais da fila, em unidades do jogo.")]
         [SerializeField] Vector2 crystalSize = new Vector2(0.84f, 0.8f);
@@ -87,8 +95,9 @@ namespace MinersIdle.Presentation
         [Tooltip("Folha da corrida: quadros quadrados em grade, da esquerda para a direita e de cima para baixo.")]
         [SerializeField] Texture2D dwarfRunSheet;
         [SerializeField, Min(1)] int dwarfRunColumns = 3;
-        [Tooltip("Quadros da corrida, em ordem (o 0 da folha é a pose parada e fica de fora).")]
-        [SerializeField] int[] dwarfRunCycle = { 1, 2, 3, 4, 5, 6, 7, 8 };
+        [Tooltip("Quadros da corrida, em ordem. Na folha do PixelLab, o 0 e o 1 são a pose parada. A passada tem dois " +
+                 "pulos (4 e 8); cada perna fica 3 quadros (2-3-4 e 6-7-8). O 5 sobra e deixava uma perna mais longa.")]
+        [SerializeField] int[] dwarfRunCycle = { 2, 3, 4, 6, 7, 8 };
 
         [Tooltip("Folha da mineração, no mesmo formato.")]
         [SerializeField] Texture2D dwarfMineSheet;
@@ -102,10 +111,22 @@ namespace MinersIdle.Presentation
         [Tooltip("Tempo máximo de cada quadro do golpe, em segundos (com golpes rápidos, a animação se comprime).")]
         [SerializeField, Min(0.01f)] float dwarfMineFrameSeconds = 0.08f;
 
+        [Tooltip("Quanto o anão, o estagiário, os cristais e a barra de vida se inclinam para ficar de frente para a " +
+                 "câmera (1 = de frente), girando em volta dos pés. Sem isso, a câmera de cima achata as figuras.")]
+        [SerializeField, Range(0f, 1f)] float spriteLean = 1f;
+
         [Tooltip("Largura e altura do anão, em unidades do jogo (quadros quadrados: largura = altura).")]
         [SerializeField] Vector2 dwarfSize = new Vector2(2.4f, 2f);
         [Tooltip("Fração do quadro abaixo dos pés (o quadro desce isso para o pé tocar o chão).")]
         [SerializeField, Range(0f, 0.5f)] float dwarfFootGap;
+
+        [Header("Estagiário (M1b E7, D-76: o anão grisalho; só pelo DBG até o M7)")]
+        [SerializeField] Texture2D internRunSheet;
+        [SerializeField] Texture2D internMineSheet;
+        [Tooltip("Lugar do estagiário em relação ao anão, em metros: x para o lado, y para trás (D-57).")]
+        [SerializeField] Vector2 internOffset = new Vector2(0.85f, 0.6f);
+        [Tooltip("Quadros de defasagem da corrida do estagiário (para não correrem em espelho).")]
+        [SerializeField] int internRunLag = 3;
 
         [Tooltip("Quadros de corrida exibidos por segundo. A animação segue o relógio do jogo.")]
         [SerializeField, Min(1f)] float runAnimationFps = 8f;
@@ -125,8 +146,14 @@ namespace MinersIdle.Presentation
         [SerializeField] Texture2D supportTexture;
         [Tooltip("Largura e altura do esteio em sprite, em metros.")]
         [SerializeField] Vector2 supportSize = new Vector2(3.4f, 4.5f);
-        [Tooltip("Gemas nas paredes. Vazio = cristais gerados por código.")]
-        [SerializeField] Texture2D[] decorTextures;
+        [Tooltip("Pedra da beira do caminho, no encontro do chão com a parede, dos dois lados. Vazio = sem pedras.")]
+        [SerializeField] Texture2D edgeRockTexture;
+        [Tooltip("Metros entre uma pedra e a próxima, em cada lado.")]
+        [SerializeField, Min(0.2f)] float edgeRockSpacing = 0.7f;
+        [Tooltip("Largura e altura da pedra média, em metros (cada pedra varia de 70% a 130%).")]
+        [SerializeField] Vector2 edgeRockSize = new Vector2(0.5f, 0.44f);
+        [Tooltip("Fração da pedra abaixo da base do desenho (linhas transparentes): a pedra desce isso para tocar o chão.")]
+        [SerializeField, Range(0f, 0.5f)] float edgeRockFootGap;
 
         [SerializeField] Color fogColor = new Color32(0x14, 0x0D, 0x09, 0xFF);
         [SerializeField] float fogStart = 3f;
@@ -143,18 +170,20 @@ namespace MinersIdle.Presentation
         int _screenWidth, _screenHeight;
         float _screenOrthoSize;
 
-        DescentPiece _dwarf, _dwarfShadow, _healthBack, _healthFill;
+        DescentPiece _dwarf, _dwarfShadow, _healthBack, _healthFill, _intern, _internShadow;
         readonly DescentPiece[] _crystals = new DescentPiece[CrystalSlots];
         readonly DescentPiece[] _crystalShadows = new DescentPiece[CrystalSlots];
         readonly DescentPiece[] _postsLeft = new DescentPiece[PostSlots];
         readonly DescentPiece[] _postsRight = new DescentPiece[PostSlots];
         readonly DescentPiece[] _beams = new DescentPiece[PostSlots];
         readonly DescentPiece[] _lanterns = new DescentPiece[PostSlots];
-        readonly DescentPiece[] _decor = new DescentPiece[DecorSlots];
         readonly DescentPiece[] _supports = new DescentPiece[PostSlots];
+        readonly DescentPiece[] _edgeRocks = new DescentPiece[EdgeRockSlots];
 
         RenderTexture _target;
         bool _hitThisTarget;
+        bool _lastHitWasTap;
+        double _finisherStart = double.NegativeInfinity;
         Crystal _shaking;
         float _shake;
         float _shakeAmplitude;
@@ -178,6 +207,12 @@ namespace MinersIdle.Presentation
         public Transform ScreenQuad => _screen;
 
         public float MetersPerUnit => metersPerUnit;
+
+        /// <summary>Mostra o estagiário ao lado do anão (DBG; o estagiário de verdade é do M7).</summary>
+        public bool ShowIntern { get; set; }
+
+        /// <summary>O quadro da folha do estagiário mostrado agora (−1 escondido; para testes).</summary>
+        public int InternFrame { get; private set; } = -1;
 
         /// <summary>O quadro da folha do anão mostrado agora (−1 sem as folhas do PixelLab; para testes).</summary>
         public int DwarfFrame { get; private set; } = -1;
@@ -243,8 +278,12 @@ namespace MinersIdle.Presentation
                                                 supportTexture != null ? supportTexture : (Texture)_art.White);
                 _supports[i].Visible = false;
             }
-            for (int i = 0; i < DecorSlots; i++)
-                _decor[i] = new DescentPiece(transform, "WallCrystal", _quad, _sprites, _art.Decor[0]);
+            for (int i = 0; i < EdgeRockSlots; i++)
+            {
+                _edgeRocks[i] = new DescentPiece(transform, "EdgeRock", _quad, _sprites,
+                                                 edgeRockTexture != null ? edgeRockTexture : (Texture)_art.White);
+                _edgeRocks[i].Visible = false;
+            }
             for (int i = 0; i < CrystalSlots; i++)
             {
                 _crystalShadows[i] = new DescentPiece(transform, "CrystalShadow", _flat, _sprites, _art.Shadow);
@@ -253,6 +292,9 @@ namespace MinersIdle.Presentation
             }
             _dwarfShadow = new DescentPiece(transform, "DwarfShadow", _flat, _sprites, _art.Shadow);
             _dwarf = new DescentPiece(transform, "Dwarf", _quad, _sprites, _art.DwarfRun[0]);
+            _internShadow = new DescentPiece(transform, "InternShadow", _flat, _sprites, _art.Shadow);
+            _intern = new DescentPiece(transform, "Intern", _quad, _sprites, _art.InternRun[0]);
+            _intern.Visible = _internShadow.Visible = false;
             _healthBack = new DescentPiece(transform, "HealthBack", _quad, _sprites, _art.White);
             _healthFill = new DescentPiece(transform, "HealthFill", _quad, _sprites, _art.White);
             _healthBack.SetColor(HealthBackColor);
@@ -297,17 +339,21 @@ namespace MinersIdle.Presentation
         {
             simulation.HitLanded += OnHit;
             simulation.TargetChanged += OnTargetChanged;
+            simulation.CrystalBroken += OnCrystalBroken;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
         {
             simulation.HitLanded -= OnHit;
             simulation.TargetChanged -= OnTargetChanged;
+            simulation.CrystalBroken -= OnCrystalBroken;
         }
 
         protected override void Rebuild(MiningSimulation simulation)
         {
             _hitThisTarget = false;
+            _lastHitWasTap = false;
+            _finisherStart = double.NegativeInfinity;
             _shaking = null;
             _shake = 0f;
         }
@@ -315,7 +361,23 @@ namespace MinersIdle.Presentation
         void OnHit(MiningHit hit)
         {
             if (!hit.IsTap) _hitThisTarget = true;
+            _lastHitWasTap = hit.IsTap;
         }
+
+        /// <summary>
+        /// O toque do jogador quebrou o cristal antes da picareta do anão descer (pela regra ele já pode correr): o anão
+        /// faz mesmo assim uma picaretada completa e rápida (pedido do Bruno). Só ilustra; nenhuma regra muda.
+        /// </summary>
+        void OnCrystalBroken(Crystal crystal)
+        {
+            var simulation = Simulation;
+            if (!_lastHitWasTap || simulation == null) return;
+            double gap = (crystal.Distance - simulation.Miner.Distance) * metersPerUnit;
+            if (gap <= FinisherReach) _finisherStart = simulation.Elapsed;
+        }
+
+        /// <summary>Se a picaretada de despedida está tocando agora (para testes).</summary>
+        public bool IsFinishing => Simulation != null && Simulation.Elapsed - _finisherStart < FinisherSeconds;
 
         void OnTargetChanged(Crystal target) => _hitThisTarget = false;
 
@@ -489,15 +551,21 @@ namespace MinersIdle.Presentation
 
             if (sheets)
             {
-                DwarfFrame = running ? dwarfRunCycle[runFrame % dwarfRunCycle.Length] : MineFrame(miner, simulation.Stats.HitInterval);
-                _dwarf.SetFrame(running ? dwarfRunSheet : dwarfMineSheet, DwarfFrame, running ? dwarfRunColumns : dwarfMineColumns);
+                int mine = running ? dwarfMineRest : MineFrame(miner, simulation.Stats.HitInterval);
+                bool finishing = IsFinishing && (running || mine == dwarfMineRest);
+                bool mining = !running || finishing;
+                if (finishing) mine = FinisherFrame(simulation.Elapsed - _finisherStart);
+                DwarfFrame = mining ? mine : dwarfRunCycle[runFrame % dwarfRunCycle.Length];
+                _dwarf.SetFrame(mining ? dwarfMineSheet : dwarfRunSheet, DwarfFrame, mining ? dwarfMineColumns : dwarfRunColumns);
             }
             else if (!running) _dwarf.SetTexture(_art.DwarfMine[SwingFrame(miner, simulation.Stats.HitInterval)]);
             else _dwarf.SetTexture(_art.DwarfRun[runFrame & 3]);
 
             float bounce = running ? Mathf.Abs(Mathf.Sin(runPhase)) * Mathf.Max(0f, runBounceHeight) : 0f;
-            _dwarf.Place(new Vector3(0f, bounce - dwarfFootGap * dwarfSize.y, distance), dwarfSize);
+            var lean = Quaternion.Euler(framing.tilt * spriteLean, 0f, 0f);
+            PlaceOnFeet(_dwarf, new Vector3(0f, bounce, distance), lean);
             PlaceShadow(_dwarfShadow, 0f, distance, DescentArt.ShadowSize.x);
+            LayoutIntern(sheets, running, runFrame, bounce, distance);
 
             var crystals = simulation.Crystals;
             _drawnCrystals = Mathf.Min(crystals.Count, CrystalSlots);
@@ -515,21 +583,76 @@ namespace MinersIdle.Presentation
                 // Uma textura atribuída no Inspector substitui o cristal provisório; mantém-se a arte antiga como fallback.
                 _crystals[i].SetTexture(CrystalTexture(crystal.Id));
                 _crystals[i].Place(new Vector3(shake, 0f, z), crystalSize);
+                _crystals[i].Transform.localRotation = lean;
                 PlaceShadow(_crystalShadows[i], 0f, z, DescentArt.ShadowSize.x * 1.1f);
             }
 
             LayoutHealthBar(miner.Target, distance);
             LayoutPosts(front);
-            LayoutDecor(front);
+            LayoutEdgeRocks(front);
         }
 
-        /// <summary>A textura do cristal pela cor do seu id (a mesma regra dos estilhaços da quebra).</summary>
+        bool HasCrystalArt => crystalTextures != null && crystalTextures.Length > 0;
+
+        /// <summary>A textura do cristal pelo id: os cristais da lista em revezamento (a mesma regra dos estilhaços).</summary>
         public Texture CrystalTexture(int id)
         {
-            int color = id % DescentArt.CrystalColorCount;
-            return crystalTextures != null && color < crystalTextures.Length && crystalTextures[color] != null
-                ? crystalTextures[color]
-                : _art.Crystals[color];
+            if (HasCrystalArt)
+            {
+                var texture = crystalTextures[id % crystalTextures.Length];
+                if (texture != null) return texture;
+            }
+            return _art.Crystals[id % DescentArt.CrystalColorCount];
+        }
+
+        /// <summary>A cor dos estilhaços do cristal pelo id: a do cristal que aparece na fila.</summary>
+        public Color CrystalShardColor(int id)
+        {
+            if (HasCrystalArt && crystalShardColors != null && crystalShardColors.Length == crystalTextures.Length)
+                return crystalShardColors[id % crystalShardColors.Length];
+            return DescentArt.CrystalColors[id % DescentArt.CrystalColorCount, 0];
+        }
+
+        /// <summary>
+        /// O estagiário (D-76): as folhas grisalhas, ao lado e um pouco atrás do anão (D-57), no mesmo relógio. A corrida
+        /// vem defasada; o golpe acompanha o do anão (o golpe próprio dele é do M7).
+        /// </summary>
+        void LayoutIntern(bool sheets, bool running, int runFrame, float bounce, float distance)
+        {
+            bool show = ShowIntern && sheets && internRunSheet != null && internMineSheet != null;
+            _intern.Visible = _internShadow.Visible = show;
+            if (!show)
+            {
+                InternFrame = -1;
+                return;
+            }
+
+            bool mining = !running || IsFinishing;
+            InternFrame = mining ? DwarfFrame : dwarfRunCycle[(runFrame + internRunLag) % dwarfRunCycle.Length];
+            _intern.SetFrame(mining ? internMineSheet : internRunSheet, InternFrame, mining ? dwarfMineColumns : dwarfRunColumns);
+            float z = distance + internOffset.y;
+            PlaceOnFeet(_intern, new Vector3(internOffset.x, bounce, z), _dwarf.Transform.localRotation);
+            PlaceShadow(_internShadow, internOffset.x, z, DescentArt.ShadowSize.x);
+        }
+
+        /// <summary>
+        /// O anão (ou o estagiário) inclinado para a câmera girando em volta dos pés: os pés ficam em
+        /// <paramref name="feet"/>, em cima da sombra. Girar em volta da base do quadro (abaixo dos pés, pela folga da
+        /// folha) jogava os pés para trás da sombra, e o anão parecia flutuar.
+        /// </summary>
+        void PlaceOnFeet(DescentPiece piece, Vector3 feet, Quaternion lean)
+        {
+            piece.Place(feet - lean * new Vector3(0f, dwarfFootGap * dwarfSize.y, 0f), dwarfSize);
+            piece.Transform.localRotation = lean;
+        }
+
+        /// <summary>A picaretada de despedida: levantar e bater em sequência, rápido.</summary>
+        int FinisherFrame(double elapsed)
+        {
+            int index = (int)(elapsed / FinisherFrameSeconds);
+            if (index < dwarfMineWindUp.Length) return dwarfMineWindUp[index];
+            index -= dwarfMineWindUp.Length;
+            return index < dwarfMineStrike.Length ? dwarfMineStrike[index] : dwarfMineRest;
         }
 
         /// <summary>
@@ -582,6 +705,7 @@ namespace MinersIdle.Presentation
             float width = HealthBarSize.x * ratio;
             _healthFill.Place(new Vector3(-(HealthBarSize.x - width) * 0.5f, HealthBarHeight, z - 0.01f),
                               new Vector2(Mathf.Max(0.001f, width), HealthBarSize.y));
+            _healthBack.Transform.localRotation = _healthFill.Transform.localRotation = _dwarf.Transform.localRotation;
         }
 
         void PlaceShadow(DescentPiece shadow, float x, float z, float width) =>
@@ -631,28 +755,35 @@ namespace MinersIdle.Presentation
             }
         }
 
-        /// <summary>Cristais incrustados nas paredes, em ~1 de cada 5 metros (sorteio fixo por metro).</summary>
-        void LayoutDecor(double front)
+        /// <summary>
+        /// Pedras na beira do caminho, no encontro do chão com a parede, dos dois lados e por todo o corredor: disfarçam a
+        /// emenda entre chão, parede e esteios e desenham o caminho em perspectiva. Tamanho e posição sorteados de forma
+        /// fixa por posição na trilha (a mesma pedra está sempre no mesmo lugar); algumas faltam, para não ficar em fila.
+        /// </summary>
+        void LayoutEdgeRocks(double front)
         {
-            float halfWidth = framing.corridorWidth * 0.5f;
             int used = 0;
-            double from = Math.Ceiling(front - CorridorFar);
-            double to = Math.Floor(front - CorridorNear);
-            for (double k = from; k <= to && used < DecorSlots; k++)
+            if (edgeRockTexture != null)
             {
-                if (DescentArt.Hash((float)k, 7) >= 0.2f) continue;
-
-                float side = DescentArt.Hash((float)k, 9) < 0.5f ? -1f : 1f;
-                float y = 0.5f + DescentArt.Hash((float)k, 11) * 1.6f;
-                bool custom = decorTextures != null && decorTextures.Length > 0;
-                int count = custom ? decorTextures.Length : DescentArt.CrystalColorCount;
-                int color = (int)(((long)k % count + count) % count);
-                var piece = _decor[used++];
-                piece.SetTexture(custom ? decorTextures[color] : _art.Decor[color]);
-                piece.Place(new Vector3(side * (halfWidth - DescentArt.DecorSize.x * 0.5f - 0.01f), y, (float)(front - k - 0.5)), DescentArt.DecorSize);
+                float halfWidth = framing.corridorWidth * 0.5f;
+                double first = Math.Ceiling((front - CorridorFar) / edgeRockSpacing);
+                double last = Math.Floor((front - CorridorNear) / edgeRockSpacing);
+                for (double k = first; k <= last && used < EdgeRockSlots - 1; k++)
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    float seed = (float)k * 2f + side;
+                    if (DescentArt.Hash(seed, 21) < 0.18f) continue; // uma falha aqui e ali
+                    float scale = 0.8f + DescentArt.Hash(seed, 23) * 0.4f;
+                    var size = edgeRockSize * scale;
+                    // Pouca variação de lugar: com muita, umas pedras pareciam mais fundas ou mais baixas que as outras.
+                    float jitter = (DescentArt.Hash(seed, 25) - 0.5f) * edgeRockSpacing * 0.3f;
+                    float z = (float)(front - k * edgeRockSpacing) + jitter;
+                    float inset = DescentArt.Hash(seed, 27) * 0.05f;
+                    float x = side * (halfWidth - size.x * 0.4f - inset);
+                    _edgeRocks[used++].Place(new Vector3(x, -edgeRockFootGap * size.y, z), size);
+                }
             }
-
-            for (int i = used; i < DecorSlots; i++) _decor[i].Visible = false;
+            for (int i = used; i < EdgeRockSlots; i++) _edgeRocks[i].Visible = false;
         }
     }
 }

@@ -22,6 +22,8 @@ namespace MinersIdle.Game
         [SerializeField] int maxCrystals = 12;
         [Tooltip("Segundos entre nascimentos.")]
         [SerializeField] double spawnInterval = 5;
+        [Tooltip("A fila nunca fica com menos que isto: abaixo, nasce um cristal na hora (D-80). 0 desliga.")]
+        [SerializeField] int minCrystals = 4;
         [Tooltip("Espaço mínimo entre dois cristais da fila (D-60).")]
         [SerializeField] double minCrystalSpacing = 2;
         [Tooltip("O cristal novo nasce no fim da fila, a pelo menos esta distância à frente do anão: fora da tela (D-60).")]
@@ -70,7 +72,8 @@ namespace MinersIdle.Game
             minCrystalSpacing, spawnDistance,
             crystalHealth, crystalReward,
             damage, hitInterval,
-            walkSpeed, miningRange);
+            walkSpeed, miningRange,
+            minCrystals);
 
         public StrikeRules ToStrike() => new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow);
 

@@ -59,6 +59,7 @@ namespace MinersIdle.EditorTools
         public static void EnsureAssets()
         {
             ShopSkinSetup.EnsureGeneratedIcons();
+            HudSkinSetup.EnsureArtButtonAssets();
             ConfigureUiSprites();
             EnsureGameFont();
         }

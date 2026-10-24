@@ -86,7 +86,7 @@ namespace MinersIdle.EditorTools
 
             EnsureCatalogArt();
             EnsureRowPrefab();
-            return SkinShopWindow();
+            return SkinShopWindow() | RubyBackButton();
         }
 
         // ── Catálogo ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -272,6 +272,22 @@ namespace MinersIdle.EditorTools
             back.Find("Label").GetComponent<TMP_Text>().color = TextColor;
 
             Debug.Log("[Setup] Janela da loja com a pele de madeira (M1b E3).");
+            return true;
+        }
+
+        /// <summary>VOLTAR no rubi, como o botão de comprar quando dá (pedido do Bruno). Idempotente.</summary>
+        static bool RubyBackButton()
+        {
+            var back = GameObject.Find("SafeArea")?.transform.Find("Shop/Screen/Panel/Back");
+            var normal = Load(Fantasy("buttons/button_ruby_normal"));
+            if (back == null || normal == null) return false;
+            var image = back.GetComponent<Image>();
+            if (image.sprite == normal) return false;
+
+            image.sprite = normal;
+            image.type = Image.Type.Sliced;
+            back.GetComponent<Button>().spriteState = new SpriteState { pressedSprite = Load(Fantasy("buttons/button_ruby_pressed")) };
+            Debug.Log("[Setup] VOLTAR da loja no botão rubi.");
             return true;
         }
 

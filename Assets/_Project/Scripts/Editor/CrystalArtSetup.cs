@@ -44,26 +44,50 @@ namespace MinersIdle.EditorTools
 
             int configured = 0;
             for (int c = 0; c < DescentArt.CrystalColorCount; c++) configured += Configure(PathOf(c));
+            foreach (var name in BrunoCrystals)
+                if (File.Exists($"{Folder}/{name}.png")) configured += Configure($"{Folder}/{name}.png");
             if (made > 0) Debug.Log($"[Setup] Cristais da fila em 5 cores gerados em {Folder} (D-70).");
             if (configured > 0) Debug.Log($"[Setup] Cristais da fila configurados (pixel art): {configured}.");
         }
 
-        /// <summary>No DescentStage da cena Game (já aberta): as 5 cores e o tamanho. Devolve se mudou a cena.</summary>
+        /// <summary>
+        /// Os cristais desenhados pelo Bruno (D-77), em revezamento na fila, com a cor dos estilhaços de cada um. O raro
+        /// (<c>crystal_glass_rare</c>) fica guardado para um futuro cristal raro (regra nova, precisa de decisão).
+        /// </summary>
+        static readonly (string name, Color32 shards)[] QueueCrystals =
+        {
+            ("crystal_glass", new Color32(0xD8, 0xE2, 0xDF, 0xFF)),
+            ("crystal_sapphire", new Color32(0x6A, 0xA8, 0xDA, 0xFF)),
+            ("crystal_yellow", new Color32(0xF0, 0xB3, 0x5A, 0xFF)),
+        };
+        static readonly string[] BrunoCrystals = { "crystal_glass", "crystal_glass_rare", "crystal_sapphire", "crystal_yellow" };
+
+        /// <summary>
+        /// No DescentStage da cena Game (já aberta): os cristais do Bruno na fila e o tamanho. Troca também a lista das 5
+        /// cores geradas da E5 (D-70), que eles substituem. Devolve se mudou a cena.
+        /// </summary>
         public static bool EnsureInScene()
         {
             var stage = Object.FindAnyObjectByType<DescentStage>();
-            if (stage == null || !File.Exists(PathOf(0))) return false;
+            if (stage == null || !File.Exists($"{Folder}/{QueueCrystals[0].name}.png")) return false;
 
             var so = new SerializedObject(stage);
             var textures = so.FindProperty("crystalTextures");
-            if (textures.arraySize > 0) return false;
+            var first = textures.arraySize > 0 ? textures.GetArrayElementAtIndex(0).objectReferenceValue : null;
+            bool generated = first != null && first.name.StartsWith("crystal_white");
+            if (textures.arraySize > 0 && !generated) return false;
 
-            textures.arraySize = DescentArt.CrystalColorCount;
-            for (int c = 0; c < DescentArt.CrystalColorCount; c++)
-                textures.GetArrayElementAtIndex(c).objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture2D>(PathOf(c));
+            var shards = so.FindProperty("crystalShardColors");
+            textures.arraySize = shards.arraySize = QueueCrystals.Length;
+            for (int i = 0; i < QueueCrystals.Length; i++)
+            {
+                textures.GetArrayElementAtIndex(i).objectReferenceValue =
+                    AssetDatabase.LoadAssetAtPath<Texture2D>($"{Folder}/{QueueCrystals[i].name}.png");
+                shards.GetArrayElementAtIndex(i).colorValue = QueueCrystals[i].shards;
+            }
             so.FindProperty("crystalSize").vector2Value = CrystalSize;
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log("[Setup] Fila de cristais com as 5 cores do cristal do Bruno (M1b E5).");
+            Debug.Log("[Setup] Fila com os cristais do Bruno: glass, sapphire, yellow (D-77).");
             return true;
         }
 

@@ -16,9 +16,9 @@ namespace MinersIdle.Tests
         static MiningRules Rules(
             int initial = 10, double first = 3, int max = 12, double spawnInterval = 5, double spacing = 2,
             double spawnDistance = 12, double health = 10, double reward = 1, double damage = 1, double hitInterval = 1,
-            double walkSpeed = 4, double range = 1) =>
+            double walkSpeed = 4, double range = 1, int min = 0) =>
             new MiningRules(initial, first, max, spawnInterval, spacing, spawnDistance, health, reward, damage, hitInterval,
-                            walkSpeed, range);
+                            walkSpeed, range, min);
 
         /// <summary>Fila vazia e sem nascimento: os testes põem cada cristal à mão.</summary>
         static MiningSimulation EmptyTrack(double health = 3) =>
@@ -82,6 +82,35 @@ namespace MinersIdle.Tests
             Assert.That(sim.Miner.Distance, Is.EqualTo(40).Within(1e-9));
             Assert.That(sim.State.Hits, Is.EqualTo(0));
             Assert.That(sim.State.Shards, Is.EqualTo(0));
+        }
+
+        /// <summary>
+        /// D-80: o anão forte quebra mais rápido do que o relógio repõe; com o mínimo, a fila nunca fica abaixo dele, nem
+        /// numa partida de 50 minutos, e cada cristal novo nasce fora da tela (a pelo menos 12 un do anão).
+        /// </summary>
+        [Test]
+        public void StrongMiner_NeverRunsOutOfCrystals_InALongRun()
+        {
+            var sim = new MiningSimulation(Rules(damage: 1e9, hitInterval: 0.5, min: 4), new SeededRandom(1));
+            int broken = 0;
+            sim.CrystalBroken += _ => broken++;
+            sim.CrystalSpawned += c => Assert.That(c.Distance - sim.Miner.Distance, Is.GreaterThanOrEqualTo(12 - 1e-9));
+
+            for (int second = 0; second < 50 * 60; second++)
+            {
+                sim.Tick(1);
+                Assert.That(sim.Crystals.Count, Is.GreaterThanOrEqualTo(4), $"fila no segundo {second}");
+            }
+            // Sem o mínimo, o relógio (1 a cada 5 s) daria ~600 em 50 min; com ele, o ritmo é o do anão.
+            Assert.That(broken, Is.GreaterThan(1500));
+        }
+
+        [Test]
+        public void WithoutMinimum_TheQueueDrains()
+        {
+            var sim = new MiningSimulation(Rules(damage: 1e9, hitInterval: 0.5), new SeededRandom(1));
+            sim.Tick(60);
+            Assert.That(sim.Crystals.Count, Is.LessThan(4), "sem o mínimo, o anão forte esvazia a fila");
         }
 
         [Test]

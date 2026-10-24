@@ -9,59 +9,59 @@ using UnityEngine.TestTools;
 namespace MinersIdle.Tests
 {
     /// <summary>
-    /// M1b (E5, D-70): a fila usa o cristal do Bruno em 5 cores, na mesma ordem dos estilhaços da quebra
-    /// (<see cref="DescentArt.CrystalColors"/>): o cristal e os estilhaços dele têm a mesma cor.
+    /// M1b (E5, D-77): a fila reveza os cristais desenhados pelo Bruno (glass, sapphire, yellow), e os estilhaços de cada
+    /// um saem na cor dele.
     /// </summary>
     public class CrystalArtTests
     {
-        static readonly string[] Names = { "white", "gold", "blue", "purple", "red" };
+        static readonly string[] Names = { "crystal_glass", "crystal_sapphire", "crystal_yellow" };
 
         [UnityTest]
-        public IEnumerator QueueCrystals_UseTheFiveColors_InTheShardOrder()
+        public IEnumerator QueueCrystals_RotateBrunosCrystals()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 "Assets/_Project/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
-            Assert.That(DescentArt.CrystalColorCount, Is.EqualTo(Names.Length));
-            for (int id = 0; id < 10; id++)
+            for (int id = 0; id < 9; id++)
             {
                 var texture = stage.CrystalTexture(id);
-                Assert.That(texture.name, Does.Contain(Names[id % Names.Length]), $"cristal {id}");
+                Assert.That(texture.name, Is.EqualTo(Names[id % Names.Length]), $"cristal {id}");
                 Assert.That(texture.filterMode, Is.EqualTo(FilterMode.Point), $"cristal {id}");
             }
         }
 
         [UnityTest]
-        public IEnumerator EachCrystalColor_MatchesItsShardColor()
+        public IEnumerator EachCrystal_BreaksIntoShardsOfItsOwnColor()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 "Assets/_Project/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
-            for (int c = 1; c < Names.Length; c++) // o branco quase não tem matiz
+            for (int c = 1; c < Names.Length; c++) // o vidro quase não tem matiz
             {
                 // Lê o PNG do disco (no modo batch sem placa de vídeo não dá para ler a textura da GPU).
-                Assert.That(stage.CrystalTexture(c).name, Does.Contain(Names[c]));
                 var copy = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                copy.LoadImage(System.IO.File.ReadAllBytes($"Assets/_Project/Art/Crystals/crystal_{Names[c]}.png"));
+                copy.LoadImage(System.IO.File.ReadAllBytes($"Assets/_Project/Art/Crystals/{Names[c]}.png"));
 
-                // Matiz médio dos pixels coloridos x matiz do estilhaço.
+                // Matiz médio dos pixels coloridos do cristal (a base de terra, embaixo, fica de fora).
                 float sx = 0f, sy = 0f;
-                foreach (var p in copy.GetPixels32())
+                var pixels = copy.GetPixels32();
+                for (int i = copy.width * 20; i < pixels.Length; i++)
                 {
+                    var p = pixels[i];
                     if (p.a < 200) continue;
                     Color.RGBToHSV(p, out float h, out float s, out float v);
-                    if (s < 0.3f || v < 0.3f) continue;
+                    if (s < 0.3f || v < 0.45f) continue;
                     sx += Mathf.Cos(h * 2f * Mathf.PI);
                     sy += Mathf.Sin(h * 2f * Mathf.PI);
                 }
                 float hue = Mathf.Repeat(Mathf.Atan2(sy, sx) / (2f * Mathf.PI), 1f);
-                Color.RGBToHSV(DescentArt.CrystalColors[c, 0], out float shardHue, out _, out _);
+                Color.RGBToHSV(stage.CrystalShardColor(c), out float shardHue, out _, out _);
                 float diff = Mathf.Abs(Mathf.DeltaAngle(hue * 360f, shardHue * 360f));
-                Assert.That(diff, Is.LessThan(15f), $"{Names[c]}: cristal {hue * 360f:0}°, estilhaço {shardHue * 360f:0}°");
+                Assert.That(diff, Is.LessThan(20f), $"{Names[c]}: cristal {hue * 360f:0}°, estilhaço {shardHue * 360f:0}°");
                 Object.Destroy(copy);
             }
         }

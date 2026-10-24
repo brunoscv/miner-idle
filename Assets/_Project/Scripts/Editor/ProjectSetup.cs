@@ -84,6 +84,7 @@ namespace MinersIdle.EditorTools
             CorridorArtSetup.EnsureAssets();
             CrystalArtSetup.EnsureAssets();
             DwarfArtSetup.EnsureAssets();
+            DwarfVariantsSetup.EnsureAssets();
             GrayboxSetup.Ensure();
             ConfigureBuildScenes();
             AssetDatabase.SaveAssets();

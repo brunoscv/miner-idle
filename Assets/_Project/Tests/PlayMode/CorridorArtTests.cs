@@ -62,5 +62,27 @@ namespace MinersIdle.Tests
             }
             if (seen == 0) Assert.Ignore("Sem o esteio em sprite (pack fora do git, D-65).");
         }
+
+        [UnityTest]
+        public IEnumerator EdgeRocks_LineBothSidesOfThePath_NeverTheMiddle()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+            yield return null;
+
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            float half = stage.Framing.corridorWidth * 0.5f;
+            int left = 0, right = 0;
+            foreach (Transform child in stage.transform)
+            {
+                if (child.name != "EdgeRock" || !child.GetComponent<MeshRenderer>().enabled) continue;
+                Assert.That(Mathf.Abs(child.localPosition.x), Is.GreaterThan(half - 0.5f), "na beira, não no caminho");
+                if (child.localPosition.x < 0f) left++; else right++;
+            }
+            if (left + right == 0) Assert.Ignore("Sem a pedra da beira (fora do git).");
+            Assert.That(left, Is.GreaterThan(10), "pedras do lado esquerdo");
+            Assert.That(right, Is.GreaterThan(10), "pedras do lado direito");
+        }
     }
 }

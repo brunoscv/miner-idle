@@ -26,7 +26,6 @@ namespace MinersIdle.Presentation
         /// <summary>Tamanho do sprite do anão em metros: largo, para caber a picareta erguida dos dois lados do pivô.</summary>
         public static readonly Vector2 DwarfSize = new Vector2(2.4f, 2f);
         public static readonly Vector2 CrystalSize = new Vector2(0.84f, 0.8f);
-        public static readonly Vector2 DecorSize = new Vector2(0.3f, 0.32f);
         public static readonly Vector2 LanternSize = new Vector2(0.2f, 0.26f);
         public static readonly Vector2 ShadowSize = new Vector2(0.7f, 0.16f);
 
@@ -47,7 +46,6 @@ namespace MinersIdle.Presentation
         public Texture2D[] InternRun { get; private set; }
         public Texture2D[] InternMine { get; private set; }
         public Texture2D[] Crystals { get; private set; }
-        public Texture2D[] Decor { get; private set; }
         public Texture2D Lantern { get; private set; }
         public Texture2D Shadow { get; private set; }
         public Texture2D White { get; private set; }
@@ -73,7 +71,6 @@ namespace MinersIdle.Presentation
                 InternRun = new Texture2D[Frames],
                 InternMine = new Texture2D[Frames],
                 Crystals = new Texture2D[CrystalColorCount],
-                Decor = new Texture2D[CrystalColorCount],
             };
 
             var dwarf = new Palette(new Color32(0xD9, 0xA5, 0x20, 0xFF), new Color32(0xB8, 0x40, 0x2A, 0xFF), lamp: true);
@@ -92,7 +89,6 @@ namespace MinersIdle.Presentation
                 var light = CrystalColors[c, 0];
                 var dark = CrystalColors[c, 1];
                 art.Crystals[c] = Sprite($"Crystal{c}", CrystalSize, (x, y) => CrystalPixel(x, y, light, dark));
-                art.Decor[c] = Sprite($"Decor{c}", DecorSize, (x, y) => DecorPixel(x, y, light, dark));
             }
 
             art.Lantern = Sprite("Lantern", LanternSize, LanternPixel);
@@ -113,7 +109,6 @@ namespace MinersIdle.Presentation
             DestroyAll(InternRun);
             DestroyAll(InternMine);
             DestroyAll(Crystals);
-            DestroyAll(Decor);
             DestroyAll(new[] { Lantern, Shadow, White, Floor, Wall, Ceiling, Wood });
         }
 
@@ -273,16 +268,6 @@ namespace MinersIdle.Presentation
             if (Polygon(x, y, FacetRight)) c = dark;
             if (Rect(x, y, -0.08f, 0.25f, -0.04f, 0.5f)) c = Highlight;
             return c;
-        }
-
-        static readonly Vector2[] DecorBig = { new(-0.12f, 0f), new(-0.02f, 0.3f), new(0.06f, 0f) };
-        static readonly Vector2[] DecorSmall = { new(0.02f, 0f), new(0.09f, 0.18f), new(0.14f, 0f) };
-
-        static Color32 DecorPixel(float x, float y, Color32 light, Color32 dark)
-        {
-            if (Polygon(x, y, DecorBig)) return light;
-            if (Polygon(x, y, DecorSmall)) return dark;
-            return Clear;
         }
 
         static readonly Color32 LanternFrame = new Color32(0x3A, 0x24, 0x12, 0xFF);

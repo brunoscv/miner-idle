@@ -16,6 +16,7 @@ MonoBehaviour:
   firstCrystalDistance: 3
   maxCrystals: 12
   spawnInterval: 5
+  minCrystals: 4
   minCrystalSpacing: 2
   spawnDistance: 12
   crystalHealth: 10

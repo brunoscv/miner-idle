@@ -27,6 +27,9 @@ namespace MinersIdle.Core
         public int Count => _crystals.Count;
         public bool IsFull => _crystals.Count >= _rules.MaxCrystals;
 
+        /// <summary>A fila está abaixo do mínimo (D-80): o próximo nasce já.</summary>
+        public bool IsBelowMinimum => _crystals.Count < _rules.MinCrystals;
+
         /// <summary>O primeiro da fila (o alvo do anão), ou <c>null</c> com a fila vazia.</summary>
         public Crystal Front => _crystals.Count > 0 ? _crystals[0] : null;
 

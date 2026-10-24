@@ -26,8 +26,8 @@ namespace MinersIdle.EditorTools
         internal const string CobblePath = GeneratedFolder + "/cobble.png";
         internal const string SupportPath = GeneratedFolder + "/support_portal.png";
 
-        const string GemsFolder = "Assets/_Vendor/AssetStore/CaveMix";
-        static readonly string[] Gems = { "rough_amethyst", "rough_ruby", "pyrite_cube" };
+        /// <summary>Pedra da beira do caminho (enviada pelo Bruno; origem a confirmar, por isso fora do git).</summary>
+        const string EdgeRockPath = "Assets/_Vendor/AssetStore/Misc/rock_t1.png";
 
         // Peças do mainlev_build.png (x, y a partir do canto de cima, largura, altura), achadas nas prévias.
         static readonly RectInt RockA = new RectInt(224, 736, 96, 64);
@@ -70,11 +70,7 @@ namespace MinersIdle.EditorTools
 
             int configured = Configure(RockPath, TextureWrapMode.Repeat) + Configure(CobblePath, TextureWrapMode.Repeat)
                              + Configure(SupportPath, TextureWrapMode.Clamp);
-            foreach (var gem in Gems)
-            {
-                var path = $"{GemsFolder}/{gem}.png";
-                if (File.Exists(path)) configured += Configure(path, TextureWrapMode.Clamp);
-            }
+            if (File.Exists(EdgeRockPath)) configured += Configure(EdgeRockPath, TextureWrapMode.Clamp);
 
             if (made > 0) Debug.Log($"[Setup] Texturas do corredor geradas em {GeneratedFolder}: {made}.");
             if (configured > 0) Debug.Log($"[Setup] Texturas do corredor configuradas (pixel art): {configured}.");
@@ -91,6 +87,7 @@ namespace MinersIdle.EditorTools
             changed |= SetIfEmpty(so, "floorTexture", CobblePath);
             changed |= SetIfEmpty(so, "wallTexture", RockPath);
             changed |= SetIfEmpty(so, "ceilingTexture", RockPath);
+            changed |= SetIfEmpty(so, "edgeRockTexture", EdgeRockPath);
             if (SetIfEmpty(so, "supportTexture", SupportPath))
             {
                 so.FindProperty("supportSize").vector2Value = new Vector2(3.4f, 4.5f);
@@ -98,13 +95,12 @@ namespace MinersIdle.EditorTools
             }
             if (changed) so.FindProperty("wallTint").colorValue = WallTint;
 
-            var decor = so.FindProperty("decorTextures");
-            if (decor.arraySize == 0 && File.Exists($"{GemsFolder}/{Gems[0]}.png"))
+            // A pedra encosta no chão: desce as linhas transparentes de baixo do desenho.
+            var footGap = so.FindProperty("edgeRockFootGap");
+            float gap = File.Exists(EdgeRockPath) ? BottomGap(EdgeRockPath) : 0f;
+            if (!Mathf.Approximately(footGap.floatValue, gap))
             {
-                decor.arraySize = Gems.Length;
-                for (int i = 0; i < Gems.Length; i++)
-                    decor.GetArrayElementAtIndex(i).objectReferenceValue =
-                        AssetDatabase.LoadAssetAtPath<Texture2D>($"{GemsFolder}/{Gems[i]}.png");
+                footGap.floatValue = gap;
                 changed = true;
             }
 
@@ -147,6 +143,25 @@ namespace MinersIdle.EditorTools
         }
 
         // ── Geração ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>Fração da altura da imagem abaixo do último pixel visível (as linhas transparentes de baixo).</summary>
+        static float BottomGap(string path)
+        {
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            texture.LoadImage(File.ReadAllBytes(path));
+            int row = 0;
+            while (row < texture.height && !RowHasPixels(texture, row)) row++;
+            float gap = row < texture.height ? (float)row / texture.height : 0f;
+            UnityEngine.Object.DestroyImmediate(texture);
+            return gap;
+        }
+
+        static bool RowHasPixels(Texture2D texture, int row)
+        {
+            for (int x = 0; x < texture.width; x++)
+                if (texture.GetPixel(x, row).a > 0f) return true;
+            return false;
+        }
 
         static Texture2D LoadReadable(string path)
         {

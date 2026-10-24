@@ -219,7 +219,14 @@ namespace MinersIdle.Core
                     ComboChanged?.Invoke(0);
                 }
 
-                if (!_track.IsFull && _spawnTimer >= _rules.SpawnInterval - Epsilon)
+                if (_track.IsBelowMinimum)
+                {
+                    // Fila no mínimo (D-80): repõe na hora, sem mexer no relógio de nascimento.
+                    var crystal = _track.TrySpawn(_miner.Distance);
+                    CrystalSpawned?.Invoke(crystal);
+                    changed = true;
+                }
+                else if (!_track.IsFull && _spawnTimer >= _rules.SpawnInterval - Epsilon)
                 {
                     _spawnTimer = Math.Max(0, _spawnTimer - _rules.SpawnInterval);
                     // Nasce antes de avisar: com "?.Invoke(TrySpawn())", sem ninguém escutando, o nascimento seria pulado.
