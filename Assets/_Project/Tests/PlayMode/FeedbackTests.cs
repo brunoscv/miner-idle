@@ -52,7 +52,6 @@ namespace MinersIdle.Tests
             Assert.That(_floating.ActiveCount, Is.GreaterThan(0), "texto do crítico");
             Assert.That(_floating.LastText, Is.Not.Empty);
             Assert.That(_shake.IsShaking, Is.True, "crítico treme a tela");
-            Assert.That(_feedback.IsFlashing, Is.False, "crítico sem clarão amarelo (só a quebra pisca)");
 
             yield return new WaitForSecondsRealtime(1f);
             Assert.That(_floating.ActiveCount, Is.EqualTo(0), "o texto some sozinho");
@@ -128,19 +127,19 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// M6 (E4): na vista de frente a quebra ganha clarão e estilhaços, e o ajuste "Intensidade dos efeitos" do DBG
-        /// multiplica as peças.
+        /// M6 (E4): na vista de frente a quebra ganha estilhaços e tremor, e o ajuste "Intensidade dos efeitos" do DBG
+        /// multiplica as peças. Sem clarão de tela (D-83).
         /// </summary>
         [UnityTest]
-        public IEnumerator Break_FlashesAndBursts_StrongerWithIntensity()
+        public IEnumerator Break_ShakesAndBursts_StrongerWithIntensity()
         {
             yield return LoadGame();
 
             _feedback.Intensity = 1f;
             _runner.Simulation.BreakTarget();
             int normal = _sparks.ActiveCount;
-            Assert.That(_feedback.IsFlashing, Is.True, "clarão na quebra");
             Assert.That(_shake.IsShaking, Is.True, "a tela treme");
+            Assert.That(_feedback.transform.Find("Flash"), Is.Null, "a tela não pisca (D-83)");
 
             yield return new WaitForSecondsRealtime(1f); // as peças voltam ao pool
             Assert.That(_sparks.ActiveCount, Is.EqualTo(0));

@@ -12,9 +12,8 @@ namespace MinersIdle.Presentation
     /// múltiplos de 10. Quebra: tremor leve e a lasca voando até o HUD. Com toques muito rápidos, os tremores diminuem.
     ///
     /// M6 (E4): na vista de frente o anão e o cristal ficam muitas vezes maiores na tela que no mapa visto de cima; as
-    /// faíscas, os textos e a lasca crescem por <see cref="sizeScale"/>, e o impacto ganha força: tremor leve a cada golpe,
-    /// estilhaços na cor do cristal e um clarão branco na tela na quebra (no crítico, só o tremor; pedido do Bruno). <see cref="Intensity"/> (DBG) multiplica
-    /// quantidades, tremores e clarões, para calibrar no aparelho.
+    /// faíscas, os textos e a lasca crescem por <see cref="sizeScale"/>. <see cref="Intensity"/> (DBG) multiplica
+    /// quantidades e tremores, para calibrar no aparelho. Sem clarão de tela: nem no crítico nem na quebra (D-81, D-83).
     /// </summary>
     public sealed class MiningFeedbackView : MiningViewBase
     {
@@ -22,7 +21,6 @@ namespace MinersIdle.Presentation
         static readonly Color TapSparkColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         static readonly Color CriticalColor = new Color32(0xFF, 0xE0, 0x3A, 0xFF);
         static readonly Color MilestoneColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
-        static readonly Color BreakFlashColor = Color.white;
 
         const float ComboPulseSeconds = 0.15f;
 
@@ -37,23 +35,20 @@ namespace MinersIdle.Presentation
         [SerializeField] ShardFlight shardFlight;
         [Tooltip("O \"xN\" que fica sobre o anão enquanto o combo dura.")]
         [SerializeField] TextMeshPro comboText;
-        [Tooltip("Quadrado branco do tamanho da tela, por cima de tudo: o clarão da quebra.")]
-        [SerializeField] SpriteRenderer flash;
 
         [Header("Força na vista de frente (M6, E4)")]
         [Tooltip("Faíscas, textos e lasca em relação à vista de cima do mapa (o cristal e o anão ficaram ~4× maiores).")]
         [SerializeField] float sizeScale = 3.5f;
-        [SerializeField] float hitShake = 0.12f;
-        [SerializeField] float hitShakeSeconds = 0.08f;
-        [SerializeField, Range(0f, 1f)] float breakFlash = 0.22f;
-        [SerializeField] float flashSeconds = 0.12f;
 
         [Header("Tremor de tela (unidades de mundo; a tela tem ~17 de largura)")]
-        [SerializeField] float criticalShake = 1.0f;
+        [Tooltip("A cada golpe do anão (D-83).")]
+        [SerializeField] float hitShake = 0.25f;
+        [SerializeField] float hitShakeSeconds = 0.12f;
+        [SerializeField] float criticalShake = 0.4f;
         [SerializeField] float criticalShakeSeconds = 0.3f;
-        [SerializeField] float breakShake = 0.8f;
+        [SerializeField] float breakShake = 0.5f;
         [SerializeField] float breakShakeSeconds = 0.25f;
-        [SerializeField] float milestoneShake = 0.6f;
+        [SerializeField] float milestoneShake = 0.25f;
         [SerializeField] float milestoneShakeSeconds = 0.2f;
         [Tooltip("Com muitos toques por segundo, os tremores caem até esta fração (1 = nunca diminuem).")]
         [SerializeField, Range(0f, 1f)] float minCalm = 0.6f;
@@ -62,20 +57,15 @@ namespace MinersIdle.Presentation
         readonly float[] _recentTaps = new float[16];
         int _tapCursor;
         float _comboPulse;
-        float _flash;
-        float _flashAlpha;
-        Color _flashColor;
 
         float _intensity = 1f;
 
-        /// <summary>Multiplica quantidades, tremores e clarões (o ajuste "Intensidade dos efeitos" do DBG, M6 E4).</summary>
+        /// <summary>Multiplica quantidades e tremores (o ajuste "Intensidade dos efeitos" do DBG, M6 E4).</summary>
         public float Intensity
         {
             get => _intensity;
             set => _intensity = Mathf.Clamp(value, 0.25f, 3f);
         }
-
-        public bool IsFlashing => _flash > 0f;
 
         public bool IsComboShown => comboText.gameObject.activeSelf;
         public string ComboShown => comboText.text;
@@ -112,7 +102,6 @@ namespace MinersIdle.Presentation
 
         void LateUpdate()
         {
-            UpdateFlash();
             if (!comboText.gameObject.activeSelf) return;
 
             comboText.transform.position = stage.MinerOnScreen + Vector3.up * (0.8f * sizeScale);
@@ -123,31 +112,6 @@ namespace MinersIdle.Presentation
 
         /// <summary>O "xN" cresce menos que os outros efeitos: fica sobre o anão o tempo todo do combo.</summary>
         float ComboScale => sizeScale * 0.6f;
-
-        /// <summary>O clarão cobre a tela da câmera e some rápido.</summary>
-        void UpdateFlash()
-        {
-            if (flash == null || _flash <= 0f) return;
-
-            _flash = Mathf.Max(0f, _flash - Time.unscaledDeltaTime / flashSeconds);
-            var color = _flashColor;
-            color.a = _flashAlpha * _flash;
-            flash.color = color;
-            flash.enabled = _flash > 0f;
-
-            var cameraPosition = worldCamera.transform.position;
-            float height = worldCamera.orthographicSize * 2.2f; // com folga para o tremor
-            flash.transform.position = new Vector3(cameraPosition.x, cameraPosition.y, 0f);
-            flash.transform.localScale = new Vector3(height * worldCamera.aspect, height, 1f);
-        }
-
-        void Flash(Color color, float alpha)
-        {
-            if (flash == null || alpha <= 0f) return;
-            _flashColor = color;
-            _flashAlpha = Mathf.Clamp01(Mathf.Max(alpha * _intensity, _flashAlpha * _flash));
-            _flash = 1f;
-        }
 
         /// <summary>Quantas peças, com a intensidade do DBG (pelo menos uma).</summary>
         int Count(int baseCount) => Mathf.Max(1, Mathf.RoundToInt(baseCount * _intensity));
@@ -173,7 +137,7 @@ namespace MinersIdle.Presentation
             sparks.Emit(at, Count(18), CriticalColor, 6f * sizeScale, size * 1.4f, 0.5f);
             var near = stage.MinerOnScreen + (Vector3)(Random.insideUnitCircle * 1.2f * sizeScale) + Vector3.up * (0.5f * sizeScale);
             floatingTexts.Show(texts.CriticalLabel, near, CriticalColor, 1.05f * sizeScale * 0.65f, 0.85f, 1.2f * sizeScale); // um pouco menor (pedido do Bruno)
-            screenShake.Shake(criticalShake * calm * _intensity, criticalShakeSeconds); // sem clarão: só a quebra pisca (pedido do Bruno)
+            screenShake.Shake(criticalShake * calm * _intensity, criticalShakeSeconds);
         }
 
         void OnTapped(Vector2 screenPosition)
@@ -195,7 +159,6 @@ namespace MinersIdle.Presentation
             screenShake.Shake(breakShake * calm * _intensity, breakShakeSeconds);
             sparks.Emit(at, Count(10), HitSparkColor, 5f * sizeScale, size);
             sparks.Emit(at, Count(18), shards, 6f * sizeScale, size * 2f, 0.6f); // estilhaços na cor do cristal
-            Flash(BreakFlashColor, breakFlash * calm);
             shardFlight.Launch(at, sizeScale * 0.7f);
         }
 

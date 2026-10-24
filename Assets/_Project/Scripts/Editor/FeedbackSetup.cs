@@ -19,10 +19,9 @@ namespace MinersIdle.EditorTools
         const string TextsPath = "Assets/_Project/Data/FeedbackTexts.asset";
         const string EffectsName = "Effects";
         const string SoundName = "Sound";
-        const string FlashName = "Flash";
 
-        /// <summary>O clarão fica por cima de tudo que a câmera da tela desenha.</summary>
-        const int FlashSortingOrder = 32000;
+        /// <summary>O clarão da M6 E4, que saiu (D-83): cenas antigas perdem o objeto.</summary>
+        const string FlashName = "Flash";
 
         static readonly Color ShardColor = new Color32(0xC2, 0x3C, 0xFF, 0xFF);
         static readonly Color ComboColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
@@ -105,15 +104,12 @@ namespace MinersIdle.EditorTools
                 changed = true;
             }
 
-            // M6 (E4): o clarão do crítico e da quebra, um quadrado do tamanho da tela por cima de tudo.
-            if (effectsObject != null && effectsObject.Find(FlashName) == null)
+            // D-83: a tela não pisca mais na quebra; o quadrado do clarão (M6 E4) sai das cenas que o têm.
+            var oldFlash = effectsObject != null ? effectsObject.Find(FlashName) : null;
+            if (oldFlash != null)
             {
-                var square = AssetDatabase.LoadAssetAtPath<Sprite>(GrayboxSetup.SquarePath);
-                var flash = GrayboxSetup.CreateSprite(FlashName, effectsObject, square, Color.clear, Vector3.zero, Vector3.one);
-                flash.sortingOrder = FlashSortingOrder;
-                flash.enabled = false;
-                GrayboxSetup.SetReferences(effectsObject.GetComponent<MiningFeedbackView>(), ("flash", flash));
-                Debug.Log("[Setup] Clarão do crítico e da quebra criado na cena Game.");
+                Object.DestroyImmediate(oldFlash.gameObject);
+                Debug.Log("[Setup] Clarão da quebra removido da cena Game (D-83).");
                 changed = true;
             }
 
