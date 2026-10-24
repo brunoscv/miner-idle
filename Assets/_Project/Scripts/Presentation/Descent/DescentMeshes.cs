@@ -161,19 +161,17 @@ namespace MinersIdle.Presentation
             Apply();
         }
 
-        /// <summary>Usa um recorte de spritesheet sem criar uma textura ou material por quadro.</summary>
-        public void SetSprite(Sprite sprite)
+        /// <summary>
+        /// Um quadro de uma folha em grade de quadros quadrados (da esquerda para a direita, de cima para baixo), sem criar
+        /// textura nem material por quadro: só muda o recorte da textura (_BaseMap_ST).
+        /// </summary>
+        public void SetFrame(Texture sheet, int index, int columns)
         {
-            if (sprite == null) return;
-            _texture = sprite.texture;
-            var rect = sprite.textureRect;
-            float width = sprite.texture.width;
-            float height = sprite.texture.height;
-            _block.SetVector(BaseMapSTId, new Vector4(
-                rect.width / width,
-                rect.height / height,
-                rect.x / width,
-                rect.y / height));
+            if (sheet == null) return;
+            int rows = Mathf.Max(1, sheet.height * columns / Mathf.Max(1, sheet.width));
+            int column = index % columns, row = index / columns;
+            _texture = sheet;
+            _block.SetVector(BaseMapSTId, new Vector4(1f / columns, 1f / rows, (float)column / columns, (float)(rows - 1 - row) / rows));
             Apply();
         }
 

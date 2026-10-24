@@ -189,10 +189,12 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 - **Como testar:** ver as 5 cores na fila; bater e quebrar; conferir que o cristal não esconde o anão.
 - **Como ficou:** `CrystalArtSetup` (Editor) gera `Art/Crystals/crystal_{white,gold,blue,purple,red}.png` do `icon_crystal` (rampas de uma cor, no git) e põe na lista `crystalTextures` do `DescentStage`, na ordem de `DescentArt.CrystalColors`: a cor do cristal é a mesma dos estilhaços da quebra. Cristal de 0,7 m. O campo de textura única do trabalho em andamento saiu.
 
-### E6 — Anão em recorte animado
-- Peças recortadas do `dwarf-idle` (o recorte fica em `ArtSource/characters/miner_main/` e as peças em `Art/Character/rig/`); animação de correr e de minerar em código, presa ao relógio do jogo; Picareta Dupla com a segunda picareta.
-- Antes de recortar tudo, um **teste curto**: o golpe e a corrida com as peças mínimas, em GIF, para você aprovar o movimento.
-- **Como testar:** ver o anão correr entre os cristais e bater no ritmo da VELOCIDADE; comprar a Picareta Dupla e ver as duas picaretas; DBG ×5 para ver o golpe rápido.
+### E6 — Anão com as folhas do PixelLab (D-75; substitui o recorte animado da D-71) ✅ (validada no Moto G75 em 2026-10-23)
+- O recorte animado foi testado em GIF e reprovado pelo Bruno: o movimento certo é o das folhas do PixelLab.
+- `DescentStage` toca as folhas em grade (`SetFrame` só muda o recorte da textura: sem alocação): corrida 1–8 em ciclo (10 qps); mineração com o impacto (quadro 4) no instante do dano, o levantar (1–3) logo antes e 5–12 depois, no máximo 80 ms por quadro (com golpes rápidos, comprime). Quadro quadrado de 1,94 m (o anão mede 1,32 m) descido 13% para o pé tocar o chão.
+- `DwarfArtSetup` importa as folhas como pixel art e preenche a cena. Os campos `Sprite[]` do trabalho em andamento saíram.
+- **Como testar:** ver o anão correr entre os cristais e minerar; o impacto da picareta bate junto com as faíscas e o número; DBG ×5 para golpes rápidos.
+- **Observações:** no golpe o anão agacha e gira um pouco para a direita (é a arte); a barra de vida fica na altura da barriga dele. A Picareta Dupla (segunda picareta) depende de uma folha nova do PixelLab.
 
 ### E7 — Estagiário
 - O mesmo boneco recolorido (capacete de aço, barba castanha), correndo ao lado (D-57). O estagiário de verdade é do M7; aqui ele aparece só pelo DBG, para aprovar o visual.

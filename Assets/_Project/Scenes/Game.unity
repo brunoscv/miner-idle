@@ -10887,11 +10887,19 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 739ac78f81fb4f643b6639f58472bde5, type: 3}
   - {fileID: 2800000, guid: 04d05ac2076844b4fb58bfec765b705a, type: 3}
   crystalSize: {x: 0.7, y: 0.7}
-  dwarfRunFrames: []
-  dwarfMineFrames: []
-  dwarfSize: {x: 2.4, y: 2}
-  runAnimationFps: 8
-  runBounceHeight: 0.04
+  dwarfRunSheet: {fileID: 2800000, guid: 54dbdd1be5ade7f4d834b981342dbf7a, type: 3}
+  dwarfRunColumns: 3
+  dwarfRunCycle: 0100000002000000030000000400000005000000060000000700000008000000i
+  dwarfMineSheet: {fileID: 2800000, guid: ff1bccdbfd4bd664bbd3067e72162c2d, type: 3}
+  dwarfMineColumns: 4
+  dwarfMineWindUp: 010000000200000003000000i
+  dwarfMineStrike: 0400000005000000060000000700000008000000090000000a0000000b0000000c000000i
+  dwarfMineRest: 0
+  dwarfMineFrameSeconds: 0.08
+  dwarfSize: {x: 1.942069, y: 1.942069}
+  dwarfFootGap: 0.12890625
+  runAnimationFps: 10
+  runBounceHeight: 0
   floorTexture: {fileID: 2800000, guid: 8004d7e11a5be384984c6721f7a06f04, type: 3}
   wallTexture: {fileID: 2800000, guid: a78070a9d9af0c540817df3c35a54cc4, type: 3}
   ceilingTexture: {fileID: 2800000, guid: a78070a9d9af0c540817df3c35a54cc4, type: 3}

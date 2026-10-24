@@ -83,14 +83,29 @@ namespace MinersIdle.Presentation
         [Tooltip("Largura e altura dos cristais da fila, em unidades do jogo.")]
         [SerializeField] Vector2 crystalSize = new Vector2(0.84f, 0.8f);
 
-        [Tooltip("Frames de corrida do anão, em ordem. Deixe vazio para usar o desenho provisório.")]
-        [SerializeField] Sprite[] dwarfRunFrames;
+        [Header("Anão (M1b E6, D-75: folhas do PixelLab; vazio = desenho gerado por código)")]
+        [Tooltip("Folha da corrida: quadros quadrados em grade, da esquerda para a direita e de cima para baixo.")]
+        [SerializeField] Texture2D dwarfRunSheet;
+        [SerializeField, Min(1)] int dwarfRunColumns = 3;
+        [Tooltip("Quadros da corrida, em ordem (o 0 da folha é a pose parada e fica de fora).")]
+        [SerializeField] int[] dwarfRunCycle = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
-        [Tooltip("Frames de mineração do anão, em ordem. Deixe vazio para usar o desenho provisório.")]
-        [SerializeField] Sprite[] dwarfMineFrames;
+        [Tooltip("Folha da mineração, no mesmo formato.")]
+        [SerializeField] Texture2D dwarfMineSheet;
+        [SerializeField, Min(1)] int dwarfMineColumns = 4;
+        [Tooltip("Quadros que antecedem o golpe (levantar a picareta), tocados logo antes do instante do dano.")]
+        [SerializeField] int[] dwarfMineWindUp = { 1, 2, 3 };
+        [Tooltip("Quadros a partir do impacto: o primeiro aparece no instante do dano; depois volta à pose parada.")]
+        [SerializeField] int[] dwarfMineStrike = { 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+        [Tooltip("Pose parada (esperando o próximo golpe).")]
+        [SerializeField] int dwarfMineRest;
+        [Tooltip("Tempo máximo de cada quadro do golpe, em segundos (com golpes rápidos, a animação se comprime).")]
+        [SerializeField, Min(0.01f)] float dwarfMineFrameSeconds = 0.08f;
 
-        [Tooltip("Largura e altura do anão, em unidades do jogo.")]
+        [Tooltip("Largura e altura do anão, em unidades do jogo (quadros quadrados: largura = altura).")]
         [SerializeField] Vector2 dwarfSize = new Vector2(2.4f, 2f);
+        [Tooltip("Fração do quadro abaixo dos pés (o quadro desce isso para o pé tocar o chão).")]
+        [SerializeField, Range(0f, 0.5f)] float dwarfFootGap;
 
         [Tooltip("Quadros de corrida exibidos por segundo. A animação segue o relógio do jogo.")]
         [SerializeField, Min(1f)] float runAnimationFps = 8f;
@@ -163,6 +178,12 @@ namespace MinersIdle.Presentation
         public Transform ScreenQuad => _screen;
 
         public float MetersPerUnit => metersPerUnit;
+
+        /// <summary>O quadro da folha do anão mostrado agora (−1 sem as folhas do PixelLab; para testes).</summary>
+        public int DwarfFrame { get; private set; } = -1;
+
+        /// <summary>O primeiro quadro do golpe: aparece no instante do dano (para testes).</summary>
+        public int DwarfImpactFrame => dwarfMineStrike.Length > 0 ? dwarfMineStrike[0] : -1;
 
         public DescentFraming Framing
         {
@@ -461,27 +482,21 @@ namespace MinersIdle.Presentation
             double front = run + distance; // posição na trilha (em metros) que está em z = 0, a câmera
             Shader.SetGlobalFloat(ScrollId, (float)(front % ScrollPeriod));
 
-            int runFrameCount = dwarfRunFrames != null && dwarfRunFrames.Length > 0
-                ? dwarfRunFrames.Length
-                : DescentArt.Frames;
+            bool sheets = dwarfRunSheet != null && dwarfMineSheet != null && dwarfRunCycle.Length > 0;
+            int runFrameCount = sheets ? dwarfRunCycle.Length : DescentArt.Frames;
             int runFrame = (int)Math.Floor(simulation.Elapsed * Mathf.Max(1f, runAnimationFps));
             float runPhase = (float)(simulation.Elapsed * Mathf.Max(1f, runAnimationFps) / runFrameCount * Math.PI * 2.0);
 
-            if (!running)
+            if (sheets)
             {
-                int frame = SwingFrame(miner, simulation.Stats.HitInterval);
-                var sprite = FrameAt(dwarfMineFrames, frame);
-                if (sprite != null) _dwarf.SetSprite(sprite);
-                else _dwarf.SetTexture(_art.DwarfMine[frame]);
+                DwarfFrame = running ? dwarfRunCycle[runFrame % dwarfRunCycle.Length] : MineFrame(miner, simulation.Stats.HitInterval);
+                _dwarf.SetFrame(running ? dwarfRunSheet : dwarfMineSheet, DwarfFrame, running ? dwarfRunColumns : dwarfMineColumns);
             }
-            else
-            {
-                var sprite = FrameAt(dwarfRunFrames, runFrame);
-                if (sprite != null) _dwarf.SetSprite(sprite);
-                else _dwarf.SetTexture(_art.DwarfRun[runFrame & 3]);
-            }
+            else if (!running) _dwarf.SetTexture(_art.DwarfMine[SwingFrame(miner, simulation.Stats.HitInterval)]);
+            else _dwarf.SetTexture(_art.DwarfRun[runFrame & 3]);
+
             float bounce = running ? Mathf.Abs(Mathf.Sin(runPhase)) * Mathf.Max(0f, runBounceHeight) : 0f;
-            _dwarf.Place(new Vector3(0f, bounce, distance), dwarfSize);
+            _dwarf.Place(new Vector3(0f, bounce - dwarfFootGap * dwarfSize.y, distance), dwarfSize);
             PlaceShadow(_dwarfShadow, 0f, distance, DescentArt.ShadowSize.x);
 
             var crystals = simulation.Crystals;
@@ -517,8 +532,27 @@ namespace MinersIdle.Presentation
                 : _art.Crystals[color];
         }
 
-        static Sprite FrameAt(Sprite[] frames, int index) =>
-            frames != null && frames.Length > 0 ? frames[index % frames.Length] : null;
+        /// <summary>
+        /// Quadro da folha de mineração pelo relógio do golpe (D-75): os quadros de levantar tocam logo antes do golpe, o
+        /// de impacto aparece no instante do dano e os seguintes depois dele; no resto do intervalo, a pose parada. Cada
+        /// quadro dura no máximo <see cref="dwarfMineFrameSeconds"/>; com golpes rápidos, a animação se comprime para caber
+        /// no intervalo. Antes do primeiro golpe no cristal, só o levantar (esperando o golpe).
+        /// </summary>
+        int MineFrame(Miner miner, double hitInterval)
+        {
+            int total = dwarfMineWindUp.Length + dwarfMineStrike.Length;
+            double frame = hitInterval > 0 ? Math.Min(dwarfMineFrameSeconds, hitInterval / Math.Max(1, total)) : dwarfMineFrameSeconds;
+            double untilHit = hitInterval - miner.HitTimer;
+            int windUp = dwarfMineWindUp.Length;
+            if (windUp > 0 && untilHit < windUp * frame)
+                return dwarfMineWindUp[Mathf.Clamp(windUp - 1 - (int)(untilHit / frame), 0, windUp - 1)];
+            if (_hitThisTarget)
+            {
+                int strike = (int)(miner.HitTimer / frame);
+                if (strike < dwarfMineStrike.Length) return dwarfMineStrike[strike];
+            }
+            return dwarfMineRest;
+        }
 
         /// <summary>
         /// Quadro do golpe pelo relógio do golpe da simulação: a picareta desce no instante do golpe (quadro 2), volta
