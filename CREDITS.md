@@ -22,12 +22,12 @@ Todo asset de terceiros usado no jogo, com autor, origem e licença. Os packs cu
 | Asset | Autor | Origem | Licença | No projeto |
 |---|---|---|---|---|
 | Nasha's Dark Dungeons: Caves & Mines — free sample (`cave_rock_floor`, `cave_rock_wall`, `tall_pink_crystal_pillar`, `pyrite_cube`, `rough_amethyst`, `rough_ruby`) | Nasha | itch.io (LICENSE.txt no zip) | **Uso comercial OK**; pode editar; proíbe redistribuir os arquivos e treinar IA; crédito opcional | `Assets/_Vendor/AssetStore/CaveMix` (fora do git); **não usado no jogo** (as gemas saíram, D-81) |
-| Afterwork Dungeon Pixel Assets — free sampler (`mine/`, `structures/`, `gear/`) | bbig0104 | https://bbig0104.itch.io/afterwork-dungeon-pixel-assets | **Só NÃO comercial** (LICENSE_FREE.txt). Full library US$ 4,99 libera uso comercial. Arte gerada com IA | `Assets/_Vendor/AssetStore/CaveMix` (fora do git) — **não usado no jogo**; não pode ir para a versão publicada sem a Full |
+| Afterwork Dungeon Pixel Assets — free sampler (`mine/`, `structures/`, `gear/`) | bbig0104 | https://bbig0104.itch.io/afterwork-dungeon-pixel-assets | **Só NÃO comercial** (LICENSE_FREE.txt). Full library US$ 4,99 libera uso comercial. Arte gerada com IA | **tirado do projeto** em 2026-10-23 (D-82); nunca foi usado no jogo |
 | Pixel Fantasy Caves (rocha, calçamento, portal de esteio) | Szadi art. | https://szadiart.itch.io/pixel-fantasy-caves | Uso pessoal e comercial; crédito opcional; a página não fala de redistribuição (mantido fora do git) | `Assets/_Vendor/AssetStore/PixelFantasyCaves` (fora do git); em uso: rocha, calçamento e portais do corredor (D-74) |
 | Nature Pixel Art Environment (terra com pedras) | CraftPix | https://craftpix.net/freebies/nature-pixel-art-environment-free-assets-pack/ | Brinde CraftPix: uso comercial, sem crédito; proíbe redistribuir | só nas prévias (não está no projeto) |
 | Super Grotto Escape | Luis Zuno (ansimuz) | https://ansimuz.itch.io/ | Uso comercial; pode redistribuir; crédito opcional | avaliado (pouco uso no corredor) |
 | MineAssets (pedra `rock_t1` da beira do caminho) | — | baixado pelo Bruno (LISCENCE.txt no zip) | Uso comercial OK, pode modificar; proíbe redistribuir e deixar os arquivos extraíveis fora do jogo | `Assets/_Vendor/AssetStore/Misc` (fora do git) |
-| Free Gold Rush Asset Pack (`free_walls&doors_TileSheet`) | — | itch.io | **Só NÃO comercial** (CC BY-NC) | `Assets/_Vendor/AssetStore/CaveMix` — **não usar** |
+| Free Gold Rush Asset Pack (`free_walls&doors_TileSheet`) | — | itch.io | **Só NÃO comercial** (CC BY-NC) | **tirado do projeto** em 2026-10-23 (D-82); nunca foi usado no jogo |
 
 ## Arte do jogo
 
