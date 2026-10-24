@@ -102,7 +102,14 @@
 | **D-80** | **A fila de cristais nunca fica abaixo de 4** (pedido do Bruno em 2026-10-23: "precisa sempre ter cristais pra ele quebrar", mesmo numa partida de 50 min). Antes, só o relógio (1 a cada 5 s) repunha a fila; com o anão forte ele quebrava mais rápido e ficava correndo sem cristais. Agora, abaixo de `minCrystals` (= 4, no `Balance_Prototipo`), nasce um na hora, no mesmo lugar de sempre (fim da fila, ≥ 12 un à frente, fora da tela); o relógio continua enchendo até 12. Efeito na economia: o ritmo de lascas passa a ser o do anão, não o do relógio. |
 | **D-81** | **Ajustes do Art Spike pedidos no Moto G75 (2026-10-23):** o crítico não pisca mais em amarelo (só a quebra pisca, em branco); as gemas da beira do caminho saíram (ficam só as pedras); o VOLTAR da loja é rubi como o "comprar"; a corrida usa os quadros 2-3-4 e 6-7-8 da folha (cada perna 3 quadros; o 5 deixava uma perna mais longa). |
 | **D-82** | **Arte só não comercial fica fora do projeto** (pedido do Bruno em 2026-10-23). Conferido pelas GUIDs: nenhuma cena, prefab, material ou script usava o Afterwork Dungeon (`mine/`, `structures/`, `gear/`) nem o Free Gold Rush (`free_walls&doors_TileSheet`). Os 49 arquivos saíram de `Assets/_Vendor/AssetStore/CaveMix` e foram para `Downloads\assets\_tirados-do-miners-idle\CaveMix`, junto dos zips originais. Uma arte nova de terceiros só entra no projeto com a licença comercial lida e registrada no `CREDITS.md`. |
+
+### 1.4 Decididas pelo Bruno em 2026-10-24
+
+| # | Decisão |
+|---|---|
 | **D-83** | **A tela não pisca mais na quebra; o golpe do anão treme mais** (pedido do Bruno em 2026-10-24: o pessoal não gostou do clarão branco). Saiu o clarão inteiro (`Effects/Flash` e o código), então nada pisca, nem no crítico (D-81) nem na quebra. Tremor de câmera, em unidades de mundo (a tela tem ~17 de largura): golpe 0,12 por 0,08 s → **0,25 por 0,12 s**; quebra 0,3 → **0,5** (continua mais forte que o golpe, já que perdeu o clarão). Crítico (0,4) e marco do combo (0,25) não mudaram. Achado: os valores que valem são os da cena `Game`; o código dizia 1,0 / 0,8 / 0,6 desde a M6 E4, mas a cena nunca recebeu. Agora o código e a cena dizem o mesmo. Ajuste fino no aparelho: DBG → Câmera → Intensidade dos efeitos. |
+| **D-84** | **Builds de teste para o pessoal: script local + Firebase App Distribution** (caminho 1, escolhido pelo Bruno em 2026-10-24). Um comando no PC do Bruno gera o APK com versão automática (sobe a cada commit) e manda para um grupo de testadores no Firebase, que recebem convite por e-mail e atualizam sem desinstalar. O build no GitHub Actions (caminho 2) fica para depois: esbarra na licença do Unity no CI, na keystore fixa e nos assets que ficam fora do git (D-65), que fariam o CI gerar o jogo em graybox. Vira o **marco M15**, no fim do Roadmap (o Bruno prefere cuidar das mecânicas antes; pode ser puxado antes do playtest do M11). Plano: [Builds de teste](Plano%20-%20Builds%20de%20teste.md). |
+| **D-85** | **O GDD v5 ([`docs/gdd v5.pdf`](../gdd%20v5.pdf), versão 5.0, "Idle Miner roguelite") passa a ser a referência de design**, no lugar do v1 (pedido do Bruno em 2026-10-24). O v1 fica como histórico, e o `Balance_GDD_v1` continua guardado para comparação. Diferenças e impacto por marco: [Análise - GDD v5](Analise%20-%20GDD%20v5.md). **Nenhum valor de regra muda só por esta decisão:** cada mudança (toque de 33%, bônus do combo, estagiário, Letrado, cristal raro…) entra com decisão própria quando o marco dela começar. As contradições do v5 ficam em §2.4 (G1–G10, com as decisões D-86…D-89), para tirar com o autor do GDD no marco indicado. As decisões anteriores que contrariam o v5 valem até serem revistas. |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
@@ -127,9 +134,9 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 
 | # | Pergunta | Opções / Rec. | Bloq. |
 |---|---|---|---|
-| D-04 | **Progressão offline** no MVP? | Sim, analítica: teto 2–4 h, 50% (Economia §6) **[rec.]** · Não, só pós-MVP | M8 |
-| D-06 | **Linhas de melhoria:** 6 (sem *Crítico*) ou 7? "Letrado" ou "Pesquisador"? | **6 linhas, nome "Letrado"**, crítico fixo 5% **[rec.]**; ou adicionar *Crítico* (custo/limite a definir) | M2 |
-| D-07 | **"Quebrar a parede"** para passar de caverna, ou só o botão? | **Botão + animação de parede quebrando como efeito** (sem vida/estado) **[rec.]** · Parede com vida (novo sistema) · Só botão | M7 |
+| D-04 | **Progressão offline** no MVP? | Sim, analítica: teto 2–4 h, 50% (Economia §6) **[rec.]** · Não, só pós-MVP. **GDD v5 (D-85): sim, feita só pelo estagiário, até 4 h, com melhorias offline próprias**; detalhes em G8 | M9 |
+| D-06 | **Linhas de melhoria:** 6 (sem *Crítico*) ou 7? "Letrado" ou "Pesquisador"? | **6 linhas, nome "Letrado"**, crítico fixo 5% **[rec.]**; ou adicionar *Crítico* (custo/limite a definir). **O GDD v5 mantém as "sete linhas" sem tabela para Pesquisador e Crítico: G9** | M7 |
+| D-07 | **"Quebrar a parede"** para passar de caverna, ou só o botão? | **Botão + animação de parede quebrando como efeito** (sem vida/estado) **[rec.]** · Parede com vida (novo sistema) · Só botão. **GDD v5 (D-85): a passagem depende do Letrado e da parede** (resolve a C-03 pela parede); se a parede tem vida: G7 | M8 |
 | ~~D-08~~ | ~~Regras do toque: área (qualquer ponto × só o cristal), taxa máxima, crítico no toque?~~ → **decidido em D-47** | **Qualquer ponto**, sem limite rígido, **crítico vale no toque**, tremor reduzido em alta taxa **[rec.]**; decidir após ver o simulador | M3 |
 | D-09 | **Boost:** o mínimo de 0,5 s vale com boost? Recarga igual à duração é intencional? | **Boost pode passar do mínimo (piso 0,2 s)**; recarga **60 s** após o fim **[rec.]** (ou manter 30 s se for proposital) | M8 |
 | D-10 | **Ferramenta de pixel art** e origem da arte | Aseprite (pago, ~US$ 20 [verificar]) **[rec.]** · LibreSprite/Pixelorama (grátis) · só IA+retoque; **fallback**: pacotes CC0 de ambiente | M1b |
@@ -139,7 +146,7 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | D-15 | **Rastreador de tarefas** | Checklist nos planos + GitHub Issues/Projects (mostrar a lista antes de criar) **[rec.]** · só docs | M1 |
 | D-16 | **Git LFS e ramos:** LFS só para áudio/binários grandes (não para PNG pixel art, cenas ou prefabs); *main* + ramos curtos | **[rec.]** como em Qualidade §2–3 | M1 |
 | D-17 | **Horas por semana** disponíveis e calendário | Informar; converte as faixas do Roadmap em semanas | M2 |
-| D-19 | **Justificativa da penalidade** (−50% após 100 quebras): "anti-grind/empurrar ao Letrado" × "pena ao jogador parado" | Documentar a intenção e ajustar o limiar relativo ao *K* (Economia §4) **[rec.]** | M2 |
+| D-19 | **Justificativa da penalidade** (−50% após 100 quebras): "anti-grind/empurrar ao Letrado" × "pena ao jogador parado" | Documentar a intenção e ajustar o limiar relativo ao *K* (Economia §4) **[rec.]**. **O GDD v5 tirou a regra da penalidade e pôs os 100 cristais como trava do Letrado: G2** | M8 |
 
 ### 2.3 Novas perguntas geradas pelas respostas
 
@@ -152,7 +159,28 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | **D-30** | **"Contar picaretas"** (pedido de 2026-10-21): é um **contador de golpes** (estatística) ou um **segundo recurso**? | **Contador de golpes**, exibido no painel de debug no M2; um segundo recurso contraria a "uma moeda" (DEC-03) e pediria decisão própria **[rec.]** | M2 (não bloqueia o início) |
 | **D-31** | **Caminho do anão:** linha reta até o alvo (cristais não bloqueiam) ou desviar de cristais/paredes? | **Linha reta no M2** **[rec.]**; desvio só se o mapa ganhar obstáculos | M2 |
 
-### 2.4 Para depois do MVP
+### 2.4 GDD v5: decisões e perguntas em aberto (D-85; tirar no marco indicado)
+
+> Anotadas em 2026-10-24 a partir da [Análise - GDD v5](Analise%20-%20GDD%20v5.md). As **G** são perguntas para o autor do GDD (contradições ou lacunas do v5); as **D** são decisões do Bruno sobre o nosso plano. Nada aqui muda o jogo antes de ser respondido.
+
+| # | Pergunta | Rec. | Quando tirar |
+|---|---|---|---|
+| **D-86** | **Toque de 33% do golpe** (v5) no lugar dos 10% (D-47)? É só um valor no asset | Aplicar junto da economia do v5 para não desequilibrar o protótipo sozinho; testar no celular | Ao retomar a E5 do M6 |
+| **D-87** | **`Balance_GDD_v5`**: criar o asset com os números do v5 (dano `5 × 2^(n−1)`, intervalo 2,0 → 0,1 s, Velocidade `50 × 5^(n−1)`, Mineração +100%/nível até +1000%, Letrado `100 × 10^(n−1)`) e incluí-lo no relatório de economia | **Sim**, ao lado do v1, para comparar; depende da G1 para vida e lascas por caverna | Ao retomar a E5 do M6 |
+| **D-88** | **Ordem M7 × M8:** progressão (Letrado, passagem, cavernas) antes do estagiário? | **M8 antes do M7**: dá o objetivo de "descer", aproveita os biomas, e o estagiário do v5 depende de economia de várias cavernas e do offline | Ao fechar o M6 |
+| **D-89** | **Marco novo "Bônus temporários":** bônus do combo (×10/×30/×50/×100), cristal raro com a janela de 2 escolhas e, talvez, o boost do AD (o mesmo tipo de coisa: bônus com tempo, visível na tela) | **Sim**, depois do M8; o M9 fica com save completo, offline e ajustes. Depende da G5 e da G6 | Ao planejar o marco seguinte ao M8 |
+| G1 | Vida e lascas por caverna: vale a fórmula da §3.1 (`10 × 8^(c−1)`, `1 × 3^(c−1)`) ou a tabela da §6.1 (`10 × 10^(c−1)`, `1 × 2^(c−1)`)? | — | E5 do M6 (relatório) / M8 |
+| G2 | A **penalidade** saiu de vez (e os 100 cristais viraram só a trava do Letrado) ou continua? Se continua, com que regra? (§1.3 e §9 citam; §3.1 e §2.3 não) | — | M8 |
+| G3 | Linha "Estagiário" (`500 × 5^(n−1)`, nível 10 / 100%) × "Picareta Online" (`100 × 2^(n−1)`, 10% × nível até 100%): a primeira só contrata e a segunda dá o percentual, ou as duas dão dano? | — | M7 |
+| G4 | No cristal que os dois batem, se o estagiário dá o golpe final: a recompensa é uma só? Essa quebra conta nos 100 cristais da trava do Letrado? | — | M7 |
+| G5 | Combo: "ao alcançar e parar" = o bônus vem quando o combo acaba, valendo o maior marco alcançado? Bônus acumulam entre si? | — | Marco "Bônus temporários" |
+| G6 | Cristal raro: frequência, lista de melhorias temporárias possíveis e duração de cada uma | — | Marco "Bônus temporários" |
+| G7 | A parede da passagem tem vida (anão e toque batem nela) ou é só a animação de quebrar ao apertar o botão? | Ver D-07 | M8 |
+| G8 | Offline: há redução além dos números próprios? Há tela de "enquanto você estava fora"? O nível online do estagiário conta offline? | — | M9 |
+| G9 | "Sete linhas": Pesquisador = Letrado? A linha Crítico (§1.3 e loop) existe? Com que custo e efeito? | Ver D-06 | M7 (loja) |
+| G10 | A Picareta Dupla do estagiário aparece no boneco (segunda picareta)? A §5.3 diz que a Dupla do anão não aparece nele | — | M7 |
+
+### 2.5 Para depois do MVP
 Prestígio ("Nova Descida") · música · iOS · idiomas adicionais · missões.
 
 ## 3. Questões abertas rápidas (para responder quando convier)
@@ -193,12 +221,13 @@ Probabilidade/Impacto: B(aixo) · M(édio) · A(lto). Dono: Bruno, salvo indica�
 | R-19 | Jogo "parece genérico" no mercado de idle mining | M | M | Investir em *game feel* e arte (M5), identidade da descida, polimento | Playtest sem "uau" |
 | R-20 | Dois outros jogos em andamento disputam as horas do Bruno | A | M | Trabalhar 1 marco por vez; estimar com horas reais (D-17) | Marco atrasado 2× |
 | R-23 | **Tempo de caminhada** (D-26/D-27) vira parte da economia: andar longe pela ordem do lote reduz lascas/min e pode parecer "burro" ao jogador | M | M | Caminhada no núcleo (medível no simulador); velocidade de caminhada como valor ajustável; avaliar o *feel* no M2 com o debug de ordem ligado | Bruno acha o vaivém irritante no M2 |
-| R-24 | Mapa com nascimento contínuo + estagiário (M6) aumenta a chance de alvo duplicado ou espera infinita | M | A | Seletor de alvo isolado e testado desde o M2; reserva de alvo entra junto com o estagiário | Qualquer P0 do estagiário |
+| R-24 | Mapa com nascimento contínuo + estagiário (M6) aumenta a chance de alvo duplicado ou espera infinita | M | A | Seletor de alvo isolado e testado desde o M2; reserva de alvo entra junto com o estagiário. **No GDD v5 (D-85) o estagiário bate no mesmo cristal do anão e avança junto: o risco cai muito se o M7 seguir o v5** | Qualquer P0 do estagiário |
 | R-25 | Texturas de pixel art "dançam" (shimmer) na perspectiva em baixa resolução (D-53) | M | M | Render de 270 px com filtro *point* e mipmaps; densidade de pixel das texturas decidida no Art Spike | Bruno ou playtester nota cintilação no corredor |
 | R-26 | O cristal na frente tapa o anão no golpe | M | B | Cristal baixo; o anão para a uma distância que deixa o cristal abaixo do peito; conferido na E1 | Rosto ou picareta escondidos no aparelho |
 | R-27 | O cristal aparece por pouco tempo (menos de 1 s com a câmera da D-50) e o jogador não o vê chegando | M | M | Escala da trilha (D-58); câmera ajustável no DBG; aviso na borda de baixo antes de o cristal entrar | Playtester não percebe o cristal chegando |
 | R-28 | O 3D com cara de pixel art se afasta do visual do mockup | M | M | Paleta e tema do mockup nas texturas; validar um quadro da caverna 1 no Art Spike antes de produzir as outras | Art Spike reprovado |
 | R-29 | O cristal minerado (~69–90% da tela) fica colado no botão PASSAR DE CAVERNA | B | B | O toque vale na tela toda; subir ou reduzir o botão se atrapalhar | Toques no botão por engano |
+| R-30 | Os builds de teste (D-84) saem assinados com a chave de debug do PC do Bruno: se o PC ou a chave se perderem, os testadores precisam desinstalar (e perdem o save) para instalar a versão nova | B | M | Backup de `~/.android/debug.keystore`; chave de verdade (fora do git) antes do CI ou da Play Store (M12) | Troca de PC ou de chave |
 
 ## 5. Premissas a validar
 

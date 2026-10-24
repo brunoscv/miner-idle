@@ -5,6 +5,8 @@
 > [Relatório de Descoberta](../planning/Descoberta%20-%20Relatorio.md)) · `CONF` = conflita com outro requisito.
 > Tudo aqui é **[DOC]**, exceto onde marcado. Os IDs são usados no [Roadmap](../planning/Roadmap.md) para rastreabilidade.
 > Abreviações de origem: **GDD** = `GDD_Idle_Miner.docx`; **RM** = `Roadmap_MVP_Idle_Miner_Unity_CSharp.docx`; **MK** = mockup embutido no GDD.
+>
+> **2026-10-24 — o GDD foi substituído (D-85):** a referência agora é o **GDD v5** (`docs/gdd v5.pdf`). As linhas abaixo ainda citam o **v1** (seções e valores) e são rebaseadas no v5 marco a marco, quando cada plano for escrito e as perguntas G1–G10 forem respondidas. Requisitos que o v5 muda: REQ-MIN-02 (toque 33%), REQ-MIN-04 (combo com bônus), REQ-ECO-02…06 (números), REQ-CRY-01/02 (G1), REQ-CRY-03/05/06 (penalidade e barra do estagiário: G2, G4), REQ-INT-01…05 (estagiário no mesmo cristal, árvore própria, offline), REQ-CAVE-03 (Letrado *n* → caverna *n+1*, trava de 100 cristais), REQ-LOOP-04 (parede). Novos no v5, ainda sem ID: cristal raro com melhoria temporária, bônus do combo, offline pelo estagiário. Detalhes: [Análise - GDD v5](../planning/Analise%20-%20GDD%20v5.md).
 
 ## A. Produto e plataforma
 

@@ -13,6 +13,8 @@
 
 > **Atualização de 2026-10-23 — D-62…D-67:** a E5 do M6 fica pausada e o **Art Spike (M1b)** começa, primeiro pela **interface** (packs de UI em madeira, ícones, fonte Pixelify Sans, botões LOJA e AD) e depois anão, cristais e biomas. Plano: [Marco 1b - Art Spike](Marco%201b%20-%20Art%20Spike.md).
 
+> **Atualização de 2026-10-24 — D-84, D-85:** o **GDD v5** passa a ser a referência de design (o v1 vira histórico). Os textos do M7, M8 e M9 abaixo ainda descrevem o v1; cada um tem uma nota "GDD v5" com o que muda, e o plano de cada marco é escrito pelo v5. Perguntas em aberto (G1–G10) e decisões pendentes (D-86 toque 33%, D-87 `Balance_GDD_v5`, D-88 ordem M7 × M8, D-89 marco "Bônus temporários") em [Decisões e Riscos §2.4](Decisoes%20e%20Riscos.md); diferenças completas em [Análise - GDD v5](Analise%20-%20GDD%20v5.md). Builds de teste pelo Firebase viram o **M15** (D-84).
+
 ## 1. Como este roadmap se relaciona com o do RM
 
 | RM (semanas) | Aqui | Mudança e motivo |
@@ -58,6 +60,8 @@ M11 Balanceamento, desempenho, playtest
 M12 Regressão e Release Candidate ← Marco D
                               ▼
 M13 Publicação  →  M14 Pós-lançamento
+
+M15 Builds de teste pelo Firebase (ferramenta, D-84; no fim, pode ser puxado antes do M11)
 ```
 
 ## 3. Marcos
@@ -132,6 +136,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Objetivo:** trocar o mapa aberto pela **descida em corrida**: câmera de frente (D-50), o anão correndo na direção dela por um corredor de caverna 3D com cara de pixel art (D-53), parando para bater nos cristais da fila. **Jogador:** o mesmo loop (golpe, toque, crítico, combo, loja, save), na tela nova.
 - **Plano detalhado:** [Marco 6 - Descida em corrida.md](Marco%206%20-%20Descida%20em%20corrida.md) (E1 câmera e render ✅ · E2 fila no núcleo · E3 jogo no corredor · E4 feedback e DBG · E5 economia e celular). Proposta e motivos: [Proposta - Descida em corrida](Proposta%20-%20Descida%20em%20corrida.md).
 - **Dependências:** M5 ✅ (D-59). **Fora:** arte de verdade (Art Spike, depois), estagiário (M7). **Esforço:** 40–60 h.
+- **GDD v5 (D-85):** a E5 (relatório de economia) compara também com o `Balance_GDD_v5` (D-87, depende da G1) e decide o toque de 33% (D-86).
 
 ### M7 — Estagiário
 - **Objetivo:** segundo minerador sem estados quebrados. **Jogador:** contrata, vê o estagiário atacar o cristal à frente.
@@ -139,6 +144,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Entregáveis:** `MinerAgent` + `CrystalLot` com estados, `InternController`, barra de vida do estagiário, silhueta/capacete distinto, regras REQ-INT-01…06.
 - **Testes:** **matriz** (principal primeiro, estagiário primeiro, simultâneo, 5º cristal, troca de lote, compra no meio do lote, pausa); nenhum alvo duplicado; nenhuma espera infinita (P0); quebra do estagiário não conta p/ penalidade; Dupla não altera estagiário (REQ-INT-05).
 - **DoD:** matriz verde + 30 min de sessão sem travar; **Bruno testa**. **Riscos:** C-08 mal resolvido. **Fora:** mais mineradores. **Esforço:** 35–50 h.
+- **GDD v5 (D-85) — muda bastante:** o estagiário **bate no mesmo cristal do anão** e avança junto (somem a reserva de alvo, a matriz de ordem de quebra, o R-24 e a [spec do mapa](../design/Spec%20-%20Estagiario%20no%20mapa.md)); nasce no cristal atual do anão; dano online 10% × nível de uma picareta. Ganha **árvore própria** de melhorias (Picareta Offline, Velocidade Offline, Mineração Offline, Picareta Dupla do Estagiário 20.000, Picareta Online), compradas depois de contratar: a loja precisa de uma aba ou seção "Estagiário". O **offline** é dele (só ele minera fora do jogo), mas o cálculo offline fica no M9; o M7 já salva os níveis do estagiário. Perguntas: G3, G4, G9, G10. Ordem com o M8: D-88.
 
 ### M8 — Progressão: Letrado, penalidade, passagem e 10 cavernas
 - **Objetivo:** descer de verdade. **Jogador:** compra o Letrado, passa de caverna, vê a cor mudar; sente a penalidade.
@@ -146,6 +152,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Entregáveis:** `CaveDefinition[10]` com *recolor* provisório, `Letrado`, `Penalty` (ícone), passagem (botão âmbar ou parede), reset da penalidade, bloqueio após a cave 10, tela "fim da descida", dica do Letrado/penalidade.
 - **Testes:** nova caverna remove a penalidade e gera 5 cristais novos; Letrado *n* só dobra o dano na caverna *n*; bônus não acumula (REQ-ECO-06); progressão 1→10 **alcançável** no simulador e jogando; botão desabilitado/habilitado.
 - **DoD:** **marco C parcial:** caverna 1→10 funcional com arte provisória; REQ-CAVE-01…03. **Riscos:** C-01/C-09 mal calibrados fazem o final inatingível — rodar o simulador em cada alteração. **Fora:** arte final das caves 2–10. **Esforço:** 35–45 h.
+- **GDD v5 (D-85):** Letrado custa `100 × 10^(n−1)`; **Letrado *n* leva à caverna *n+1*** e o nível 10 leva ao **"coração da montanha", o fim do jogo**; só pode ser comprado **depois de quebrar 100 cristais na caverna atual**. A passagem depende do Letrado **e da parede** (D-07, G7); na descida, a parede fica no fim do corredor. A **penalidade** saiu das regras do v5 (G2, D-19). Vida e lascas por caverna dependem da G1. Os biomas (E8 do Art Spike, D-72) entram aqui.
 
 ### M9 — AD simulado, persistência completa, offline e ajustes
 - **Objetivo:** fechar os sistemas. **Jogador:** assiste (simulado) para ganhar boost; fecha e volta sem perder nada.
@@ -153,6 +160,12 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Entregáveis:** modal de AD (5 s, ×2,5, 30 s, recarga), selo do boost, `SaveService` completo (JSON versionado, escrita atômica, backup, migração), pausa/retomada, **offline (se D-04)**, Configurações (volume, tremor, vibração, apagar save com confirmação), créditos mínimos.
 - **Testes:** fechar/minimizar não duplica bônus/compra/moeda (RM sem. 8, P0); save corrompido recupera; versão futura tratada; teste de migração; manipular o relógio do aparelho; sessão longa (2 h).
 - **DoD:** **marco C** (RM): loja, estagiário, penalidade, progressão, boost e save integrados; testes de estados simultâneos feitos. **Riscos:** relógio do aparelho, *backgrounding* do Android. **Fora:** SDK de anúncios real. **Esforço:** 40–55 h.
+- **GDD v5 (D-85):** o offline existe e é **só do estagiário**, por até 4 h, com as melhorias offline dele (resolve a D-04; detalhes na G8). Se a D-89 for aprovada, o boost do AD vai para o marco "Bônus temporários" e este marco fica com save completo, offline e ajustes.
+
+### Marco proposto (D-89, aguardando) — Bônus temporários ← *GDD v5*
+- **Objetivo:** o lado "10% roguelite" do v5. **Jogador:** combo longo dá bônus (×10: +10% de dano por 5 s · ×30: +15% por 10 s · ×50: crítico garantido por 20 s · ×100: "Frenesi", +50% por 30 s), sempre visível na tela; quebrar um **cristal raro** abre uma janela com **2 melhorias temporárias** para escolher.
+- **Técnica:** modificadores com tempo no núcleo (o mesmo mecanismo serviria ao boost do AD); indicador de bônus ativo no HUD; o `crystal_glass_rare` do Bruno (D-77) como arte do raro.
+- **Posição sugerida:** depois do M8, antes do M9. **Pendências:** G5 (como o bônus do combo dispara), G6 (frequência do raro, lista de melhorias, durações). **Esforço:** a estimar quando a G6 for respondida.
 
 ### M10 — Arte, áudio e integração visual das cavernas 2–10
 - **Objetivo:** os 10 ambientes e a UI final. **Jogador:** cada caverna parece outro lugar; interface com cara de jogo.
@@ -178,6 +191,11 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 
 ### M14 — Pós-lançamento
 Backlog em §6 (P1/P2). Reavaliar com dados reais.
+
+### M15 — Builds de teste para o pessoal (Firebase App Distribution) ← *D-84, 2026-10-24*
+- **Objetivo:** um comando no PC do Bruno gera o APK com versão automática e manda para um grupo de testadores no Firebase; eles atualizam sem desinstalar e sem perder o save. **Jogador:** o pessoal recebe as versões novas por e-mail.
+- **Plano detalhado:** [Plano - Builds de teste](Plano%20-%20Builds%20de%20teste.md) (E1 versão automática e versão na tela · E2 script `publish-test.sh` · E3 primeira rodada com o pessoal; perguntas P1–P4 em aberto).
+- **Posição:** posto no fim do planejamento pelo Bruno (2026-10-24). Não depende de nenhum marco e **pode ser puxado antes**: o lugar natural é logo antes do playtest do M11 (5–8 pessoas). Até lá, APK de desenvolvimento passado à mão (Drive). **Fora:** build no GitHub Actions, chave definitiva e Play Store (M13). **Esforço:** 5–7 h.
 
 ## 4. Caminho crítico e paralelismo
 
@@ -259,6 +277,7 @@ Arte cavernas 2–10 · UI final · VFX/áudio finais · `CREDITS.md` · auditor
 | M11 | 35–50 |
 | M12 | 25–40 |
 | M13 | 15–30 |
+| M15 (builds de teste, D-84) | 5–7 |
 | **Total** | **≈ 440–650 h** (≈ **22–33 semanas a 20 h/sem**; recalculado em 2026-10-21 com o M2 novo) (o RM estima 420–460 h para M1–M11, sem M1b, M12 e sem a recalibração) |
 
 **Premissas (a validar — C-18, D-17):** (1) horas de desenvolvimento **focado com o Claude escrevendo o código** e o Bruno revisando/testando — em 2026-10-20 não há medida de velocidade neste projeto; (2) **uma pessoa**;
