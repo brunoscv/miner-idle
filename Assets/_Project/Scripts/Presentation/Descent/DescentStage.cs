@@ -120,6 +120,13 @@ namespace MinersIdle.Presentation
         [Tooltip("Fração do quadro abaixo dos pés (o quadro desce isso para o pé tocar o chão).")]
         [SerializeField, Range(0f, 0.5f)] float dwarfFootGap;
 
+        [Header("Anão com menos pixels (só pelo DBG, para comparar; a mesma grade e os mesmos quadros das folhas acima)")]
+        [SerializeField] Texture2D lowDwarfRunSheet;
+        [SerializeField] Texture2D lowDwarfMineSheet;
+        [Tooltip("Largura e altura do quadro: o desenho enche mais o quadro de 64 px que o de 256, então o quadro é menor.")]
+        [SerializeField] Vector2 lowDwarfSize = new Vector2(1.94f, 1.94f);
+        [SerializeField, Range(0f, 0.5f)] float lowDwarfFootGap;
+
         [Header("Estagiário (M1b E7, D-76: o anão grisalho; só pelo DBG até o M7)")]
         [SerializeField] Texture2D internRunSheet;
         [SerializeField] Texture2D internMineSheet;
@@ -210,6 +217,12 @@ namespace MinersIdle.Presentation
 
         /// <summary>Mostra o estagiário ao lado do anão (DBG; o estagiário de verdade é do M7).</summary>
         public bool ShowIntern { get; set; }
+
+        /// <summary>Troca o anão pelas folhas com menos pixels (DBG, para comparar; não fica salvo).</summary>
+        public bool UseLowDwarf { get; set; }
+
+        /// <summary>A folha do anão mostrada agora (null sem as folhas do PixelLab; para testes).</summary>
+        public Texture DwarfSheet { get; private set; }
 
         /// <summary>O quadro da folha do estagiário mostrado agora (−1 escondido; para testes).</summary>
         public int InternFrame { get; private set; } = -1;
@@ -549,6 +562,7 @@ namespace MinersIdle.Presentation
             int runFrame = (int)Math.Floor(simulation.Elapsed * Mathf.Max(1f, runAnimationFps));
             float runPhase = (float)(simulation.Elapsed * Mathf.Max(1f, runAnimationFps) / runFrameCount * Math.PI * 2.0);
 
+            bool low = sheets && UseLowDwarf && lowDwarfRunSheet != null && lowDwarfMineSheet != null;
             if (sheets)
             {
                 int mine = running ? dwarfMineRest : MineFrame(miner, simulation.Stats.HitInterval);
@@ -556,14 +570,16 @@ namespace MinersIdle.Presentation
                 bool mining = !running || finishing;
                 if (finishing) mine = FinisherFrame(simulation.Elapsed - _finisherStart);
                 DwarfFrame = mining ? mine : dwarfRunCycle[runFrame % dwarfRunCycle.Length];
-                _dwarf.SetFrame(mining ? dwarfMineSheet : dwarfRunSheet, DwarfFrame, mining ? dwarfMineColumns : dwarfRunColumns);
+                DwarfSheet = mining ? (low ? lowDwarfMineSheet : dwarfMineSheet) : (low ? lowDwarfRunSheet : dwarfRunSheet);
+                _dwarf.SetFrame(DwarfSheet, DwarfFrame, mining ? dwarfMineColumns : dwarfRunColumns);
             }
             else if (!running) _dwarf.SetTexture(_art.DwarfMine[SwingFrame(miner, simulation.Stats.HitInterval)]);
             else _dwarf.SetTexture(_art.DwarfRun[runFrame & 3]);
 
             float bounce = running ? Mathf.Abs(Mathf.Sin(runPhase)) * Mathf.Max(0f, runBounceHeight) : 0f;
             var lean = Quaternion.Euler(framing.tilt * spriteLean, 0f, 0f);
-            PlaceOnFeet(_dwarf, new Vector3(0f, bounce, distance), lean);
+            PlaceOnFeet(_dwarf, new Vector3(0f, bounce, distance), lean,
+                        low ? lowDwarfSize : dwarfSize, low ? lowDwarfFootGap : dwarfFootGap);
             PlaceShadow(_dwarfShadow, 0f, distance, DescentArt.ShadowSize.x);
             LayoutIntern(sheets, running, runFrame, bounce, distance);
 
@@ -631,7 +647,7 @@ namespace MinersIdle.Presentation
             InternFrame = mining ? DwarfFrame : dwarfRunCycle[(runFrame + internRunLag) % dwarfRunCycle.Length];
             _intern.SetFrame(mining ? internMineSheet : internRunSheet, InternFrame, mining ? dwarfMineColumns : dwarfRunColumns);
             float z = distance + internOffset.y;
-            PlaceOnFeet(_intern, new Vector3(internOffset.x, bounce, z), _dwarf.Transform.localRotation);
+            PlaceOnFeet(_intern, new Vector3(internOffset.x, bounce, z), _dwarf.Transform.localRotation, dwarfSize, dwarfFootGap);
             PlaceShadow(_internShadow, internOffset.x, z, DescentArt.ShadowSize.x);
         }
 
@@ -640,9 +656,9 @@ namespace MinersIdle.Presentation
         /// <paramref name="feet"/>, em cima da sombra. Girar em volta da base do quadro (abaixo dos pés, pela folga da
         /// folha) jogava os pés para trás da sombra, e o anão parecia flutuar.
         /// </summary>
-        void PlaceOnFeet(DescentPiece piece, Vector3 feet, Quaternion lean)
+        void PlaceOnFeet(DescentPiece piece, Vector3 feet, Quaternion lean, Vector2 size, float footGap)
         {
-            piece.Place(feet - lean * new Vector3(0f, dwarfFootGap * dwarfSize.y, 0f), dwarfSize);
+            piece.Place(feet - lean * new Vector3(0f, footGap * size.y, 0f), size);
             piece.Transform.localRotation = lean;
         }
 

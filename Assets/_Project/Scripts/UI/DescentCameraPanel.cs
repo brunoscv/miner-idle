@@ -64,6 +64,8 @@ namespace MinersIdle.UI
         [SerializeField] Button close;
         [Tooltip("Liga e desliga o estagiário ao lado do anão (M1b E7; o de verdade é do M7).")]
         [SerializeField] Button intern;
+        [Tooltip("Troca o anão pelas folhas com menos pixels, para comparar (não fica salvo).")]
+        [SerializeField] Button lowDwarf;
 
         UnityAction[] _minus;
         UnityAction[] _plus;
@@ -104,6 +106,7 @@ namespace MinersIdle.UI
             resetFraming.onClick.AddListener(ResetFraming);
             close.onClick.AddListener(Toggle);
             if (intern != null) intern.onClick.AddListener(ToggleIntern);
+            if (lowDwarf != null) lowDwarf.onClick.AddListener(ToggleLowDwarf);
         }
 
         void OnDisable()
@@ -117,6 +120,7 @@ namespace MinersIdle.UI
             resetFraming.onClick.RemoveListener(ResetFraming);
             close.onClick.RemoveListener(Toggle);
             if (intern != null) intern.onClick.RemoveListener(ToggleIntern);
+            if (lowDwarf != null) lowDwarf.onClick.RemoveListener(ToggleLowDwarf);
         }
 
         void Update()
@@ -130,6 +134,8 @@ namespace MinersIdle.UI
 
         /// <summary>Abre ou fecha (o botão "Câmera" do DBG e o "Fechar" daqui).</summary>
         void ToggleIntern() => stage.ShowIntern = !stage.ShowIntern;
+
+        void ToggleLowDwarf() => stage.UseLowDwarf = !stage.UseLowDwarf;
 
         public void Toggle()
         {

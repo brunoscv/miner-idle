@@ -219,6 +219,11 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
   - o botão "Estagiário" (DBG → Câmera) cabe no painel: os 4 botões numa linha;
   - a fila de cristais nunca fica abaixo de 4 (D-80).
 
+### Experimento: anão com menos pixels (2026-10-24) ✅ (validado no Moto G75 em 2026-10-24)
+- Folhas `low-dwarf-walking` e `low-dwarf-mining` do Bruno (quadros de 64 px, mesma grade e mesmos quadros das de 256), para validar a ideia com o outro dev. **O anão atual continua o padrão**; nada fica salvo.
+- Mesma altura e pé no mesmo lugar que o anão atual (o desenho de 64 px enche 61 px do quadro; o de 256, 174). O estagiário continua com as folhas de 256.
+- **Como testar:** DBG → Câmera → **Anão 64px** liga e desliga.
+
 ### E8 — Biomas
 - `BiomeDefinition` (D-72) com as 10 cavernas (nomes e cores propostos para você aprovar); a caverna 1 é a mina. DBG → **Bioma** troca na hora para ver cada uma.
 - **Como testar:** DBG → Bioma, passar pelas 10.

@@ -68,9 +68,9 @@ namespace MinersIdle.EditorTools
         /// Na cena Game (já aberta): o estagiário com as folhas grisalhas e o botão "Estagiário" no painel de câmera do DBG.
         /// Devolve se mudou a cena.
         /// </summary>
-        /// <summary>Botões do painel de câmera do DBG: Resolução, Padrão F1, Fechar e Estagiário, numa linha.</summary>
-        internal const int CameraButtonColumns = 4;
-        internal static readonly Vector2 CameraButtonCell = new Vector2(60f, 16f);
+        /// <summary>Botões do painel de câmera do DBG: Resolução, Padrão F1, Fechar, Estagiário e Anão 64px, numa linha.</summary>
+        internal const int CameraButtonColumns = 5;
+        internal static readonly Vector2 CameraButtonCell = new Vector2(48f, 16f);
 
         public static bool EnsureInScene()
         {
@@ -99,7 +99,7 @@ namespace MinersIdle.EditorTools
                 GrayboxSetup.SetReferences(panel, ("intern", button));
                 changed = true;
             }
-            // Os 4 botões numa linha só: com 3 colunas, o "Estagiário" ia para uma 2ª linha, fora do painel.
+            // Os botões numa linha só: numa 2ª linha eles ficam fora do painel.
             var grid = buttons != null ? buttons.GetComponent<UnityEngine.UI.GridLayoutGroup>() : null;
             if (grid != null && grid.constraintCount != CameraButtonColumns)
             {
