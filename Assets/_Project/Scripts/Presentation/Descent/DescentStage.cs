@@ -143,6 +143,8 @@ namespace MinersIdle.Presentation
 
         [Header("Arte do corredor (M1b E4; vazio = desenho gerado por código)")]
         [SerializeField] Texture2D floorTexture;
+        [Tooltip("Chãos que o DBG → Câmera → Chão alterna, para comparar (M1b E9, D-90; não fica salvo).")]
+        [SerializeField] FloorOption[] floorOptions = Array.Empty<FloorOption>();
         [SerializeField] Texture2D wallTexture;
         [SerializeField] Texture2D ceilingTexture;
         [Tooltip("Pixels de textura por metro de corredor (64 = perto da densidade do anão).")]
@@ -170,6 +172,7 @@ namespace MinersIdle.Presentation
         Mesh _quad, _flat, _box, _corridor;
         Material _floor, _wall, _ceiling, _wood, _sprites, _screenMaterial;
         MeshFilter _corridorFilter;
+        int _floorOption = -1;
         bool _corridorHasCeiling;
         float _corridorWidth;
 
@@ -221,6 +224,28 @@ namespace MinersIdle.Presentation
         /// <summary>Troca o anão pelas folhas com menos pixels (DBG, para comparar; não fica salvo).</summary>
         public bool UseLowDwarf { get; set; }
 
+        /// <summary>Um chão da comparação do DBG: o nome no botão e a textura.</summary>
+        [Serializable]
+        public sealed class FloorOption
+        {
+            public string label;
+            public Texture2D texture;
+        }
+
+        /// <summary>A textura do chão agora (null = a gerada por código; para testes).</summary>
+        public Texture FloorTexture => _floor != null ? _floor.GetTexture(BaseMapId) : null;
+
+        /// <summary>O nome do chão mostrado agora, na lista do DBG (null fora dela).</summary>
+        public string FloorLabel => _floorOption >= 0 ? floorOptions[_floorOption].label : null;
+
+        /// <summary>Passa para o próximo chão da lista do DBG (volta ao primeiro depois do último; não fica salvo).</summary>
+        public void NextFloor()
+        {
+            if (_floor == null || floorOptions.Length == 0) return;
+            _floorOption = (_floorOption + 1) % floorOptions.Length;
+            SetSurfaceTexture(_floor, floorOptions[_floorOption].texture, _art.Floor);
+        }
+
         /// <summary>A folha do anão mostrada agora (null sem as folhas do PixelLab; para testes).</summary>
         public Texture DwarfSheet { get; private set; }
 
@@ -269,6 +294,7 @@ namespace MinersIdle.Presentation
 
             float uvPerMeter = 1f / DescentArt.CorridorTileMeters;
             _floor = CreateSurface("DescentFloor", floorTexture, _art.Floor, new Vector2(0f, uvPerMeter), Color.white);
+            _floorOption = Array.FindIndex(floorOptions, option => option.texture == floorTexture);
             _wall = CreateSurface("DescentWall", wallTexture, _art.Wall, new Vector2(uvPerMeter, 0f), wallTint);
             _ceiling = CreateSurface("DescentCeiling", ceilingTexture, _art.Ceiling, new Vector2(0f, uvPerMeter), wallTint);
             _wood = CreateMaterial("DescentWood", _art.Wood, Vector2.zero);
@@ -457,15 +483,18 @@ namespace MinersIdle.Presentation
         /// </summary>
         Material CreateSurface(string name, Texture2D texture, Texture2D fallback, Vector2 scrollAxis, Color tint)
         {
-            var material = CreateMaterial(name, texture != null ? texture : fallback, scrollAxis);
-            if (texture != null)
-            {
-                // O material repete a cada CorridorTileMeters; a textura cobre width / pixelsPorMetro metros.
-                float scale = DescentArt.CorridorTileMeters * texturePixelsPerMeter / texture.width;
-                material.SetTextureScale(BaseMapId, new Vector2(scale, scale));
-            }
+            var material = CreateMaterial(name, fallback, scrollAxis);
+            SetSurfaceTexture(material, texture, fallback);
             material.SetColor(BaseColorId, tint);
             return material;
+        }
+
+        void SetSurfaceTexture(Material material, Texture2D texture, Texture2D fallback)
+        {
+            material.SetTexture(BaseMapId, texture != null ? texture : fallback);
+            // O material repete a cada CorridorTileMeters; a textura cobre width / pixelsPorMetro metros.
+            float scale = texture != null ? DescentArt.CorridorTileMeters * texturePixelsPerMeter / texture.width : 1f;
+            material.SetTextureScale(BaseMapId, new Vector2(scale, scale));
         }
 
         Material CreateMaterial(string name, Texture texture, Vector2 scrollAxis)

@@ -68,9 +68,19 @@ namespace MinersIdle.EditorTools
         /// Na cena Game (já aberta): o estagiário com as folhas grisalhas e o botão "Estagiário" no painel de câmera do DBG.
         /// Devolve se mudou a cena.
         /// </summary>
-        /// <summary>Botões do painel de câmera do DBG: Resolução, Padrão F1, Fechar, Estagiário e Anão 64px, numa linha.</summary>
+        /// <summary>
+        /// Botões do painel de câmera do DBG: Resolução, Padrão F1, Fechar, Estagiário e Anão 64px na 1ª linha; Chão (E9)
+        /// na 2ª. Seis numa linha não cabem: em 39 px o nome "Resolução" (41 px) vaza.
+        /// </summary>
         internal const int CameraButtonColumns = 5;
         internal static readonly Vector2 CameraButtonCell = new Vector2(48f, 16f);
+
+        /// <summary>
+        /// Altura do painel de câmera e o topo da área dos botões (fração do painel): duas linhas de botões (43 px) desde a
+        /// E9; antes, 166 px com uma linha (0,2).
+        /// </summary>
+        internal const float CameraPanelHeight = 190f;
+        internal const float CameraButtonsTop = 0.23f;
 
         public static bool EnsureInScene()
         {
@@ -99,12 +109,23 @@ namespace MinersIdle.EditorTools
                 GrayboxSetup.SetReferences(panel, ("intern", button));
                 changed = true;
             }
-            // Os botões numa linha só: numa 2ª linha eles ficam fora do painel.
             var grid = buttons != null ? buttons.GetComponent<UnityEngine.UI.GridLayoutGroup>() : null;
-            if (grid != null && grid.constraintCount != CameraButtonColumns)
+            if (grid != null && (grid.constraintCount != CameraButtonColumns || grid.cellSize != CameraButtonCell))
             {
                 grid.constraintCount = CameraButtonColumns;
                 grid.cellSize = CameraButtonCell;
+                changed = true;
+            }
+
+            // O painel cresce para a 2ª linha de botões caber dentro dele (E9).
+            var content = buttons != null ? (RectTransform)buttons.parent : null;
+            var rows = content != null ? content.Find("Rows") as RectTransform : null;
+            if (content != null && rows != null && !Mathf.Approximately(content.sizeDelta.y, CameraPanelHeight))
+            {
+                content.sizeDelta = new Vector2(content.sizeDelta.x, CameraPanelHeight);
+                ((RectTransform)buttons).anchorMax = new Vector2(1f, CameraButtonsTop);
+                rows.anchorMin = new Vector2(0f, CameraButtonsTop);
+                Debug.Log("[Setup] Painel de câmera do DBG com duas linhas de botões (M1b E9).");
                 changed = true;
             }
 

@@ -111,6 +111,12 @@
 | **D-84** | **Builds de teste para o pessoal: script local + Firebase App Distribution** (caminho 1, escolhido pelo Bruno em 2026-10-24). Um comando no PC do Bruno gera o APK com versão automática (sobe a cada commit) e manda para um grupo de testadores no Firebase, que recebem convite por e-mail e atualizam sem desinstalar. O build no GitHub Actions (caminho 2) fica para depois: esbarra na licença do Unity no CI, na keystore fixa e nos assets que ficam fora do git (D-65), que fariam o CI gerar o jogo em graybox. Vira o **marco M15**, no fim do Roadmap (o Bruno prefere cuidar das mecânicas antes; pode ser puxado antes do playtest do M11). Plano: [Builds de teste](Plano%20-%20Builds%20de%20teste.md). |
 | **D-85** | **O GDD v5 ([`docs/gdd v5.pdf`](../gdd%20v5.pdf), versão 5.0, "Idle Miner roguelite") passa a ser a referência de design**, no lugar do v1 (pedido do Bruno em 2026-10-24). O v1 fica como histórico, e o `Balance_GDD_v1` continua guardado para comparação. Diferenças e impacto por marco: [Análise - GDD v5](Analise%20-%20GDD%20v5.md). **Nenhum valor de regra muda só por esta decisão:** cada mudança (toque de 33%, bônus do combo, estagiário, Letrado, cristal raro…) entra com decisão própria quando o marco dela começar. As contradições do v5 ficam em §2.4 (G1–G10, com as decisões D-86…D-89), para tirar com o autor do GDD no marco indicado. As decisões anteriores que contrariam o v5 valem até serem revistas. |
 
+### 1.5 Decididas pelo Bruno em 2026-10-29
+
+| # | Decisão |
+|---|---|
+| **D-90** | **Começa a troca da arte de terceiros por arte própria, pelo chão** (pedido do Bruno em 2026-10-29). O chão da caverna 1 passa do calçamento do *Pixel Fantasy Caves* (D-74, fora do git) para o `tileset_ground_01`, desenhado à mão pelo Bruno (16 px exportado em 32 px), usado como PNG de 32 px a 64 px/m (tile de 0,5 m). Os tons `02`…`04` (o mesmo desenho, mais escuros) e o calçamento antigo ficam num botão do DBG para escolher no Moto G75; o tom escolhido vira o padrão. É a etapa **E9 do M1b**, não um marco novo; parede, esteios, pedras e interface vêm em etapas seguintes. Plano: [Marco 1b](Marco%201b%20-%20Art%20Spike.md) (E9). |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.

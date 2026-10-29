@@ -168,7 +168,7 @@ namespace MinersIdle.EditorTools
             contentRect.anchorMax = new Vector2(1f, 1f);
             contentRect.pivot = new Vector2(0.5f, 1f);
             contentRect.anchoredPosition = new Vector2(0f, -42f); // logo abaixo do HUD
-            contentRect.sizeDelta = new Vector2(-8f, 166f);
+            contentRect.sizeDelta = new Vector2(-8f, DwarfVariantsSetup.CameraPanelHeight);
             content.GetComponent<Image>().color = PanelColor; // recebe raycast: tocar no painel não vira toque no jogo
 
             var readout = GrayboxSetup.CreateHudText(content.transform, "Readout", "", 7f, TextColor,
@@ -178,7 +178,7 @@ namespace MinersIdle.EditorTools
 
             var rowsRoot = new GameObject("Rows", typeof(RectTransform), typeof(VerticalLayoutGroup));
             rowsRoot.transform.SetParent(content.transform, false);
-            DebugPanelSetup.Stretch((RectTransform)rowsRoot.transform, new Vector2(0f, 0.2f), new Vector2(1f, 0.75f));
+            DebugPanelSetup.Stretch((RectTransform)rowsRoot.transform, new Vector2(0f, DwarfVariantsSetup.CameraButtonsTop), new Vector2(1f, 0.75f));
             var rowsLayout = rowsRoot.GetComponent<VerticalLayoutGroup>();
             rowsLayout.padding = new RectOffset(4, 4, 1, 1);
             rowsLayout.spacing = 1f;
@@ -201,7 +201,7 @@ namespace MinersIdle.EditorTools
 
             var grid = new GameObject("Buttons", typeof(RectTransform), typeof(GridLayoutGroup));
             grid.transform.SetParent(content.transform, false);
-            DebugPanelSetup.Stretch((RectTransform)grid.transform, Vector2.zero, new Vector2(1f, 0.2f));
+            DebugPanelSetup.Stretch((RectTransform)grid.transform, Vector2.zero, new Vector2(1f, DwarfVariantsSetup.CameraButtonsTop));
             var gridLayout = grid.GetComponent<GridLayoutGroup>();
             gridLayout.padding = new RectOffset(4, 4, 4, 4);
             gridLayout.cellSize = DwarfVariantsSetup.CameraButtonCell;

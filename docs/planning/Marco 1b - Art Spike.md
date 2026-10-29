@@ -228,6 +228,48 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 - `BiomeDefinition` (D-72) com as 10 cavernas (nomes e cores propostos para você aprovar); a caverna 1 é a mina. DBG → **Bioma** troca na hora para ver cada uma.
 - **Como testar:** DBG → Bioma, passar pelas 10.
 
+### E9 — Arte própria, começando pelo chão (D-90) — plano aprovado em 2026-10-29; implementada, aguardando validação no Moto G75
+
+**Por quê:** o calçamento de hoje vem do *Pixel Fantasy Caves* (Szadi art.), que fica fora do git (D-65) e não pode ser redistribuído. Com arte própria, o chão entra no repositório: quem clonar vê o jogo como ele é, e os builds do M15 deixam de depender do pack nessa parte. O chão é o teste do caminho; o resto da troca vem depois (lista no fim).
+
+**O que o Bruno mandou** (`Assets/_Project/Art/Tile/`, desenhados à mão): desenho de 16 px exportado em PNG de 32 px (cada pixel do desenho = 2×2) e o SVG de origem.
+
+| Arquivo | O que é |
+|---|---|
+| `tileset_ground_01` | O desenho em 4 tons de areia, o mais claro |
+| `tileset_ground_02`, `_03`, `_04` | **O mesmo desenho**, cada um um tom mais escuro (o `04` vai ao roxo quase preto) |
+| `tileset_ground_01_02` | Transição: as 7 linhas de cima são o `01`, as 9 de baixo, o `02` (emenda com o `01` em cima e o `02` embaixo) |
+
+Os quatro tons emendam sem costura com eles mesmos. Na prévia ao lado da parede de rocha, o `01` é **bem mais claro** que tudo na caverna e que o chão do mockup; o `02`/`03` ficam mais perto do mockup.
+
+**Decisões (D-90):** o `01` vira o chão padrão da caverna 1; o PNG de 32 px a **64 px/m** (o mesmo `texturePixelsPerMeter` de hoje: tile de 0,5 m, pedras do tamanho das do calçamento, pixel do desenho 2× maior que o da parede); a cor final sai do teste no Moto G75 pelo DBG; o trabalho é esta etapa do M1b, não um marco novo.
+
+**Passos:**
+1. **Organizar:** os PNG ficam em `Art/Tile/`; os SVG vão para `ArtSource/tiles/` (arquivo-fonte fora de `Assets/`).
+2. **Setup** (`CorridorArtSetup`): importa os tiles como pixel art (Point, sem compressão, sem mipmap, Repeat) e põe o `01` no `floorTexture` do `DescentStage` **no lugar do calçamento**. Hoje o setup só preenche campo vazio; a regra nova é "se o campo tem o calçamento do pack, troca pelo `01`" (algo posto à mão continua intocado). O calçamento continua sendo gerado só até o fim desta etapa, para a comparação no DBG.
+3. **DBG → Câmera → Chão:** um botão alterna `01 → 02 → 03 → 04 → calçamento antigo → 01`, na hora, com o nome do tom no botão. Só visual: não salva nada (segue o padrão do "Anão 64px"). Sem o pack no PC, o "antigo" é pulado.
+4. **CREDITS.md:** "Chão da caverna 1 (tiles `ground_01`…`04`), Bruno Carvalho, à mão" na Arte do jogo; o calçamento do Pixel Fantasy passa a "comparação no DBG; sai na E9".
+5. **Depois da escolha no G75:** o tom escolhido vira o padrão (se não for o `01`, registro na D-90); sai a geração do calçamento, o botão do DBG fica para os próximos testes de arte.
+
+**Riscos a olhar no aparelho:**
+- **Repetição:** o tile repete a cada 0,5 m e não dá para girar nem espelhar (quebra a emenda), diferente do calçamento, que é montado sorteado. Nas prévias da E4, tile pequeno repetido pareceu "pano de mesa". Se aparecer: 2 ou 3 variações do `01` com **as mesmas bordas** e o miolo diferente, que o setup sorteia numa textura grande (como o calçamento faz hoje).
+- **Cristal branco sumindo:** o `crystal_glass` é branco; num chão claro pode perder contraste.
+- **Pixel 2×:** o chão fica mais "grosso" que a parede e o anão. Se incomodar, redesenho em 32 px de verdade.
+
+**Testes:** nada muda no núcleo; rodar `bash tools/ci/run-tests.sh` para garantir que EditMode e PlayMode seguem verdes, e conferir as linhas `[Setup]` (sem `error CS`).
+
+**Como testar:**
+1. Unity: `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`; abrir a cena `Game` e dar Play: o chão é o `01`.
+2. DBG → Câmera → **Chão**: passar pelos 5 e voltar ao `01`.
+3. Moto G75: `Tools → Miners Idle → Build → Rodar no celular (Android)`; repetir o passo 2 com o brilho de sempre e olhar repetição, costura, contraste com os cristais e o pixel 2×.
+4. Escolher o tom.
+
+**Critério de pronto:** o Bruno escolheu o tom no Moto G75, o chão é arte própria versionada no git, o calçamento não é mais gerado nem usado, e o CREDITS.md está em dia.
+
+**Esforço:** 3–5 h.
+
+**Próximas trocas (cada uma uma etapa, em ordem de quanto aparece na tela):** parede e teto (rocha escura, Pixel Fantasy) · esteios (portal, Pixel Fantasy) · pedras da beira (`rock_t1`, MineAssets) · interface (Pixel UI Kit, Fantasy UI Kit Lite, ícones Anvil). A fonte Pixelify Sans (OFL) pode ficar.
+
 ## O que fica de fora
 - **Troca de caverna jogando** (Letrado, PASSAR DE CAVERNA): M8.
 - **Novas regras:** nada muda em valores de regra; o espaço entre cristais (2 un) continua.

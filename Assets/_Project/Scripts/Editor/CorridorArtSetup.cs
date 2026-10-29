@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using MinersIdle.Presentation;
 using TMPro;
@@ -16,6 +17,9 @@ namespace MinersIdle.EditorTools
     ///
     /// O pack e as texturas derivadas ficam fora do git (D-65): sem eles, o corredor continua desenhado por código.
     /// Idempotente: só gera o que falta e não sobrescreve campos preenchidos à mão.
+    ///
+    /// Desde a E9 (D-90), o chão é arte própria: o tile do Bruno (<c>tileset_ground_01</c>, no git) entra no lugar do
+    /// calçamento, e os outros tons (e o calçamento, enquanto o pack estiver no PC) ficam no DBG → Câmera → Chão.
     /// </summary>
     static class CorridorArtSetup
     {
@@ -25,6 +29,23 @@ namespace MinersIdle.EditorTools
         internal const string RockPath = GeneratedFolder + "/rock_dark.png";
         internal const string CobblePath = GeneratedFolder + "/cobble.png";
         internal const string SupportPath = GeneratedFolder + "/support_portal.png";
+
+        /// <summary>Tiles do chão desenhados pelo Bruno (M1b E9, D-90): o mesmo desenho em 4 tons, do claro ao escuro.</summary>
+        const string TileFolder = "Assets/_Project/Art/Tile";
+        const string OwnFloorPath = TileFolder + "/tileset_ground_01.png";
+
+        /// <summary>Os chãos do DBG → Câmera → Chão, na ordem do botão (o nome aparece nele).</summary>
+        static readonly (string label, string path)[] FloorOptions =
+        {
+            ("Chão 01", OwnFloorPath),
+            ("Chão 02", TileFolder + "/tileset_ground_02.png"),
+            ("Chão 03", TileFolder + "/tileset_ground_03.png"),
+            ("Chão 04", TileFolder + "/tileset_ground_04.png"),
+            ("Calçamento", CobblePath),
+        };
+
+        internal const string FloorButton = "Floor";
+        const string FloorButtonLabel = "Chão";
 
         /// <summary>Pedra da beira do caminho (enviada pelo Bruno; origem a confirmar, por isso fora do git).</summary>
         const string EdgeRockPath = "Assets/_Vendor/AssetStore/Misc/rock_t1.png";
@@ -42,9 +63,15 @@ namespace MinersIdle.EditorTools
 
         public static void EnsureAssets()
         {
+            int tiles = 0;
+            if (Directory.Exists(TileFolder))
+                foreach (var path in Directory.GetFiles(TileFolder, "tileset_ground_*.png"))
+                    tiles += Configure(path.Replace('\\', '/'), TextureWrapMode.Repeat);
+            if (tiles > 0) Debug.Log($"[Setup] Tiles do chão (arte própria) configurados (pixel art): {tiles}.");
+
             if (!File.Exists(SourcePath))
             {
-                Debug.LogWarning($"[Setup] Pixel Fantasy Caves ausente em {PackFolder}: o corredor continua desenhado por código (D-65).");
+                Debug.LogWarning($"[Setup] Pixel Fantasy Caves ausente em {PackFolder}: parede, teto e esteios continuam desenhados por código (D-65).");
                 return;
             }
 
@@ -84,7 +111,6 @@ namespace MinersIdle.EditorTools
 
             var so = new SerializedObject(stage);
             bool changed = false;
-            changed |= SetIfEmpty(so, "floorTexture", CobblePath);
             changed |= SetIfEmpty(so, "wallTexture", RockPath);
             changed |= SetIfEmpty(so, "ceilingTexture", RockPath);
             changed |= SetIfEmpty(so, "edgeRockTexture", EdgeRockPath);
@@ -94,6 +120,8 @@ namespace MinersIdle.EditorTools
                 changed = true;
             }
             if (changed) so.FindProperty("wallTint").colorValue = WallTint;
+            changed |= EnsureOwnFloor(so);
+            changed |= EnsureFloorOptions(so);
 
             // A pedra encosta no chão: desce as linhas transparentes de baixo do desenho.
             var footGap = so.FindProperty("edgeRockFootGap");
@@ -119,8 +147,68 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             changed |= RenameResetButton();
+            changed |= EnsureFloorButton();
             if (changed) Debug.Log("[Setup] Corredor da caverna 1 com a arte do Pixel Fantasy Caves (M1b E4, D-74).");
             return changed;
+        }
+
+        /// <summary>
+        /// O chão passa a ser o tile do Bruno (D-90): no campo vazio ou no lugar do calçamento do pack. Outra textura posta
+        /// à mão fica. Devolve se mudou.
+        /// </summary>
+        static bool EnsureOwnFloor(SerializedObject so)
+        {
+            var floor = so.FindProperty("floorTexture");
+            var current = floor.objectReferenceValue;
+            if (current != null && AssetDatabase.GetAssetPath(current) != CobblePath) return false;
+            var own = AssetDatabase.LoadAssetAtPath<Texture2D>(OwnFloorPath);
+            if (own == null) return false;
+            floor.objectReferenceValue = own;
+            Debug.Log("[Setup] Chão da caverna 1 = tile do Bruno (tileset_ground_01; M1b E9, D-90).");
+            return true;
+        }
+
+        /// <summary>A lista do DBG → Câmera → Chão, só com as texturas que existem neste PC. Devolve se mudou.</summary>
+        static bool EnsureFloorOptions(SerializedObject so)
+        {
+            var wanted = new List<(string label, Texture2D texture)>();
+            foreach (var (label, path) in FloorOptions)
+            {
+                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (texture != null) wanted.Add((label, texture));
+            }
+
+            var options = so.FindProperty("floorOptions");
+            bool same = options.arraySize == wanted.Count;
+            for (int i = 0; same && i < wanted.Count; i++)
+            {
+                var option = options.GetArrayElementAtIndex(i);
+                same = option.FindPropertyRelative("label").stringValue == wanted[i].label
+                       && option.FindPropertyRelative("texture").objectReferenceValue == wanted[i].texture;
+            }
+            if (same) return false;
+
+            options.arraySize = wanted.Count;
+            for (int i = 0; i < wanted.Count; i++)
+            {
+                var option = options.GetArrayElementAtIndex(i);
+                option.FindPropertyRelative("label").stringValue = wanted[i].label;
+                option.FindPropertyRelative("texture").objectReferenceValue = wanted[i].texture;
+            }
+            Debug.Log($"[Setup] Chãos do DBG → Câmera → Chão: {wanted.Count}.");
+            return true;
+        }
+
+        static bool EnsureFloorButton()
+        {
+            var panel = UnityEngine.Object.FindAnyObjectByType<MinersIdle.UI.DescentCameraPanel>(FindObjectsInactive.Include);
+            var buttons = panel != null ? panel.transform.Find("Content/Buttons") : null;
+            if (buttons == null || buttons.Find(FloorButton) != null) return false;
+
+            var button = DebugPanelSetup.CreateButton(buttons, FloorButton, FloorButtonLabel);
+            GrayboxSetup.SetReferences(panel, ("floor", button));
+            Debug.Log("[Setup] Botão \"Chão\" no DBG → Câmera (M1b E9).");
+            return true;
         }
 
         /// <summary>O botão do DBG dizia "Padrão D-50"; agora o padrão é a F1.</summary>

@@ -66,10 +66,13 @@ namespace MinersIdle.UI
         [SerializeField] Button intern;
         [Tooltip("Troca o anão pelas folhas com menos pixels, para comparar (não fica salvo).")]
         [SerializeField] Button lowDwarf;
+        [Tooltip("Passa pelos chãos da comparação do DBG (M1b E9, D-90); o botão mostra o nome do chão (não fica salvo).")]
+        [SerializeField] Button floor;
 
         UnityAction[] _minus;
         UnityAction[] _plus;
         float _refresh;
+        TMP_Text _floorLabel;
 
         public bool IsOpen => content.activeSelf;
 
@@ -92,6 +95,7 @@ namespace MinersIdle.UI
                 _plus[i] = () => Change(setting, +1);
             }
 
+            if (floor != null) _floorLabel = floor.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -107,6 +111,7 @@ namespace MinersIdle.UI
             close.onClick.AddListener(Toggle);
             if (intern != null) intern.onClick.AddListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.AddListener(ToggleLowDwarf);
+            if (floor != null) floor.onClick.AddListener(NextFloor);
         }
 
         void OnDisable()
@@ -121,6 +126,7 @@ namespace MinersIdle.UI
             close.onClick.RemoveListener(Toggle);
             if (intern != null) intern.onClick.RemoveListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.RemoveListener(ToggleLowDwarf);
+            if (floor != null) floor.onClick.RemoveListener(NextFloor);
         }
 
         void Update()
@@ -136,6 +142,12 @@ namespace MinersIdle.UI
         void ToggleIntern() => stage.ShowIntern = !stage.ShowIntern;
 
         void ToggleLowDwarf() => stage.UseLowDwarf = !stage.UseLowDwarf;
+
+        void NextFloor()
+        {
+            stage.NextFloor();
+            _refresh = 0f;
+        }
 
         public void Toggle()
         {
@@ -196,6 +208,8 @@ namespace MinersIdle.UI
             double speed = simulation != null ? simulation.Stats.WalkSpeed * stage.MetersPerUnit : 0;
             double reach = simulation != null ? simulation.Rules.MiningRange * stage.MetersPerUnit : 0;
             double seconds = speed > 0 ? Math.Max(0, ground - reach) / speed : 0;
+
+            if (_floorLabel != null && stage.FloorLabel != null) _floorLabel.text = stage.FloorLabel;
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),

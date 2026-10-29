@@ -44,7 +44,7 @@ namespace MinersIdle.Tests
             Assert.That(stage.DwarfSheet.name, Does.Not.StartWith("low-"), "e destroca");
         }
 
-        /// <summary>Os 5 botões do DBG → Câmera cabem numa linha, dentro do painel, com o nome numa linha só.</summary>
+        /// <summary>Os botões do DBG → Câmera (duas linhas desde a E9) cabem dentro do painel, com o nome numa linha só.</summary>
         [UnityTest]
         public IEnumerator CameraPanelButtons_FitInsideThePanel()
         {
