@@ -12,9 +12,6 @@ namespace MinersIdle.UI
     /// </summary>
     public sealed class HudView : MiningViewBase
     {
-        /// <summary>Só existe a caverna 1 até o M7 (passagem de caverna).</summary>
-        const int CurrentCave = 1;
-
         [SerializeField] TMP_Text shardsValue;
         [SerializeField] TMP_Text damageValue;
         [SerializeField] TMP_Text caveValue;
@@ -38,6 +35,8 @@ namespace MinersIdle.UI
         /// <summary>Os textos de DANO e VELOCIDADE na tela (para testes).</summary>
         public string DamageText => damageValue.text;
         public string SpeedText => speedValue.text;
+        /// <summary>O texto de CAVERNA na tela (para testes).</summary>
+        public string CaveText => caveValue.text;
 
         void Awake()
         {
@@ -62,6 +61,7 @@ namespace MinersIdle.UI
             simulation.ShardsChanged += OnShardsChanged;
             simulation.StatsChanged += OnStatsChanged;
             simulation.ComboMilestone += OnComboMilestone;
+            simulation.CaveChanged += OnCaveChanged;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -69,6 +69,7 @@ namespace MinersIdle.UI
             simulation.ShardsChanged -= OnShardsChanged;
             simulation.StatsChanged -= OnStatsChanged;
             simulation.ComboMilestone -= OnComboMilestone;
+            simulation.CaveChanged -= OnCaveChanged;
         }
 
         void Update()
@@ -93,8 +94,10 @@ namespace MinersIdle.UI
         {
             OnShardsChanged(simulation.State.Shards);
             OnStatsChanged(simulation.Stats);
-            caveValue.text = NumberFormatter.Format(CurrentCave);
+            OnCaveChanged(simulation.State.Cave);
         }
+
+        void OnCaveChanged(int cave) => caveValue.text = NumberFormatter.Format(cave);
 
         void OnShardsChanged(double shards) => shardsValue.text = NumberFormatter.FormatShards(shards);
 

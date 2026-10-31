@@ -19,6 +19,12 @@ namespace MinersIdle.Core
         /// <summary>Cristais quebrados.</summary>
         public long Breaks { get; private set; }
 
+        /// <summary>A caverna em que o anão está (M8; 1 = a primeira).</summary>
+        public int Cave { get; private set; } = 1;
+
+        /// <summary>Cristais quebrados na caverna atual (M8): a trava do Letrado (D-93); toda quebra conta (D-95).</summary>
+        public long CaveBreaks { get; private set; }
+
         /// <summary>Nível da melhoria = compras feitas (D-38).</summary>
         public int LevelOf(UpgradeId id) => _levels[(int)id];
 
@@ -56,7 +62,18 @@ namespace MinersIdle.Core
         internal void RegisterBreak(double reward)
         {
             Breaks++;
+            CaveBreaks++;
             Shards += reward;
         }
+
+        /// <summary>Entra na caverna: a contagem da trava do Letrado recomeça.</summary>
+        internal void EnterCave(int cave)
+        {
+            Cave = cave;
+            CaveBreaks = 0;
+        }
+
+        /// <summary>Atalho do debug: quebras da caverna sem quebrar cristal.</summary>
+        internal void SetCaveBreaks(long breaks) => CaveBreaks = Math.Max(0, breaks);
     }
 }

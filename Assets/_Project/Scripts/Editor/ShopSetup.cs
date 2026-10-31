@@ -45,7 +45,11 @@ namespace MinersIdle.EditorTools
 
         static void EnsureCatalog()
         {
-            if (File.Exists(CatalogPath)) return;
+            if (File.Exists(CatalogPath))
+            {
+                EnsureLetrado();
+                return;
+            }
 
             ProjectSetup.EnsureFolder(Path.GetDirectoryName(CatalogPath)?.Replace('\\', '/'));
             var catalog = ScriptableObject.CreateInstance<ShopCatalog>();
@@ -57,6 +61,8 @@ namespace MinersIdle.EditorTools
             so.FindProperty("boughtLabel").stringValue = "comprada";
             so.FindProperty("lockedLabel").stringValue = "Em breve";
             so.FindProperty("bonusPercentFormat").stringValue = "+{0}%";
+            so.FindProperty("progressFormat").stringValue = ProgressFormat;
+            so.FindProperty("passFirstLabel").stringValue = PassFirstLabel;
 
             var entries = so.FindProperty("entries");
             entries.arraySize = 0;
@@ -66,11 +72,50 @@ namespace MinersIdle.EditorTools
             AddEntry(entries, false, UpgradeId.DoublePickaxe, "Picareta Dupla", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0xF2, 0xA9, 0x00, 0xFF));
             AddEntry(entries, false, UpgradeId.Boots, "Botas", "Caminhada {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0x8D, 0x6E, 0x63, 0xFF));
             AddEntry(entries, true, UpgradeId.Pickaxe, "Estagiário", "Um ajudante que minera junto", ShopCatalog.EffectStyle.Number, new Color32(0x9E, 0x9E, 0x9E, 0xFF));
-            AddEntry(entries, true, UpgradeId.Pickaxe, "Letrado", "Libera a próxima caverna", ShopCatalog.EffectStyle.Number, new Color32(0x9E, 0x9E, 0x9E, 0xFF));
+            AddEntry(entries, false, UpgradeId.Letrado, "Letrado", LetradoEffect, ShopCatalog.EffectStyle.Number, new Color32(0x4F, 0x7C, 0xF7, 0xFF));
             so.ApplyModifiedPropertiesWithoutUndo();
 
             AssetDatabase.CreateAsset(catalog, CatalogPath);
             Debug.Log($"[Setup] Catálogo da loja criado em {CatalogPath}.");
+        }
+
+        const string LetradoEffect = "Caverna {0} » {1}";
+        const string ProgressFormat = "Quebre {1} cristais: {0}/{1}";
+        const string PassFirstLabel = "DESCER";
+
+        /// <summary>
+        /// M8 (D-109): no catálogo de antes, o Letrado era uma linha "Em breve"; vira a linha de verdade, com o progresso
+        /// dos cristais e a moldura trocada pela do <see cref="ShopSkinSetup"/> (a de bloqueada sai).
+        /// </summary>
+        static void EnsureLetrado()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
+            var so = new SerializedObject(catalog);
+            bool changed = false;
+            if (string.IsNullOrEmpty(so.FindProperty("progressFormat").stringValue))
+            {
+                so.FindProperty("progressFormat").stringValue = ProgressFormat;
+                so.FindProperty("passFirstLabel").stringValue = PassFirstLabel;
+                changed = true;
+            }
+
+            var entries = so.FindProperty("entries");
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var entry = entries.GetArrayElementAtIndex(i);
+                if (entry.FindPropertyRelative("title").stringValue != "Letrado" || !entry.FindPropertyRelative("locked").boolValue)
+                    continue;
+                entry.FindPropertyRelative("locked").boolValue = false;
+                entry.FindPropertyRelative("upgrade").enumValueIndex = (int)UpgradeId.Letrado;
+                entry.FindPropertyRelative("effectFormat").stringValue = LetradoEffect;
+                entry.FindPropertyRelative("frame").objectReferenceValue = null;
+                changed = true;
+            }
+
+            if (!changed) return;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Letrado na loja de verdade (M8, D-109).");
         }
 
         static void AddEntry(SerializedProperty entries, bool locked, UpgradeId upgrade, string title, string effect,

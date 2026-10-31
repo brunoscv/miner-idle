@@ -21,6 +21,10 @@ MonoBehaviour:
   spawnDistance: 12
   crystalHealth: 10
   crystalReward: 1
+  caveCount: 10
+  caveHealthGrowth: 8
+  caveRewardGrowth: 3
+  letradoBreaks: 100
   damage: 5
   hitInterval: 2
   walkSpeed: 4
@@ -50,6 +54,11 @@ MonoBehaviour:
     costGrowth: 1
     maxLevel: 0
     effect: 0
+  letrado:
+    baseCost: 100
+    costGrowth: 10
+    maxLevel: 10
+    effect: 2
   minHitInterval: 0.1
   critChance: 0.05
   critMultiplier: 2

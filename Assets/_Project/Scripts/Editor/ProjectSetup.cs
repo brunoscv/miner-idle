@@ -84,6 +84,7 @@ namespace MinersIdle.EditorTools
             EnsurePrototypeBalance();
             EnsureGddBalance();
             EnsureGddV5Balance();
+            EnsureGddV5Caves();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -370,6 +371,29 @@ namespace MinersIdle.EditorTools
         /// +100% por nível até +1000%; Dupla 5.000; crítico 5% × 2; toque 33% (D-86). O cristal é o da caverna 1 (D-92:
         /// vida 10 × 8^0, lascas 1 × 3^0): as cavernas entram no M8. Botas não existem no v5 (linha desligada).
         /// </summary>
+        /// <summary>
+        /// M8: as 10 cavernas e o Letrado no <c>Balance_GDD_v5</c> (D-92: vida × 8 e lascas × 3 por caverna; D-93: 100
+        /// cristais; GDD v5: Letrado <c>100 × 10^(n−1)</c>, 10 níveis, dano × 2). Só no asset que ainda tem uma caverna só
+        /// (criado antes do M8); um ajuste feito à mão depois fica.
+        /// </summary>
+        static void EnsureGddV5Caves()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV5BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            if (serialized.FindProperty("caveCount").intValue != 1) return;
+
+            serialized.FindProperty("caveCount").intValue = 10;
+            serialized.FindProperty("caveHealthGrowth").doubleValue = 8;
+            serialized.FindProperty("caveRewardGrowth").doubleValue = 3;
+            serialized.FindProperty("letradoBreaks").intValue = 100;
+            SetLine(serialized, "letrado", 100, 10, 10, 2);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Balance_GDD_v5: 10 cavernas e o Letrado (M8).");
+        }
+
         static void EnsureGddV5Balance()
         {
             if (File.Exists(GddV5BalancePath)) return;

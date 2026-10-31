@@ -15,7 +15,8 @@ namespace MinersIdle.Core
             double crystalHealth, double crystalReward,
             double damage, double hitInterval,
             double walkSpeed, double miningRange,
-            int minCrystals = 0)
+            int minCrystals = 0,
+            int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int letradoBreaks = 100)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -30,6 +31,10 @@ namespace MinersIdle.Core
             if (walkSpeed <= 0) throw new ArgumentOutOfRangeException(nameof(walkSpeed));
             if (miningRange < 0) throw new ArgumentOutOfRangeException(nameof(miningRange));
             if (minCrystals < 0 || minCrystals > maxCrystals) throw new ArgumentOutOfRangeException(nameof(minCrystals));
+            if (caveCount < 1) throw new ArgumentOutOfRangeException(nameof(caveCount));
+            if (caveHealthGrowth <= 0 || double.IsNaN(caveHealthGrowth)) throw new ArgumentOutOfRangeException(nameof(caveHealthGrowth));
+            if (caveRewardGrowth <= 0 || double.IsNaN(caveRewardGrowth)) throw new ArgumentOutOfRangeException(nameof(caveRewardGrowth));
+            if (letradoBreaks < 0) throw new ArgumentOutOfRangeException(nameof(letradoBreaks));
 
             InitialCrystals = initialCrystals;
             FirstCrystalDistance = firstCrystalDistance;
@@ -44,6 +49,10 @@ namespace MinersIdle.Core
             WalkSpeed = walkSpeed;
             MiningRange = miningRange;
             MinCrystals = minCrystals;
+            CaveCount = caveCount;
+            CaveHealthGrowth = caveHealthGrowth;
+            CaveRewardGrowth = caveRewardGrowth;
+            LetradoBreaks = letradoBreaks;
         }
 
         /// <summary>Cristais na fila no início (já na tela).</summary>
@@ -74,5 +83,20 @@ namespace MinersIdle.Core
         public double WalkSpeed { get; }
         /// <summary>O anão para a esta distância do cristal e começa a bater.</summary>
         public double MiningRange { get; }
+
+        /// <summary>Número de cavernas (M8; GDD v5: 10). Com 1, o jogo não passa de caverna.</summary>
+        public int CaveCount { get; }
+        /// <summary>A vida do cristal multiplica por isto a cada caverna (D-92: 8).</summary>
+        public double CaveHealthGrowth { get; }
+        /// <summary>As lascas do cristal multiplicam por isto a cada caverna (D-92: 3).</summary>
+        public double CaveRewardGrowth { get; }
+        /// <summary>Cristais a quebrar na caverna para liberar o Letrado dela (D-93: 100).</summary>
+        public int LetradoBreaks { get; }
+
+        /// <summary>Vida do cristal na caverna <paramref name="cave"/> (1 = a primeira): base × crescimento^(c−1).</summary>
+        public double CrystalHealthIn(int cave) => CrystalHealth * Math.Pow(CaveHealthGrowth, cave - 1);
+
+        /// <summary>Lascas do cristal na caverna <paramref name="cave"/>: base × crescimento^(c−1).</summary>
+        public double CrystalRewardIn(int cave) => CrystalReward * Math.Pow(CaveRewardGrowth, cave - 1);
     }
 }

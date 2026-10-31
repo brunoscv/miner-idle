@@ -62,9 +62,14 @@ namespace MinersIdle.UI
         [SerializeField] Button shake;
         [SerializeField] Button sound;
         [SerializeField] Button resetStats;
+        [Tooltip("M8: a trava do Letrado cumprida (os 100 cristais da caverna).")]
+        [SerializeField] Button fillCaveBreaks;
+        [Tooltip("M8: a próxima caverna agora, com o Letrado dela de graça.")]
+        [SerializeField] Button nextCave;
         [SerializeField] DescentCameraPanel cameraPanel;
 
-        readonly object[] _upgradeArgs = new object[10];
+        /// <summary>Nível e próximo custo de cada linha, na ordem de <see cref="UpgradeId"/> (o Letrado entrou no M8).</summary>
+        readonly object[] _upgradeArgs = new object[2 * System.Enum.GetValues(typeof(UpgradeId)).Length];
 
         float _refresh;
 
@@ -106,6 +111,8 @@ namespace MinersIdle.UI
             shake.onClick.AddListener(ToggleShake);
             sound.onClick.AddListener(ToggleSound);
             resetStats.onClick.AddListener(ResetStats);
+            if (fillCaveBreaks != null) fillCaveBreaks.onClick.AddListener(FillCaveBreaks);
+            if (nextCave != null) nextCave.onClick.AddListener(NextCave);
         }
 
         void OnDisable()
@@ -132,6 +139,8 @@ namespace MinersIdle.UI
             shake.onClick.RemoveListener(ToggleShake);
             sound.onClick.RemoveListener(ToggleSound);
             resetStats.onClick.RemoveListener(ResetStats);
+            if (fillCaveBreaks != null) fillCaveBreaks.onClick.RemoveListener(FillCaveBreaks);
+            if (nextCave != null) nextCave.onClick.RemoveListener(NextCave);
         }
 
         void Update()
@@ -157,6 +166,8 @@ namespace MinersIdle.UI
         void SpawnCrystal() => runner.Simulation?.SpawnCrystalNow();
         void BreakTarget() => runner.Simulation?.BreakTarget();
         void AddShards() => runner.Simulation?.AddShards(ShardsToAdd);
+        void FillCaveBreaks() => runner.Simulation?.FillCaveBreaks();
+        void NextCave() => runner.Simulation?.SkipToNextCave();
         void RestartSameSeed() => runner.StartNew(runner.Seed);
         void RestartNewSeed() => runner.StartNew(MiningRunner.NewSeed());
 

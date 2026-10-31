@@ -46,6 +46,11 @@ namespace MinersIdle.EditorTools
         static readonly Color DisabledLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
+        /// <summary>O nome do botão de passar de caverna (D-110; "Descer na Caverna" no GDD, curto para caber no quadrado).</summary>
+        const string PassCaveTitle = "DESCER";
+        /// <summary>Âmbar sobre a madeira (D-110): destaca o botão dos outros da coluna.</summary>
+        static readonly Color AmberTint = new Color32(0xFF, 0xD0, 0x6A, 0xFF);
+
         static readonly (string panel, string icon)[] HudPanels =
         {
             ("Lascas", ArtFolder + "/Crystals/icon_crystal.png"),
@@ -90,6 +95,7 @@ namespace MinersIdle.EditorTools
                                         Load(Wood("buttons/button_square_normal")),
                                         Load(Wood("buttons/button_square_pressed")), LabelColor);
             if (changed) Debug.Log("[Setup] HUD e botões da direita com a pele de madeira (M1b E2).");
+            changed |= EnsurePassCaveButton(safeArea.transform);
             changed |= PlaceSideIcons(safeArea.transform);
             return ApplyArtButtons(safeArea.transform) | changed;
         }
@@ -406,6 +412,41 @@ namespace MinersIdle.EditorTools
         }
 
         static Sprite SettingsIcon() => Load(SettingsIconPath) ?? Load(Wood("icons/icon_settings"));
+
+        /// <summary>
+        /// M8 (D-110): o botão de passar de caverna, na coluna abaixo de AJUSTES, em madeira tingida de âmbar com o livro do
+        /// Letrado. O objeto "PassCave" (sempre ativo) leva a view; o botão dentro dele só aparece quando dá para passar.
+        /// </summary>
+        static bool EnsurePassCaveButton(Transform safeArea)
+        {
+            var normal = Load(Wood("buttons/button_square_normal"));
+            if (safeArea.Find("PassCave") != null || normal == null) return false;
+
+            var container = new GameObject("PassCave", typeof(RectTransform));
+            container.transform.SetParent(safeArea, false);
+            var containerRect = (RectTransform)container.transform;
+            containerRect.anchorMin = Vector2.zero;
+            containerRect.anchorMax = Vector2.one;
+            containerRect.offsetMin = containerRect.offsetMax = Vector2.zero;
+            // Antes da loja na hierarquia: a loja aberta fica por cima.
+            var shop = safeArea.Find("Shop");
+            if (shop != null) container.transform.SetSiblingIndex(shop.GetSiblingIndex());
+
+            var go = new GameObject("PassCaveButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(container.transform, false);
+            var label = GrayboxSetup.CreateHudText(go.transform, "Label", PassCaveTitle, LabelSize, LabelColor,
+                                                   Vector2.zero, Vector2.one);
+            SideButton((RectTransform)go.transform, 3, normal, Load(Wood("buttons/button_square_pressed")),
+                       Load(UiSkinSetup.IconsFolder + "/Icon299.png"), label, LabelColor);
+            go.GetComponent<Image>().color = AmberTint;
+
+            var view = container.AddComponent<CavePassButton>();
+            GrayboxSetup.SetReferences(view, ("runner", Object.FindAnyObjectByType<MiningRunner>()),
+                                       ("button", go.GetComponent<Button>()), ("visual", go));
+            go.SetActive(false);
+            Debug.Log("[Setup] Botão DESCER (passar de caverna, M8) na coluna da direita.");
+            return true;
+        }
 
         /// <summary>AD e AJUSTES (D-67): aparecem já, abaixo da LOJA, e ao tocar mostram "Em breve".</summary>
         static bool EnsureComingSoon(Transform safeArea, string name, string title, int slot, Sprite icon, Sprite normal,

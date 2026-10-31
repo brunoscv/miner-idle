@@ -391,6 +391,7 @@ namespace MinersIdle.Presentation
             simulation.HitLanded += OnHit;
             simulation.TargetChanged += OnTargetChanged;
             simulation.CrystalBroken += OnCrystalBroken;
+            simulation.CaveChanged += OnCaveChanged;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -398,6 +399,7 @@ namespace MinersIdle.Presentation
             simulation.HitLanded -= OnHit;
             simulation.TargetChanged -= OnTargetChanged;
             simulation.CrystalBroken -= OnCrystalBroken;
+            simulation.CaveChanged -= OnCaveChanged;
         }
 
         protected override void Rebuild(MiningSimulation simulation)
@@ -407,6 +409,13 @@ namespace MinersIdle.Presentation
             _finisherStart = double.NegativeInfinity;
             _shaking = null;
             _shake = 0f;
+            OnCaveChanged(simulation.State.Cave);
+        }
+
+        /// <summary>M8: a caverna em que o anão está mostra o bioma dela (a caverna 1 = o bioma 1, D-102).</summary>
+        void OnCaveChanged(int cave)
+        {
+            if (cave - 1 != _biome) ApplyBiome(cave - 1);
         }
 
         void OnHit(MiningHit hit)

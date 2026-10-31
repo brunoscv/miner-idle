@@ -29,7 +29,7 @@ namespace MinersIdle.EditorTools
         /// <summary>Modelo do nível e próximo custo das melhorias (ver o Tooltip de <c>DebugPanel.upgradesFormat</c>).</summary>
         const string UpgradesFormat =
             "Picareta nv {0} (próx. {1}) · Velocidade nv {2} (próx. {3}) · Mineração nv {4} (próx. {5}) · " +
-            "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9})";
+            "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9}) · Letrado nv {10} (próx. {11})";
         const string MaxedLabel = "máx.";
 
         /// <summary>Medição do M5 E5 (ver o Tooltip de <c>BuildInfoLabel.statsFormat</c>).</summary>
@@ -54,7 +54,8 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.transform.Find(PanelName);
             if (existing != null)
             {
-                if (existing.Find("Content/Buttons/Camera") != null) return UpdateStatsFormat(existing) || changed;
+                if (existing.Find("Content/Buttons/Camera") != null)
+                    return UpdateStatsFormat(existing) | EnsureCaveButtons(existing) || changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
@@ -155,6 +156,8 @@ namespace MinersIdle.EditorTools
                 ("shake", CreateButton(grid.transform, "Shake", "Tremor on/off")),
                 ("sound", CreateButton(grid.transform, "Sound", "Som on/off")),
                 ("resetStats", CreateButton(grid.transform, "ResetStats", "Zerar medição")),
+                ("fillCaveBreaks", CreateButton(grid.transform, "FillCaveBreaks", "Encher 100 cristais")),
+                ("nextCave", CreateButton(grid.transform, "NextCave", "Próxima caverna")),
                 ("cameraPanel", Object.FindAnyObjectByType<DescentCameraPanel>()),
                 ("frameStats", frameStats),
                 ("upgrades", upgrades));
@@ -180,6 +183,29 @@ namespace MinersIdle.EditorTools
             format.stringValue = StatsFormat;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             Debug.Log("[Setup] Estatísticas do painel de debug atualizadas para a fila.");
+            return true;
+        }
+
+        /// <summary>M8 (E1): "Encher 100 cristais" e "Próxima caverna" no fim da grade (a 7ª fileira), e o Letrado nas melhorias.</summary>
+        static bool EnsureCaveButtons(Transform panel)
+        {
+            bool changed = false;
+            var serialized = new SerializedObject(panel.GetComponent<DebugPanel>());
+            var format = serialized.FindProperty("upgradesFormat");
+            if (format.stringValue != UpgradesFormat)
+            {
+                format.stringValue = UpgradesFormat;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+
+            var grid = panel.Find("Content/Buttons");
+            if (grid == null || grid.Find("FillCaveBreaks") != null) return changed;
+
+            GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
+                ("fillCaveBreaks", CreateButton(grid, "FillCaveBreaks", "Encher 100 cristais")),
+                ("nextCave", CreateButton(grid, "NextCave", "Próxima caverna")));
+            Debug.Log("[Setup] Painel de debug: atalhos das cavernas (M8).");
             return true;
         }
 

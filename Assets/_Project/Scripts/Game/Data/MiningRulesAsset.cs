@@ -33,6 +33,16 @@ namespace MinersIdle.Game
         [SerializeField] double crystalHealth = 10;
         [SerializeField] double crystalReward = 1;
 
+        [Header("Cavernas (M8; o cristal da caverna c = base × crescimento^(c−1), D-92)")]
+        [Tooltip("Número de cavernas. 1 = o jogo não passa de caverna.")]
+        [SerializeField] int caveCount = 1;
+        [Tooltip("A vida do cristal multiplica por isto a cada caverna.")]
+        [SerializeField] double caveHealthGrowth = 1;
+        [Tooltip("As lascas do cristal multiplicam por isto a cada caverna.")]
+        [SerializeField] double caveRewardGrowth = 1;
+        [Tooltip("Cristais a quebrar na caverna para liberar o Letrado dela (D-93).")]
+        [SerializeField] int letradoBreaks = 100;
+
         [Header("Anão")]
         [Tooltip("Dano base por golpe, sem melhorias.")]
         [SerializeField] double damage = 1;
@@ -54,6 +64,8 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues doublePickaxe = new UpgradeLineValues(500, 1, 1, 2);
         [Tooltip("Efeito: fração a mais de corrida a cada nível (0,1 = 10%). Limite 0 desliga a linha.")]
         [SerializeField] UpgradeLineValues boots = new UpgradeLineValues(10, 2, 10, 0.1);
+        [Tooltip("Letrado (M8): o nível n leva à caverna n+1. Efeito: multiplicador do dano dali em diante. Limite 0 desliga.")]
+        [SerializeField] UpgradeLineValues letrado = new UpgradeLineValues(100, 10, 0, 2);
         [Tooltip("Intervalo mínimo entre golpes, em segundos.")]
         [SerializeField] double minHitInterval = 0.5;
 
@@ -73,13 +85,14 @@ namespace MinersIdle.Game
             crystalHealth, crystalReward,
             damage, hitInterval,
             walkSpeed, miningRange,
-            minCrystals);
+            minCrystals,
+            caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks);
 
         public StrikeRules ToStrike() => new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow);
 
         public EconomyRules ToEconomy() => new EconomyRules(
             pickaxe.ToDefinition(), speed.ToDefinition(), mining.ToDefinition(),
-            doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval);
+            doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, letrado.ToDefinition());
     }
 
     /// <summary>Uma linha de melhoria no Inspector (vira uma <see cref="UpgradeDefinition"/> do Núcleo).</summary>

@@ -19,6 +19,8 @@ MonoBehaviour:
   boughtLabel: comprada
   lockedLabel: Em breve
   bonusPercentFormat: +{0}%
+  progressFormat: 'Quebre {1} cristais: {0}/{1}'
+  passFirstLabel: DESCER
   entries:
   - locked: 0
     upgrade: 0
@@ -68,11 +70,11 @@ MonoBehaviour:
     iconColor: {r: 0.61960787, g: 0.61960787, b: 0.61960787, a: 1}
     icon: {fileID: 21300000, guid: 7d0c49568ce7df744b9d1fc7e04e6e96, type: 3}
     frame: {fileID: 21300000, guid: a9adf7ec20f744542be7d0c5e47d56dc, type: 3}
-  - locked: 1
-    upgrade: 0
+  - locked: 0
+    upgrade: 5
     title: Letrado
-    effectFormat: "Libera a pr\xF3xima caverna"
+    effectFormat: "Caverna {0} \xBB {1}"
     style: 0
     iconColor: {r: 0.61960787, g: 0.61960787, b: 0.61960787, a: 1}
     icon: {fileID: 21300000, guid: fe688fc9d091eda49b7a7c28a7db035e, type: 3}
-    frame: {fileID: 21300000, guid: a9adf7ec20f744542be7d0c5e47d56dc, type: 3}
+    frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}

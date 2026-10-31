@@ -54,6 +54,7 @@ namespace MinersIdle.Core
             _stats = MinerStats.Compute(_rules, _economy, _state);
             _miner = new Miner();
             _track = new CrystalTrack(rules);
+            _track.SetCrystalValues(rules.CrystalHealthIn(_state.Cave), rules.CrystalRewardIn(_state.Cave));
             _track.SpawnInitial(_miner.Distance);
         }
 
@@ -75,6 +76,11 @@ namespace MinersIdle.Core
         public event Action<int> ComboChanged;
         /// <summary>O combo chegou a um múltiplo de 10 (o "pop" especial).</summary>
         public event Action<int> ComboMilestone;
+        /// <summary>
+        /// A caverna ou o progresso da trava do Letrado mudou fora de uma quebra (M8): passagem de caverna e atalhos do
+        /// debug. A quebra comum já avisa por <see cref="CrystalBroken"/>.
+        /// </summary>
+        public event Action<int> CaveChanged;
 
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
@@ -167,7 +173,7 @@ namespace MinersIdle.Core
         /// </summary>
         public PurchaseResult Purchase(UpgradeId id)
         {
-            var result = Purchases.TryPurchase(_state, _economy, id);
+            var result = Purchases.TryPurchase(_state, _economy, id, _rules);
             if (result != PurchaseResult.Purchased) return result;
 
             _stats = MinerStats.Compute(_rules, _economy, _state);
@@ -197,6 +203,54 @@ namespace MinersIdle.Core
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(new MiningHit(target, damage, isTap: true, isCritical: critical));
             if (broke) Break(target);
+        }
+
+        /// <summary>
+        /// Se o botão de passar de caverna vale agora (M8, D-110): o Letrado da caverna atual comprado e uma caverna depois
+        /// desta. O fim do jogo (Letrado 10) é da E3.
+        /// </summary>
+        public bool CanPassCave =>
+            _economy.Get(UpgradeId.Letrado).IsEnabled && _state.LevelOf(UpgradeId.Letrado) >= _state.Cave
+            && _state.Cave < _rules.CaveCount;
+
+        /// <summary>
+        /// Passa para a próxima caverna (M8, E1: na hora; a parede entra na E2). Os cristais que nascerem daqui em diante
+        /// são da caverna nova; os que já estão na fila continuam os da anterior. <c>false</c> se não pode passar.
+        /// </summary>
+        public bool PassCave()
+        {
+            if (!CanPassCave) return false;
+            EnterCave(_state.Cave + 1);
+            return true;
+        }
+
+        /// <summary>Atalho do debug: a trava do Letrado cumprida (os cristais da caverna, sem quebrar).</summary>
+        public void FillCaveBreaks()
+        {
+            if (_state.CaveBreaks >= _rules.LetradoBreaks) return;
+            _state.SetCaveBreaks(_rules.LetradoBreaks);
+            CaveChanged?.Invoke(_state.Cave);
+        }
+
+        /// <summary>
+        /// Atalho do debug: a próxima caverna agora, como se tivesse comprado o Letrado (de graça) e passado. Na última
+        /// caverna, nada muda. <c>false</c> se não há caverna depois.
+        /// </summary>
+        public bool SkipToNextCave()
+        {
+            if (_state.Cave >= _rules.CaveCount) return false;
+            while (_state.LevelOf(UpgradeId.Letrado) < _state.Cave) _state.RaiseLevel(UpgradeId.Letrado);
+            EnterCave(_state.Cave + 1);
+            return true;
+        }
+
+        void EnterCave(int cave)
+        {
+            _state.EnterCave(cave);
+            _track.SetCrystalValues(_rules.CrystalHealthIn(cave), _rules.CrystalRewardIn(cave));
+            _stats = MinerStats.Compute(_rules, _economy, _state);
+            StatsChanged?.Invoke(_stats);
+            CaveChanged?.Invoke(cave);
         }
 
         bool RollCritical() =>

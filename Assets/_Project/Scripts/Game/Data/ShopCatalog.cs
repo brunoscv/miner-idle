@@ -60,6 +60,10 @@ namespace MinersIdle.Game
         [SerializeField] string lockedLabel;
         [Tooltip("Bônus em % (Mineração). {0} = número; ex.: \"+{0}%\".")]
         [SerializeField] string bonusPercentFormat;
+        [Tooltip("Letrado travado (D-109): {0} = cristais quebrados na caverna, {1} = quantos a trava pede.")]
+        [SerializeField] string progressFormat;
+        [Tooltip("Letrado desta caverna já comprado: falta passar de caverna.")]
+        [SerializeField] string passFirstLabel;
         [SerializeField] Entry[] entries = Array.Empty<Entry>();
 
         public string ShopTitle => shopTitle;
@@ -69,6 +73,8 @@ namespace MinersIdle.Game
         public string BoughtLabel => boughtLabel;
         public string LockedLabel => lockedLabel;
         public string BonusPercentFormat => bonusPercentFormat;
+        public string ProgressFormat => progressFormat;
+        public string PassFirstLabel => passFirstLabel;
         public System.Collections.Generic.IReadOnlyList<Entry> Entries => entries;
     }
 }

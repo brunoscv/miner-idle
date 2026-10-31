@@ -51,7 +51,7 @@ M4  Loja, melhorias, HUD, save mínimo ✅
                               ▼
 M5  Toque, crítico, combo e feedback (graybox) ✅
                               ▼
-M6  Descida em corrida (câmera de frente, corredor 3D) ← nova visão, D-52
+M6  Descida em corrida (câmera de frente, corredor 3D) ← nova visão, D-52 ✅
                               ▼ ◄─── M1b Art Spike (depois da E1 do M6, para o corredor)
 M8  Letrado, parede, 10 cavernas  (antes do M7, D-88)
                               ▼
@@ -140,6 +140,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Objetivo:** trocar o mapa aberto pela **descida em corrida**: câmera de frente (D-50), o anão correndo na direção dela por um corredor de caverna 3D com cara de pixel art (D-53), parando para bater nos cristais da fila. **Jogador:** o mesmo loop (golpe, toque, crítico, combo, loja, save), na tela nova.
 - **Plano detalhado:** [Marco 6 - Descida em corrida.md](Marco%206%20-%20Descida%20em%20corrida.md) (E1 câmera e render ✅ · E2 fila no núcleo · E3 jogo no corredor · E4 feedback e DBG · E5 economia e celular). Proposta e motivos: [Proposta - Descida em corrida](Proposta%20-%20Descida%20em%20corrida.md).
 - **Dependências:** M5 ✅ (D-59). **Fora:** arte de verdade (Art Spike, depois), estagiário (M7). **Esforço:** 40–60 h.
+- **✅ Aprovado em 2026-10-31 (D-106);** o teste de 10 min no Moto G75 ficou com o Apellon (D-105).
 - **GDD v5 (D-85):** a E5 (relatório de economia) compara também com o `Balance_GDD_v5` (D-87, aprovada; vida e lascas da D-92) e aplica o toque de 33% junto com ele (D-86, aprovada).
 
 ### M7 — Estagiário
@@ -151,6 +152,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **GDD v5 (D-85) — muda bastante:** o estagiário **bate no mesmo cristal do anão** e avança junto (somem a reserva de alvo, a matriz de ordem de quebra, o R-24 e a [spec do mapa](../design/Spec%20-%20Estagiario%20no%20mapa.md)); nasce no cristal atual do anão; dano online 10% × nível de uma picareta. Ganha **árvore própria** de melhorias (Picareta Offline, Velocidade Offline, Mineração Offline, Picareta Dupla do Estagiário 20.000, Picareta Online), compradas depois de contratar: a loja precisa de uma aba ou seção "Estagiário". O **offline** é dele (só ele minera fora do jogo), mas o cálculo offline fica no M9; o M7 já salva os níveis do estagiário. Perguntas: G3, G4, G9, G10. Ordem com o M8: D-88.
 
 ### M8 — Progressão: Letrado, penalidade, passagem e 10 cavernas
+- **Plano detalhado (aprovado em 2026-10-31, D-107…D-113):** [Marco 8 - Letrado, parede e 10 cavernas.md](Marco%208%20-%20Letrado,%20parede%20e%2010%20cavernas.md) (E1 cavernas e Letrado · E2 parede · E3 save e fim · E4 economia 1→10 e celular). O texto abaixo é o do v1; vale o plano.
 - **Objetivo:** descer de verdade. **Jogador:** compra o Letrado, passa de caverna, vê a cor mudar; sente a penalidade.
 - **Tarefas:** T-M7-01…T-M7-09. **Dependências:** M4, M6, **D-07 (parede?)**.
 - **Entregáveis:** `CaveDefinition[10]` com *recolor* provisório, `Letrado`, `Penalty` (ícone), passagem (botão âmbar ou parede), reset da penalidade, bloqueio após a cave 10, tela "fim da descida", dica do Letrado/penalidade.

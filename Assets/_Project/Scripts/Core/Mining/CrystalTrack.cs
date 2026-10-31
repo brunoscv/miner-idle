@@ -14,11 +14,27 @@ namespace MinersIdle.Core
         readonly MiningRules _rules;
         readonly List<Crystal> _crystals;
         int _nextId = 1;
+        double _health;
+        double _reward;
 
         public CrystalTrack(MiningRules rules)
         {
             _rules = rules ?? throw new ArgumentNullException(nameof(rules));
             _crystals = new List<Crystal>(rules.MaxCrystals);
+            _health = rules.CrystalHealth;
+            _reward = rules.CrystalReward;
+        }
+
+        /// <summary>
+        /// Vida e lascas dos cristais que nascerem daqui em diante (M8: os da caverna atual). Os que já estão na fila não
+        /// mudam.
+        /// </summary>
+        public void SetCrystalValues(double health, double reward)
+        {
+            if (health <= 0 || double.IsNaN(health)) throw new ArgumentOutOfRangeException(nameof(health));
+            if (reward < 0 || double.IsNaN(reward)) throw new ArgumentOutOfRangeException(nameof(reward));
+            _health = health;
+            _reward = reward;
         }
 
         /// <summary>Cristais inteiros, do mais perto (o da frente) ao mais longe.</summary>
@@ -56,7 +72,7 @@ namespace MinersIdle.Core
         /// <summary>Cria um cristal na distância dada, no seu lugar da fila, sem checar espaço nem máximo (testes e debug).</summary>
         public Crystal SpawnAt(double distance)
         {
-            var crystal = new Crystal(_nextId++, distance, _rules.CrystalHealth, _rules.CrystalReward);
+            var crystal = new Crystal(_nextId++, distance, _health, _reward);
             int index = _crystals.Count;
             while (index > 0 && _crystals[index - 1].Distance > distance) index--;
             _crystals.Insert(index, crystal);
@@ -67,7 +83,7 @@ namespace MinersIdle.Core
 
         Crystal Add(double distance)
         {
-            var crystal = new Crystal(_nextId++, distance, _rules.CrystalHealth, _rules.CrystalReward);
+            var crystal = new Crystal(_nextId++, distance, _health, _reward);
             _crystals.Add(crystal);
             return crystal;
         }

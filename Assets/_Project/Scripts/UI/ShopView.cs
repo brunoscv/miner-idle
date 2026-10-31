@@ -68,12 +68,14 @@ namespace MinersIdle.UI
         {
             simulation.ShardsChanged += OnShardsChanged;
             simulation.StatsChanged += OnStatsChanged;
+            simulation.CaveChanged += OnCaveChanged;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
         {
             simulation.ShardsChanged -= OnShardsChanged;
             simulation.StatsChanged -= OnStatsChanged;
+            simulation.CaveChanged -= OnCaveChanged;
         }
 
         protected override void Rebuild(MiningSimulation simulation) => Refresh();
@@ -90,6 +92,7 @@ namespace MinersIdle.UI
 
         void OnShardsChanged(double shards) => Refresh();
         void OnStatsChanged(MinerStats stats) => Refresh();
+        void OnCaveChanged(int cave) => Refresh();
 
         void Refresh()
         {

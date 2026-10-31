@@ -47,7 +47,7 @@ namespace MinersIdle.Tests
             Click("ShopButton");
             Assert.That(_shop.IsOpen, Is.True);
             Assert.That(_shop.Rows.Count, Is.EqualTo(7), "5 melhorias + Estagiário + Letrado");
-            Assert.That(_shop.Rows.Count(r => r.IsLocked), Is.EqualTo(2));
+            Assert.That(_shop.Rows.Count(r => r.IsLocked), Is.EqualTo(1), "só o Estagiário (o Letrado é de verdade desde o M8)");
             Assert.That(_shop.Rows.Where(r => r.IsLocked).All(r => !r.CanBuy), Is.True, "linhas bloqueadas não compram (D-42)");
 
             var pickaxe = Row(UpgradeId.Pickaxe);
