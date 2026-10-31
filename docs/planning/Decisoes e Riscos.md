@@ -123,6 +123,32 @@
 |---|---|
 | **D-91** | **Os esteios do corredor passam a ser arte própria** (pedido do Bruno em 2026-10-31, segue a D-90). O portal de madeira do *Pixel Fantasy Caves* (D-74, fora do git) sai e entra o `mine_wood` (do Apellon; 96×128 px, `Art/Corridor/`), no mesmo tamanho de hoje (3,4 × 4,5 m: a proporção 3:4 é a mesma). A variação com lampião (`mine_wood_lamp`) e o lampião solto ficam guardados, sem uso. Junto, os ícones `icon_cave` e `icon_crystal` foram trocados pelas versões novas (mesmo arquivo, mesmo GUID). É a etapa **E10 do M1b**. Plano: [Marco 1b](Marco%201b%20-%20Art%20Spike.md) (E10). |
 
+### 1.7 Respostas às perguntas do GDD v5 (G1–G10), trazidas pelo Bruno em 2026-10-31
+
+> Cada resposta vira uma decisão. As pontas que ficaram abertas viraram as perguntas G11–G16 (§2.4). Nenhum código muda agora: cada decisão entra no marco indicado.
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-92** | **Vida e lascas por caverna (G1):** vale a §3.1 do v5. Vida do cristal `10 × 8^(c−1)`, lascas por cristal `1 × 3^(c−1)`; a tabela da §6.1 (`10^`, `2^`) fica descartada. São os valores de caverna do `Balance_GDD_v5` (D-87). | E5 do M6 / M8 |
+| **D-93** | **A penalidade sai do jogo (G2):** sem regra, sem estado e sem feedback (a seta vermelha da §9 sai). Os 100 cristais quebrados na caverna atual são **só a trava para comprar o Letrado**. Nada a tirar do código: a penalidade nunca foi implementada. Resolve a D-19. | M8 |
+| **D-94** | **Sai a linha "Picareta Online" (G3):** o dano online do estagiário vem só da linha **Estagiário** (`500 × 5^(n−1)`, nível 10; 10% × nível de uma picareta do anão, até 100%). A árvore do estagiário fica com Picareta Offline, Velocidade Offline, Mineração Offline e Picareta Dupla do Estagiário. | M7 |
+| **D-95** | **Uma recompensa por cristal (G4):** quebrou, paga uma vez, não importa quem deu o último golpe (anão, estagiário ou toque). Toda quebra conta nos 100 cristais da trava do Letrado. | M7 / M8 |
+| **D-96** | **Bônus do combo (G5):** o bônus vem quando o jogador **para de tocar**, pelo marco alcançado no combo (×10, ×30, ×50, ×100, valores do v5). Os bônus são **cumulativos**. Detalhe do acúmulo: G11. | Bônus temporários (D-89) |
+| **D-97** | **Cristal raro (G6):** **15% de chance**; a melhoria temporária escolhida dura **60 s**. A lista de melhorias e a base da chance: G12 e G13. | Bônus temporários (D-89) |
+| **D-98** | **Parede da passagem com vida (G7):** depois de comprar o Letrado, o jogador aperta **"Passar de caverna"**; a **parede de cristais** aparece mais à frente no corredor (não surge do nada: o anão chega nela andando), o anão bate nela até quebrar e aí começa a caverna nova. Vida da parede = **2 × a vida do cristal da caverna nova** (entrando na caverna *k*: `2 × 10 × 8^(k−1)`). Resolve a D-07 (e a C-03) pela parede. Toque e lascas na parede: G14. | M8 |
+| **D-99** | **Volta do offline (G8):** ao reabrir o jogo, um modal **"Bem-vindo de volta"** com o **tempo offline** e o **total de lascas coletadas**. O **nível do estagiário vale online e offline**. Resolve a D-04 (offline existe, só do estagiário, teto de 4 h do v5). A conta exata: G15. | M9 |
+| **D-100** | **Linhas de melhoria (G9):** Pesquisador = Letrado = Conhecimento (é a mesma linha). A linha **Crítico** existe; custo e efeito ainda não definidos (G16). Com isso, as "sete linhas" do v5 são Picareta, Velocidade, Mineração, Picareta Dupla, Crítico, Letrado e Estagiário (as Botas, D-35, são nossas, a mais). Resolve a D-06. | M8 (loja) |
+| **D-101** | **Picareta Dupla do estagiário aparece no boneco dele (G10):** uma segunda picareta na mão do estagiário. A Dupla do anão continua sem mudar o estagiário (§5.3). | M7 |
+
+### 1.8 Plano do GDD v5, decidido pelo Bruno em 2026-10-31 (aprovou as quatro recomendações)
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-86** | **Toque passa a 33% do golpe** (v5), no lugar dos 10% da D-47. Entra **junto** com o `Balance_GDD_v5`, nunca sozinho no protótipo; testar no celular. | E5 do M6 |
+| **D-87** | **Criar o `Balance_GDD_v5`** com os números do v5 (dano `5 × 2^(n−1)`, intervalo 2,0 → 0,1 s, Velocidade `50 × 5^(n−1)`, Mineração +100%/nível até +1000%, Letrado `100 × 10^(n−1)`; vida e lascas por caverna da D-92) e pô-lo no relatório de economia, ao lado do v1. | E5 do M6 |
+| **D-88** | **M8 (Letrado, parede, 10 cavernas) vem antes do M7 (Estagiário).** Os números dos marcos não mudam; só a ordem. Motivo: o M8 dá o objetivo de descer e usa os biomas; o estagiário do v5 depende do offline (M9) e da economia de várias cavernas. | Roadmap |
+| **D-89** | **Marco novo "Bônus temporários"**, depois do M8: bônus do combo (D-96), cristal raro com janela de 2 escolhas (D-97) e o boost do AD (sai do M9, que fica com save completo, offline e ajustes). O plano espera as G11–G13. | Roadmap |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.
@@ -146,9 +172,9 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 
 | # | Pergunta | Opções / Rec. | Bloq. |
 |---|---|---|---|
-| D-04 | **Progressão offline** no MVP? | Sim, analítica: teto 2–4 h, 50% (Economia §6) **[rec.]** · Não, só pós-MVP. **GDD v5 (D-85): sim, feita só pelo estagiário, até 4 h, com melhorias offline próprias**; detalhes em G8 | M9 |
-| D-06 | **Linhas de melhoria:** 6 (sem *Crítico*) ou 7? "Letrado" ou "Pesquisador"? | **6 linhas, nome "Letrado"**, crítico fixo 5% **[rec.]**; ou adicionar *Crítico* (custo/limite a definir). **O GDD v5 mantém as "sete linhas" sem tabela para Pesquisador e Crítico: G9** | M7 |
-| D-07 | **"Quebrar a parede"** para passar de caverna, ou só o botão? | **Botão + animação de parede quebrando como efeito** (sem vida/estado) **[rec.]** · Parede com vida (novo sistema) · Só botão. **GDD v5 (D-85): a passagem depende do Letrado e da parede** (resolve a C-03 pela parede); se a parede tem vida: G7 | M8 |
+| D-04 | **Progressão offline** no MVP? | → **resolvida pela D-99** (offline só do estagiário, modal de volta; conta na G15) | M9 |
+| D-06 | **Linhas de melhoria:** 6 (sem *Crítico*) ou 7? "Letrado" ou "Pesquisador"? | **6 linhas, nome "Letrado"**, crítico fixo 5% **[rec.]**; ou adicionar *Crítico* (custo/limite a definir). → **resolvida pela D-100** (7 linhas com Crítico; custo na G16) | M7 |
+| D-07 | **"Quebrar a parede"** para passar de caverna, ou só o botão? | **Botão + animação de parede quebrando como efeito** (sem vida/estado) **[rec.]** · Parede com vida (novo sistema) · Só botão. → **resolvida pela D-98** (parede com vida) | M8 |
 | ~~D-08~~ | ~~Regras do toque: área (qualquer ponto × só o cristal), taxa máxima, crítico no toque?~~ → **decidido em D-47** | **Qualquer ponto**, sem limite rígido, **crítico vale no toque**, tremor reduzido em alta taxa **[rec.]**; decidir após ver o simulador | M3 |
 | D-09 | **Boost:** o mínimo de 0,5 s vale com boost? Recarga igual à duração é intencional? | **Boost pode passar do mínimo (piso 0,2 s)**; recarga **60 s** após o fim **[rec.]** (ou manter 30 s se for proposital) | M8 |
 | D-10 | **Ferramenta de pixel art** e origem da arte | Aseprite (pago, ~US$ 20 [verificar]) **[rec.]** · LibreSprite/Pixelorama (grátis) · só IA+retoque; **fallback**: pacotes CC0 de ambiente | M1b |
@@ -158,7 +184,7 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | D-15 | **Rastreador de tarefas** | Checklist nos planos + GitHub Issues/Projects (mostrar a lista antes de criar) **[rec.]** · só docs | M1 |
 | D-16 | **Git LFS e ramos:** LFS só para áudio/binários grandes (não para PNG pixel art, cenas ou prefabs); *main* + ramos curtos | **[rec.]** como em Qualidade §2–3 | M1 |
 | D-17 | **Horas por semana** disponíveis e calendário | Informar; converte as faixas do Roadmap em semanas | M2 |
-| D-19 | **Justificativa da penalidade** (−50% após 100 quebras): "anti-grind/empurrar ao Letrado" × "pena ao jogador parado" | Documentar a intenção e ajustar o limiar relativo ao *K* (Economia §4) **[rec.]**. **O GDD v5 tirou a regra da penalidade e pôs os 100 cristais como trava do Letrado: G2** | M8 |
+| D-19 | **Justificativa da penalidade** (−50% após 100 quebras): "anti-grind/empurrar ao Letrado" × "pena ao jogador parado" | Documentar a intenção e ajustar o limiar relativo ao *K* (Economia §4) **[rec.]**. → **resolvida pela D-93** (a penalidade saiu) | M8 |
 
 ### 2.3 Novas perguntas geradas pelas respostas
 
@@ -173,24 +199,30 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 
 ### 2.4 GDD v5: decisões e perguntas em aberto (D-85; tirar no marco indicado)
 
-> Anotadas em 2026-10-24 a partir da [Análise - GDD v5](Analise%20-%20GDD%20v5.md). As **G** são perguntas para o autor do GDD (contradições ou lacunas do v5); as **D** são decisões do Bruno sobre o nosso plano. Nada aqui muda o jogo antes de ser respondido.
+> Anotadas em 2026-10-24 a partir da [Análise - GDD v5](Analise%20-%20GDD%20v5.md); **G1–G10 respondidas e D-86…D-89 aprovadas em 2026-10-31 (§1.7, §1.8)**. As **G** são perguntas para o autor do GDD (contradições ou lacunas do v5); as **D** são decisões do Bruno sobre o nosso plano. Nada aqui muda o jogo antes de ser respondido.
 
 | # | Pergunta | Rec. | Quando tirar |
 |---|---|---|---|
-| **D-86** | **Toque de 33% do golpe** (v5) no lugar dos 10% (D-47)? É só um valor no asset | Aplicar junto da economia do v5 para não desequilibrar o protótipo sozinho; testar no celular | Ao retomar a E5 do M6 |
-| **D-87** | **`Balance_GDD_v5`**: criar o asset com os números do v5 (dano `5 × 2^(n−1)`, intervalo 2,0 → 0,1 s, Velocidade `50 × 5^(n−1)`, Mineração +100%/nível até +1000%, Letrado `100 × 10^(n−1)`) e incluí-lo no relatório de economia | **Sim**, ao lado do v1, para comparar; depende da G1 para vida e lascas por caverna | Ao retomar a E5 do M6 |
-| **D-88** | **Ordem M7 × M8:** progressão (Letrado, passagem, cavernas) antes do estagiário? | **M8 antes do M7**: dá o objetivo de "descer", aproveita os biomas, e o estagiário do v5 depende de economia de várias cavernas e do offline | Ao fechar o M6 |
-| **D-89** | **Marco novo "Bônus temporários":** bônus do combo (×10/×30/×50/×100), cristal raro com a janela de 2 escolhas e, talvez, o boost do AD (o mesmo tipo de coisa: bônus com tempo, visível na tela) | **Sim**, depois do M8; o M9 fica com save completo, offline e ajustes. Depende da G5 e da G6 | Ao planejar o marco seguinte ao M8 |
-| G1 | Vida e lascas por caverna: vale a fórmula da §3.1 (`10 × 8^(c−1)`, `1 × 3^(c−1)`) ou a tabela da §6.1 (`10 × 10^(c−1)`, `1 × 2^(c−1)`)? | — | E5 do M6 (relatório) / M8 |
-| G2 | A **penalidade** saiu de vez (e os 100 cristais viraram só a trava do Letrado) ou continua? Se continua, com que regra? (§1.3 e §9 citam; §3.1 e §2.3 não) | — | M8 |
-| G3 | Linha "Estagiário" (`500 × 5^(n−1)`, nível 10 / 100%) × "Picareta Online" (`100 × 2^(n−1)`, 10% × nível até 100%): a primeira só contrata e a segunda dá o percentual, ou as duas dão dano? | — | M7 |
-| G4 | No cristal que os dois batem, se o estagiário dá o golpe final: a recompensa é uma só? Essa quebra conta nos 100 cristais da trava do Letrado? | — | M7 |
-| G5 | Combo: "ao alcançar e parar" = o bônus vem quando o combo acaba, valendo o maior marco alcançado? Bônus acumulam entre si? | — | Marco "Bônus temporários" |
-| G6 | Cristal raro: frequência, lista de melhorias temporárias possíveis e duração de cada uma | — | Marco "Bônus temporários" |
-| G7 | A parede da passagem tem vida (anão e toque batem nela) ou é só a animação de quebrar ao apertar o botão? | Ver D-07 | M8 |
-| G8 | Offline: há redução além dos números próprios? Há tela de "enquanto você estava fora"? O nível online do estagiário conta offline? | — | M9 |
-| G9 | "Sete linhas": Pesquisador = Letrado? A linha Crítico (§1.3 e loop) existe? Com que custo e efeito? | Ver D-06 | M7 (loja) |
-| G10 | A Picareta Dupla do estagiário aparece no boneco (segunda picareta)? A §5.3 diz que a Dupla do anão não aparece nele | — | M7 |
+| ~~D-86~~ | ~~Toque de 33% do golpe~~ → **aprovada em 2026-10-31** (§1.8) | — | — |
+| ~~D-87~~ | ~~`Balance_GDD_v5`~~ → **aprovada em 2026-10-31** (§1.8) | — | — |
+| ~~D-88~~ | ~~Ordem M7 × M8:~~ → **aprovada em 2026-10-31** (§1.8) | — | — |
+| ~~D-89~~ | ~~Marco novo "Bônus temporários":~~ → **aprovada em 2026-10-31** (§1.8) | — | — |
+| ~~G1~~ | ~~Vida e lascas por caverna~~ → **D-92** | — | — |
+| ~~G2~~ | ~~Penalidade~~ → **D-93** (saiu) | — | — |
+| ~~G3~~ | ~~Estagiário × Picareta Online~~ → **D-94** (sai a Picareta Online) | — | — |
+| ~~G4~~ | ~~Recompensa quando o estagiário quebra~~ → **D-95** | — | — |
+| ~~G5~~ | ~~Quando o bônus do combo dispara~~ → **D-96** (resta a G11) | — | — |
+| ~~G6~~ | ~~Cristal raro~~ → **D-97** (restam a G12 e a G13) | — | — |
+| ~~G7~~ | ~~Parede da passagem~~ → **D-98** (resta a G14) | — | — |
+| ~~G8~~ | ~~Mineração offline~~ → **D-99** (resta a G15) | — | — |
+| ~~G9~~ | ~~"Sete linhas"~~ → **D-100** (resta a G16) | — | — |
+| ~~G10~~ | ~~Dupla do estagiário no boneco~~ → **D-101** | — | — |
+| G11 | **Acúmulo do combo (D-96):** quem chega a ×50 ganha só o bônus do ×50, ou também os do ×10 e ×30? Dois bônus iguais seguidos somam o efeito, somam o tempo ou só renovam? | Só o maior marco alcançado; bônus de combos diferentes somam o efeito, cada um com o seu tempo | Bônus temporários |
+| G12 | **Melhorias temporárias do raro (D-97):** quais podem sair na janela de 2 opções e quanto cada uma dá? | Começar com 4 ou 5 (ex.: +dano, +velocidade, +lascas, +crítico) | Bônus temporários |
+| G13 | **Base dos 15% (D-97):** é a chance de cada cristal que nasce ser raro? A janela de escolha pausa a mineração? | 15% por cristal que nasce; janela sem pausar (como a loja, D-42). **Risco:** 15% ≈ 1 em cada 7 cristais; com quebras de poucos segundos, a janela pode abrir demais. Testar no celular | Bônus temporários |
+| G14 | **Parede (D-98):** o toque bate nela? Ela dá lascas ao quebrar? Conta nos 100 cristais da caverna? | Toque bate; não dá lascas nem conta nos 100 (é passagem, não cristal) | M8 |
+| G15 | **Conta do offline (D-99):** como o nível do estagiário entra no offline (os mesmos 10% × nível, multiplicados pelas melhorias offline)? O teto de 4 h do v5 continua? | — | M9 |
+| G16 | **Linha Crítico e nome do Letrado (D-100):** custo, efeito por nível (sobe a chance? o multiplicador?) e nível máximo do Crítico; na loja, o nome fica "Letrado", "Pesquisador" ou "Conhecimento"? | — | M8 (loja) |
 
 ### 2.5 Para depois do MVP
 Prestígio ("Nova Descida") · música · iOS · idiomas adicionais · missões.

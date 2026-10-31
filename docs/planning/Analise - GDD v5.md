@@ -3,6 +3,8 @@
 > Análise de 2026-10-24. Compara o [GDD v5](../gdd%20v5.pdf) (versão 5.0, "Idle Miner roguelite") com o [GDD v1](../GDD_Idle_Miner.docx), que foi a base de todo o planejamento, e com o que o jogo já faz.
 >
 > **Estado (2026-10-24):** o v5 é a referência (**D-85**). As perguntas G1–G10 e as decisões D-86…D-89 estão anotadas em [Decisões e Riscos §2.4](Decisoes%20e%20Riscos.md), cada uma com o marco em que precisa ser respondida; o [Roadmap](Roadmap.md) tem uma nota "GDD v5" no M6, M7, M8 e M9 e o marco proposto "Bônus temporários". Nenhum valor de regra mudou ainda.
+>
+> **Atualização (2026-10-31):** G1–G10 respondidas, viraram as decisões **D-92…D-101** ([Decisões e Riscos §1.7](Decisoes%20e%20Riscos.md)). Em resumo: vale a §3.1 (vida `10 × 8^(c−1)`, lascas `1 × 3^(c−1)`); a penalidade saiu; a Picareta Online saiu; a parede da passagem tem vida (2× o cristal da caverna nova); o offline mostra um modal de volta; a linha Crítico existe. O que este documento chama de "contradição" ou "não define" nas seções abaixo vale como histórico. Pontas ainda abertas: G11–G16.
 
 ## Resumo
 

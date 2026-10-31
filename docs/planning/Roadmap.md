@@ -15,6 +15,8 @@
 
 > **Atualização de 2026-10-24 — D-84, D-85:** o **GDD v5** passa a ser a referência de design (o v1 vira histórico). Os textos do M7, M8 e M9 abaixo ainda descrevem o v1; cada um tem uma nota "GDD v5" com o que muda, e o plano de cada marco é escrito pelo v5. Perguntas em aberto (G1–G10) e decisões pendentes (D-86 toque 33%, D-87 `Balance_GDD_v5`, D-88 ordem M7 × M8, D-89 marco "Bônus temporários") em [Decisões e Riscos §2.4](Decisoes%20e%20Riscos.md); diferenças completas em [Análise - GDD v5](Analise%20-%20GDD%20v5.md). Builds de teste pelo Firebase viram o **M15** (D-84).
 
+> **Atualização de 2026-10-31 — D-92…D-101:** as perguntas **G1–G10 do GDD v5 foram respondidas** ([Decisões e Riscos §1.7](Decisoes%20e%20Riscos.md)). Valem sobre as notas "GDD v5" dos marcos abaixo: penalidade fora do jogo (D-93), parede da passagem com vida (D-98), Picareta Online fora (D-94), linha Crítico (D-100), modal de volta do offline (D-99). Pontas abertas: G11–G16. **D-86…D-89 aprovadas no mesmo dia:** toque de 33% e `Balance_GDD_v5` entram juntos na E5 do M6; **o M8 vem antes do M7** (os números ficam); o marco **"Bônus temporários"** entra depois do M8 e leva o boost do AD.
+
 ## 1. Como este roadmap se relaciona com o do RM
 
 | RM (semanas) | Aqui | Mudança e motivo |
@@ -51,9 +53,11 @@ M5  Toque, crítico, combo e feedback (graybox) ✅
                               ▼
 M6  Descida em corrida (câmera de frente, corredor 3D) ← nova visão, D-52
                               ▼ ◄─── M1b Art Spike (depois da E1 do M6, para o corredor)
-M7  Estagiário ──► M8  Letrado, penalidade, 10 cavernas ← Marco C parcial
+M8  Letrado, parede, 10 cavernas  (antes do M7, D-88)
                               ▼
-M9  AD simulado, save completo, offline, config ← Marco C
+M7  Estagiário  ·  Bônus temporários + boost do AD (D-89)  (ordem entre os dois: a definir)
+                              ▼
+M9  Save completo, offline, config ← Marco C
                               ▼ ◄─── (paralelo) M10 arte das cavernas 2–10 e UI final
 M11 Balanceamento, desempenho, playtest
                               ▼
@@ -136,7 +140,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Objetivo:** trocar o mapa aberto pela **descida em corrida**: câmera de frente (D-50), o anão correndo na direção dela por um corredor de caverna 3D com cara de pixel art (D-53), parando para bater nos cristais da fila. **Jogador:** o mesmo loop (golpe, toque, crítico, combo, loja, save), na tela nova.
 - **Plano detalhado:** [Marco 6 - Descida em corrida.md](Marco%206%20-%20Descida%20em%20corrida.md) (E1 câmera e render ✅ · E2 fila no núcleo · E3 jogo no corredor · E4 feedback e DBG · E5 economia e celular). Proposta e motivos: [Proposta - Descida em corrida](Proposta%20-%20Descida%20em%20corrida.md).
 - **Dependências:** M5 ✅ (D-59). **Fora:** arte de verdade (Art Spike, depois), estagiário (M7). **Esforço:** 40–60 h.
-- **GDD v5 (D-85):** a E5 (relatório de economia) compara também com o `Balance_GDD_v5` (D-87, depende da G1) e decide o toque de 33% (D-86).
+- **GDD v5 (D-85):** a E5 (relatório de economia) compara também com o `Balance_GDD_v5` (D-87, aprovada; vida e lascas da D-92) e aplica o toque de 33% junto com ele (D-86, aprovada).
 
 ### M7 — Estagiário
 - **Objetivo:** segundo minerador sem estados quebrados. **Jogador:** contrata, vê o estagiário atacar o cristal à frente.
@@ -160,12 +164,12 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Entregáveis:** modal de AD (5 s, ×2,5, 30 s, recarga), selo do boost, `SaveService` completo (JSON versionado, escrita atômica, backup, migração), pausa/retomada, **offline (se D-04)**, Configurações (volume, tremor, vibração, apagar save com confirmação), créditos mínimos.
 - **Testes:** fechar/minimizar não duplica bônus/compra/moeda (RM sem. 8, P0); save corrompido recupera; versão futura tratada; teste de migração; manipular o relógio do aparelho; sessão longa (2 h).
 - **DoD:** **marco C** (RM): loja, estagiário, penalidade, progressão, boost e save integrados; testes de estados simultâneos feitos. **Riscos:** relógio do aparelho, *backgrounding* do Android. **Fora:** SDK de anúncios real. **Esforço:** 40–55 h.
-- **GDD v5 (D-85):** o offline existe e é **só do estagiário**, por até 4 h, com as melhorias offline dele (resolve a D-04; detalhes na G8). Se a D-89 for aprovada, o boost do AD vai para o marco "Bônus temporários" e este marco fica com save completo, offline e ajustes.
+- **GDD v5 (D-85):** o offline existe e é **só do estagiário**, por até 4 h, com as melhorias offline dele (resolve a D-04; detalhes na G8). Pela D-89 (aprovada), o boost do AD vai para o marco "Bônus temporários" e este marco fica com save completo, offline e ajustes.
 
-### Marco proposto (D-89, aguardando) — Bônus temporários ← *GDD v5*
+### Bônus temporários (D-89, aprovado em 2026-10-31) ← *GDD v5*
 - **Objetivo:** o lado "10% roguelite" do v5. **Jogador:** combo longo dá bônus (×10: +10% de dano por 5 s · ×30: +15% por 10 s · ×50: crítico garantido por 20 s · ×100: "Frenesi", +50% por 30 s), sempre visível na tela; quebrar um **cristal raro** abre uma janela com **2 melhorias temporárias** para escolher.
 - **Técnica:** modificadores com tempo no núcleo (o mesmo mecanismo serviria ao boost do AD); indicador de bônus ativo no HUD; o `crystal_glass_rare` do Bruno (D-77) como arte do raro.
-- **Posição sugerida:** depois do M8, antes do M9. **Pendências:** G5 (como o bônus do combo dispara), G6 (frequência do raro, lista de melhorias, durações). **Esforço:** a estimar quando a G6 for respondida.
+- **Posição:** depois do M8 (D-89). **Já decidido:** bônus quando o combo para, cumulativos (D-96); raro com 15% e bônus de 60 s (D-97); leva também o boost do AD. **Pendências:** G11 (acúmulo), G12 (lista de melhorias), G13 (base dos 15% e pausa). **Esforço:** a estimar quando a G12 for respondida.
 
 ### M10 — Arte, áudio e integração visual das cavernas 2–10
 - **Objetivo:** os 10 ambientes e a UI final. **Jogador:** cada caverna parece outro lugar; interface com cara de jogo.
