@@ -62,7 +62,7 @@ O tema madeira é a base (combina com a mina e com o mockup). Do fantasy entram 
 | Botão comprar — **dá para comprar** | fantasy `buttons/button_ruby_*` | Escolha do Bruno: rubi, para saltar aos olhos. |
 | Botão comprar — sem lascas, comprada, máx. | madeira `buttons/button_medium_disabled` | Cinza: lê-se "não dá agora" sem precisar ler o texto. |
 | **VOLTAR** | madeira `buttons/button_large_*` | Normal e pressionado. |
-| Todos os textos do jogo (HUD, loja, textos flutuantes) | **Pixelify Sans** | O painel DBG continua na fonte atual: é ferramenta de desenvolvimento e tem textos miúdos. |
+| Todos os textos do jogo (HUD, loja, textos flutuantes) | **Pixelify Sans** | O painel DBG continua na fonte atual: é ferramenta de desenvolvimento e tem textos miúdos. Desde a D-104 (2026-10-31), os valores (número do HUD, saldo e preço da loja) usam a **Press Start 2P**, porque na Pixelify o 2, o 5 e o 8 se confundem. |
 
 Prévia feita com os sprites reais sobre a tela atual (escolhas acima): HUD **A**, loja **2** (madeira + rubi); a segunda prévia já com os ícones e os botões LOJA e AD.
 

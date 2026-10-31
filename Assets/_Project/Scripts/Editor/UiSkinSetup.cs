@@ -13,7 +13,8 @@ namespace MinersIdle.EditorTools
     /// Parte do <see cref="ProjectSetup"/> para a cara de jogo da interface (M1b, Art Spike, parte 1). Na E1: importa os
     /// sprites de UI em pixel art (filtro Point, sem compressão, 1 px do sprite = 1 px da referência 270, bordas de
     /// 9-slice), cria o font asset da Pixelify Sans (D-64) e põe essa fonte nos textos do jogo. O painel DBG e o BuildInfo
-    /// ficam na fonte de antes (ferramenta de desenvolvimento).
+    /// ficam na fonte de antes (ferramenta de desenvolvimento). Os valores (preço da loja, números do HUD, saldo da loja)
+    /// usam a Press Start 2P (D-104), porque na Pixelify o 2, o 5 e o 8 se confundem.
     ///
     /// Os packs de terceiros ficam fora do git (D-65): sem eles, o setup avisa e o jogo continua com o visual graybox.
     /// Idempotente: só reimporta ou salva o que estiver diferente.
@@ -30,6 +31,8 @@ namespace MinersIdle.EditorTools
 
         const string FontFilePath = "Assets/_Vendor/Fonts/PixelifySans/PixelifySans-Regular.ttf";
         internal const string GameFontPath = "Assets/_Project/Art/Fonts/PixelifySans Bitmap.asset";
+        const string NumbersFontFilePath = "Assets/_Vendor/Fonts/PressStart2P/PressStart2P-Regular.ttf";
+        internal const string NumbersFontPath = "Assets/_Project/Art/Fonts/PressStart2P Bitmap.asset";
         const string FallbackFontPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset";
         const string RowPrefabPath = "Assets/_Project/Prefabs/UI/UpgradeRow.prefab";
 
@@ -48,6 +51,13 @@ namespace MinersIdle.EditorTools
         const float FontPixelStep = FontGridPixels / 4f;
         const int FontGridPixels = 11;
 
+        /// <summary>
+        /// A Press Start 2P é desenhada num grid de 8 por em (D-104). Tamanho 6 = 3 px de tela por pixel da fonte no Moto G75,
+        /// a altura dos números da comparação aprovada; os 7 algarismos de "999.999" cabem no painel do HUD.
+        /// </summary>
+        const int NumbersGridPixels = 8;
+        internal const float NumbersFontSize = 6f;
+
         /// <summary>Os caracteres dos textos do jogo em pt-BR (o atlas é estático; o que faltar cai na fonte reserva).</summary>
         const string GameCharacters =
             " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" +
@@ -61,7 +71,8 @@ namespace MinersIdle.EditorTools
             ShopSkinSetup.EnsureGeneratedIcons();
             HudSkinSetup.EnsureArtButtonAssets();
             ConfigureUiSprites();
-            EnsureGameFont();
+            EnsureBitmapFont(FontFilePath, GameFontPath, FontGridPixels);
+            EnsureBitmapFont(NumbersFontFilePath, NumbersFontPath, NumbersGridPixels, GameFontPath);
         }
 
         // ── Sprites ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -164,34 +175,42 @@ namespace MinersIdle.EditorTools
         // ── Fonte ────────────────────────────────────────────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Font asset em bitmap com atlas estático (os caracteres do jogo), a partir da Pixelify Sans, amostrada a 4 pixels
-        /// de atlas por pixel da fonte e ampliada sem suavizar (Point). Achados da E1: em SDF os quadradinhos da fonte, que
-        /// se sobrepõem, saíam ocos e fechavam letras ("C" virava "O"); amostrada a 1:1 (11), o espaçamento entre letras
-        /// ficava irregular; com hinting, as letras se deformavam. Reserva: LiberationSans.
+        /// Font asset em bitmap com atlas estático (os caracteres do jogo), a partir de uma fonte pixel art, amostrada a 4
+        /// pixels de atlas por pixel da fonte e ampliada sem suavizar (Point). Achados da E1 (com a Pixelify Sans): em SDF os
+        /// quadradinhos da fonte, que se sobrepõem, saíam ocos e fechavam letras ("C" virava "O"); amostrada a 1:1 (11), o
+        /// espaçamento entre letras ficava irregular; com hinting, as letras se deformavam. Reservas: as de
+        /// <paramref name="fallbackPaths"/> e, por último, a LiberationSans.
         /// </summary>
-        static void EnsureGameFont()
+        static void EnsureBitmapFont(string fontFilePath, string assetPath, int gridPixels, params string[] fallbackPaths)
         {
-            if (File.Exists(GameFontPath) || !File.Exists(FontFilePath)) return;
+            if (File.Exists(assetPath) || !File.Exists(fontFilePath)) return;
 
-            if (AssetImporter.GetAtPath(FontFilePath) == null) AssetDatabase.ImportAsset(FontFilePath);
-            var font = AssetDatabase.LoadAssetAtPath<Font>(FontFilePath);
+            if (AssetImporter.GetAtPath(fontFilePath) == null) AssetDatabase.ImportAsset(fontFilePath);
+            var font = AssetDatabase.LoadAssetAtPath<Font>(fontFilePath);
             if (font == null)
             {
-                Debug.LogError($"[Setup] Fonte não carregou: {FontFilePath}.");
+                Debug.LogError($"[Setup] Fonte não carregou: {fontFilePath}.");
                 return;
             }
 
-            var asset = TMP_FontAsset.CreateFontAsset(font, FontGridPixels * 4, 4, GlyphRenderMode.RASTER, 1024, 1024,
+            var asset = TMP_FontAsset.CreateFontAsset(font, gridPixels * 4, 4, GlyphRenderMode.RASTER, 1024, 1024,
                                                       AtlasPopulationMode.Dynamic, false);
-            asset.name = Path.GetFileNameWithoutExtension(GameFontPath);
+            asset.name = Path.GetFileNameWithoutExtension(assetPath);
             if (!asset.TryAddCharacters(GameCharacters, out var missing))
-                Debug.LogWarning($"[Setup] A Pixelify Sans não tem: {missing} (usa a fonte reserva).");
+                Debug.LogWarning($"[Setup] A fonte {font.name} não tem: {missing} (usa a fonte reserva).");
 
+            var fallbacks = new List<TMP_FontAsset>();
+            foreach (var path in fallbackPaths)
+            {
+                var reserve = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+                if (reserve != null) fallbacks.Add(reserve);
+            }
             var fallback = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FallbackFontPath);
-            if (fallback != null) asset.fallbackFontAssetTable = new List<TMP_FontAsset> { fallback };
+            if (fallback != null) fallbacks.Add(fallback);
+            asset.fallbackFontAssetTable = fallbacks;
 
-            ProjectSetup.EnsureFolder(Path.GetDirectoryName(GameFontPath)?.Replace('\\', '/'));
-            AssetDatabase.CreateAsset(asset, GameFontPath);
+            ProjectSetup.EnsureFolder(Path.GetDirectoryName(assetPath)?.Replace('\\', '/'));
+            AssetDatabase.CreateAsset(asset, assetPath);
             asset.atlasTexture.name = asset.name + " Atlas";
             asset.material.name = asset.name + " Material";
 
@@ -206,7 +225,7 @@ namespace MinersIdle.EditorTools
 
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[Setup] Fonte do jogo criada em {GameFontPath} ({asset.characterTable.Count} caracteres).");
+            Debug.Log($"[Setup] Fonte criada em {assetPath} ({asset.characterTable.Count} caracteres).");
         }
 
         /// <summary>
@@ -221,15 +240,16 @@ namespace MinersIdle.EditorTools
 
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(GameFontPath);
             if (font == null) return skinned;
+            var numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(NumbersFontPath);
 
             int changed = 0;
             foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects())
-                changed += ApplyFont(root.transform, font);
+                changed += ApplyFont(root.transform, font, numbers);
             if (changed > 0) Debug.Log($"[Setup] Fonte do jogo aplicada a {changed} texto(s) da cena Game.");
 
             if (!File.Exists(RowPrefabPath)) return skinned || changed > 0;
             var prefab = PrefabUtility.LoadPrefabContents(RowPrefabPath);
-            int rowChanged = ApplyFont(prefab.transform, font);
+            int rowChanged = ApplyFont(prefab.transform, font, numbers);
             if (rowChanged > 0)
             {
                 PrefabUtility.SaveAsPrefabAsset(prefab, RowPrefabPath);
@@ -240,25 +260,36 @@ namespace MinersIdle.EditorTools
             return skinned || changed > 0;
         }
 
-        static int ApplyFont(Transform node, TMP_FontAsset font)
+        static int ApplyFont(Transform node, TMP_FontAsset font, TMP_FontAsset numbers)
         {
             if (System.Array.IndexOf(KeepOldFont, node.name) >= 0) return 0;
 
             int changed = 0;
-            if (node.TryGetComponent<TMP_Text>(out var text) && text.font != font)
+            bool isNumber = numbers != null && IsNumberText(node);
+            var wanted = isNumber ? numbers : font;
+            if (node.TryGetComponent<TMP_Text>(out var text) && text.font != wanted)
             {
-                text.font = font;
-                text.fontSharedMaterial = font.material;
+                text.font = wanted;
+                text.fontSharedMaterial = wanted.material;
                 // Na UI, o tamanho vai para o múltiplo mais próximo do grid da fonte (nítido no aparelho). Os textos do
                 // mundo (flutuantes) mudam de escala o tempo todo; ficam com o tamanho que têm.
-                if (text is TextMeshProUGUI) text.fontSize = SnapFontSize(text.fontSize);
+                if (isNumber) text.fontSize = NumbersFontSize;
+                else if (text is TextMeshProUGUI) text.fontSize = SnapFontSize(text.fontSize);
                 EditorUtility.SetDirty(text);
                 changed++;
             }
 
-            foreach (Transform child in node) changed += ApplyFont(child, font);
+            foreach (Transform child in node) changed += ApplyFont(child, font, numbers);
             return changed;
         }
+
+        /// <summary>
+        /// Os textos de valor (D-104): o número dos painéis do HUD ("Value"), o saldo da loja ("Balance") e o preço no botão
+        /// Comprar da linha da loja ("Buy/Label").
+        /// </summary>
+        static bool IsNumberText(Transform node) =>
+            node.name == "Value" || node.name == "Balance" ||
+            (node.name == "Label" && node.parent != null && node.parent.name == "Buy");
 
         internal static float SnapFontSize(float size) =>
             Mathf.Max(2f, Mathf.Round(size / FontPixelStep)) * FontPixelStep;

@@ -15,6 +15,7 @@ Todo asset de terceiros usado no jogo, com autor, origem e licença. Os packs cu
 
 | Fonte | Autor | Origem | Licença | No projeto |
 |---|---|---|---|---|
+| Press Start 2P (Regular) — números do HUD e da loja (D-104) | CodeMan38 (The Press Start 2P Project Authors) | https://github.com/google/fonts/tree/main/ofl/pressstart2p · Google Fonts | SIL Open Font License 1.1 (`OFL.txt` junto) | `Assets/_Vendor/Fonts/PressStart2P`; o font asset é gerado a partir dela (`Assets/_Project/Art/Fonts/PressStart2P Bitmap.asset`) |
 | Pixelify Sans (Regular) | The Pixelify Sans Project Authors (Stefie Justprince) | https://github.com/eifetx/Pixelify-Sans · Google Fonts | SIL Open Font License 1.1 (`OFL.txt` junto) | `Assets/_Vendor/Fonts/PixelifySans`; o font asset do jogo é gerado a partir dela (`Assets/_Project/Art/Fonts/PixelifySans Bitmap.asset`) |
 
 ## Corredor
