@@ -123,6 +123,7 @@ namespace MinersIdle.Presentation
         readonly MeshRenderer _renderer;
         readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
         Texture _texture;
+        int _frame = -1;
         Color _color = Color.white;
         bool _visible = true;
 
@@ -155,8 +156,9 @@ namespace MinersIdle.Presentation
 
         public void SetTexture(Texture texture)
         {
-            if (texture == _texture) return;
+            if (texture == _texture && _frame < 0) return;
             _texture = texture;
+            _frame = -1;
             _block.SetVector(BaseMapSTId, new Vector4(1f, 1f, 0f, 0f));
             Apply();
         }
@@ -167,7 +169,8 @@ namespace MinersIdle.Presentation
         /// </summary>
         public void SetFrame(Texture sheet, int index, int columns)
         {
-            if (sheet == null) return;
+            if (sheet == null || (sheet == _texture && index == _frame)) return;
+            _frame = index;
             int rows = Mathf.Max(1, sheet.height * columns / Mathf.Max(1, sheet.width));
             int column = index % columns, row = index / columns;
             _texture = sheet;

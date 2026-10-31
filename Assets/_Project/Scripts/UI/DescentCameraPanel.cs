@@ -69,11 +69,16 @@ namespace MinersIdle.UI
         [SerializeField] Button lowDwarf;
         [Tooltip("Passa pelas 10 cavernas (M1b E8, D-102); o botão mostra o nome da caverna (não fica salvo).")]
         [SerializeField, FormerlySerializedAs("floor")] Button biome;
+        [Tooltip("Passa pelas prévias da beira do caminho, A–D (M1b E11); o botão mostra a atual (não fica salvo).")]
+        [SerializeField] Button edge;
+        [Tooltip("Rótulo do botão da beira para cada prévia, na ordem A–D.")]
+        [SerializeField] string[] edgeLabels;
 
         UnityAction[] _minus;
         UnityAction[] _plus;
         float _refresh;
         TMP_Text _biomeLabel;
+        TMP_Text _edgeLabel;
 
         public bool IsOpen => content.activeSelf;
 
@@ -97,6 +102,7 @@ namespace MinersIdle.UI
             }
 
             if (biome != null) _biomeLabel = biome.GetComponentInChildren<TMP_Text>();
+            if (edge != null) _edgeLabel = edge.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -113,6 +119,7 @@ namespace MinersIdle.UI
             if (intern != null) intern.onClick.AddListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.AddListener(ToggleLowDwarf);
             if (biome != null) biome.onClick.AddListener(NextBiome);
+            if (edge != null) edge.onClick.AddListener(NextEdge);
         }
 
         void OnDisable()
@@ -128,6 +135,7 @@ namespace MinersIdle.UI
             if (intern != null) intern.onClick.RemoveListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.RemoveListener(ToggleLowDwarf);
             if (biome != null) biome.onClick.RemoveListener(NextBiome);
+            if (edge != null) edge.onClick.RemoveListener(NextEdge);
         }
 
         void Update()
@@ -147,6 +155,12 @@ namespace MinersIdle.UI
         void NextBiome()
         {
             stage.NextBiome();
+            _refresh = 0f;
+        }
+
+        void NextEdge()
+        {
+            stage.EdgeLook = (stage.EdgeLook + 1) % DescentStage.EdgeLooks;
             _refresh = 0f;
         }
 
@@ -211,6 +225,8 @@ namespace MinersIdle.UI
             double seconds = speed > 0 ? Math.Max(0, ground - reach) / speed : 0;
 
             if (_biomeLabel != null && stage.Biome != null) _biomeLabel.text = stage.Biome.DisplayName;
+            if (_edgeLabel != null && edgeLabels != null && stage.EdgeLook < edgeLabels.Length)
+                _edgeLabel.text = edgeLabels[stage.EdgeLook];
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),

@@ -41,6 +41,16 @@ namespace MinersIdle.EditorTools
         /// <summary>Pedra da beira do caminho (enviada pelo Bruno; origem a confirmar, por isso fora do git).</summary>
         const string EdgeRockPath = "Assets/_Vendor/AssetStore/Misc/rock_t1.png";
 
+        /// <summary>
+        /// Prévia da beira (M1b E11): pedras, cascalho e enfeites recortados do props1/props2 do pack, reduzidos para 64
+        /// px por metro. Gerada fora do setup na prévia; se for aprovada, a geração vem para cá.
+        /// </summary>
+        const string EdgeSheetPath = GeneratedFolder + "/edge_sheet.png";
+
+        /// <summary>O botão do DBG → Câmera que passa pelas prévias da beira (M1b E11), com o rótulo de cada uma.</summary>
+        const string EdgeButton = "Edge";
+        static readonly string[] EdgeLabels = { "Beira A", "Beira B", "Beira C", "Beira D" };
+
         // Peças do mainlev_build.png (x, y a partir do canto de cima, largura, altura), achadas nas prévias.
         static readonly RectInt RockA = new RectInt(224, 736, 96, 64);
         static readonly RectInt RockB = new RectInt(224, 816, 96, 64);
@@ -84,6 +94,7 @@ namespace MinersIdle.EditorTools
 
             int configured = Configure(RockPath, TextureWrapMode.Repeat) + Configure(SupportPath, TextureWrapMode.Clamp);
             if (File.Exists(EdgeRockPath)) configured += Configure(EdgeRockPath, TextureWrapMode.Clamp);
+            if (File.Exists(EdgeSheetPath)) configured += Configure(EdgeSheetPath, TextureWrapMode.Clamp);
 
             if (made > 0) Debug.Log($"[Setup] Texturas do corredor geradas em {GeneratedFolder}: {made}.");
             if (configured > 0) Debug.Log($"[Setup] Texturas do corredor configuradas (pixel art): {configured}.");
@@ -100,6 +111,7 @@ namespace MinersIdle.EditorTools
             changed |= SetIfEmpty(so, "wallTexture", RockPath);
             changed |= SetIfEmpty(so, "ceilingTexture", RockPath);
             changed |= SetIfEmpty(so, "edgeRockTexture", EdgeRockPath);
+            changed |= SetIfEmpty(so, "edgeSheet", EdgeSheetPath);
             if (SetIfEmpty(so, "supportTexture", SupportPath))
             {
                 so.FindProperty("supportSize").vector2Value = new Vector2(3.4f, 4.5f);
@@ -133,6 +145,7 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             changed |= RenameResetButton();
+            changed |= EnsureEdgeButton();
             if (changed) Debug.Log("[Setup] Corredor da caverna 1 com a arte do Pixel Fantasy Caves (M1b E4, D-74).");
             return changed;
         }
@@ -177,6 +190,24 @@ namespace MinersIdle.EditorTools
             if (label == null || !label.TryGetComponent<TMP_Text>(out var text) || text.text != "Padrão D-50") return false;
             text.text = "Padrão F1";
             EditorUtility.SetDirty(text);
+            return true;
+        }
+
+        /// <summary>O botão "Beira" no DBG → Câmera (M1b E11), para comparar as prévias A–D jogando. Devolve se mudou.</summary>
+        static bool EnsureEdgeButton()
+        {
+            var panel = UnityEngine.Object.FindAnyObjectByType<MinersIdle.UI.DescentCameraPanel>(FindObjectsInactive.Include);
+            var buttons = panel != null ? panel.transform.Find("Content/Buttons") : null;
+            if (buttons == null || buttons.Find(EdgeButton) != null) return false;
+
+            var button = DebugPanelSetup.CreateButton(buttons, EdgeButton, EdgeLabels[0]);
+            GrayboxSetup.SetReferences(panel, ("edge", button));
+            var so = new SerializedObject(panel);
+            var labels = so.FindProperty("edgeLabels");
+            labels.arraySize = EdgeLabels.Length;
+            for (int i = 0; i < EdgeLabels.Length; i++) labels.GetArrayElementAtIndex(i).stringValue = EdgeLabels[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] Botão \"Beira\" no DBG → Câmera (prévias A–D da beira do caminho, M1b E11).");
             return true;
         }
 

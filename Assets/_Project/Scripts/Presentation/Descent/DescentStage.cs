@@ -33,6 +33,24 @@ namespace MinersIdle.Presentation
         /// <summary>Pedras da beira do caminho desenhadas ao mesmo tempo (os dois lados, ao longo de todo o corredor).</summary>
         const int EdgeRockSlots = 120;
 
+        /// <summary>
+        /// Folha da beira (M1b E11): grade de 4 × 4 quadros de 64 px (1 m), cada peça com o pé no fundo do quadro. Pedras
+        /// nos quadros 0–8, cascalho em 9–12, enfeites (mato, pedra com musgo) em 13–15.
+        /// </summary>
+        const int EdgeSheetColumns = 4;
+        const int EdgeRockFrames = 9;
+        const int PebbleFirstFrame = 9;
+        const int PebbleFrames = 4;
+        const int DecorFirstFrame = 13;
+        const int DecorFrames = 3;
+        const float EdgeFrameMeters = 1f;
+
+        /// <summary>Cascalho desenhado ao mesmo tempo, nos dois lados.</summary>
+        const int PebbleSlots = 200;
+
+        /// <summary>Quantas beiras a prévia tem (A–D).</summary>
+        public const int EdgeLooks = 4;
+
         /// <summary>Picaretada de despedida: só se o anão estava junto do cristal (metros), e quanto dura (segundos).</summary>
         const double FinisherReach = 1.0;
         const double FinisherFrameSeconds = 0.05;
@@ -82,6 +100,7 @@ namespace MinersIdle.Presentation
         static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         static readonly int ScrollAxisId = Shader.PropertyToID("_ScrollAxis");
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        static readonly int EdgeShadeId = Shader.PropertyToID("_EdgeShade");
 
         [SerializeField] Shader shader;
         [Tooltip("Shader do quadro que mostra a descida na tela (URP Unlit).")]
@@ -185,6 +204,18 @@ namespace MinersIdle.Presentation
         [Tooltip("Fração da pedra abaixo da base do desenho (linhas transparentes): a pedra desce isso para tocar o chão.")]
         [SerializeField, Range(0f, 0.5f)] float edgeRockFootGap;
 
+        [Header("Beira do caminho, prévia (M1b E11)")]
+        [Tooltip("0 = A (como era), 1 = B (sombra no canto), 2 = C (+ pedras variadas e cascalho), 3 = D (+ enfeites). " +
+                 "Cada uma soma à anterior.")]
+        [SerializeField, Range(0, 3)] int edgeLook;
+        [Tooltip("Pedras, cascalho e enfeites da beira (grade de 4 × 4 quadros de 64 px). Vazio = C e D não mudam nada.")]
+        [SerializeField] Texture2D edgeSheet;
+        [Tooltip("Até onde a sombra do canto entra no chão e sobe na parede, em metros.")]
+        [SerializeField, Min(0.1f)] float edgeShadeFloorMeters = 1.3f;
+        [SerializeField, Min(0.1f)] float edgeShadeWallMeters = 0.9f;
+        [Tooltip("Quanto escurece bem no canto (0 = nada, 1 = preto).")]
+        [SerializeField, Range(0f, 1f)] float edgeShadeStrength = 0.75f;
+
         [SerializeField] Color fogColor = new Color32(0x14, 0x0D, 0x09, 0xFF);
         [SerializeField] float fogStart = 3f;
         [SerializeField] float fogEnd = 25f;
@@ -210,6 +241,7 @@ namespace MinersIdle.Presentation
         readonly DescentPiece[] _lanterns = new DescentPiece[PostSlots];
         readonly DescentPiece[] _supports = new DescentPiece[PostSlots];
         readonly DescentPiece[] _edgeRocks = new DescentPiece[EdgeRockSlots];
+        readonly DescentPiece[] _pebbles = new DescentPiece[PebbleSlots];
         readonly DescentPiece[] _wallBlocks = new DescentPiece[WallBlockHeights.Length];
 
         RenderTexture _target;
@@ -225,6 +257,20 @@ namespace MinersIdle.Presentation
         float _caveFade = -1f;
 
         public Camera SceneCamera => sceneCamera;
+
+        /// <summary>
+        /// A beira do caminho da prévia (M1b E11): 0 = A (como era), 1 = B (sombra no canto), 2 = C (+ pedras variadas e
+        /// cascalho), 3 = D (+ enfeites).
+        /// </summary>
+        public int EdgeLook
+        {
+            get => edgeLook;
+            set
+            {
+                edgeLook = Mathf.Clamp(value, 0, EdgeLooks - 1);
+                ApplyEdgeShade();
+            }
+        }
 
         /// <summary>A imagem da descida (baixa resolução).</summary>
         public RenderTexture Output => _target;
@@ -367,6 +413,11 @@ namespace MinersIdle.Presentation
                 _edgeRocks[i] = new DescentPiece(transform, "EdgeRock", _quad, _sprites,
                                                  edgeRockTexture != null ? edgeRockTexture : (Texture)_art.White);
                 _edgeRocks[i].Visible = false;
+            }
+            for (int i = 0; i < PebbleSlots; i++)
+            {
+                _pebbles[i] = new DescentPiece(transform, "Pebble", _quad, _sprites, _art.White);
+                _pebbles[i].Visible = false;
             }
             for (int i = 0; i < _wallBlocks.Length; i++)
             {
@@ -625,6 +676,17 @@ namespace MinersIdle.Presentation
                 _corridorHasCeiling = ceiling;
                 _corridorWidth = framing.corridorWidth;
             }
+            ApplyEdgeShade();
+        }
+
+        /// <summary>A sombra do canto (B em diante) nos materiais do chão e da parede; desligada, o shader pula a conta.</summary>
+        void ApplyEdgeShade()
+        {
+            if (_floor == null) return;
+            float half = framing.corridorWidth * 0.5f;
+            bool on = edgeLook >= 1;
+            _floor.SetVector(EdgeShadeId, on ? new Vector4(half, edgeShadeFloorMeters, edgeShadeStrength, 0f) : Vector4.zero);
+            _wall.SetVector(EdgeShadeId, on ? new Vector4(half, edgeShadeWallMeters, edgeShadeStrength, 1f) : Vector4.zero);
         }
 
         /// <summary>O campo de visão da D-50 para esta tela, aumentado pela margem do tremor (<see cref="Overscan"/>).</summary>
@@ -961,6 +1023,12 @@ namespace MinersIdle.Presentation
         void LayoutEdgeRocks(double front)
         {
             int used = 0;
+            if (edgeLook >= 2 && edgeSheet != null)
+            {
+                LayoutVariedEdge(front);
+                return;
+            }
+            for (int i = 0; i < PebbleSlots; i++) _pebbles[i].Visible = false;
             if (edgeRockTexture != null)
             {
                 float halfWidth = framing.corridorWidth * 0.5f;
@@ -982,6 +1050,59 @@ namespace MinersIdle.Presentation
                 }
             }
             for (int i = used; i < EdgeRockSlots; i++) _edgeRocks[i].Visible = false;
+        }
+
+        /// <summary>
+        /// Prévia C e D (M1b E11): a beira sem fila. Pedras de várias formas e tamanhos, espelhadas ao acaso e algumas
+        /// mais para dentro do chão, metade enterrada na parede; cascalho espalhado, mais denso junto da parede; em D, um
+        /// enfeite (mato, pedra com musgo) no lugar de uma pedra de vez em quando. Tudo fixo pela posição na trilha.
+        /// </summary>
+        void LayoutVariedEdge(double front)
+        {
+            float halfWidth = framing.corridorWidth * 0.5f;
+            const float rockSpacing = 0.55f;
+            int used = 0;
+            double first = Math.Ceiling((front - CorridorFar) / rockSpacing);
+            double last = Math.Floor((front - CorridorNear) / rockSpacing);
+            for (double k = first; k <= last && used < EdgeRockSlots - 1; k++)
+            for (int side = -1; side <= 1; side += 2)
+            {
+                float seed = (float)k * 2f + side;
+                if (DescentArt.Hash(seed, 21) < 0.2f) continue;
+                bool decor = edgeLook >= 3 && DescentArt.Hash(seed, 29) < 0.12f;
+                int frame = decor ? DecorFirstFrame + (int)(DescentArt.Hash(seed, 31) * DecorFrames * 0.999f)
+                                  : (int)(DescentArt.Hash(seed, 23) * EdgeRockFrames * 0.999f);
+                float scale = EdgeFrameMeters * (1.1f + DescentArt.Hash(seed, 33) * 0.5f); // a de hoje (25 px) fica com 0,43–0,62 m
+                float flip = DescentArt.Hash(seed, 35) < 0.5f ? -1f : 1f;
+                float inset = DescentArt.Hash(seed, 27) * DescentArt.Hash(seed, 37) * 0.15f; // quase todas junto da parede
+                float z = (float)(front - k * rockSpacing) + (DescentArt.Hash(seed, 25) - 0.5f) * rockSpacing * 0.6f;
+                float x = side * (halfWidth - 0.12f * scale - inset);
+                var rock = _edgeRocks[used++];
+                rock.SetFrame(edgeSheet, frame, EdgeSheetColumns);
+                rock.Place(new Vector3(x, -0.02f, z), new Vector3(scale * flip, scale, 1f));
+            }
+            for (int i = used; i < EdgeRockSlots; i++) _edgeRocks[i].Visible = false;
+
+            const float pebbleSpacing = 0.3f;
+            used = 0;
+            first = Math.Ceiling((front - CorridorFar) / pebbleSpacing);
+            last = Math.Floor((front - CorridorNear) / pebbleSpacing);
+            for (double k = first; k <= last && used < PebbleSlots - 1; k++)
+            for (int side = -1; side <= 1; side += 2)
+            {
+                float seed = (float)k * 2f + side + 0.5f;
+                if (DescentArt.Hash(seed, 41) < 0.5f) continue;
+                float spread = DescentArt.Hash(seed, 43);
+                float inset = 0.08f + spread * spread * 0.5f; // mais cascalho junto da parede, pouco no meio
+                float z = (float)(front - k * pebbleSpacing) + (DescentArt.Hash(seed, 45) - 0.5f) * pebbleSpacing;
+                float scale = EdgeFrameMeters * (0.8f + DescentArt.Hash(seed, 47) * 0.4f);
+                float flip = DescentArt.Hash(seed, 49) < 0.5f ? -1f : 1f;
+                var pebble = _pebbles[used++];
+                pebble.SetFrame(edgeSheet, PebbleFirstFrame + (int)(DescentArt.Hash(seed, 51) * PebbleFrames * 0.999f),
+                                EdgeSheetColumns);
+                pebble.Place(new Vector3(side * (halfWidth - inset), -0.01f, z), new Vector3(scale * flip, scale, 1f));
+            }
+            for (int i = used; i < PebbleSlots; i++) _pebbles[i].Visible = false;
         }
     }
 }

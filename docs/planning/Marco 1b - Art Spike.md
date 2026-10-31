@@ -347,6 +347,29 @@ Os quatro tons emendam sem costura com eles mesmos. Na prévia ao lado da parede
 
 **Critério de pronto:** o Bruno aprovou os esteios no Moto G75; o portal do pack não é mais usado; CREDITS.md em dia.
 
+### E11 — Suavizar o encontro do chão com a parede (prévia) — pedida pelo Bruno em 2026-10-31
+
+**Por quê:** no Moto G75 o canto entre o chão e a parede fica "chapado": o chão tem o mesmo brilho até a parede, as pedras da beira são uma imagem só em fila, e a parede é uma faixa reta. A referência que o Bruno trouxe escurece o chão junto da parede e quebra a linha com pedras, cascalho e plantas.
+
+**A prévia** (capturas da mesma cena, lado a lado; cada uma soma à anterior; nada muda no jogo até a escolha: o `edgeLook` do `DescentStage` fica em 0):
+
+| | O que muda | Arte nova? |
+|---|---|---|
+| **A** | como está hoje | — |
+| **B** | **sombra de contato** no shader do corredor: o chão escurece até 1,3 m da parede e o pé da parede até 0,9 m (75% no canto), em 4 degraus com pontilhado de 4×4 nos pixels da tela (sombra de pixel art, não degradê) | não |
+| **C** | **beira variada**: 9 pedras de formas e tamanhos diferentes (0,4–0,95 m), espelhadas ao acaso, encostadas na parede, e **cascalho** espalhado, mais denso junto da parede | recortes dos `props1` do *Pixel Fantasy Caves* (pack já usado, fora do git), redesenhados na paleta cinza da pedra de hoje (`rock_t1`) |
+| **D** | **enfeites**: de vez em quando, mato ou pedra com musgo no lugar de uma pedra | recortes dos `props2` do mesmo pack |
+
+**Caminho para a versão final, se aprovada:** os tons de transição do Apellon (`tileset_ground_01_02` … `_03_04`, guardados na E10) fazem à mão o mesmo degradê da B, e a pedra `tileset_ground_01_rock_02` é a pedra no estilo dele; enfeites próprios de cada bioma (cogumelos, cristais pequenos) são pedido de arte para o M10. A geração da folha da beira (hoje um script fora do setup) passa para o `CorridorArtSetup`, e um botão no DBG → Câmera alterna A–D no aparelho.
+
+**Folha da beira:** `Generated/edge_sheet.png` (fora do git, como as outras texturas derivadas do pack) sai de `python tools/art/edge_sheet.py`. Sem ela, C e D mostram a beira de hoje.
+
+**Resultado (2026-10-31):** o Bruno viu as capturas A–D e **não gostou visualmente de nenhuma** ("não ficaram como eu gostaria"), mas elas servem de base para o que ele quer no futuro. **Fica o original (A)** como padrão, e as quatro ficam no DBG para ele comparar jogando. A versão final volta com arte própria (caminho acima).
+
+**Como testar:** abrir a cena `Game` e dar Play (ou no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)`); **DBG → Câmera → "Beira A"**: cada toque passa para a próxima (A → B → C → D → A), e o botão mostra a atual. Não fica salvo: ao reabrir o jogo volta para A.
+
+**Critério de pronto da prévia:** as quatro no DBG, o jogo no A, testes verdes. **Da versão final** (fora deste marco): arte própria aprovada pelo Bruno no Moto G75; nenhuma alocação por quadro a mais.
+
 ## O que fica de fora
 - **Troca de caverna jogando** (Letrado, PASSAR DE CAVERNA): M8.
 - **Novas regras:** nada muda em valores de regra; o espaço entre cristais (2 un) continua.
