@@ -45,14 +45,15 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>
-        /// 30 min de jogo com a política "junta para a mais barata", para o protótipo e o GDD v1, com três sementes.
+        /// 30 min de jogo com a política "junta para a mais barata", para o protótipo, o GDD v1 e o GDD v5 (D-87), com três
+        /// sementes. O v5 só tem a caverna 1 (as cavernas entram no M8).
         /// </summary>
         public static string BuildEconomyReport()
         {
             ProjectSetup.EnsurePrototypeBalance();
             var text = new StringBuilder();
             text.AppendLine("[Economia] 30 min de jogo, comprando sempre a melhoria mais barata assim que der.");
-            foreach (var path in new[] { ProjectSetup.PrototypeBalancePath, ProjectSetup.GddBalancePath })
+            foreach (var path in new[] { ProjectSetup.PrototypeBalancePath, ProjectSetup.GddBalancePath, ProjectSetup.GddV5BalancePath })
             {
                 var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(path);
                 if (asset == null)

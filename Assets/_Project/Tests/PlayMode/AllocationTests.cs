@@ -84,6 +84,25 @@ namespace MinersIdle.Tests
             yield return Settle();
         }
 
+        /// <summary>
+        /// Alocações de <paramref name="action"/> e quantas quebras e nascimentos aconteceram nela. Com o toque do GDD v5
+        /// (33% do golpe, D-86/D-103) um toque pode quebrar o cristal; a quebra e o nascimento alocam de propósito
+        /// (<see cref="MaxAllocsPerEvent"/>), então o teto de cada medida desconta esses eventos.
+        /// </summary>
+        int AllocationsAndEvents(Action action, out int events)
+        {
+            var simulation = _runner.Simulation;
+            int count = 0;
+            Action<Crystal> onEvent = _ => count++;
+            simulation.CrystalBroken += onEvent;
+            simulation.CrystalSpawned += onEvent;
+            int allocations = Allocations(action);
+            simulation.CrystalBroken -= onEvent;
+            simulation.CrystalSpawned -= onEvent;
+            events = count;
+            return allocations;
+        }
+
         /// <summary>Deixa faíscas, textos e lascas voltarem aos pools e o combo zerar (1 s de jogo sem toque).</summary>
         static IEnumerator Settle() => new WaitForSecondsRealtime(1.5f);
 
@@ -94,21 +113,23 @@ namespace MinersIdle.Tests
             var simulation = _runner.Simulation;
             Assume.That(simulation.Miner.Target, Is.Not.Null);
 
-            int tap = Allocations(() => simulation.Tap());
+            int tap = AllocationsAndEvents(() => simulation.Tap(), out int tapEvents);
             yield return Settle();
 
             _runner.ForceCritical = true;
-            int critical = Allocations(() => simulation.Tap());
+            int critical = AllocationsAndEvents(() => simulation.Tap(), out int criticalEvents);
             _runner.ForceCritical = false;
             yield return Settle();
 
             // O toque de verdade: passa pela checagem "caiu na interface?" (raycast de UI) antes de virar Tap().
-            int screenTap = Allocations(() => _tapInput.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)));
+            int screenTap = AllocationsAndEvents(
+                () => _tapInput.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), out int screenEvents);
 
-            Debug.Log($"[Alloc] toque {tap} · crítico {critical} · toque na tela {screenTap}");
-            Assert.That(tap, Is.Zero, "toque (golpe, tremor, faíscas, som)");
-            Assert.That(critical, Is.Zero, "crítico (CRÍTICO!, tremor de tela, som)");
-            Assert.That(screenTap, Is.Zero, "toque na tela, com a checagem da interface");
+            Debug.Log($"[Alloc] toque {tap} · crítico {critical} · toque na tela {screenTap} " +
+                      $"(quebras e nascimentos: {tapEvents} · {criticalEvents} · {screenEvents})");
+            Assert.That(tap, Is.LessThanOrEqualTo(MaxAllocsPerEvent * tapEvents), "toque (golpe, tremor, faíscas, som)");
+            Assert.That(critical, Is.LessThanOrEqualTo(MaxAllocsPerEvent * criticalEvents), "crítico (CRÍTICO!, tremor de tela, som)");
+            Assert.That(screenTap, Is.LessThanOrEqualTo(MaxAllocsPerEvent * screenEvents), "toque na tela, com a checagem da interface");
         }
 
         [UnityTest]
@@ -119,14 +140,18 @@ namespace MinersIdle.Tests
             simulation.Tap(); // combo 1: o "xN" ainda não aparece
 
             yield return null;
-            int combo = Allocations(() => simulation.Tap()); // "x2" aparece
-            int comboTaps = Allocations(() => { for (int i = 0; i < 7; i++) simulation.Tap(); }); // x3…x9
-            int milestone = Allocations(() => simulation.Tap()); // x10 e o "x10!"
+            int combo = AllocationsAndEvents(() => simulation.Tap(), out int comboEvents); // "x2" aparece
+            int comboTaps = AllocationsAndEvents(
+                () => { for (int i = 0; i < 7; i++) simulation.Tap(); }, out int comboTapsEvents); // x3…x9
+            int milestone = AllocationsAndEvents(() => simulation.Tap(), out int milestoneEvents); // x10 e o "x10!"
 
-            Debug.Log($"[Alloc] x2 {combo} · x3…x9 {comboTaps} · x10 {milestone}");
-            Assert.That(combo, Is.LessThanOrEqualTo(EditorAllocsPerSetText), "x2");
-            Assert.That(comboTaps, Is.LessThanOrEqualTo(7 * EditorAllocsPerSetText), "x3…x9: só o SetText do \"xN\"");
-            Assert.That(milestone, Is.LessThanOrEqualTo(2 * EditorAllocsPerSetText), "x10: \"xN\" e \"x10!\" pelo SetText");
+            Debug.Log($"[Alloc] x2 {combo} · x3…x9 {comboTaps} · x10 {milestone} " +
+                      $"(quebras e nascimentos: {comboEvents} · {comboTapsEvents} · {milestoneEvents})");
+            Assert.That(combo, Is.LessThanOrEqualTo(EditorAllocsPerSetText + MaxAllocsPerEvent * comboEvents), "x2");
+            Assert.That(comboTaps, Is.LessThanOrEqualTo(7 * EditorAllocsPerSetText + MaxAllocsPerEvent * comboTapsEvents),
+                        "x3…x9: só o SetText do \"xN\"");
+            Assert.That(milestone, Is.LessThanOrEqualTo(2 * EditorAllocsPerSetText + MaxAllocsPerEvent * milestoneEvents),
+                        "x10: \"xN\" e \"x10!\" pelo SetText");
         }
 
         [UnityTest]

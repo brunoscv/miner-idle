@@ -139,9 +139,16 @@ namespace MinersIdle.Tests
             Assert.That(simulation.Stats.HitInterval, Is.LessThan(interval));
             Assert.That(hud.SpeedText, Is.EqualTo(NumberFormatter.FormatSeconds(simulation.Stats.HitInterval)));
 
+            // As Botas só existem no protótipo; no GDD v5 (D-103) a linha vem desligada e o botão não compra nada.
             double walk = simulation.Stats.WalkSpeed;
             Click("Content/Buttons/BuyBoots");
-            Assert.That(simulation.Stats.WalkSpeed, Is.GreaterThan(walk));
+            if (economy.Get(UpgradeId.Boots).IsEnabled)
+                Assert.That(simulation.Stats.WalkSpeed, Is.GreaterThan(walk));
+            else
+            {
+                Assert.That(simulation.State.LevelOf(UpgradeId.Boots), Is.EqualTo(0), "linha desligada: nada comprado");
+                Assert.That(simulation.Stats.WalkSpeed, Is.EqualTo(walk));
+            }
 
             Click("Content/Buttons/BuyMining");
             Assert.That(simulation.State.LevelOf(UpgradeId.Mining), Is.EqualTo(1));

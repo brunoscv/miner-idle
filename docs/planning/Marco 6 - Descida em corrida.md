@@ -148,13 +148,42 @@ O DBG de antes continua, com os atalhos de sempre (tempo ×20, gerar cristal, qu
 - **Relatório de economia** (`Tools → Miners Idle → Debug → Relatório de economia`) antes (tag `v0.5-campo-aberto`) e depois, nos 3 perfis: lascas por minuto e tempo até cada compra. Os números vão para você comparar; nenhum valor muda sem decisão.
 - **10 min no Moto G75** (o teste herdado do M5 pela D-59): tocando, comprando e deixando minerar sozinho, com a medição do DBG (fps, quadros lentos, GC).
 - A pergunta do marco: **"a descida está gostosa?"**
+- **GDD v5 (D-86, D-87, aprovadas em 2026-10-31):** o relatório passa a medir também o `Balance_GDD_v5`, com o toque de 33%.
+- **O teste de 10 min usa o v5 (D-103, 2026-10-31):** o setup troca o balanço da cena para o `Balance_GDD_v5`. A loja mostra Picareta, Velocidade, Mineração e Picareta Dupla; as Botas (limite 0 no v5) somem. Antes do teste, apagar o save no DBG.
+
+### Roteiro do teste de 10 min (Moto G75, GDD v5)
+
+1. `Tools → Miners Idle → Build → Rodar no celular (Android)` (ou `bash tools/build/run-android.sh` no Terminal, com o Editor fechado).
+2. No jogo, **DBG → Apagar save**: o jogo recomeça do zero, já no v5.
+3. Jogue **10 min de verdade** (sem Tempo ×20): toque bastante no começo, compre na LOJA quando der e deixe minerar sozinho por alguns minutos.
+4. Ao fim, anote no DBG: **fps, quadros lentos e GC**. Anote também mais ou menos quando saiu a 1ª compra (o relatório prevê ~3min43 sem tocar; tocando deve sair antes).
+5. Responda: **a descida está gostosa?** E o ritmo do v5: começo lento demais? A Mineração deixa tudo fácil cedo demais (G17)?
+
+**1ª rodada no G75 (2026-10-31, ~4 min de jogo):** o Bruno **gostou do fluxo, da velocidade, do tempo das coisas e da descida**. O DBG mostrou 60 fps de média; os quadros lentos ficaram cobertos na foto, e o pior quadro (1.078 ms) deve ser o app indo e voltando do segundo plano, porque a medição não para quando o app é pausado. A "loja com preço $0" era o 5 da fonte, que nesse tamanho parece um S: o preço era 50. Falta a rodada de 10 min com os números do DBG inteiros.
+
+### Resultado do relatório (2026-10-31)
+
+30 min de jogo, comprando sempre a melhoria mais barata assim que der, sementes 1–3 (os números variam menos de 2% entre elas; abaixo, a semente 1). O relatório não toca na tela, então o toque de 33% não entra nestes números.
+
+| Asset | Versão | 1ª compra | Ritmo 5 / 10 / 30 min (lascas/min) | Compras | Lascas ganhas |
+|---|---|---|---|---|---|
+| Protótipo | **antes** (mapa aberto, `v0.5-campo-aberto`) | 1min52 | 7,4 / 9,2 / 12,3 | 13 | 295 |
+| Protótipo | **depois** (fila no corredor) | 1min43 | 9,5 / 12,0 / 20,2 | 16 | 424 |
+| GDD v1 | antes = depois | nenhuma | 0,6 / 0,6 / 0,6 | 0 | 18 |
+| **GDD v5** (D-87) | depois | **3min43** | 15,8 / 34,6 / **272,8** | 16 | 4.760 |
+
+**O que os números dizem:**
+1. **A fila rende mais que o mapa, como previsto** (R-01, R-23): +27% aos 5 min, +30% aos 10 e +64% aos 30, e +44% de lascas no total. O anão anda só 1 m entre cristais em vez de atravessar o mapa. A 1ª compra continua dentro da meta do protótipo (< 3 min, D-35).
+2. **O v1 continua travado:** um cristal leva 100 s (dano 0,5, golpe a cada 5 s, vida 10), e em 30 min não sai nenhuma compra. Já era o achado C-01.
+3. **O v5 começa mais devagar e acelera muito.** A 1ª compra sai aos 3min43, acima da meta de 3 min do protótipo: são 50 lascas a 1 por cristal. Aos 30 min o ritmo é ~13× o do protótipo, porque **a Mineração custa `50 × 1,2^(n−1)` e dá +100% por nível**: em 30 min o jogador compra os 10 níveis e passa a ganhar ×11 por cristal. Picareta e Velocidade ficam no nível 3. Pergunta ao Apellon: **G17**.
+4. **Limite da medida:** o v5 aqui é só a caverna 1. A vida (`10 × 8^(c−1)`) e as lascas (`1 × 3^(c−1)`) das cavernas seguintes entram no M8, e é lá que o ritmo do v5 se mede de verdade.
 
 ## Como testar (Bruno) — ao fim do marco
 
 1. **Rodar no celular**.
 2. O anão corre na sua direção, as paredes passam, os cristais vêm por baixo; ele para em cada um, bate e quebra; a lasca voa até LASCAS.
 3. Toque na tela: o cristal treme, sai faísca, a barra cai mais rápido; combo e crítico aparecem como no M5.
-4. LOJA: compre Picareta, Velocidade e Botas; o anão bate mais forte, mais rápido e corre mais rápido. A mineração continua com a loja aberta.
+4. LOJA: compre Picareta, Velocidade e Mineração; o anão bate mais forte e mais rápido, e cada cristal rende mais lascas. As Botas não aparecem no v5 (D-103). A mineração continua com a loja aberta.
 5. Feche e reabra o app: as lascas e as melhorias continuam.
 6. DBG: os − e + da câmera ajustam o enquadramento; Tempo ×20 e Toques auto funcionam.
 7. Jogue 10 minutos e mande os números do DBG.
@@ -164,7 +193,7 @@ O DBG de antes continua, com os atalhos de sempre (tempo ×20, gerar cristal, qu
 - [ ] Fila de cristais no núcleo, com os testes do mapa reescritos para ela (nenhum apagado) e o determinismo mantido.
 - [ ] A cena `Game` é o corredor, com o jogo inteiro funcionando (golpe, toque, crítico, combo, loja, save).
 - [ ] Feedback do M5 no corredor; nenhuma alocação por quadro.
-- [ ] Relatório de economia comparado (antes × depois).
+- [x] Relatório de economia comparado (antes × depois), com o GDD v5 (2026-10-31).
 - [ ] 10 min no Moto G75 a 60 fps; você aprova a sensação de descida.
 
 ## Fora deste marco
@@ -192,4 +221,4 @@ E1 ✅ · E2 8–12 h · E3 12–18 h · E4 6–10 h · E5 4–6 h → **30–46
 | E2 A fila no núcleo | ✅ validada pelo Bruno em 2026-10-22 | Core: `CrystalTrack` (fila em ordem de distância; nascimento por tempo no fim da fila, a ≥ 12 un do anão e a 2 un do último; fila inicial de 10 a partir de 3 un), `Crystal.Distance`, `Miner.Distance` com os estados Correndo e Batendo (sem alvo, continua correndo), alvo = primeiro da fila. Saem `CrystalField`, `TargetSelector`, o lote e a posição 2D. A simulação passa a ter **um só sorteio** (o do crítico): os cristais nascem em lugares fixos. Asset: `firstCrystalDistance` 3 e `spawnDistance` 12 nos dois balanços (sem área do mapa). Vista de cima provisória: o anão parado no alto e a fila subindo por uma faixa vertical. DBG: "Descida N un" no lugar do lote. **Achado:** `CrystalSpawned?.Invoke(TrySpawn())` pulava o nascimento quando ninguém escutava o evento (só nos testes e no relatório de economia; no jogo sempre há quem escute); corrigido e anotado no código. Testes reescritos para a fila, nenhum apagado: `MiningSimulationTests` (14), `CrystalTrackTests` (8, era `TargetSelectorTests`), `DebugCommandsTests`, `StrikeTests` (o teste de nascimento passa a comparar o instante, não o lugar), `MiningSceneTests`. Primeira medida da fila: 1 h sem compras = 342 quebras (~5,7 lascas/min; o mapa dava ~5). Em batch: setup ok, EditMode **113/113**, PlayMode **33/33** |
 | E3 O jogo no corredor | ✅ validada pelo Bruno no Moto G75 em 2026-10-22 (sons, críticos e loja ok; pediu efeitos mais fortes na vista de frente, que viram a E4) | Presentation: `DescentStage` passa a ser dirigido pela `MiningSimulation` (distância do anão e dos cristais × 0,5 m, D-58); o golpe anima pelo relógio do golpe da regra (a picareta desce no instante do golpe); barra de vida só no alvo (REQ-CRY-03), acima dele. O 3D fica em y = −1000 (fora da vista da câmera de cima) e a textura de 270 px é mostrada num quadro atrás dos sprites, pela câmera da tela: os efeitos 2D do M5 (faíscas, textos, lasca voando, tremor) continuam funcionando, com as posições vindas do corredor (`CrystalOnScreen`, `MinerOnScreen`). O quadro sai 6% maior que a tela (e o campo de visão também), para o tremor não mostrar a borda. UI: `DescentCameraPanel` (os − e + da câmera, Resolução, Padrão D-50, Fechar), aberto pelo botão **Câmera** do DBG no lugar do "Mostrar ordem"; fica aberto com o DBG fechado. Saíram (D-61): a cena `Descida`, o loop só visual, `MapView`, `CrystalFieldView`, `CrystalView` (e o prefab), `MinerView`, `TargetLineView`. O setup migra a cena Game (tira a vista de cima, cria a descida e o painel). Testes: `DescentTests` (6) olhando a cena Game (render, corrida, quebra, desenho sem alocação, painel de câmera), `MiningSceneTests` e `DebugPanelTests` reescritos para o corredor. Conferido em capturas renderizadas de verdade. **Para você decidir:** com a fila cheia (2 un = 1 m entre cristais, D-60), os cristais seguintes ficam entre o anão e a câmera e cobrem o alvo e as pernas do anão. Em batch: setup ok, EditMode **113/113**, PlayMode **33/33** |
 | E4 Feedback e DBG | ✅ validada pelo Bruno no Moto G75 em 2026-10-22 ("MUITO melhor") | Os efeitos do M5 foram calibrados para a vista de cima (cristal de ~1 unidade na tela); na vista de frente o cristal tem ~7 e o anão ~10, e tudo ficou tímido. `MiningFeedbackView`: faíscas, textos e lasca ×3,5 (`sizeScale`); tremor leve a cada golpe; crítico com chuva de faíscas, texto grande, tremor 1,0 e clarão amarelo; quebra com estilhaços na cor do cristal, clarão branco, tremor 0,8 e lasca maior num arco mais alto; marco do combo com tremor 0,6. `SparkBurst` com tamanho e duração por faísca (gravidade proporcional ao tamanho); `ShardFlight` com escala por lasca. Clarão: quadrado do tamanho da tela por cima de tudo (`Effects/Flash`). **DBG → Câmera → Intensidade dos efeitos** (×0,25 a ×3) multiplica peças, tremores e clarões; ficou no padrão ×1. Teste PlayMode `Break_FlashesAndBursts_StrongerWithIntensity`. Setup aplicado pelo Editor; **os testes da E4 ainda não rodaram em batch** (Editor aberto), ficam para a próxima vez que ele estiver fechado. **Depois (D-81, D-83):** o clarão saiu inteiro (nem crítico nem quebra piscam), e o tremor ficou golpe 0,25 por 0,12 s, crítico 0,4, quebra 0,5, marco 0,25 (os valores da cena; os 1,0 / 0,8 / 0,6 acima nunca chegaram nela). O teste virou `Break_ShakesAndBursts_StrongerWithIntensity` |
-| E5 Economia e celular | ⏳ | |
+| E5 Economia e celular | 🔨 relatório feito em 2026-10-31; v5 ativo (D-103); falta o teste de 10 min no Moto G75 | `Balance_GDD_v5` criado pelo setup (D-87: dano 5 × 2^(n−1), intervalo 2,0 → 0,1 s, Velocidade 50 × 5^(n−1), Mineração +100%/nível até +1000%, Dupla 5.000, crítico 5% × 2, toque 33% da D-86; cristal da caverna 1, D-92) e incluído no relatório. Pela D-103 o setup o liga na cena e a loja esconde as linhas com limite 0 (Botas). Testes ajustados ao v5, sem apagar nenhum: os de alocação descontam quebras e nascimentos (o toque de 33% pode quebrar o cristal), o do DBG confere que as Botas desligadas não compram nada e o do save compra Velocidade no lugar das Botas. Resultado e roteiro na seção E5. O "antes" foi medido numa cópia de trabalho da tag `v0.5-campo-aberto`, removida depois. Teste EditMode `GddV5_HasTheGddNumbers`. Em batch: setup ok, EditMode **126/126**, PlayMode **57/57** |

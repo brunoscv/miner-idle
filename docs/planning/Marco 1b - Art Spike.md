@@ -233,7 +233,7 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 - `tileset_ground_01_rock_01`, `_rock_02` e `_hole` são o tom `01` com uma pedra pequena, uma pedra grande e um buraco por cima. Como o chão por baixo usa as mesmas 4 cores, **o setup gera pedra e buraco em qualquer tom só trocando as 4 cores**: o Apellon não precisa redesenhar nada.
 - A mesma troca de 4 cores gera **qualquer piso novo** a partir do desenho dele (é o que a prévia abaixo faz).
 
-**A tabela do GDD v5 (§6), como a extração do PDF permitiu ler** (as colunas saíram embaralhadas; a linha da caverna 9 não saiu: confirmar com o Apellon):
+**A tabela do GDD v5 (§6), como a extração do PDF permitiu ler** (as colunas saíram embaralhadas; a linha da caverna 9 foi achada depois, na E5 do M6: a paleta "azul abissal" da caverna 9 ainda não tem o turquesa do GDD):
 
 | Caverna | Sensação (nome proposto) | Piso no GDD |
 |---|---|---|
@@ -245,7 +245,7 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 | 6 | Fenda cristalina | Basalto violeta |
 | 7 | Profundidade térmica | Rocha ferruginosa |
 | 8 | Abismo mineral | Obsidiana rachada |
-| 9 | Núcleo profundo | (ilegível) |
+| 9 | Núcleo profundo | Rocha negra com brilho interno (cor dominante: turquesa elétrico) |
 | 10 | Coração do vulcão | Solo vulcânico, magma e brasas |
 
 **Escolhas para você (com a prévia gerada a partir dos tiles do Apellon):**

@@ -90,7 +90,7 @@ namespace MinersIdle.EditorTools
 
             if (GameObject.Find(MiningRootName) == null)
             {
-                var rules = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(ProjectSetup.PrototypeBalancePath);
+                var rules = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(ProjectSetup.ActiveBalancePath);
                 var root = new GameObject(MiningRootName);
                 SetReferences(root.AddComponent<MiningRunner>(), ("rules", rules));
 
@@ -102,6 +102,7 @@ namespace MinersIdle.EditorTools
                 Debug.Log("[Setup] Partida (Mining) criada na cena Game.");
             }
 
+            changed |= EnsureActiveBalance();
             changed |= EnsureTapInput();
             changed |= EnsureHud();
             changed |= EnsureHudBlocksTaps();
@@ -231,6 +232,28 @@ namespace MinersIdle.EditorTools
             renderer.sprite = sprite;
             renderer.color = color;
             return renderer;
+        }
+
+        /// <summary>
+        /// O balanço do jogo passa do protótipo para o GDD v5 (D-103). Só troca se a partida ainda estiver no protótipo;
+        /// outro asset posto à mão fica. Devolve se mudou.
+        /// </summary>
+        static bool EnsureActiveBalance()
+        {
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            if (runner == null) return false;
+
+            var so = new SerializedObject(runner);
+            var rules = so.FindProperty("rules");
+            if (rules.objectReferenceValue != null
+                && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.PrototypeBalancePath) return false;
+
+            var active = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(ProjectSetup.ActiveBalancePath);
+            if (active == null || rules.objectReferenceValue == active) return false;
+            rules.objectReferenceValue = active;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log($"[Setup] Balanço do jogo = {active.name} (D-103).");
+            return true;
         }
 
         /// <summary>Preenche campos privados com [SerializeField] (o mesmo que arrastar no Inspector).</summary>

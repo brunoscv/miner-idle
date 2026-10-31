@@ -6,9 +6,9 @@ namespace MinersIdle.Game
 {
     /// <summary>
     /// Os valores do jogo editáveis no Inspector (Arquitetura Técnica, D-T3): o loop de mineração (M2) e as melhorias (M3).
-    /// O asset ativo é <c>Data/Balance_Prototipo</c>: valores de protótipo (D-29, D-35), não balanceamento; os padrões
-    /// abaixo são as tabelas dos planos dos Marcos 2 e 3. <c>Data/Balance_GDD_v1</c> guarda os números literais do GDD
-    /// para comparação. O Núcleo recebe cópias somente leitura (<see cref="ToRules"/>, <see cref="ToEconomy"/>).
+    /// Os padrões abaixo são os valores de protótipo (<c>Data/Balance_Prototipo</c>, D-29, D-35), das tabelas dos planos
+    /// dos Marcos 2 e 3. Desde a D-103 o asset ativo é <c>Data/Balance_GDD_v5</c> (os números do GDD v5);
+    /// <c>Data/Balance_GDD_v1</c> e o protótipo ficam para comparação. O Núcleo recebe cópias somente leitura (<see cref="ToRules"/>, <see cref="ToEconomy"/>).
     /// </summary>
     [CreateAssetMenu(menuName = "Miners Idle/Valores de mineração", fileName = "Balance_Prototipo")]
     public sealed class MiningRulesAsset : ScriptableObject

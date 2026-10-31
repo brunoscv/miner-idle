@@ -46,6 +46,12 @@ namespace MinersIdle.EditorTools
         /// <summary>Os números literais do GDD v1, guardados para comparação (Marco 3, D-35). Não é o asset ativo.</summary>
         public const string GddBalancePath = "Assets/_Project/Data/Balance_GDD_v1.asset";
 
+        /// <summary>Os números do GDD v5 (D-87, D-92; toque de 33%, D-86), para comparação. Não é o asset ativo.</summary>
+        public const string GddV5BalancePath = "Assets/_Project/Data/Balance_GDD_v5.asset";
+
+        /// <summary>O balanço que o jogo usa: o GDD v5 desde a D-103 (antes, o protótipo).</summary>
+        public const string ActiveBalancePath = GddV5BalancePath;
+
         public const string PackageId = "com.brunocarvalho.minersidle";
         public const string VersionName = "0.1.0";
 
@@ -77,6 +83,7 @@ namespace MinersIdle.EditorTools
             ConfigureAudio();
             EnsurePrototypeBalance();
             EnsureGddBalance();
+            EnsureGddV5Balance();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -356,6 +363,37 @@ namespace MinersIdle.EditorTools
 
             AssetDatabase.CreateAsset(asset, GddBalancePath);
             Debug.Log($"[Setup] Valores do GDD v1 criados em {GddBalancePath}.");
+        }
+
+        /// <summary>
+        /// GDD v5 §3–§4 (D-87): dano 5 × 2^(n−1) até o nível 20; intervalo de 2,0 s, −0,1 s por nível até 0,1 s; Mineração
+        /// +100% por nível até +1000%; Dupla 5.000; crítico 5% × 2; toque 33% (D-86). O cristal é o da caverna 1 (D-92:
+        /// vida 10 × 8^0, lascas 1 × 3^0): as cavernas entram no M8. Botas não existem no v5 (linha desligada).
+        /// </summary>
+        static void EnsureGddV5Balance()
+        {
+            if (File.Exists(GddV5BalancePath)) return;
+
+            EnsureFolder(Path.GetDirectoryName(GddV5BalancePath)?.Replace('\\', '/'));
+            var asset = ScriptableObject.CreateInstance<MiningRulesAsset>();
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("crystalHealth").doubleValue = 10;
+            serialized.FindProperty("crystalReward").doubleValue = 1;
+            serialized.FindProperty("damage").doubleValue = 5;
+            serialized.FindProperty("hitInterval").doubleValue = 2;
+            SetLine(serialized, "pickaxe", 50, 4, 19, 2);
+            SetLine(serialized, "speed", 50, 5, 19, 0.1);
+            SetLine(serialized, "mining", 50, 1.2, 10, 1);
+            SetLine(serialized, "doublePickaxe", 5000, 1, 1, 2);
+            SetLine(serialized, "boots", 0, 1, 0, 0);
+            serialized.FindProperty("minHitInterval").doubleValue = 0.1;
+            serialized.FindProperty("critChance").doubleValue = 0.05;
+            serialized.FindProperty("critMultiplier").doubleValue = 2;
+            serialized.FindProperty("tapFraction").doubleValue = 0.33;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            AssetDatabase.CreateAsset(asset, GddV5BalancePath);
+            Debug.Log($"[Setup] Valores do GDD v5 criados em {GddV5BalancePath} (D-87).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect)

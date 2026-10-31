@@ -15791,7 +15791,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dce09e198a0b704e96381f67b7d2180, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MinersIdle.Game::MinersIdle.Game.MiningRunner
-  rules: {fileID: 11400000, guid: 64a6de6ea423f6f4b985c27c2736d6f3, type: 2}
+  rules: {fileID: 11400000, guid: fc8918cab8eb24e49813f627a9430606, type: 2}
   useFixedSeed: 0
   fixedSeed: 1
 --- !u!4 &1673760090

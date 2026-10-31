@@ -10,6 +10,7 @@ namespace MinersIdle.Tests
     {
         const string PrototypePath = "Assets/_Project/Data/Balance_Prototipo.asset";
         const string GddPath = "Assets/_Project/Data/Balance_GDD_v1.asset";
+        const string GddV5Path = "Assets/_Project/Data/Balance_GDD_v5.asset";
         static readonly double[] Checkpoints = { 300, 600 };
 
         static MiningRulesAsset Load(string path)
@@ -79,6 +80,29 @@ namespace MinersIdle.Tests
             Assert.That(slow.Earned, Is.LessThan(fast.Earned));
             if (slow.FirstPurchaseAt.HasValue)
                 Assert.That(slow.FirstPurchaseAt.Value, Is.GreaterThan(fast.FirstPurchaseAt.Value));
+        }
+
+        /// <summary>O asset do GDD v5 (D-87) tem os números do GDD §3–§4 e o toque de 33% (D-86).</summary>
+        [Test]
+        public void GddV5_HasTheGddNumbers()
+        {
+            var values = new SerializedObject(Load(GddV5Path));
+            double Value(string field) => values.FindProperty(field).doubleValue;
+
+            Assert.That(Value("damage"), Is.EqualTo(5), "dano 5 × 2^(n−1)");
+            Assert.That(Value("pickaxe.baseCost"), Is.EqualTo(50));
+            Assert.That(Value("pickaxe.costGrowth"), Is.EqualTo(4));
+            Assert.That(values.FindProperty("pickaxe.maxLevel").intValue, Is.EqualTo(19), "nível 20 = 19 compras");
+            Assert.That(Value("hitInterval"), Is.EqualTo(2), "parte de 2,0 s");
+            Assert.That(Value("speed.costGrowth"), Is.EqualTo(5));
+            Assert.That(Value("hitInterval") - values.FindProperty("speed.maxLevel").intValue * Value("speed.effect"),
+                Is.EqualTo(Value("minHitInterval")).Within(1e-9), "19 níveis de −0,1 s chegam ao mínimo de 0,1 s");
+            Assert.That(values.FindProperty("mining.maxLevel").intValue * Value("mining.effect"), Is.EqualTo(10), "até +1000%");
+            Assert.That(Value("doublePickaxe.baseCost"), Is.EqualTo(5000));
+            Assert.That(Value("tapFraction"), Is.EqualTo(0.33), "toque de 33% (D-86)");
+            Assert.That(Value("critChance"), Is.EqualTo(0.05));
+            Assert.That(Value("crystalHealth"), Is.EqualTo(10), "caverna 1: 10 × 8^0 (D-92)");
+            Assert.That(Value("crystalReward"), Is.EqualTo(1), "caverna 1: 1 × 3^0 (D-92)");
         }
     }
 }

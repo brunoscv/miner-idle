@@ -82,6 +82,10 @@ namespace MinersIdle.UI
         {
             if (_entry.Locked) return;
 
+            // Linha desligada no balanço ativo (limite 0, como as Botas no GDD v5, D-103): some da loja.
+            if (gameObject.activeSelf != preview.IsEnabled) gameObject.SetActive(preview.IsEnabled);
+            if (!preview.IsEnabled) return;
+
             level.text = string.Format(_catalog.LevelFormat, preview.Level, preview.MaxLevel);
             SetBuyable(preview.State == UpgradeButtonState.Purchasable);
 

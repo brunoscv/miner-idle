@@ -52,7 +52,7 @@ namespace MinersIdle.Tests
             var simulation = runner.Simulation;
             simulation.AddShards(1000);
             Assert.That(simulation.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased)); // salva sozinho
-            Assert.That(simulation.Purchase(UpgradeId.Boots), Is.EqualTo(PurchaseResult.Purchased));
+            Assert.That(simulation.Purchase(UpgradeId.Speed), Is.EqualTo(PurchaseResult.Purchased)); // linha do protótipo e do v5
             double shards = simulation.State.Shards;
             Assert.That(File.Exists(Path.Combine(_dir, FileSaveStore.FileName)), Is.True, "a compra gravou o save");
 
@@ -63,7 +63,7 @@ namespace MinersIdle.Tests
             Assert.That(reopened, Is.Not.SameAs(simulation));
             Assert.That(reopened.State.Shards, Is.EqualTo(shards));
             Assert.That(reopened.State.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(1));
-            Assert.That(reopened.State.LevelOf(UpgradeId.Boots), Is.EqualTo(1));
+            Assert.That(reopened.State.LevelOf(UpgradeId.Speed), Is.EqualTo(1));
             Assert.That(reopened.Stats.Damage, Is.GreaterThan(reopened.Rules.Damage), "atributos recalculados do save");
 
             var hud = UnityEngine.Object.FindAnyObjectByType<HudView>();
