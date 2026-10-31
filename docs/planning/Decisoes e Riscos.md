@@ -117,6 +117,12 @@
 |---|---|
 | **D-90** | **Começa a troca da arte de terceiros por arte própria, pelo chão** (pedido do Bruno em 2026-10-29). O chão da caverna 1 passa do calçamento do *Pixel Fantasy Caves* (D-74, fora do git) para o `tileset_ground_01`, desenhado à mão pelo Bruno (16 px exportado em 32 px), usado como PNG de 32 px a 64 px/m (tile de 0,5 m). Os tons `02`…`04` (o mesmo desenho, mais escuros) e o calçamento antigo ficam num botão do DBG para escolher no Moto G75; o tom escolhido vira o padrão. É a etapa **E9 do M1b**, não um marco novo; parede, esteios, pedras e interface vêm em etapas seguintes. Plano: [Marco 1b](Marco%201b%20-%20Art%20Spike.md) (E9). |
 
+### 1.6 Decididas pelo Bruno em 2026-10-31
+
+| # | Decisão |
+|---|---|
+| **D-91** | **Os esteios do corredor passam a ser arte própria** (pedido do Bruno em 2026-10-31, segue a D-90). O portal de madeira do *Pixel Fantasy Caves* (D-74, fora do git) sai e entra o `mine_wood` (do Apellon; 96×128 px, `Art/Corridor/`), no mesmo tamanho de hoje (3,4 × 4,5 m: a proporção 3:4 é a mesma). A variação com lampião (`mine_wood_lamp`) e o lampião solto ficam guardados, sem uso. Junto, os ícones `icon_cave` e `icon_crystal` foram trocados pelas versões novas (mesmo arquivo, mesmo GUID). É a etapa **E10 do M1b**. Plano: [Marco 1b](Marco%201b%20-%20Art%20Spike.md) (E10). |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.

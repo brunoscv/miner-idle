@@ -11456,7 +11456,7 @@ MonoBehaviour:
   ceilingTexture: {fileID: 2800000, guid: a78070a9d9af0c540817df3c35a54cc4, type: 3}
   texturePixelsPerMeter: 64
   wallTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
-  supportTexture: {fileID: 2800000, guid: 0abbcfe89fea7df43b98208baedc1937, type: 3}
+  supportTexture: {fileID: 2800000, guid: f53e138471882a447a0a70772edd7076, type: 3}
   supportSize: {x: 3.4, y: 4.5}
   edgeRockTexture: {fileID: 2800000, guid: 1fd4bd83e88b4f34385e203fe186426f, type: 3}
   edgeRockSpacing: 0.7

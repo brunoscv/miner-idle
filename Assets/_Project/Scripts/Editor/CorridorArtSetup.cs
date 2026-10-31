@@ -19,7 +19,8 @@ namespace MinersIdle.EditorTools
     /// Idempotente: só gera o que falta e não sobrescreve campos preenchidos à mão.
     ///
     /// Desde a E9 (D-90), o chão é arte própria: o tile do Bruno (<c>tileset_ground_01</c>, no git) entra no lugar do
-    /// calçamento, e os outros tons (e o calçamento, enquanto o pack estiver no PC) ficam no DBG → Câmera → Chão.
+    /// calçamento, e os outros tons (e o calçamento, enquanto o pack estiver no PC) ficam no DBG → Câmera → Chão. Desde a
+    /// E10 (D-91), o esteio também é arte própria (<c>mine_wood</c>), no lugar do portal do pack.
     /// </summary>
     static class CorridorArtSetup
     {
@@ -43,6 +44,9 @@ namespace MinersIdle.EditorTools
             ("Chão 04", TileFolder + "/tileset_ground_04.png"),
             ("Calçamento", CobblePath),
         };
+
+        /// <summary>Esteio de madeira próprio (M1b E10, D-91): entra no lugar do portal do pack.</summary>
+        const string OwnSupportPath = "Assets/_Project/Art/Corridor/mine_wood.png";
 
         internal const string FloorButton = "Floor";
         const string FloorButtonLabel = "Chão";
@@ -68,6 +72,8 @@ namespace MinersIdle.EditorTools
                 foreach (var path in Directory.GetFiles(TileFolder, "tileset_ground_*.png"))
                     tiles += Configure(path.Replace('\\', '/'), TextureWrapMode.Repeat);
             if (tiles > 0) Debug.Log($"[Setup] Tiles do chão (arte própria) configurados (pixel art): {tiles}.");
+            if (Configure(OwnSupportPath, TextureWrapMode.Clamp) > 0)
+                Debug.Log("[Setup] Esteio de madeira (arte própria) configurado (pixel art).");
 
             if (!File.Exists(SourcePath))
             {
@@ -121,6 +127,7 @@ namespace MinersIdle.EditorTools
             }
             if (changed) so.FindProperty("wallTint").colorValue = WallTint;
             changed |= EnsureOwnFloor(so);
+            changed |= EnsureOwnSupport(so);
             changed |= EnsureFloorOptions(so);
 
             // A pedra encosta no chão: desce as linhas transparentes de baixo do desenho.
@@ -165,6 +172,22 @@ namespace MinersIdle.EditorTools
             if (own == null) return false;
             floor.objectReferenceValue = own;
             Debug.Log("[Setup] Chão da caverna 1 = tile do Bruno (tileset_ground_01; M1b E9, D-90).");
+            return true;
+        }
+
+        /// <summary>
+        /// O esteio passa a ser o <c>mine_wood</c> (D-91): no campo vazio ou no lugar do portal do pack. Mesma proporção
+        /// 3:4 do portal, então o <c>supportSize</c> fica. Outra textura posta à mão fica. Devolve se mudou.
+        /// </summary>
+        static bool EnsureOwnSupport(SerializedObject so)
+        {
+            var support = so.FindProperty("supportTexture");
+            var current = support.objectReferenceValue;
+            if (current != null && AssetDatabase.GetAssetPath(current) != SupportPath) return false;
+            var own = AssetDatabase.LoadAssetAtPath<Texture2D>(OwnSupportPath);
+            if (own == null) return false;
+            support.objectReferenceValue = own;
+            Debug.Log("[Setup] Esteios da caverna 1 = madeira própria (mine_wood; M1b E10, D-91).");
             return true;
         }
 

@@ -268,7 +268,29 @@ Os quatro tons emendam sem costura com eles mesmos. Na prévia ao lado da parede
 
 **Esforço:** 3–5 h.
 
-**Próximas trocas (cada uma uma etapa, em ordem de quanto aparece na tela):** parede e teto (rocha escura, Pixel Fantasy) · esteios (portal, Pixel Fantasy) · pedras da beira (`rock_t1`, MineAssets) · interface (Pixel UI Kit, Fantasy UI Kit Lite, ícones Anvil). A fonte Pixelify Sans (OFL) pode ficar.
+**Próximas trocas (cada uma uma etapa, em ordem de quanto aparece na tela):** parede e teto (rocha escura, Pixel Fantasy) · ~~esteios (portal, Pixel Fantasy)~~ feito na E10 · pedras da beira (`rock_t1`, MineAssets) · interface (Pixel UI Kit, Fantasy UI Kit Lite, ícones Anvil). A fonte Pixelify Sans (OFL) pode ficar.
+
+### E10 — Esteios de madeira próprios e ícones novos (D-91) — validada pelo Bruno no Editor em 2026-10-31; falta o Moto G75
+
+**Por quê:** segue a E9: o portal de esteio do *Pixel Fantasy Caves* fica fora do git; o `mine_wood` é arte própria e vai no repositório.
+
+**O que chegou** (feito pelo Apellon; pasta `Art/new`, organizada e removida):
+
+| Arquivo | Destino | Uso |
+|---|---|---|
+| `icon_cave`, `icon_crystal` | por cima dos de `Art/UI` e `Art/Crystals` (mesmo GUID) | HUD, já em uso |
+| `mine_wood` | `Art/Corridor/` | **esteio do corredor** (esta etapa) |
+| `mine_wood_lamp`, `lamp_16x16` | `Art/Corridor/` | guardados (lampião: ideia para depois) |
+| `tileset_ground_01_hole`, `_01_rock_01`, `_01_rock_02`, `_02_03`, `_03_04` | `Art/Tile/` | guardados (pedras/buraco no chão e transições de tom precisam de decisão) |
+| os outros 10 | — | eram idênticos aos que o jogo já usa |
+
+**Passos:** o `CorridorArtSetup` importa o `mine_wood` como pixel art (Point, sem compressão, Clamp) e o põe no `supportTexture` do `DescentStage` no lugar do portal do pack (campo vazio ou com o portal; algo posto à mão fica). O `supportSize` (3,4 × 4,5 m) não muda: a proporção é a mesma.
+
+**Como testar:**
+1. Unity: `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`; abrir a cena `Game` e dar Play: os esteios são a madeira nova e o ícone da Caverna no HUD é a montanha.
+2. Moto G75: `Tools → Miners Idle → Build → Rodar no celular (Android)`; olhar a espessura da madeira contra a parede e o chão.
+
+**Critério de pronto:** o Bruno aprovou os esteios no Moto G75; o portal do pack não é mais usado; CREDITS.md em dia.
 
 ## O que fica de fora
 - **Troca de caverna jogando** (Letrado, PASSAR DE CAVERNA): M8.
