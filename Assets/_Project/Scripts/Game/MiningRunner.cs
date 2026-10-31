@@ -10,7 +10,8 @@ namespace MinersIdle.Game
     /// (M3) e a avança a cada quadro. As views só leem a simulação e escutam os eventos dela.
     ///
     /// Save (M4): o <c>GameBootstrap</c> entrega o <see cref="SaveService"/> (<see cref="UseSave"/>); daí em diante o
-    /// progresso é carregado e salvo depois de cada compra, a cada 30 s, ao minimizar e ao sair. Aberta direto (Play na
+    /// progresso é carregado e salvo depois de cada compra, a cada troca de caverna (M8), a cada 30 s, ao minimizar e ao
+    /// sair. Aberta direto (Play na
     /// cena Game, testes PlayMode), a cena roda sem save: os testes nunca mexem no progresso de quem joga.
     /// </summary>
     public sealed class MiningRunner : MonoBehaviour
@@ -81,15 +82,15 @@ namespace MinersIdle.Game
 
         void OnDestroy()
         {
-            if (Simulation != null) Simulation.UpgradePurchased -= OnUpgradePurchased;
+            Unsubscribe();
         }
 
         /// <summary>Liga o save: carrega o progresso e recomeça a partida com ele (chamado pelo <c>GameBootstrap</c>).</summary>
         public void UseSave(SaveService save)
         {
             _save = save ?? throw new ArgumentNullException(nameof(save));
-            var state = save.Load(rules.ToEconomy(), out var status);
-            Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas.");
+            var state = save.Load(rules.ToEconomy(), out var status, rules.ToRules().CaveCount);
+            Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas, caverna {state.Cave}.");
             Begin(Seed, state);
         }
 
@@ -126,7 +127,7 @@ namespace MinersIdle.Game
                 return;
             }
 
-            if (Simulation != null) Simulation.UpgradePurchased -= OnUpgradePurchased;
+            Unsubscribe();
 
             Seed = seed;
             Simulation = new MiningSimulation(
@@ -135,10 +136,21 @@ namespace MinersIdle.Game
                 ForceCritical = _forceCritical,
             };
             Simulation.UpgradePurchased += OnUpgradePurchased;
+            Simulation.CaveChanged += OnCaveChanged;
+            Simulation.HeartReached += SaveNow;
             NotifyStarted();
         }
 
+        void Unsubscribe()
+        {
+            if (Simulation == null) return;
+            Simulation.UpgradePurchased -= OnUpgradePurchased;
+            Simulation.CaveChanged -= OnCaveChanged;
+            Simulation.HeartReached -= SaveNow;
+        }
+
         void OnUpgradePurchased(UpgradeId id, int level) => SaveNow();
+        void OnCaveChanged(int cave) => SaveNow();
 
         /// <summary>
         /// Avisa cada view separadamente: uma view com erro não pode impedir as outras de se conectarem. Sem isso, um erro

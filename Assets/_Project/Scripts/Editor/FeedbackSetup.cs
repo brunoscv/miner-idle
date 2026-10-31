@@ -33,6 +33,7 @@ namespace MinersIdle.EditorTools
             if (File.Exists(TextsPath))
             {
                 EnsureCaveBannerText();
+                EnsureHeartTexts();
                 return;
             }
 
@@ -43,6 +44,7 @@ namespace MinersIdle.EditorTools
             so.FindProperty("comboFormat").stringValue = "x{0}";
             so.FindProperty("milestoneFormat").stringValue = "x{0}!";
             so.FindProperty("caveBannerFormat").stringValue = CaveBannerFormat;
+            SetHeartTexts(so);
             so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.CreateAsset(texts, TextsPath);
             Debug.Log($"[Setup] Textos do feedback criados em {TextsPath}.");
@@ -62,6 +64,28 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(texts);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Texto da faixa da caverna nos textos do feedback (M8).");
+        }
+
+        /// <summary>M8 (E3): os textos da tela do coração da montanha nos textos que já existem.</summary>
+        static void EnsureHeartTexts()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null || !string.IsNullOrEmpty(texts.HeartTitle)) return;
+
+            var so = new SerializedObject(texts);
+            SetHeartTexts(so);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Textos do coração da montanha nos textos do feedback (M8).");
+        }
+
+        static void SetHeartTexts(SerializedObject so)
+        {
+            so.FindProperty("heartTitle").stringValue = "Coração da montanha";
+            so.FindProperty("heartBodyFormat").stringValue =
+                "Você desceu as dez cavernas.\n\nTempo de jogo: {0}\nLascas coletadas: {1}";
+            so.FindProperty("heartContinue").stringValue = "CONTINUAR";
         }
 
         public static bool EnsureInScene()

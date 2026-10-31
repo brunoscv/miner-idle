@@ -88,6 +88,11 @@ namespace MinersIdle.Core
         /// debug. A quebra comum já avisa por <see cref="CrystalBroken"/>.
         /// </summary>
         public event Action<int> CaveChanged;
+        /// <summary>
+        /// A última parede caiu (M8, E3; D-112): o coração da montanha. Sai uma vez por partida; o jogo segue na última
+        /// caverna, sem passagem.
+        /// </summary>
+        public event Action HeartReached;
 
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
@@ -220,19 +225,20 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// Se o botão de passar de caverna vale agora (M8, D-110): o Letrado da caverna atual comprado, uma caverna depois
-        /// desta e nenhuma parede de pé. O fim do jogo (Letrado 10) é da E3.
+        /// Se o botão de passar de caverna vale agora (M8, D-110): o Letrado da caverna atual comprado e nenhuma parede de
+        /// pé. Na última caverna, o último Letrado leva à última parede, a do coração da montanha (D-112); depois dela, não
+        /// há mais passagem.
         /// </summary>
         public bool CanPassCave =>
             _economy.Get(UpgradeId.Letrado).IsEnabled && _state.LevelOf(UpgradeId.Letrado) >= _state.Cave
-            && _state.Cave < _rules.CaveCount && _track.Wall == null;
+            && !_state.ReachedHeart && _track.Wall == null;
 
         /// <summary>
         /// Começa a passagem para a próxima caverna (M8, E2): põe a parede no fim da fila, a
         /// <see cref="MiningRules.SpawnDistance"/> à frente do anão, onde os cristais nascem (D-107). Os cristais até ela o
         /// anão quebra normalmente; os de depois somem; nada nasce enquanto ela está de pé. A vida dela é a da D-98; ela não
-        /// paga lascas nem conta nos 100 cristais (D-108). A caverna só muda quando ela quebra. <c>false</c> se não pode
-        /// passar.
+        /// paga lascas nem conta nos 100 cristais (D-108). A caverna só muda quando ela quebra. A última parede (D-112) leva
+        /// a vida da mesma fórmula, como se houvesse uma caverna a mais. <c>false</c> se não pode passar.
         /// </summary>
         public bool PassCave()
         {
@@ -258,10 +264,17 @@ namespace MinersIdle.Core
         /// Atalho do debug: a próxima caverna agora, sem parede, como se tivesse comprado o Letrado (de graça) e passado.
         /// Uma parede de pé sai junto. Na última caverna, nada muda. <c>false</c> se não há caverna depois.
         /// </summary>
-        public bool SkipToNextCave()
+        public bool SkipToNextCave() => SkipToCave(_state.Cave + 1);
+
+        /// <summary>
+        /// Atalho do debug (M8, E3): direto para a caverna <paramref name="cave"/> (no máximo a última), com os Letrados das
+        /// cavernas de antes de graça, sem parede. <c>false</c> se ela não fica mais abaixo.
+        /// </summary>
+        public bool SkipToCave(int cave)
         {
-            if (_state.Cave >= _rules.CaveCount) return false;
-            while (_state.LevelOf(UpgradeId.Letrado) < _state.Cave) _state.RaiseLevel(UpgradeId.Letrado);
+            cave = Math.Min(cave, _rules.CaveCount);
+            if (cave <= _state.Cave) return false;
+            while (_state.LevelOf(UpgradeId.Letrado) < cave - 1) _state.RaiseLevel(UpgradeId.Letrado);
 
             var wall = _track.Wall;
             if (wall != null)
@@ -274,7 +287,7 @@ namespace MinersIdle.Core
                     TargetChanged?.Invoke(null);
                 }
             }
-            EnterCave(_state.Cave + 1);
+            EnterCave(cave);
             return true;
         }
 
@@ -367,6 +380,7 @@ namespace MinersIdle.Core
             if (step <= 0) return;
 
             Elapsed += step;
+            _state.AddPlayTime(step);
 
             // Fila cheia ou parede de pé: o relógio de nascimento espera no limite e nasce assim que der.
             _spawnTimer = SpawnWaits ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;
@@ -432,7 +446,10 @@ namespace MinersIdle.Core
             if (broke) Break(target);
         }
 
-        /// <summary>A quebra de um cristal paga e conta; a da parede (M8) não, e leva à caverna seguinte.</summary>
+        /// <summary>
+        /// A quebra de um cristal paga e conta; a da parede (M8) não, e leva à caverna seguinte ou, na última, ao coração
+        /// da montanha (D-112).
+        /// </summary>
         void Break(Crystal target)
         {
             _track.Remove(target);
@@ -443,7 +460,14 @@ namespace MinersIdle.Core
             CrystalBroken?.Invoke(target);
             if (!target.IsWall) ShardsChanged?.Invoke(_state.Shards);
             TargetChanged?.Invoke(null);
-            if (target.IsWall) EnterCave(_state.Cave + 1);
+            if (!target.IsWall) return;
+            if (_state.Cave < _rules.CaveCount)
+            {
+                EnterCave(_state.Cave + 1);
+                return;
+            }
+            _state.ReachHeart();
+            HeartReached?.Invoke();
         }
     }
 }

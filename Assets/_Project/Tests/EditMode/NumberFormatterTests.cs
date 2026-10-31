@@ -56,5 +56,18 @@ namespace MinersIdle.Tests
         {
             Assert.That(NumberFormatter.FormatSeconds(value), Is.EqualTo(expected));
         }
+
+        /// <summary>M8 (E3): o tempo de jogo da tela do coração da montanha, arredondado para baixo.</summary>
+        [TestCase(0, "0 s")]
+        [TestCase(45.9, "45 s")]
+        [TestCase(725, "12 min 05 s")]
+        [TestCase(3600, "1 h 00 min")]
+        [TestCase(11250, "3 h 07 min")]
+        [TestCase(4_000_000, "1.111 h 06 min")]
+        [TestCase(-5, "0 s")]
+        public void Duration_IsHoursMinutesSeconds(double seconds, string expected)
+        {
+            Assert.That(NumberFormatter.FormatDuration(seconds), Is.EqualTo(expected));
+        }
     }
 }

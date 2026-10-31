@@ -119,5 +119,69 @@ namespace MinersIdle.Tests
             Assert.That(simulation.State.Cave, Is.EqualTo(3));
             Assert.That(hud.CaveText, Is.EqualTo("3"));
         }
+
+        /// <summary>E3 (D-112): DBG → Caverna 10, o Letrado 10, a última parede e a tela do coração da montanha, uma vez só.</summary>
+        [UnityTest]
+        public IEnumerator LastCave_TheLastWall_ShowsTheHeartOnce()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            var simulation = runner.Simulation;
+            if (!simulation.Economy.Get(UpgradeId.Letrado).IsEnabled)
+                Assert.Ignore("O balanço ativo não tem o Letrado (rode o setup do projeto).");
+
+            var hud = Object.FindAnyObjectByType<HudView>();
+            var shop = Object.FindAnyObjectByType<ShopView>();
+            var pass = Object.FindAnyObjectByType<CavePassButton>();
+            var heart = Object.FindAnyObjectByType<HeartScreen>();
+            var panel = Object.FindAnyObjectByType<DebugPanel>();
+            Assert.That(heart, Is.Not.Null, "a cena precisa da tela do coração (rode o setup do projeto)");
+            Assert.That(heart.IsOpen, Is.False);
+
+            // DBG: a última caverna, com a trava cumprida e as lascas do último Letrado.
+            panel.transform.Find("Content/Buttons/LastCave").GetComponent<Button>().onClick.Invoke();
+            int last = simulation.Rules.CaveCount;
+            Assert.That(simulation.State.Cave, Is.EqualTo(last));
+            Assert.That(hud.CaveText, Is.EqualTo(last.ToString()));
+
+            shop.Open();
+            var letrado = shop.Rows.First(r => !r.IsLocked && r.Upgrade == UpgradeId.Letrado);
+            Assert.That(letrado.CanBuy, Is.True, "o Letrado 10 à venda");
+            letrado.GetComponentInChildren<Button>().onClick.Invoke();
+            shop.Close();
+            Assert.That(pass.IsShown, Is.True, "DESCER para a última parede");
+
+            pass.GetComponentInChildren<Button>(includeInactive: true).onClick.Invoke();
+            Assert.That(simulation.Wall, Is.Not.Null);
+            for (int i = 0; i < 20 && simulation.Miner.Target != simulation.Wall; i++)
+            {
+                simulation.Tick(0);
+                if (simulation.Miner.Target != simulation.Wall) simulation.BreakTarget();
+            }
+            Assert.That(simulation.Miner.Target, Is.SameAs(simulation.Wall));
+
+            simulation.BreakTarget();
+            Assert.That(simulation.State.ReachedHeart, Is.True);
+            Assert.That(simulation.State.Cave, Is.EqualTo(last), "o jogo segue na última caverna");
+            Assert.That(heart.IsPending, Is.True, "a tela vem depois dos estilhaços");
+            Assert.That(heart.IsOpen, Is.False);
+
+            for (float t = 0; t < 3f && !heart.IsOpen; t += Time.unscaledDeltaTime) yield return null;
+            Assert.That(heart.IsOpen, Is.True, "o coração da montanha");
+            Assert.That(heart.BodyText, Does.Contain(NumberFormatter.FormatShards(simulation.State.ShardsEarned)));
+            Assert.That(heart.BodyText, Does.Contain(" s").Or.Contain(" min"), "o tempo de jogo");
+
+            heart.GetComponentInChildren<Button>().onClick.Invoke();
+            Assert.That(heart.IsOpen, Is.False, "CONTINUAR fecha");
+            Assert.That(pass.IsShown, Is.False, "não há mais passagem");
+
+            runner.TimeScale = 20f;
+            yield return new WaitForSecondsRealtime(0.5f);
+            runner.TimeScale = 1f;
+            Assert.That(heart.IsOpen || heart.IsPending, Is.False, "o fim aparece uma vez só");
+        }
     }
 }

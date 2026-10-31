@@ -115,6 +115,7 @@ namespace MinersIdle.EditorTools
             changed |= FeedbackSetup.EnsureInScene();
             changed |= DebugPanelSetup.Ensure();
             changed |= ShopSetup.EnsureInScene();
+            changed |= HeartScreenSetup.EnsureInScene();
             changed |= UiSkinSetup.EnsureInScene();
 
             if (changed) EditorSceneManager.SaveScene(scene);

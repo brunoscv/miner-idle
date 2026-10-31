@@ -58,6 +58,19 @@ namespace MinersIdle.Core
         /// <summary>Tempo em segundos com duas casas ("1,00s"), como a VELOCIDADE do HUD.</summary>
         public static string FormatSeconds(double seconds) => seconds.ToString("0.00", PtBr) + "s";
 
+        /// <summary>
+        /// Tempo de jogo (M8, E3): "45 s", "12 min 05 s", "3 h 07 min"; a partir de uma hora, sem os segundos. Arredonda
+        /// para baixo, como as lascas.
+        /// </summary>
+        public static string FormatDuration(double seconds)
+        {
+            long total = double.IsNaN(seconds) || seconds < 0 ? 0 : (long)Math.Min(Math.Floor(seconds), long.MaxValue);
+            long hours = total / 3600, minutes = total / 60 % 60, rest = total % 60;
+            if (hours > 0) return hours.ToString("#,0", PtBr) + " h " + minutes.ToString("00") + " min";
+            if (minutes > 0) return minutes + " min " + rest.ToString("00") + " s";
+            return rest + " s";
+        }
+
         /// <summary>1,23 / 12,3 / 123. <paramref name="overflowed"/> quando o arredondamento chega a 1000 (999,95 → 1000).</summary>
         static string ThreeSignificant(double scaled, out bool overflowed)
         {

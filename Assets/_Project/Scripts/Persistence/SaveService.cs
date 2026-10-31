@@ -16,8 +16,9 @@ namespace MinersIdle.Persistence
 
     /// <summary>
     /// Carrega e salva o progresso (Marco 4, E3; D-43, D-44). Nunca deixa um save ruim travar o jogo: o arquivo é separado
-    /// (<see cref="ISaveStore.SetAsideBad"/>) e começa um jogo novo, com aviso no log. Backup e migração entre versões
-    /// ficam para o M8.
+    /// (<see cref="ISaveStore.SetAsideBad"/>) e começa um jogo novo, com aviso no log. M8 (E3): a versão 2 guarda a
+    /// descida (caverna, quebras nela, tempo de jogo, lascas ganhas, coração da montanha); a versão 1 abre migrada, na
+    /// caverna 1 com 0 quebras.
     /// </summary>
     public sealed class SaveService
     {
@@ -30,8 +31,11 @@ namespace MinersIdle.Persistence
             _store = store ?? throw new ArgumentNullException(nameof(store));
         }
 
-        /// <summary>Carrega o progresso, com os níveis cortados nos limites de <paramref name="economy"/>.</summary>
-        public GameState Load(EconomyRules economy, out SaveLoadStatus status)
+        /// <summary>
+        /// Carrega o progresso, com os níveis cortados nos limites de <paramref name="economy"/> e a caverna nas
+        /// <paramref name="caveCount"/> do balanço ativo.
+        /// </summary>
+        public GameState Load(EconomyRules economy, out SaveLoadStatus status, int caveCount = 1)
         {
             string text;
             try
@@ -61,7 +65,7 @@ namespace MinersIdle.Persistence
                 // tratado abaixo como save ruim
             }
 
-            if (data == null || data.version != SaveData.CurrentVersion)
+            if (data == null || data.version < SaveData.OldestVersion || data.version > SaveData.CurrentVersion)
             {
                 string why = data == null ? "ilegível" : $"de versão desconhecida ({data.version})";
                 Debug.LogWarning($"[Save] Save {why}: guardado à parte e começando um jogo novo.");
@@ -75,17 +79,29 @@ namespace MinersIdle.Persistence
                 if (saved != null && saved.upgrade != null) levels[saved.upgrade] = saved.level;
 
             status = SaveLoadStatus.Loaded;
-            return GameState.Restore(
-                data.shards, data.hits, data.breaks,
-                id => levels.TryGetValue(id.ToString(), out int level) ? level : 0, // linha desconhecida no save: ignorada
-                economy);
+            Func<UpgradeId, int> levelOf = id => levels.TryGetValue(id.ToString(), out int level) ? level : 0; // linha desconhecida: ignorada
+            if (data.version == 1)
+            {
+                // Antes da descida: caverna 1, contagem do zero; as lascas de agora são o que se sabe das ganhas.
+                Debug.Log("[Save] Save da versão 1: aberto na caverna 1 (a versão 2 grava a descida).");
+                return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
+                                         shardsEarned: data.shards);
+            }
+
+            return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
+                                     data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart);
         }
 
         public void Save(GameState state)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
 
-            var data = new SaveData { shards = state.Shards, hits = state.Hits, breaks = state.Breaks };
+            var data = new SaveData
+            {
+                shards = state.Shards, hits = state.Hits, breaks = state.Breaks,
+                cave = state.Cave, caveBreaks = state.CaveBreaks, playSeconds = state.PlaySeconds,
+                shardsEarned = state.ShardsEarned, reachedHeart = state.ReachedHeart,
+            };
             foreach (var id in Lines)
                 data.levels.Add(new SavedLevel { upgrade = id.ToString(), level = state.LevelOf(id) });
 

@@ -158,6 +158,7 @@ namespace MinersIdle.EditorTools
                 ("resetStats", CreateButton(grid.transform, "ResetStats", "Zerar medição")),
                 ("fillCaveBreaks", CreateButton(grid.transform, "FillCaveBreaks", "Encher 100 cristais")),
                 ("nextCave", CreateButton(grid.transform, "NextCave", "Próxima caverna")),
+                ("lastCave", CreateButton(grid.transform, "LastCave", LastCaveLabel)),
                 ("cameraPanel", Object.FindAnyObjectByType<DescentCameraPanel>()),
                 ("frameStats", frameStats),
                 ("upgrades", upgrades));
@@ -186,7 +187,10 @@ namespace MinersIdle.EditorTools
             return true;
         }
 
-        /// <summary>M8 (E1): "Encher 100 cristais" e "Próxima caverna" no fim da grade (a 7ª fileira), e o Letrado nas melhorias.</summary>
+        /// <summary>
+        /// M8 (E1): "Encher 100 cristais" e "Próxima caverna" no fim da grade, e o Letrado nas melhorias; E3: "Caverna 10
+        /// (fim)", ao lado deles.
+        /// </summary>
         static bool EnsureCaveButtons(Transform panel)
         {
             bool changed = false;
@@ -200,14 +204,29 @@ namespace MinersIdle.EditorTools
             }
 
             var grid = panel.Find("Content/Buttons");
-            if (grid == null || grid.Find("FillCaveBreaks") != null) return changed;
+            if (grid == null) return changed;
 
-            GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
-                ("fillCaveBreaks", CreateButton(grid, "FillCaveBreaks", "Encher 100 cristais")),
-                ("nextCave", CreateButton(grid, "NextCave", "Próxima caverna")));
-            Debug.Log("[Setup] Painel de debug: atalhos das cavernas (M8).");
-            return true;
+            if (grid.Find("FillCaveBreaks") == null)
+            {
+                GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
+                    ("fillCaveBreaks", CreateButton(grid, "FillCaveBreaks", "Encher 100 cristais")),
+                    ("nextCave", CreateButton(grid, "NextCave", "Próxima caverna")));
+                Debug.Log("[Setup] Painel de debug: atalhos das cavernas (M8).");
+                changed = true;
+            }
+
+            // M8 (E3): o atalho do fim da descida.
+            if (grid.Find("LastCave") == null)
+            {
+                GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
+                    ("lastCave", CreateButton(grid, "LastCave", LastCaveLabel)));
+                Debug.Log("[Setup] Painel de debug: atalho da última caverna (M8).");
+                changed = true;
+            }
+            return changed;
         }
+
+        const string LastCaveLabel = "Caverna 10 (fim)";
 
         internal static bool EnsureEventSystem()
         {

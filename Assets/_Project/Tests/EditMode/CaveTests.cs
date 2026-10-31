@@ -11,7 +11,8 @@ namespace MinersIdle.Tests
     /// cristais quebrados na caverna, contando toda quebra (D-93, D-95), um por caverna; o nível n leva à caverna n+1 e
     /// dobra o dano dali em diante (GDD v5). E2: a passagem põe a parede a 12 un (D-107), com 2 × a vida do cristal da
     /// caverna nova (D-98); ela apanha de golpe, toque e crítico, não paga lascas nem conta (D-108), e a caverna muda
-    /// quando ela cai.
+    /// quando ela cai. E3: na caverna 10, o Letrado 10 leva à última parede e ao coração da montanha (D-112); o tempo de
+    /// jogo e as lascas ganhas, para a tela do fim.
     /// </summary>
     public class CaveTests
     {
@@ -197,20 +198,78 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void LastCave_HasNoPassage()
+        public void LastCave_TheLastLetradoLeadsToTheLastWall_AndTheHeart()
         {
             var sim = Sim();
             for (int cave = 1; cave < 10; cave++) Assert.That(sim.SkipToNextCave(), Is.True, $"caverna {cave}");
 
             Assert.That(sim.State.Cave, Is.EqualTo(10));
             Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(9), "o atalho dá o Letrado de cada caverna");
-            Assert.That(sim.SkipToNextCave(), Is.False);
+            Assert.That(sim.SkipToNextCave(), Is.False, "não há caverna 11");
+            Assert.That(sim.CanPassCave, Is.False, "sem o Letrado 10");
 
+            int hearts = 0;
+            var caves = new List<int>();
+            sim.HeartReached += () => hearts++;
+            sim.CaveChanged += caves.Add;
             sim.AddShards(1e12);
             sim.FillCaveBreaks();
+            caves.Clear();
             Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased), "o Letrado 10 existe");
-            Assert.That(sim.CanPassCave, Is.False, "o fim da descida é da E3");
+            Assert.That(sim.CanPassCave, Is.True, "o último Letrado leva à última parede (D-112)");
+
+            Assert.That(sim.PassCave(), Is.True);
+            Assert.That(sim.Wall.MaxHealth, Is.EqualTo(2 * 10 * Math.Pow(8, 10)), "a fórmula da D-98, uma caverna além");
+            ReachTheWall(sim);
+            sim.BreakTarget();
+
+            Assert.That(hearts, Is.EqualTo(1));
+            Assert.That(sim.State.ReachedHeart, Is.True);
+            Assert.That(sim.State.Cave, Is.EqualTo(10), "o jogo segue na caverna 10, sem reset");
+            Assert.That(caves, Is.Empty, "não muda de caverna");
+            Assert.That(sim.CanPassCave, Is.False, "depois do coração, não há passagem");
+            Assert.That(sim.PassCave(), Is.False);
+
+            sim.Tick(0);
+            Assert.That(sim.Crystals.Count, Is.EqualTo(4), "a fila volta");
+            Assert.That(sim.Crystals.All(c => c.MaxHealth == 10 * Math.Pow(8, 9)), Is.True, "cristais da caverna 10");
+            Assert.That(hearts, Is.EqualTo(1), "o fim sai uma vez só");
+        }
+
+        [Test]
+        public void SkipToCave_GoesStraightThere_WithTheLetradosBefore()
+        {
+            var sim = Sim();
+            var caves = new List<int>();
+            sim.CaveChanged += caves.Add;
+            double damage = sim.Stats.Damage;
+
+            Assert.That(sim.SkipToCave(10), Is.True);
+
+            Assert.That(caves, Is.EqualTo(new[] { 10 }), "um aviso só, direto na 10");
             Assert.That(sim.State.Cave, Is.EqualTo(10));
+            Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(9));
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(damage * 2), "o ×2 do Letrado, como em qualquer caverna depois da 1");
+            Assert.That(sim.SkipToCave(5), Is.False, "não volta");
+            Assert.That(sim.SkipToCave(15), Is.False, "não passa da última");
+        }
+
+        [Test]
+        public void PlayTime_AndShardsEarned_CountForTheEnd()
+        {
+            var sim = Sim(rules: Rules(spawnInterval: 1));
+            sim.Tick(30);
+            Assert.That(sim.State.PlaySeconds, Is.EqualTo(30).Within(1e-9), "o tempo de jogo é o da simulação");
+            Assume.That(sim.State.Breaks, Is.GreaterThan(0));
+            Assert.That(sim.State.ShardsEarned, Is.EqualTo(sim.State.Shards).Within(1e-9), "as lascas das quebras");
+
+            double earned = sim.State.ShardsEarned;
+            sim.AddShards(500);
+            Assert.That(sim.State.ShardsEarned, Is.EqualTo(earned), "as do debug não contam");
+            sim.FillCaveBreaks();
+            sim.Purchase(UpgradeId.Letrado);
+            Assert.That(sim.State.ShardsEarned, Is.EqualTo(earned), "gastar não desconta");
         }
 
         [Test]

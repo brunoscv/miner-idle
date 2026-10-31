@@ -66,6 +66,8 @@ namespace MinersIdle.UI
         [SerializeField] Button fillCaveBreaks;
         [Tooltip("M8: a próxima caverna agora, com o Letrado dela de graça.")]
         [SerializeField] Button nextCave;
+        [Tooltip("M8 (E3): a última caverna, com os 100 cristais e as lascas do último Letrado (para testar o fim).")]
+        [SerializeField] Button lastCave;
         [SerializeField] DescentCameraPanel cameraPanel;
 
         /// <summary>Nível e próximo custo de cada linha, na ordem de <see cref="UpgradeId"/> (o Letrado entrou no M8).</summary>
@@ -113,6 +115,7 @@ namespace MinersIdle.UI
             resetStats.onClick.AddListener(ResetStats);
             if (fillCaveBreaks != null) fillCaveBreaks.onClick.AddListener(FillCaveBreaks);
             if (nextCave != null) nextCave.onClick.AddListener(NextCave);
+            if (lastCave != null) lastCave.onClick.AddListener(GoToLastCave);
         }
 
         void OnDisable()
@@ -141,6 +144,7 @@ namespace MinersIdle.UI
             resetStats.onClick.RemoveListener(ResetStats);
             if (fillCaveBreaks != null) fillCaveBreaks.onClick.RemoveListener(FillCaveBreaks);
             if (nextCave != null) nextCave.onClick.RemoveListener(NextCave);
+            if (lastCave != null) lastCave.onClick.RemoveListener(GoToLastCave);
         }
 
         void Update()
@@ -168,6 +172,18 @@ namespace MinersIdle.UI
         void AddShards() => runner.Simulation?.AddShards(ShardsToAdd);
         void FillCaveBreaks() => runner.Simulation?.FillCaveBreaks();
         void NextCave() => runner.Simulation?.SkipToNextCave();
+
+        /// <summary>A última caverna, a trava cumprida e lascas para o último Letrado: falta comprar, DESCER e quebrar.</summary>
+        void GoToLastCave()
+        {
+            var simulation = runner.Simulation;
+            if (simulation == null) return;
+
+            simulation.SkipToCave(simulation.Rules.CaveCount);
+            simulation.FillCaveBreaks();
+            double? cost = simulation.Preview(UpgradeId.Letrado).NextCost;
+            if (cost != null && simulation.State.Shards < cost.Value) simulation.AddShards(cost.Value - simulation.State.Shards);
+        }
         void RestartSameSeed() => runner.StartNew(runner.Seed);
         void RestartNewSeed() => runner.StartNew(MiningRunner.NewSeed());
 
