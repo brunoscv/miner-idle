@@ -224,9 +224,64 @@ Trocar o desenho por código do corredor, dos cristais e do anão por arte de ve
 - Mesma altura e pé no mesmo lugar que o anão atual (o desenho de 64 px enche 61 px do quadro; o de 256, 174). O estagiário continua com as folhas de 256.
 - **Como testar:** DBG → Câmera → **Anão 64px** liga e desliga.
 
-### E8 — Biomas
-- `BiomeDefinition` (D-72) com as 10 cavernas (nomes e cores propostos para você aprovar); a caverna 1 é a mina. DBG → **Bioma** troca na hora para ver cada uma.
-- **Como testar:** DBG → Bioma, passar pelas 10.
+### E8 — Biomas das 10 cavernas (D-72, D-102) — opção B escolhida e implementada em 2026-10-31; aguardando validação no Moto G75
+
+**Por quê:** o pilar "descida perceptível" do GDD v5 pede que chão, luz e paleta mudem a cada caverna (tabela da §6). O M8 (o próximo marco, D-88) vai trocar de caverna jogando; esta etapa deixa as 10 cavernas prontas **como dados** e visíveis pelo DBG, para você escolher a cara de cada uma antes de existir a regra. Nada muda nas regras.
+
+**O que já temos para isso:**
+- Os 4 tons do chão do Apellon (`tileset_ground_01`…`04`) são **o mesmo desenho de 4 cores**, cada tom um degrau mais escuro numa escada de 8 cores (`#E7D5B3` … `#241527`). As transições `01_02`, `02_03`, `03_04` emendam um degrau no seguinte.
+- `tileset_ground_01_rock_01`, `_rock_02` e `_hole` são o tom `01` com uma pedra pequena, uma pedra grande e um buraco por cima. Como o chão por baixo usa as mesmas 4 cores, **o setup gera pedra e buraco em qualquer tom só trocando as 4 cores**: o Apellon não precisa redesenhar nada.
+- A mesma troca de 4 cores gera **qualquer piso novo** a partir do desenho dele (é o que a prévia abaixo faz).
+
+**A tabela do GDD v5 (§6), como a extração do PDF permitiu ler** (as colunas saíram embaralhadas; a linha da caverna 9 não saiu: confirmar com o Apellon):
+
+| Caverna | Sensação (nome proposto) | Piso no GDD |
+|---|---|---|
+| 1 | Entrada da mina | Areia clara e poeira mineral |
+| 2 | Galeria rochosa | Pedra cinza-amarronzada |
+| 3 | Veio profundo | Carvão escuro |
+| 4 | Zona metálica | Carvão com veios de prata |
+| 5 | Câmara subterrânea | Rocha úmida verde-escura |
+| 6 | Fenda cristalina | Basalto violeta |
+| 7 | Profundidade térmica | Rocha ferruginosa |
+| 8 | Abismo mineral | Obsidiana rachada |
+| 9 | Núcleo profundo | (ilegível) |
+| 10 | Coração do vulcão | Solo vulcânico, magma e brasas |
+
+**Escolhas para você (com a prévia gerada a partir dos tiles do Apellon):**
+
+1. **Chão de cada caverna**
+   - **A — só escurecer:** os 4 tons do Apellon em grupos (1–3 → `01`, 4–5 → `02`, 6–8 → `03`, 9–10 → `04`). Simples, mas as cavernas se repetem e da 6 em diante quase não se distinguem.
+   - **B — escurecer e mudar de pedra (rec.):** cavernas 1–4 com os tons `01`…`04` do Apellon (a descida pela areia, com as transições dele), 5–10 com paletas novas de 4 cores no mesmo desenho, seguindo o piso do GDD (verde úmido, basalto violeta, ferrugem, obsidiana, azul abissal, brasa). Cada caverna fica reconhecível sem HUD, que é o teste do pilar.
+2. **Nomes:** os da coluna "Sensação" do GDD (tabela acima), mostrados no botão do DBG. Texto em dados (pt-BR).
+3. **Decoração do chão:** pedra pequena, pedra grande e buraco sorteados com semente fixa, **1 a cada ~10 tiles** (rec.), igual em todas as cavernas. Pode ser mais denso nas fundas, se você quiser.
+4. **Lampiões nos esteios** (`mine_wood_lamp`): "mais fundo = mais escuro" também pela luz. Rec.: caverna 1 com lampião em 1 de cada 2 esteios, rareando até nenhum na 8–10; a neblina do fundo escurece junto, na cor do piso.
+
+**Escolhido (D-102):** opção B e as recomendações dos itens 2–4.
+
+**Passos:**
+1. **`BiomeDefinition`** (ScriptableObject de apresentação, D-72): nome, as 4 cores do chão, tinta da parede/teto, cor da neblina, densidade da decoração, lampião a cada N esteios. O setup cria os 10 assets.
+2. **Setup do chão:** para cada caverna, uma textura de 256 px (8 × 8 tiles, 4 × 4 m) com o desenho na paleta da caverna e a decoração sorteada; vai no git (é arte própria derivada). Pixel art, Repeat.
+3. **`DescentStage`:** aplicar um bioma (chão, tinta, neblina, lampiões) na hora; a caverna 1 abre com o bioma 1.
+4. **DBG → Câmera → Bioma:** um botão passa 1 → 10 → 1 com o nome da caverna. Substitui o botão "Chão" da E9: o tom da caverna 1 vira parte do bioma 1, o que fecha a escolha pendente da E9. O calçamento do pack deixa de ser gerado.
+
+**Onde ficou:** `BiomeDefinition` (Presentation/Descent), `BiomeArtSetup` (Editor; tabela das 10 cavernas), chãos em `Art/Tile/Biomes/floor_cave_01…10`, assets em `Data/Biomes/Caverna_01…10`. O teste PlayMode `BiomeTests` (antes `FloorTests`) mede o ciclo das 10 cavernas.
+5. **CREDITS.md:** chãos e decoração derivados dos tiles do Apellon.
+
+**Fica para depois:** trocar de caverna jogando e a faixa de transição na emenda, junto da parede (M8); cristal próprio de cada caverna (Vidro, Solar, Safira…: M10, a fila continua com os cristais da D-77); parede e teto próprios (próxima troca de arte); chão "molhado" de verdade (poças, brilho) pediria arte nova do Apellon.
+
+**Riscos a olhar no aparelho:** a decoração repetir a cada 4 m (se aparecer, textura de 256 × 512); a pedra cinza destacar demais nos chãos escuros; o desenho de 4 cores ficar "chapado" nas paletas novas (ajustar as cores no DBG antes de fixar).
+
+**Testes:** nada no núcleo; rodar `bash tools/ci/run-tests.sh` e conferir as linhas `[Setup]` (sem `error CS`).
+
+**Como testar:**
+1. Unity: `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`; abrir a cena `Game` e dar Play.
+2. DBG → Câmera → **Bioma**: passar pelas 10 e voltar à 1, olhando chão, pedras, lampiões e neblina.
+3. Moto G75: `Tools → Miners Idle → Build → Rodar no celular (Android)` e repetir o passo 2.
+
+**Critério de pronto:** as 10 cavernas existem como dados, cada uma reconhecível sem HUD no Moto G75, e você aprovou as paletas.
+
+**Esforço:** 6–10 h.
 
 ### E9 — Arte própria, começando pelo chão (D-90) — plano aprovado em 2026-10-29; implementada, aguardando validação no Moto G75
 

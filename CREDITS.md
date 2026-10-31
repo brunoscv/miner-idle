@@ -39,4 +39,4 @@ Todo asset de terceiros usado no jogo, com autor, origem e licença. Os packs cu
 | Cristais da fila (glass, sapphire, yellow; glass_rare guardado) | Bruno Carvalho | `Assets/_Project/Art/Crystals` |
 | Botões LOJA e AJUSTES (ícone e nome) | Bruno Carvalho | `Assets/_Project/Art/UI` (fontes SVG em `ArtSource/`) |
 | Chão da caverna 1 (tiles `tileset_ground_01`…`04` e a transição `01_02`; desenhados à mão, D-90) | Bruno Carvalho | `Assets/_Project/Art/Tile` (fontes SVG em `ArtSource/tiles/`) |
-| Esteio de madeira (`mine_wood`; a variação com lampião e o lampião guardados, D-91) e os tiles de pedra, buraco e transição guardados | Apellon | `Assets/_Project/Art/Corridor`, `Assets/_Project/Art/Tile` |
+| Esteio de madeira (`mine_wood`, D-91; `mine_wood_lamp` nos esteios com lampião, D-102), tiles de pedra, buraco e transição, e os chãos das 10 cavernas derivados deles por troca de paleta (`Art/Tile/Biomes`, D-102) | Apellon | `Assets/_Project/Art/Corridor`, `Assets/_Project/Art/Tile` |

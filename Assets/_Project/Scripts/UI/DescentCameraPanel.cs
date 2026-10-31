@@ -5,6 +5,7 @@ using MinersIdle.Presentation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace MinersIdle.UI
@@ -66,13 +67,13 @@ namespace MinersIdle.UI
         [SerializeField] Button intern;
         [Tooltip("Troca o anão pelas folhas com menos pixels, para comparar (não fica salvo).")]
         [SerializeField] Button lowDwarf;
-        [Tooltip("Passa pelos chãos da comparação do DBG (M1b E9, D-90); o botão mostra o nome do chão (não fica salvo).")]
-        [SerializeField] Button floor;
+        [Tooltip("Passa pelas 10 cavernas (M1b E8, D-102); o botão mostra o nome da caverna (não fica salvo).")]
+        [SerializeField, FormerlySerializedAs("floor")] Button biome;
 
         UnityAction[] _minus;
         UnityAction[] _plus;
         float _refresh;
-        TMP_Text _floorLabel;
+        TMP_Text _biomeLabel;
 
         public bool IsOpen => content.activeSelf;
 
@@ -95,7 +96,7 @@ namespace MinersIdle.UI
                 _plus[i] = () => Change(setting, +1);
             }
 
-            if (floor != null) _floorLabel = floor.GetComponentInChildren<TMP_Text>();
+            if (biome != null) _biomeLabel = biome.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -111,7 +112,7 @@ namespace MinersIdle.UI
             close.onClick.AddListener(Toggle);
             if (intern != null) intern.onClick.AddListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.AddListener(ToggleLowDwarf);
-            if (floor != null) floor.onClick.AddListener(NextFloor);
+            if (biome != null) biome.onClick.AddListener(NextBiome);
         }
 
         void OnDisable()
@@ -126,7 +127,7 @@ namespace MinersIdle.UI
             close.onClick.RemoveListener(Toggle);
             if (intern != null) intern.onClick.RemoveListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.RemoveListener(ToggleLowDwarf);
-            if (floor != null) floor.onClick.RemoveListener(NextFloor);
+            if (biome != null) biome.onClick.RemoveListener(NextBiome);
         }
 
         void Update()
@@ -143,9 +144,9 @@ namespace MinersIdle.UI
 
         void ToggleLowDwarf() => stage.UseLowDwarf = !stage.UseLowDwarf;
 
-        void NextFloor()
+        void NextBiome()
         {
-            stage.NextFloor();
+            stage.NextBiome();
             _refresh = 0f;
         }
 
@@ -209,7 +210,7 @@ namespace MinersIdle.UI
             double reach = simulation != null ? simulation.Rules.MiningRange * stage.MetersPerUnit : 0;
             double seconds = speed > 0 ? Math.Max(0, ground - reach) / speed : 0;
 
-            if (_floorLabel != null && stage.FloorLabel != null) _floorLabel.text = stage.FloorLabel;
+            if (_biomeLabel != null && stage.Biome != null) _biomeLabel.text = stage.Biome.DisplayName;
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),

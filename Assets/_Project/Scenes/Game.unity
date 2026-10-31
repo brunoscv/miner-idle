@@ -4274,7 +4274,7 @@ MonoBehaviour:
   close: {fileID: 294783436}
   intern: {fileID: 90897988}
   lowDwarf: {fileID: 464238500}
-  floor: {fileID: 1188914272}
+  biome: {fileID: 1188914272}
 --- !u!1 &412673793
 GameObject:
   m_ObjectHideFlags: 0
@@ -11441,22 +11441,23 @@ MonoBehaviour:
   runAnimationFps: 10
   runBounceHeight: 0
   floorTexture: {fileID: 2800000, guid: e1c5b2d3ac8240d4ab57fb4ff1ae9a7c, type: 3}
-  floorOptions:
-  - label: "Ch\xE3o 01"
-    texture: {fileID: 2800000, guid: e1c5b2d3ac8240d4ab57fb4ff1ae9a7c, type: 3}
-  - label: "Ch\xE3o 02"
-    texture: {fileID: 2800000, guid: 6ecb3d70c18b7a34583d17e91bf5e33e, type: 3}
-  - label: "Ch\xE3o 03"
-    texture: {fileID: 2800000, guid: c139dde0a65586a45b365184f256a7d2, type: 3}
-  - label: "Ch\xE3o 04"
-    texture: {fileID: 2800000, guid: 2974f33822684874f820395b28348eae, type: 3}
-  - label: "Cal\xE7amento"
-    texture: {fileID: 2800000, guid: 8004d7e11a5be384984c6721f7a06f04, type: 3}
+  biomes:
+  - {fileID: 11400000, guid: 1062777fd71fffe4285684c1a56a29e7, type: 2}
+  - {fileID: 11400000, guid: afa675084eed29842af0be99aad75c2b, type: 2}
+  - {fileID: 11400000, guid: 0f801c32f0d75624185bf4e4ccf1f062, type: 2}
+  - {fileID: 11400000, guid: 2b32c4f479ed34040bbdfb8f83c29ec1, type: 2}
+  - {fileID: 11400000, guid: 0124977fd5e8d0e4ba93b5af7105085a, type: 2}
+  - {fileID: 11400000, guid: a4c3a10c3cf203e4d927a32d368781d7, type: 2}
+  - {fileID: 11400000, guid: 4dee9d050da10494fbb87c9a0cb1260d, type: 2}
+  - {fileID: 11400000, guid: 3bdd1704c22ae6b43a67ded320956077, type: 2}
+  - {fileID: 11400000, guid: c5b1ad018769faa4ab7dbe229b56b5c9, type: 2}
+  - {fileID: 11400000, guid: 7ec4eb017d86b7a4ca021f55ece46ab4, type: 2}
   wallTexture: {fileID: 2800000, guid: a78070a9d9af0c540817df3c35a54cc4, type: 3}
   ceilingTexture: {fileID: 2800000, guid: a78070a9d9af0c540817df3c35a54cc4, type: 3}
   texturePixelsPerMeter: 64
   wallTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
   supportTexture: {fileID: 2800000, guid: f53e138471882a447a0a70772edd7076, type: 3}
+  supportLampTexture: {fileID: 2800000, guid: dffde25a4aeac0b48ab4d7f0f3eec57b, type: 3}
   supportSize: {x: 3.4, y: 4.5}
   edgeRockTexture: {fileID: 2800000, guid: 1fd4bd83e88b4f34385e203fe186426f, type: 3}
   edgeRockSpacing: 0.7
@@ -11478,7 +11479,7 @@ GameObject:
   - component: {fileID: 1188914273}
   - component: {fileID: 1188914272}
   m_Layer: 0
-  m_Name: Floor
+  m_Name: Biome
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18894,7 +18895,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Ch\xE3o"
+  m_text: Bioma
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ee2dfa4c89687654d86e8cd1df8ee8af, type: 2}
   m_sharedMaterial: {fileID: -4624264490274306166, guid: ee2dfa4c89687654d86e8cd1df8ee8af, type: 2}

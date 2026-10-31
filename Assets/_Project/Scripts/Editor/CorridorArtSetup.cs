@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using MinersIdle.Presentation;
 using TMPro;
@@ -19,8 +18,8 @@ namespace MinersIdle.EditorTools
     /// Idempotente: só gera o que falta e não sobrescreve campos preenchidos à mão.
     ///
     /// Desde a E9 (D-90), o chão é arte própria: o tile do Bruno (<c>tileset_ground_01</c>, no git) entra no lugar do
-    /// calçamento, e os outros tons (e o calçamento, enquanto o pack estiver no PC) ficam no DBG → Câmera → Chão. Desde a
-    /// E10 (D-91), o esteio também é arte própria (<c>mine_wood</c>), no lugar do portal do pack.
+    /// calçamento (que deixou de ser gerado); os chãos das 10 cavernas são do <see cref="BiomeArtSetup"/> (E8, D-102).
+    /// Desde a E10 (D-91), o esteio também é arte própria (<c>mine_wood</c>), no lugar do portal do pack.
     /// </summary>
     static class CorridorArtSetup
     {
@@ -28,6 +27,7 @@ namespace MinersIdle.EditorTools
         const string SourcePath = PackFolder + "/mainlev_build.png";
         const string GeneratedFolder = PackFolder + "/Generated";
         internal const string RockPath = GeneratedFolder + "/rock_dark.png";
+        /// <summary>O calçamento antigo (D-74; não é mais gerado): onde ainda estiver no chão, troca pelo tile próprio.</summary>
         internal const string CobblePath = GeneratedFolder + "/cobble.png";
         internal const string SupportPath = GeneratedFolder + "/support_portal.png";
 
@@ -35,21 +35,8 @@ namespace MinersIdle.EditorTools
         const string TileFolder = "Assets/_Project/Art/Tile";
         const string OwnFloorPath = TileFolder + "/tileset_ground_01.png";
 
-        /// <summary>Os chãos do DBG → Câmera → Chão, na ordem do botão (o nome aparece nele).</summary>
-        static readonly (string label, string path)[] FloorOptions =
-        {
-            ("Chão 01", OwnFloorPath),
-            ("Chão 02", TileFolder + "/tileset_ground_02.png"),
-            ("Chão 03", TileFolder + "/tileset_ground_03.png"),
-            ("Chão 04", TileFolder + "/tileset_ground_04.png"),
-            ("Calçamento", CobblePath),
-        };
-
         /// <summary>Esteio de madeira próprio (M1b E10, D-91): entra no lugar do portal do pack.</summary>
         const string OwnSupportPath = "Assets/_Project/Art/Corridor/mine_wood.png";
-
-        internal const string FloorButton = "Floor";
-        const string FloorButtonLabel = "Chão";
 
         /// <summary>Pedra da beira do caminho (enviada pelo Bruno; origem a confirmar, por isso fora do git).</summary>
         const string EdgeRockPath = "Assets/_Vendor/AssetStore/Misc/rock_t1.png";
@@ -57,7 +44,6 @@ namespace MinersIdle.EditorTools
         // Peças do mainlev_build.png (x, y a partir do canto de cima, largura, altura), achadas nas prévias.
         static readonly RectInt RockA = new RectInt(224, 736, 96, 64);
         static readonly RectInt RockB = new RectInt(224, 816, 96, 64);
-        static readonly RectInt Cobble = new RectInt(624, 848, 32, 32);
         static readonly RectInt Portal = new RectInt(960, 16, 48, 64);
 
         const int TextureSize = 256;
@@ -89,11 +75,6 @@ namespace MinersIdle.EditorTools
                 Save(RockPath, Stamps(new Color32(21, 17, 17, 255), pieces, 26, seed: 1));
                 made++;
             }
-            if (!File.Exists(CobblePath))
-            {
-                Save(CobblePath, CobbleFloor(Crop(source, Cobble), seed: 3));
-                made++;
-            }
             if (!File.Exists(SupportPath))
             {
                 Save(SupportPath, OpenPortal(Crop(source, Portal)));
@@ -101,8 +82,7 @@ namespace MinersIdle.EditorTools
             }
             UnityEngine.Object.DestroyImmediate(source);
 
-            int configured = Configure(RockPath, TextureWrapMode.Repeat) + Configure(CobblePath, TextureWrapMode.Repeat)
-                             + Configure(SupportPath, TextureWrapMode.Clamp);
+            int configured = Configure(RockPath, TextureWrapMode.Repeat) + Configure(SupportPath, TextureWrapMode.Clamp);
             if (File.Exists(EdgeRockPath)) configured += Configure(EdgeRockPath, TextureWrapMode.Clamp);
 
             if (made > 0) Debug.Log($"[Setup] Texturas do corredor geradas em {GeneratedFolder}: {made}.");
@@ -128,7 +108,6 @@ namespace MinersIdle.EditorTools
             if (changed) so.FindProperty("wallTint").colorValue = WallTint;
             changed |= EnsureOwnFloor(so);
             changed |= EnsureOwnSupport(so);
-            changed |= EnsureFloorOptions(so);
 
             // A pedra encosta no chão: desce as linhas transparentes de baixo do desenho.
             var footGap = so.FindProperty("edgeRockFootGap");
@@ -154,7 +133,6 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             changed |= RenameResetButton();
-            changed |= EnsureFloorButton();
             if (changed) Debug.Log("[Setup] Corredor da caverna 1 com a arte do Pixel Fantasy Caves (M1b E4, D-74).");
             return changed;
         }
@@ -188,49 +166,6 @@ namespace MinersIdle.EditorTools
             if (own == null) return false;
             support.objectReferenceValue = own;
             Debug.Log("[Setup] Esteios da caverna 1 = madeira própria (mine_wood; M1b E10, D-91).");
-            return true;
-        }
-
-        /// <summary>A lista do DBG → Câmera → Chão, só com as texturas que existem neste PC. Devolve se mudou.</summary>
-        static bool EnsureFloorOptions(SerializedObject so)
-        {
-            var wanted = new List<(string label, Texture2D texture)>();
-            foreach (var (label, path) in FloorOptions)
-            {
-                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                if (texture != null) wanted.Add((label, texture));
-            }
-
-            var options = so.FindProperty("floorOptions");
-            bool same = options.arraySize == wanted.Count;
-            for (int i = 0; same && i < wanted.Count; i++)
-            {
-                var option = options.GetArrayElementAtIndex(i);
-                same = option.FindPropertyRelative("label").stringValue == wanted[i].label
-                       && option.FindPropertyRelative("texture").objectReferenceValue == wanted[i].texture;
-            }
-            if (same) return false;
-
-            options.arraySize = wanted.Count;
-            for (int i = 0; i < wanted.Count; i++)
-            {
-                var option = options.GetArrayElementAtIndex(i);
-                option.FindPropertyRelative("label").stringValue = wanted[i].label;
-                option.FindPropertyRelative("texture").objectReferenceValue = wanted[i].texture;
-            }
-            Debug.Log($"[Setup] Chãos do DBG → Câmera → Chão: {wanted.Count}.");
-            return true;
-        }
-
-        static bool EnsureFloorButton()
-        {
-            var panel = UnityEngine.Object.FindAnyObjectByType<MinersIdle.UI.DescentCameraPanel>(FindObjectsInactive.Include);
-            var buttons = panel != null ? panel.transform.Find("Content/Buttons") : null;
-            if (buttons == null || buttons.Find(FloorButton) != null) return false;
-
-            var button = DebugPanelSetup.CreateButton(buttons, FloorButton, FloorButtonLabel);
-            GrayboxSetup.SetReferences(panel, ("floor", button));
-            Debug.Log("[Setup] Botão \"Chão\" no DBG → Câmera (M1b E9).");
             return true;
         }
 
@@ -329,28 +264,6 @@ namespace MinersIdle.EditorTools
             return canvas;
         }
 
-        /// <summary>Calçamento: o tile em grade, girado e espelhado ao acaso (sem padrão visível).</summary>
-        static Color32[,] CobbleFloor(Color32[,] tile, int seed)
-        {
-            var random = new System.Random(seed);
-            int t = tile.GetLength(0);
-            var canvas = new Color32[TextureSize, TextureSize];
-            for (int gy = 0; gy < TextureSize; gy += t)
-            for (int gx = 0; gx < TextureSize; gx += t)
-            {
-                int turns = random.Next(4);
-                bool flip = random.NextDouble() < 0.5;
-                for (int y = 0; y < t; y++)
-                for (int x = 0; x < t; x++)
-                {
-                    int sx = flip ? t - 1 - x : x, sy = y;
-                    for (int r = 0; r < turns; r++) (sx, sy) = (t - 1 - sy, sx);
-                    canvas[gx + x, gy + y] = tile[sx, sy];
-                }
-            }
-            return canvas;
-        }
-
         /// <summary>O portal do pack tem o miolo escuro (é uma porta de fase): sai, fica só a madeira.</summary>
         static Color32[,] OpenPortal(Color32[,] portal)
         {
@@ -380,7 +293,7 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>Textura em pixel art (Point, sem compressão, sem mipmap). Devolve 1 se mudou algo.</summary>
-        static int Configure(string path, TextureWrapMode wrap)
+        internal static int Configure(string path, TextureWrapMode wrap)
         {
             if (!(AssetImporter.GetAtPath(path) is TextureImporter importer)) return 0;
             if (importer.textureType == TextureImporterType.Default && importer.filterMode == FilterMode.Point

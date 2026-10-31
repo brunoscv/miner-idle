@@ -142,9 +142,11 @@ namespace MinersIdle.Presentation
         [SerializeField, Min(0f)] float runBounceHeight = 0.04f;
 
         [Header("Arte do corredor (M1b E4; vazio = desenho gerado por código)")]
+        [Tooltip("Chão sem bioma (a lista de biomas vazia).")]
         [SerializeField] Texture2D floorTexture;
-        [Tooltip("Chãos que o DBG → Câmera → Chão alterna, para comparar (M1b E9, D-90; não fica salvo).")]
-        [SerializeField] FloorOption[] floorOptions = Array.Empty<FloorOption>();
+        [Tooltip("As 10 cavernas (M1b E8, D-102): a primeira abre o jogo; o DBG → Câmera → Bioma passa por elas (não fica " +
+                 "salvo; a troca jogando é do M8).")]
+        [SerializeField] BiomeDefinition[] biomes = Array.Empty<BiomeDefinition>();
         [SerializeField] Texture2D wallTexture;
         [SerializeField] Texture2D ceilingTexture;
         [Tooltip("Pixels de textura por metro de corredor (64 = perto da densidade do anão).")]
@@ -153,6 +155,9 @@ namespace MinersIdle.Presentation
         [SerializeField] Color wallTint = Color.white;
         [Tooltip("Esteio inteiro (postes e viga) como sprite, no lugar das caixas de madeira. Vazio = caixas.")]
         [SerializeField] Texture2D supportTexture;
+        [Tooltip("O mesmo esteio com lampião, a cada N esteios conforme o bioma (D-102). Com ele, as lanternas desenhadas " +
+                 "por código saem.")]
+        [SerializeField] Texture2D supportLampTexture;
         [Tooltip("Largura e altura do esteio em sprite, em metros.")]
         [SerializeField] Vector2 supportSize = new Vector2(3.4f, 4.5f);
         [Tooltip("Pedra da beira do caminho, no encontro do chão com a parede, dos dois lados. Vazio = sem pedras.")]
@@ -172,7 +177,7 @@ namespace MinersIdle.Presentation
         Mesh _quad, _flat, _box, _corridor;
         Material _floor, _wall, _ceiling, _wood, _sprites, _screenMaterial;
         MeshFilter _corridorFilter;
-        int _floorOption = -1;
+        int _biome = -1;
         bool _corridorHasCeiling;
         float _corridorWidth;
 
@@ -224,26 +229,34 @@ namespace MinersIdle.Presentation
         /// <summary>Troca o anão pelas folhas com menos pixels (DBG, para comparar; não fica salvo).</summary>
         public bool UseLowDwarf { get; set; }
 
-        /// <summary>Um chão da comparação do DBG: o nome no botão e a textura.</summary>
-        [Serializable]
-        public sealed class FloorOption
-        {
-            public string label;
-            public Texture2D texture;
-        }
-
         /// <summary>A textura do chão agora (null = a gerada por código; para testes).</summary>
         public Texture FloorTexture => _floor != null ? _floor.GetTexture(BaseMapId) : null;
 
-        /// <summary>O nome do chão mostrado agora, na lista do DBG (null fora dela).</summary>
-        public string FloorLabel => _floorOption >= 0 ? floorOptions[_floorOption].label : null;
+        /// <summary>O bioma mostrado agora (null sem a lista de biomas).</summary>
+        public BiomeDefinition Biome => _biome >= 0 ? biomes[_biome] : null;
 
-        /// <summary>Passa para o próximo chão da lista do DBG (volta ao primeiro depois do último; não fica salvo).</summary>
-        public void NextFloor()
+        /// <summary>Passa para o próximo bioma (DBG; volta à caverna 1 depois da 10; não fica salvo).</summary>
+        public void NextBiome()
         {
-            if (_floor == null || floorOptions.Length == 0) return;
-            _floorOption = (_floorOption + 1) % floorOptions.Length;
-            SetSurfaceTexture(_floor, floorOptions[_floorOption].texture, _art.Floor);
+            if (biomes.Length > 0) ApplyBiome((_biome + 1) % biomes.Length);
+        }
+
+        /// <summary>Chão, tinta da rocha, neblina e lampiões da caverna <paramref name="index"/> (0 = caverna 1).</summary>
+        public void ApplyBiome(int index)
+        {
+            if (_floor == null || index < 0 || index >= biomes.Length || biomes[index] == null) return;
+            _biome = index;
+            var biome = biomes[index];
+            SetSurfaceTexture(_floor, biome.FloorTexture != null ? biome.FloorTexture : floorTexture, _art.Floor);
+            _wall.SetColor(BaseColorId, biome.WallTint);
+            _ceiling.SetColor(BaseColorId, biome.WallTint);
+            ApplyFog(biome.FogColor);
+        }
+
+        void ApplyFog(Color color)
+        {
+            Shader.SetGlobalColor(FogColorId, QualitySettings.activeColorSpace == ColorSpace.Linear ? color.linear : color);
+            sceneCamera.backgroundColor = color;
         }
 
         /// <summary>A folha do anão mostrada agora (null sem as folhas do PixelLab; para testes).</summary>
@@ -294,7 +307,6 @@ namespace MinersIdle.Presentation
 
             float uvPerMeter = 1f / DescentArt.CorridorTileMeters;
             _floor = CreateSurface("DescentFloor", floorTexture, _art.Floor, new Vector2(0f, uvPerMeter), Color.white);
-            _floorOption = Array.FindIndex(floorOptions, option => option.texture == floorTexture);
             _wall = CreateSurface("DescentWall", wallTexture, _art.Wall, new Vector2(uvPerMeter, 0f), wallTint);
             _ceiling = CreateSurface("DescentCeiling", ceilingTexture, _art.Ceiling, new Vector2(0f, uvPerMeter), wallTint);
             _wood = CreateMaterial("DescentWood", _art.Wood, Vector2.zero);
@@ -348,10 +360,10 @@ namespace MinersIdle.Presentation
             screenRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             screenRenderer.sortingOrder = short.MinValue; // atrás de todos os sprites
 
-            Shader.SetGlobalColor(FogColorId, QualitySettings.activeColorSpace == ColorSpace.Linear ? fogColor.linear : fogColor);
+            ApplyFog(fogColor);
             Shader.SetGlobalFloat(FogStartId, fogStart);
             Shader.SetGlobalFloat(FogEndId, fogEnd);
-            sceneCamera.backgroundColor = fogColor;
+            ApplyBiome(0);
 
             EnsureTarget();
             ApplyFraming();
@@ -757,7 +769,8 @@ namespace MinersIdle.Presentation
             shadow.Place(new Vector3(x, 0.01f, z), new Vector3(width, 1f, DescentArt.ShadowSize.y));
 
         /// <summary>
-        /// Esteios a cada 4 m (caixas de madeira ou o sprite do esteio inteiro), com uma lanterna alternando de lado.
+        /// Esteios a cada 4 m (caixas de madeira ou o sprite do esteio inteiro), com uma lanterna alternando de lado; com o
+        /// esteio com lampião (D-102), o lampião vem nele, a cada N esteios conforme o bioma.
         /// Nenhum esteio entre a câmera e o anão (M1b: o mais próximo cobria o anão inteiro).
         /// </summary>
         void LayoutPosts(double front)
@@ -765,6 +778,9 @@ namespace MinersIdle.Presentation
             float halfWidth = framing.corridorWidth * 0.5f;
             bool beams = framing.height < WallHeight + 2f;
             bool sprite = supportTexture != null;
+            // Com o esteio com lampião (D-102), a luz vem da arte e as lanternas desenhadas por código saem.
+            bool lampSprites = sprite && supportLampTexture != null;
+            int lampEvery = Biome != null ? Biome.LampEvery : 0;
             float nearest = framing.distance + SupportClearance;
             double first = Math.Ceiling((front - CorridorFar) / PostSpacing) * PostSpacing;
 
@@ -782,7 +798,13 @@ namespace MinersIdle.Presentation
                 bool inFront = z < nearest;
                 if (sprite || inFront)
                     _postsLeft[i].Visible = _postsRight[i].Visible = _beams[i].Visible = false;
-                if (sprite && !inFront) _supports[i].Place(new Vector3(0f, 0f, z), supportSize);
+                long postIndex = (long)Math.Round(k / PostSpacing);
+                if (sprite && !inFront)
+                {
+                    bool lamp = lampSprites && lampEvery > 0 && (postIndex % lampEvery + lampEvery) % lampEvery == 0;
+                    _supports[i].SetTexture(lamp ? supportLampTexture : supportTexture);
+                    _supports[i].Place(new Vector3(0f, 0f, z), supportSize);
+                }
                 else _supports[i].Visible = false;
 
                 if (!sprite && !inFront)
@@ -794,7 +816,12 @@ namespace MinersIdle.Presentation
                     else _beams[i].Visible = false;
                 }
 
-                float side = ((long)Math.Round(k / PostSpacing) & 1) == 0 ? -1f : 1f;
+                if (lampSprites)
+                {
+                    _lanterns[i].Visible = false;
+                    continue;
+                }
+                float side = (postIndex & 1) == 0 ? -1f : 1f;
                 float lanternX = side * (halfWidth - PostWidth - DescentArt.LanternSize.x * 0.5f);
                 _lanterns[i].Place(new Vector3(lanternX, LanternHeight, z - PostWidth * 0.5f - 0.02f), DescentArt.LanternSize);
             }

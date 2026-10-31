@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9298543d273a8947b4b47014e23326b, type: 3}
+  m_Name: Caverna_06
+  m_EditorClassIdentifier: MinersIdle.Presentation::MinersIdle.Presentation.BiomeDefinition
+  displayName: Fenda cristalina
+  floorTexture: {fileID: 2800000, guid: 55009804dd37cba40a736a3e98c7ccb9, type: 3}
+  wallTint: {r: 0.95, g: 0.88, b: 1.15, a: 1}
+  fogColor: {r: 0.047058824, g: 0.03137255, b: 0.08627451, a: 1}
+  lampEvery: 4

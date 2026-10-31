@@ -10,7 +10,7 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 |---|---|
 | M0 Descoberta e planejamento | ✅ aprovado em 2026-10-21 |
 | M1 Fundação técnica | ✅ aprovado em 2026-10-21 — [plano do M1](docs/planning/Marco%201%20-%20Plano%20da%20fundacao.md) |
-| M1b Art Spike | 🔨 parte 1 (interface: fonte pixel, HUD, LOJA/AD/AJUSTES, loja) ✅ aprovada em 2026-10-23; parte 2 (anão, cristais, biomas) a planejar — [plano do M1b](docs/planning/Marco%201b%20-%20Art%20Spike.md) |
+| M1b Art Spike | 🔨 parte 1 (interface: fonte pixel, HUD, LOJA/AD/AJUSTES, loja) ✅ aprovada em 2026-10-23; parte 2 em andamento: corredor, cristais, anão e estagiário feitos; chão e esteios próprios (E9, E10) e biomas das 10 cavernas (E8, D-102) aguardando validação no Moto G75 — [plano do M1b](docs/planning/Marco%201b%20-%20Art%20Spike.md) |
 | M2 Protótipo do loop no mapa | ✅ aprovado em 2026-10-21 (E6 reduzida, D-32; testes da E5 no Unity rodam no início do M3) — [plano do M2](docs/planning/Marco%202%20-%20Prototipo%20do%20loop.md) |
 | M3 Regras e economia | ✅ aprovado em 2026-10-21 — [plano do M3](docs/planning/Marco%203%20-%20Regras%20e%20economia.md) |
 | M4 Loja, HUD e save mínimo | ✅ aprovado em 2026-10-21 — [plano do M4](docs/planning/Marco%204%20-%20Loja%20e%20save.md) |

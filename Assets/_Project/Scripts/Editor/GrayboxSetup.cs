@@ -107,6 +107,7 @@ namespace MinersIdle.EditorTools
             changed |= EnsureHudBlocksTaps();
             changed |= DescentSetup.EnsureInGameScene();
             changed |= CorridorArtSetup.EnsureInScene();
+            changed |= BiomeArtSetup.EnsureInScene();
             changed |= CrystalArtSetup.EnsureInScene();
             changed |= DwarfArtSetup.EnsureInScene();
             changed |= DwarfVariantsSetup.EnsureInScene();
