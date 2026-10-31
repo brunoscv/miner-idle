@@ -5,14 +5,16 @@ namespace MinersIdle.Core
 {
     /// <summary>
     /// Um cristal da fila da descida (M6, D-52): um alvo, com uma vida e uma recompensa. <see cref="Id"/> é a ordem de
-    /// nascimento; <see cref="Distance"/> é onde ele está na trilha, em unidades (1 un = 0,5 m na tela, D-58).
+    /// nascimento; <see cref="Distance"/> é onde ele está na trilha, em unidades (1 un = 0,5 m na tela, D-58). Desde o M8
+    /// (E2), a parede da passagem de caverna também é um alvo da fila (<see cref="IsWall"/>): apanha como um cristal, mas
+    /// não paga lascas nem conta nos 100 cristais (D-108).
     /// </summary>
     public sealed class Crystal
     {
         /// <summary>Vida abaixo desta fração da vida máxima conta como zero (arredondamento de <c>double</c>).</summary>
         const double BrokenFraction = 1e-9;
 
-        public Crystal(int id, double distance, double maxHealth, double reward)
+        public Crystal(int id, double distance, double maxHealth, double reward, bool isWall = false)
         {
             if (double.IsNaN(distance) || double.IsInfinity(distance)) throw new ArgumentOutOfRangeException(nameof(distance));
             if (maxHealth <= 0) throw new ArgumentOutOfRangeException(nameof(maxHealth), "A vida precisa ser positiva.");
@@ -23,6 +25,7 @@ namespace MinersIdle.Core
             MaxHealth = maxHealth;
             Health = maxHealth;
             Reward = reward;
+            IsWall = isWall;
         }
 
         public int Id { get; }
@@ -30,6 +33,9 @@ namespace MinersIdle.Core
         public double MaxHealth { get; }
         public double Health { get; private set; }
         public double Reward { get; }
+
+        /// <summary>A parede da passagem de caverna (M8, D-98), não um cristal.</summary>
+        public bool IsWall { get; }
 
         public bool IsBroken => Health <= 0;
 
@@ -46,6 +52,6 @@ namespace MinersIdle.Core
         }
 
         public override string ToString() =>
-            string.Format(CultureInfo.InvariantCulture, "Crystal#{0} a {1:0.###} un {2}/{3}", Id, Distance, Health, MaxHealth);
+            string.Format(CultureInfo.InvariantCulture, "{0}#{1} a {2:0.###} un {3}/{4}", IsWall ? "Wall" : "Crystal", Id, Distance, Health, MaxHealth);
     }
 }

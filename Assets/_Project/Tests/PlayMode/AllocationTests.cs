@@ -154,6 +154,58 @@ namespace MinersIdle.Tests
                         "x10: \"xN\" e \"x10!\" pelo SetText");
         }
 
+        /// <summary>M8 (E2): com a parede da passagem na tela, o anão batendo nela e o corredor desenhando, nada aloca.</summary>
+        [UnityTest]
+        public IEnumerator HittingTheWall_DoesNotAllocate()
+        {
+            yield return LoadAndWarmUp();
+            var simulation = _runner.Simulation;
+            if (!simulation.Economy.Get(UpgradeId.Letrado).IsEnabled)
+                Assert.Ignore("O balanço ativo não tem o Letrado (rode o setup do projeto).");
+            var stage = UnityEngine.Object.FindAnyObjectByType<DescentStage>();
+
+            simulation.AddShards(1e6);
+            simulation.FillCaveBreaks();
+            simulation.Purchase(UpgradeId.Letrado);
+            Assert.That(simulation.PassCave(), Is.True);
+            for (int i = 0; i < 20 && simulation.Miner.Target != simulation.Wall; i++)
+            {
+                simulation.Tick(0);
+                if (simulation.Miner.Target != simulation.Wall) simulation.BreakTarget();
+            }
+            _runner.TimeScale = 20f;
+            for (float t = 0; t < 3f && simulation.Miner.State != MinerState.Mining; t += Time.unscaledDeltaTime) yield return null;
+            _runner.TimeScale = 0f; // só os Tick do teste andam
+            yield return Settle();
+            Assume.That(simulation.Wall, Is.Not.Null, "a parede ainda de pé");
+            Assume.That(simulation.Miner.State, Is.EqualTo(MinerState.Mining), "o anão na parede");
+
+            // Um quadro de ensaio (tremor, faíscas e barra da parede pela primeira vez), depois um intervalo de golpe
+            // inteiro em quadros de 60 fps (2 s no GDD v5): pelo menos um golpe cai dentro da medida.
+            simulation.Tick(simulation.Stats.HitInterval);
+            stage.Draw();
+            yield return Settle();
+            int frames = (int)Math.Ceiling(simulation.Stats.HitInterval * 60) + 1;
+            int hits = 0;
+            Action<MiningHit> onHit = _ => hits++;
+            simulation.HitLanded += onHit;
+            int total = AllocationsAndEvents(() =>
+            {
+                for (int f = 0; f < frames; f++)
+                {
+                    simulation.Tick(1.0 / 60);
+                    stage.Draw();
+                }
+            }, out int events);
+            simulation.HitLanded -= onHit;
+
+            Debug.Log($"[Alloc] parede: {frames} quadros · {hits} golpes · {total} alocações (quebras e nascimentos: {events})");
+            Assume.That(simulation.Wall, Is.Not.Null, "a parede aguentou a medida");
+            Assert.That(stage.IsWallShown, Is.True);
+            Assert.That(hits, Is.GreaterThan(0), "o anão bateu na parede");
+            Assert.That(total, Is.LessThanOrEqualTo(MaxAllocsPerEvent * events), "nada por golpe nem por quadro");
+        }
+
         [UnityTest]
         public IEnumerator WalkingAndHitting_AllocateOnlyWhenACrystalBreaksOrIsBorn()
         {

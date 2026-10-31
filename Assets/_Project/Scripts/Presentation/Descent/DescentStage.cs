@@ -44,6 +44,22 @@ namespace MinersIdle.Presentation
         /// <summary>Cristais desenhados ao mesmo tempo: o máximo da fila mais os que o debug põe além dele.</summary>
         const int CrystalSlots = 20;
 
+        /// <summary>
+        /// A parede da passagem (M8, E2) em graybox: blocos de cristal de lado a lado do corredor, mais altos nas pontas.
+        /// No meio ficam baixos, como um cristal da fila, para não esconder o anão que bate nela.
+        /// </summary>
+        static readonly float[] WallBlockHeights = { 1.6f, 1.15f, 0.9f, 0.8f, 0.9f, 1.15f, 1.6f };
+        /// <summary>Quanto cada bloco é mais largo que a sua faixa do corredor (os blocos se encostam).</summary>
+        const float WallBlockOverlap = 1.35f;
+        static readonly Vector2 WallHealthBarSize = new Vector2(1.2f, 0.08f);
+        const float WallHealthBarHeight = 1.15f;
+
+        /// <summary>
+        /// A troca de caverna (D-111): a descida escurece na primeira metade, o bioma troca no escuro e clareia na segunda.
+        /// </summary>
+        public const float CaveFadeSeconds = 0.5f;
+        const float CaveFadeDarkness = 0.9f;
+
         /// <summary>Tremor do cristal ao levar golpe (o feedback chama <see cref="Shake"/>).</summary>
         const float ShakeSeconds = 0.12f;
 
@@ -194,6 +210,7 @@ namespace MinersIdle.Presentation
         readonly DescentPiece[] _lanterns = new DescentPiece[PostSlots];
         readonly DescentPiece[] _supports = new DescentPiece[PostSlots];
         readonly DescentPiece[] _edgeRocks = new DescentPiece[EdgeRockSlots];
+        readonly DescentPiece[] _wallBlocks = new DescentPiece[WallBlockHeights.Length];
 
         RenderTexture _target;
         bool _hitThisTarget;
@@ -203,6 +220,9 @@ namespace MinersIdle.Presentation
         float _shake;
         float _shakeAmplitude;
         int _drawnCrystals;
+        bool _wallShown;
+        int _pendingBiome = -1;
+        float _caveFade = -1f;
 
         public Camera SceneCamera => sceneCamera;
 
@@ -217,6 +237,15 @@ namespace MinersIdle.Presentation
 
         /// <summary>Cristais da fila que têm desenho (os que estão atrás da câmera contam: só não aparecem ainda).</summary>
         public int DrawnCrystals => _drawnCrystals;
+
+        /// <summary>Se a parede da passagem está desenhada no corredor agora (para testes).</summary>
+        public bool IsWallShown => _wallShown;
+
+        /// <summary>Se a troca de caverna (escurecer, trocar o bioma, clarear) está tocando agora.</summary>
+        public bool IsChangingCave => _caveFade >= 0f;
+
+        /// <summary>Quanto a descida está escurecida agora (0 = normal).</summary>
+        public float Darkness { get; private set; }
 
         /// <summary>O quadro que mostra a descida na tela (para testes).</summary>
         public Transform ScreenQuad => _screen;
@@ -234,6 +263,10 @@ namespace MinersIdle.Presentation
 
         /// <summary>O bioma mostrado agora (null sem a lista de biomas).</summary>
         public BiomeDefinition Biome => _biome >= 0 ? biomes[_biome] : null;
+
+        /// <summary>O nome do bioma da caverna <paramref name="cave"/> (1 = a primeira), ou null sem bioma para ela.</summary>
+        public string BiomeName(int cave) =>
+            cave >= 1 && cave <= biomes.Length && biomes[cave - 1] != null ? biomes[cave - 1].DisplayName : null;
 
         /// <summary>Passa para o próximo bioma (DBG; volta à caverna 1 depois da 10; não fica salvo).</summary>
         public void NextBiome()
@@ -335,6 +368,11 @@ namespace MinersIdle.Presentation
                                                  edgeRockTexture != null ? edgeRockTexture : (Texture)_art.White);
                 _edgeRocks[i].Visible = false;
             }
+            for (int i = 0; i < _wallBlocks.Length; i++)
+            {
+                _wallBlocks[i] = new DescentPiece(transform, "WallBlock", _quad, _sprites, _art.Crystals[0]);
+                _wallBlocks[i].Visible = false;
+            }
             for (int i = 0; i < CrystalSlots; i++)
             {
                 _crystalShadows[i] = new DescentPiece(transform, "CrystalShadow", _flat, _sprites, _art.Shadow);
@@ -409,13 +447,55 @@ namespace MinersIdle.Presentation
             _finisherStart = double.NegativeInfinity;
             _shaking = null;
             _shake = 0f;
-            OnCaveChanged(simulation.State.Cave);
+
+            // Ao abrir (ou trocar de partida) o bioma vem na hora, sem a troca escurecida.
+            _caveFade = -1f;
+            _pendingBiome = -1;
+            SetDarkness(0f);
+            if (simulation.State.Cave - 1 != _biome) ApplyBiome(simulation.State.Cave - 1);
         }
 
-        /// <summary>M8: a caverna em que o anão está mostra o bioma dela (a caverna 1 = o bioma 1, D-102).</summary>
+        /// <summary>
+        /// M8: a caverna em que o anão está mostra o bioma dela (a caverna 1 = o bioma 1, D-102). Desde a E2 a troca é
+        /// escurecida (D-111): o bioma novo entra no meio de <see cref="CaveFadeSeconds"/>, no escuro.
+        /// </summary>
         void OnCaveChanged(int cave)
         {
-            if (cave - 1 != _biome) ApplyBiome(cave - 1);
+            int biome = cave - 1;
+            if (biome == (_pendingBiome >= 0 ? _pendingBiome : _biome)) return; // os 100 cristais do debug: mesma caverna
+            _pendingBiome = biome;
+            if (_caveFade < 0f || _caveFade >= CaveFadeSeconds * 0.5f) _caveFade = 0f; // já escurecendo: segue
+        }
+
+        /// <summary>Anda a troca de caverna: escurece, troca o bioma no escuro, clareia.</summary>
+        void UpdateCaveFade()
+        {
+            if (_caveFade < 0f) return;
+
+            _caveFade += Time.unscaledDeltaTime;
+            float half = CaveFadeSeconds * 0.5f;
+            if (_caveFade >= half && _pendingBiome >= 0)
+            {
+                ApplyBiome(_pendingBiome);
+                _pendingBiome = -1;
+            }
+
+            if (_caveFade >= CaveFadeSeconds)
+            {
+                _caveFade = -1f;
+                SetDarkness(0f);
+                return;
+            }
+            float dark = _caveFade < half ? _caveFade / half : 1f - (_caveFade - half) / half;
+            SetDarkness(Mathf.Clamp01(dark) * CaveFadeDarkness);
+        }
+
+        /// <summary>Escurece só a descida (o quadro do corredor); faíscas, estilhaços e a faixa ficam por cima, claros.</summary>
+        void SetDarkness(float darkness)
+        {
+            if (_screenMaterial == null) return;
+            Darkness = darkness;
+            _screenMaterial.SetColor(BaseColorId, Color.Lerp(Color.white, Color.black, darkness));
         }
 
         void OnHit(MiningHit hit)
@@ -463,6 +543,7 @@ namespace MinersIdle.Presentation
             if (Simulation == null) return;
 
             if (_shake > 0f) _shake = Mathf.Max(0f, _shake - Time.unscaledDeltaTime / ShakeSeconds);
+            UpdateCaveFade();
             Layout();
         }
 
@@ -635,6 +716,7 @@ namespace MinersIdle.Presentation
 
             var crystals = simulation.Crystals;
             _drawnCrystals = Mathf.Min(crystals.Count, CrystalSlots);
+            bool wallShown = false;
             for (int i = 0; i < CrystalSlots; i++)
             {
                 float z = i < crystals.Count ? distance - Ahead(crystals[i].Distance) : float.NegativeInfinity;
@@ -646,6 +728,14 @@ namespace MinersIdle.Presentation
 
                 var crystal = crystals[i];
                 float shake = crystal == _shaking && _shake > 0f ? Mathf.Sin(Time.unscaledTime * 90f) * _shakeAmplitude * _shake : 0f;
+                if (crystal.IsWall)
+                {
+                    _crystals[i].Visible = _crystalShadows[i].Visible = false;
+                    LayoutWall(crystal, z, shake, lean);
+                    wallShown = true;
+                    continue;
+                }
+
                 // Uma textura atribuída no Inspector substitui o cristal provisório; mantém-se a arte antiga como fallback.
                 _crystals[i].SetTexture(CrystalTexture(crystal.Id));
                 _crystals[i].Place(new Vector3(shake, 0f, z), crystalSize);
@@ -653,9 +743,29 @@ namespace MinersIdle.Presentation
                 PlaceShadow(_crystalShadows[i], 0f, z, DescentArt.ShadowSize.x * 1.1f);
             }
 
+            if (!wallShown && _wallShown)
+                for (int k = 0; k < _wallBlocks.Length; k++) _wallBlocks[k].Visible = false;
+            _wallShown = wallShown;
+
             LayoutHealthBar(miner.Target, distance);
             LayoutPosts(front);
             LayoutEdgeRocks(front);
+        }
+
+        /// <summary>A parede (graybox): os blocos de cristal de lado a lado do corredor, tremendo juntos no golpe.</summary>
+        void LayoutWall(Crystal wall, float z, float shake, Quaternion lean)
+        {
+            float width = framing.corridorWidth;
+            float lane = width / _wallBlocks.Length;
+            for (int k = 0; k < _wallBlocks.Length; k++)
+            {
+                var block = _wallBlocks[k];
+                block.SetTexture(CrystalTexture(wall.Id + k));
+                float x = -width * 0.5f + lane * (k + 0.5f);
+                float front = (k & 1) == 1 ? 0.06f : 0f; // um sim, um não, um pouco à frente: sem briga de profundidade
+                block.Place(new Vector3(x + shake, 0f, z - front), new Vector2(lane * WallBlockOverlap, WallBlockHeights[k]));
+                block.Transform.localRotation = lean;
+            }
         }
 
         bool HasCrystalArt => crystalTextures != null && crystalTextures.Length > 0;
@@ -758,19 +868,26 @@ namespace MinersIdle.Presentation
             return 0;
         }
 
-        /// <summary>A barra de vida só no alvo (REQ-CRY-03), acima dele; encolhe da direita para a esquerda.</summary>
+        /// <summary>
+        /// A barra de vida só no alvo (REQ-CRY-03), acima dele; encolhe da direita para a esquerda. Na parede (M8), maior e
+        /// acima dos blocos do meio.
+        /// </summary>
         void LayoutHealthBar(Crystal target, float distance)
         {
-            float z = target != null ? distance - Ahead(target.Distance) - 0.05f : float.NegativeInfinity; // na frente do cristal
+            // Na frente do cristal (e dos blocos da frente da parede).
+            float z = target != null ? distance - Ahead(target.Distance) - (target.IsWall ? 0.1f : 0.05f) : float.NegativeInfinity;
             bool show = z >= CorridorNear;
             _healthBack.Visible = _healthFill.Visible = show;
             if (!show) return;
 
+            bool wall = target.IsWall;
+            var size = wall ? WallHealthBarSize : HealthBarSize;
+            float height = wall ? WallHealthBarHeight : HealthBarHeight;
             float ratio = Mathf.Clamp01((float)(target.Health / target.MaxHealth));
-            _healthBack.Place(new Vector3(0f, HealthBarHeight, z), HealthBarSize);
-            float width = HealthBarSize.x * ratio;
-            _healthFill.Place(new Vector3(-(HealthBarSize.x - width) * 0.5f, HealthBarHeight, z - 0.01f),
-                              new Vector2(Mathf.Max(0.001f, width), HealthBarSize.y));
+            _healthBack.Place(new Vector3(0f, height, z), size);
+            float width = size.x * ratio;
+            _healthFill.Place(new Vector3(-(size.x - width) * 0.5f, height, z - 0.01f),
+                              new Vector2(Mathf.Max(0.001f, width), size.y));
             _healthBack.Transform.localRotation = _healthFill.Transform.localRotation = _dwarf.Transform.localRotation;
         }
 

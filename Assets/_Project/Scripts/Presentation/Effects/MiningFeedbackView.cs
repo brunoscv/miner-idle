@@ -14,6 +14,9 @@ namespace MinersIdle.Presentation
     /// M6 (E4): na vista de frente o anão e o cristal ficam muitas vezes maiores na tela que no mapa visto de cima; as
     /// faíscas, os textos e a lasca crescem por <see cref="sizeScale"/>. <see cref="Intensity"/> (DBG) multiplica
     /// quantidades e tremores, para calibrar no aparelho. Sem clarão de tela: nem no crítico nem na quebra (D-81, D-83).
+    ///
+    /// M8 (E2): a parede da passagem apanha como um cristal; ao quebrar, estilhaços maiores de lado a lado do corredor e um
+    /// tremor mais forte, sem a lasca voando (a parede não paga lascas, D-108).
     /// </summary>
     public sealed class MiningFeedbackView : MiningViewBase
     {
@@ -48,6 +51,9 @@ namespace MinersIdle.Presentation
         [SerializeField] float criticalShakeSeconds = 0.3f;
         [SerializeField] float breakShake = 0.5f;
         [SerializeField] float breakShakeSeconds = 0.25f;
+        [Tooltip("Na quebra da parede da passagem (M8).")]
+        [SerializeField] float wallBreakShake = 0.9f;
+        [SerializeField] float wallBreakShakeSeconds = 0.45f;
         [SerializeField] float milestoneShake = 0.25f;
         [SerializeField] float milestoneShakeSeconds = 0.2f;
         [Tooltip("Com muitos toques por segundo, os tremores caem até esta fração (1 = nunca diminuem).")]
@@ -151,6 +157,12 @@ namespace MinersIdle.Presentation
 
         void OnBroken(Crystal crystal)
         {
+            if (crystal.IsWall)
+            {
+                OnWallBroken(crystal);
+                return;
+            }
+
             var at = stage.CrystalOnScreen(crystal);
             float calm = Calm();
             float size = SparkBurst.DefaultSize * sizeScale;
@@ -160,6 +172,20 @@ namespace MinersIdle.Presentation
             sparks.Emit(at, Count(10), HitSparkColor, 5f * sizeScale, size);
             sparks.Emit(at, Count(18), shards, 6f * sizeScale, size * 2f, 0.6f); // estilhaços na cor do cristal
             shardFlight.Launch(at, sizeScale * 0.7f);
+        }
+
+        /// <summary>A parede caiu: estilhaços grandes em três pontos do corredor (esquerda, meio, direita) e tremor forte.</summary>
+        void OnWallBroken(Crystal wall)
+        {
+            float size = SparkBurst.DefaultSize * sizeScale;
+            var middle = stage.CrystalLocalPosition(wall) + Vector3.up * 0.5f;
+            screenShake.Shake(wallBreakShake * _intensity, wallBreakShakeSeconds);
+            for (int side = -1; side <= 1; side++)
+            {
+                var at = stage.ToScreenWorld(middle + Vector3.right * (side * 0.9f));
+                sparks.Emit(at, Count(12), HitSparkColor, 6f * sizeScale, size * 1.2f);
+                sparks.Emit(at, Count(24), stage.CrystalShardColor(wall.Id + side + 1), 8f * sizeScale, size * 3f, 0.8f);
+            }
         }
 
         void OnComboChanged(int combo)

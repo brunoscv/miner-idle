@@ -11,9 +11,12 @@ namespace MinersIdle.Game
         [SerializeField] string comboFormat;
         [Tooltip("{0} = combo no marco (10, 20…).")]
         [SerializeField] string milestoneFormat;
+        [Tooltip("A faixa da caverna nova (M8, D-111). {0} = número da caverna; {1} = nome do bioma.")]
+        [SerializeField] string caveBannerFormat;
 
         public string CriticalLabel => criticalLabel;
         public string ComboFormat => comboFormat;
         public string MilestoneFormat => milestoneFormat;
+        public string CaveBannerFormat => caveBannerFormat;
     }
 }

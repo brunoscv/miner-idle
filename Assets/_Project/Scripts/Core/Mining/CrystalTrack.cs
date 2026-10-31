@@ -7,7 +7,8 @@ namespace MinersIdle.Core
     /// A fila de cristais da descida (M6, D-52, D-54, D-60): cristais em ordem de distância na trilha. O que nasce entra no
     /// <b>fim da fila</b>, a pelo menos <see cref="MiningRules.SpawnDistance"/> à frente do anão (fora da tela) e a
     /// <see cref="MiningRules.MinCrystalSpacing"/> do último. Os iniciais começam na tela, a partir de
-    /// <see cref="MiningRules.FirstCrystalDistance"/>. Sem sorteio: a mesma partida se repete.
+    /// <see cref="MiningRules.FirstCrystalDistance"/>. Sem sorteio: a mesma partida se repete. Desde o M8 (E2), a parede
+    /// da passagem fica no fim da fila (<see cref="PlaceWall"/>) até quebrar.
     /// </summary>
     public sealed class CrystalTrack
     {
@@ -46,6 +47,9 @@ namespace MinersIdle.Core
         /// <summary>A fila está abaixo do mínimo (D-80): o próximo nasce já.</summary>
         public bool IsBelowMinimum => _crystals.Count < _rules.MinCrystals;
 
+        /// <summary>A parede de pé no fim da fila (M8), ou <c>null</c>.</summary>
+        public Crystal Wall { get; private set; }
+
         /// <summary>O primeiro da fila (o alvo do anão), ou <c>null</c> com a fila vazia.</summary>
         public Crystal Front => _crystals.Count > 0 ? _crystals[0] : null;
 
@@ -79,7 +83,26 @@ namespace MinersIdle.Core
             return crystal;
         }
 
-        internal void Remove(Crystal crystal) => _crystals.Remove(crystal);
+        /// <summary>
+        /// Põe a parede na distância dada, no fim da fila (D-107). Os cristais depois dela somem, e também os que ficariam
+        /// a menos de <see cref="MiningRules.MinCrystalSpacing"/> dela, menos <paramref name="keep"/> (o alvo do anão, que
+        /// quem chama deixa sempre antes da parede). A parede não paga lascas.
+        /// </summary>
+        internal Crystal PlaceWall(double distance, double health, Crystal keep)
+        {
+            for (int i = _crystals.Count - 1; i >= 0; i--)
+                if (_crystals[i] != keep && _crystals[i].Distance > distance - _rules.MinCrystalSpacing) _crystals.RemoveAt(i);
+
+            Wall = new Crystal(_nextId++, distance, health, 0, isWall: true);
+            _crystals.Add(Wall);
+            return Wall;
+        }
+
+        internal void Remove(Crystal crystal)
+        {
+            _crystals.Remove(crystal);
+            if (crystal == Wall) Wall = null;
+        }
 
         Crystal Add(double distance)
         {

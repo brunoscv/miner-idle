@@ -25,10 +25,16 @@ namespace MinersIdle.EditorTools
 
         static readonly Color ShardColor = new Color32(0xC2, 0x3C, 0xFF, 0xFF);
         static readonly Color ComboColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
+        static readonly Color CaveBannerColor = new Color32(0xFF, 0xD0, 0x6A, 0xFF);
+        const string CaveBannerName = "CaveBanner";
 
         public static void EnsureTexts()
         {
-            if (File.Exists(TextsPath)) return;
+            if (File.Exists(TextsPath))
+            {
+                EnsureCaveBannerText();
+                return;
+            }
 
             ProjectSetup.EnsureFolder(Path.GetDirectoryName(TextsPath)?.Replace('\\', '/'));
             var texts = ScriptableObject.CreateInstance<FeedbackTexts>();
@@ -36,9 +42,26 @@ namespace MinersIdle.EditorTools
             so.FindProperty("criticalLabel").stringValue = "CRÍTICO!";
             so.FindProperty("comboFormat").stringValue = "x{0}";
             so.FindProperty("milestoneFormat").stringValue = "x{0}!";
+            so.FindProperty("caveBannerFormat").stringValue = CaveBannerFormat;
             so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.CreateAsset(texts, TextsPath);
             Debug.Log($"[Setup] Textos do feedback criados em {TextsPath}.");
+        }
+
+        const string CaveBannerFormat = "Caverna {0} · {1}";
+
+        /// <summary>M8 (E2): o texto da faixa da caverna nova nos textos que já existem.</summary>
+        static void EnsureCaveBannerText()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null || !string.IsNullOrEmpty(texts.CaveBannerFormat)) return;
+
+            var so = new SerializedObject(texts);
+            so.FindProperty("caveBannerFormat").stringValue = CaveBannerFormat;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Texto da faixa da caverna nos textos do feedback (M8).");
         }
 
         public static bool EnsureInScene()
@@ -140,6 +163,24 @@ namespace MinersIdle.EditorTools
                     Debug.Log("[Setup] Feedback ligado à descida.");
                     changed = true;
                 }
+            }
+
+            // M8 (E2): a faixa da caverna nova, em "Effects/CaveBanner".
+            if (effectsObject != null && effectsObject.Find(CaveBannerName) == null)
+            {
+                var bannerObject = Child(effectsObject.gameObject, CaveBannerName);
+                var label = WorldText(bannerObject.transform, "Label", 4.5f);
+                label.color = CaveBannerColor;
+                label.sortingOrder = 31600;
+                label.textWrappingMode = TextWrappingModes.Normal;
+                label.rectTransform.sizeDelta = new Vector2(15f, 4f);
+                var banner = bannerObject.AddComponent<CaveBanner>();
+                GrayboxSetup.SetReferences(banner,
+                    ("runner", mining.GetComponent<MiningRunner>()),
+                    ("texts", AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath)),
+                    ("stage", Object.FindAnyObjectByType<DescentStage>()), ("worldCamera", camera), ("label", label));
+                Debug.Log("[Setup] Faixa da caverna nova criada na cena Game (M8).");
+                changed = true;
             }
 
             // O HUD do M4 não conhecia a lasca voadora: liga uma vez.

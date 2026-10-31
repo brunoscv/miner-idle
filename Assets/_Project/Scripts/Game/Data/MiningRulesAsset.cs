@@ -42,6 +42,8 @@ namespace MinersIdle.Game
         [SerializeField] double caveRewardGrowth = 1;
         [Tooltip("Cristais a quebrar na caverna para liberar o Letrado dela (D-93).")]
         [SerializeField] int letradoBreaks = 100;
+        [Tooltip("A parede da passagem tem esta vez a vida do cristal da caverna nova (D-98).")]
+        [SerializeField] double wallHealthFactor = 2;
 
         [Header("Anão")]
         [Tooltip("Dano base por golpe, sem melhorias.")]
@@ -86,7 +88,7 @@ namespace MinersIdle.Game
             damage, hitInterval,
             walkSpeed, miningRange,
             minCrystals,
-            caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks);
+            caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor);
 
         public StrikeRules ToStrike() => new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow);
 

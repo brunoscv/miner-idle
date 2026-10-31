@@ -16,7 +16,8 @@ namespace MinersIdle.Core
             double damage, double hitInterval,
             double walkSpeed, double miningRange,
             int minCrystals = 0,
-            int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int letradoBreaks = 100)
+            int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int letradoBreaks = 100,
+            double wallHealthFactor = 2)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -35,6 +36,7 @@ namespace MinersIdle.Core
             if (caveHealthGrowth <= 0 || double.IsNaN(caveHealthGrowth)) throw new ArgumentOutOfRangeException(nameof(caveHealthGrowth));
             if (caveRewardGrowth <= 0 || double.IsNaN(caveRewardGrowth)) throw new ArgumentOutOfRangeException(nameof(caveRewardGrowth));
             if (letradoBreaks < 0) throw new ArgumentOutOfRangeException(nameof(letradoBreaks));
+            if (wallHealthFactor <= 0 || double.IsNaN(wallHealthFactor)) throw new ArgumentOutOfRangeException(nameof(wallHealthFactor));
 
             InitialCrystals = initialCrystals;
             FirstCrystalDistance = firstCrystalDistance;
@@ -53,6 +55,7 @@ namespace MinersIdle.Core
             CaveHealthGrowth = caveHealthGrowth;
             CaveRewardGrowth = caveRewardGrowth;
             LetradoBreaks = letradoBreaks;
+            WallHealthFactor = wallHealthFactor;
         }
 
         /// <summary>Cristais na fila no início (já na tela).</summary>
@@ -92,11 +95,16 @@ namespace MinersIdle.Core
         public double CaveRewardGrowth { get; }
         /// <summary>Cristais a quebrar na caverna para liberar o Letrado dela (D-93: 100).</summary>
         public int LetradoBreaks { get; }
+        /// <summary>A vida da parede é isto × a vida do cristal da caverna nova (D-98: 2).</summary>
+        public double WallHealthFactor { get; }
 
         /// <summary>Vida do cristal na caverna <paramref name="cave"/> (1 = a primeira): base × crescimento^(c−1).</summary>
         public double CrystalHealthIn(int cave) => CrystalHealth * Math.Pow(CaveHealthGrowth, cave - 1);
 
         /// <summary>Lascas do cristal na caverna <paramref name="cave"/>: base × crescimento^(c−1).</summary>
         public double CrystalRewardIn(int cave) => CrystalReward * Math.Pow(CaveRewardGrowth, cave - 1);
+
+        /// <summary>Vida da parede que leva à caverna <paramref name="cave"/> (D-98): fator × a vida do cristal dela.</summary>
+        public double WallHealthIn(int cave) => WallHealthFactor * CrystalHealthIn(cave);
     }
 }

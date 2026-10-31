@@ -15,3 +15,4 @@ MonoBehaviour:
   criticalLabel: "CR\xCDTICO!"
   comboFormat: x{0}
   milestoneFormat: x{0}!
+  caveBannerFormat: "Caverna {0} \xB7 {1}"
