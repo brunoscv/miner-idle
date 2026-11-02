@@ -47,6 +47,22 @@ namespace MinersIdle.Game
             }
         }
 
+        ArrivalStrike? _arrivalStrike;
+
+        /// <summary>
+        /// Atalho do debug (D-124): quando sai o primeiro golpe num cristal, no lugar do valor do asset. Vale também depois
+        /// de reiniciar; não fica salvo.
+        /// </summary>
+        public ArrivalStrike ArrivalStrike
+        {
+            get => Simulation?.ArrivalStrike ?? _arrivalStrike ?? (rules != null ? rules.ToRules().ArrivalStrike : ArrivalStrike.Wait);
+            set
+            {
+                _arrivalStrike = value;
+                if (Simulation != null) Simulation.ArrivalStrike = value;
+            }
+        }
+
         public MiningSimulation Simulation { get; private set; }
         public ulong Seed { get; private set; }
 
@@ -135,6 +151,7 @@ namespace MinersIdle.Game
             {
                 ForceCritical = _forceCritical,
             };
+            if (_arrivalStrike.HasValue) Simulation.ArrivalStrike = _arrivalStrike.Value;
             Simulation.UpgradePurchased += OnUpgradePurchased;
             Simulation.CaveChanged += OnCaveChanged;
             Simulation.HeartReached += SaveNow;

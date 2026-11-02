@@ -110,6 +110,7 @@ namespace MinersIdle.EditorTools
             changed |= CorridorArtSetup.EnsureInScene();
             changed |= BiomeArtSetup.EnsureInScene();
             changed |= SupportArtSetup.EnsureInScene();
+            changed |= StrikeFeelSetup.EnsureInScene();
             changed |= CrystalArtSetup.EnsureInScene();
             changed |= DwarfArtSetup.EnsureInScene();
             changed |= DwarfVariantsSetup.EnsureInScene();

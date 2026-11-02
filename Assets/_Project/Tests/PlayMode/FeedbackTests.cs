@@ -45,6 +45,9 @@ namespace MinersIdle.Tests
         {
             yield return LoadGame();
             _runner.ForceCritical = true;
+            // O anão parado: com o golpe na chegada (D-124) ele bate no primeiro cristal antes de 1 s, e as faíscas e o
+            // crítico desse golpe contariam aqui.
+            _runner.TimeScale = 0f;
 
             _runner.Simulation.Tap();
 
@@ -134,6 +137,7 @@ namespace MinersIdle.Tests
         public IEnumerator Break_ShakesAndBursts_StrongerWithIntensity()
         {
             yield return LoadGame();
+            _runner.TimeScale = 0f; // o anão parado: o golpe da chegada (D-124) soltaria faíscas no meio da conta
 
             _feedback.Intensity = 1f;
             _runner.Simulation.BreakTarget();

@@ -49,9 +49,12 @@ namespace MinersIdle.Tests
 
             // M6: o anão corre parado na tela; quem anda é a fila, desenhada em relação a ele (0,5 m por unidade, D-58).
             Assert.That(Vector3.Distance(stage.MinerOnScreen, minerOnScreen), Is.LessThan(1e-3f), "o anão não sai do lugar na tela");
+            // Golpe fluido (D-125): logo depois da parada de uma quebra, a descida desenhada fica um pouco atrás da regra
+            // (no máximo a corrida de uma parada) e alcança em seguida.
+            Assert.That(stage.DrawnLag, Is.InRange(0, simulation.Stats.WalkSpeed * 0.1), "o atraso desenhado é curto");
             foreach (var crystal in simulation.Crystals)
             {
-                float ahead = (float)((crystal.Distance - simulation.Miner.Distance) * stage.MetersPerUnit);
+                float ahead = (float)((crystal.Distance - (simulation.Miner.Distance - stage.DrawnLag)) * stage.MetersPerUnit);
                 Assert.That(stage.CrystalLocalPosition(crystal).z, Is.EqualTo(stage.Framing.distance - ahead).Within(1e-4f),
                             "cristal " + crystal.Id);
             }

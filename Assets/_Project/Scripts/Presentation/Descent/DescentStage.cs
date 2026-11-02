@@ -179,6 +179,26 @@ namespace MinersIdle.Presentation
         [Tooltip("Altura extra do balanço do anão durante a corrida, em unidades do jogo. Use 0 para desativar.")]
         [SerializeField, Min(0f)] float runBounceHeight = 0.04f;
 
+        [Header("Golpe fluido (D-125): só ilustra; o golpe sai na hora da regra")]
+        [Tooltip("Liga o hit-stop, o preparo do golpe correndo, a freada, a respiração e a arrancada (o DBG → Câmera → Golpe compara).")]
+        [SerializeField] bool strikeFeel = true;
+        [Tooltip("Segundos de jogo com o quadro do impacto parado, a cada golpe do anão (hit-stop). O resto do golpe vem depois.")]
+        [SerializeField, Min(0f)] float hitStopSeconds = 0.06f;
+        [Tooltip("O mesmo no golpe que quebra o cristal: a descida também para e depois alcança a regra (a arrancada).")]
+        [SerializeField, Min(0f)] float breakStopSeconds = 0.1f;
+        [Tooltip("O hit-stop nunca passa desta fração do intervalo do golpe: golpes rápidos, paradas curtas.")]
+        [SerializeField, Range(0f, 1f)] float hitStopMaxShare = 0.25f;
+        [Tooltip("Depois da parada da quebra, o corredor alcança a regra com esta constante de tempo (segundos; ~3× isto até alcançar).")]
+        [SerializeField, Min(0.01f)] float catchUpSeconds = 0.08f;
+        [Tooltip("Na arrancada a corrida toca mais rápido: +isto no começo, caindo enquanto o corredor alcança a regra.")]
+        [SerializeField, Min(0f)] float launchRunBoost = 0.8f;
+        [Tooltip("Freada: ao chegar no cristal o anão achata esta fração da altura e volta ao normal em arrivalSquashSeconds.")]
+        [SerializeField, Range(0f, 0.3f)] float arrivalSquash = 0.08f;
+        [SerializeField, Min(0.01f)] float arrivalSquashSeconds = 0.15f;
+        [Tooltip("Respiração na pose parada entre os golpes: sobe e desce esta altura (unidades do jogo), tantas vezes por segundo.")]
+        [SerializeField, Min(0f)] float breathHeight = 0.02f;
+        [SerializeField, Min(0.1f)] float breathRate = 1.2f;
+
         [Header("Arte do corredor (M1b E4; vazio = desenho gerado por código)")]
         [Tooltip("Chão sem bioma (a lista de biomas vazia).")]
         [SerializeField] Texture2D floorTexture;
@@ -264,6 +284,9 @@ namespace MinersIdle.Presentation
         RenderTexture _target;
         bool _hitThisTarget;
         bool _lastHitWasTap;
+        bool _tapHitWhileStanding;
+        double _lastSwingAt = double.NegativeInfinity;
+        Crystal _preparedTarget;
         double _finisherStart = double.NegativeInfinity;
         Crystal _shaking;
         float _shake;
@@ -272,6 +295,19 @@ namespace MinersIdle.Presentation
         bool _wallShown;
         int _pendingBiome = -1;
         float _caveFade = -1f;
+
+        // Golpe fluido (D-125), tudo no relógio do jogo. A descida desenhada pode ficar um pouco atrás da regra (_lag, em un)
+        // depois da parada da quebra; ela alcança em seguida, e a corrida toca mais rápido enquanto isso (a arrancada).
+        double _lastElapsed;
+        double _runClock;
+        double _holdUntil = double.NegativeInfinity;
+        double _holdLength;
+        bool _holdingRun;
+        double _heldDistance;
+        double _lag;
+        double _lagPeak;
+        double _arrivedAt = double.NegativeInfinity;
+        bool _wasRunning;
 
         public Camera SceneCamera => sceneCamera;
 
@@ -392,6 +428,31 @@ namespace MinersIdle.Presentation
 
         /// <summary>O primeiro quadro do golpe: aparece no instante do dano (para testes).</summary>
         public int DwarfImpactFrame => dwarfMineStrike.Length > 0 ? dwarfMineStrike[0] : -1;
+
+        /// <summary>
+        /// Golpe fluido (D-125): hit-stop, preparo do golpe correndo, freada, respiração e arrancada. Só ilustra; o DBG
+        /// desliga para comparar (não fica salvo).
+        /// </summary>
+        public bool StrikeFeel
+        {
+            get => strikeFeel;
+            set => strikeFeel = value;
+        }
+
+        /// <summary>
+        /// O anão aparece golpeando com a regra dizendo que ele corre (D-125): levantando a picareta nos últimos passos ou
+        /// parado no impacto da quebra (para testes).
+        /// </summary>
+        public bool ShowsStrikeWhileRunning { get; private set; }
+
+        /// <summary>Se o anão está levantando a picareta nos últimos passos até o cristal (D-125; para testes).</summary>
+        public bool IsPreparing { get; private set; }
+
+        /// <summary>Se a parada da quebra pela picareta segurava a descida no último desenho (D-125; para testes).</summary>
+        public bool IsHoldingBreak { get; private set; }
+
+        /// <summary>Unidades que a descida desenhada está atrás da regra agora: só depois da parada da quebra (para testes).</summary>
+        public double DrawnLag => _lag;
 
         public DescentFraming Framing
         {
@@ -539,9 +600,22 @@ namespace MinersIdle.Presentation
         {
             _hitThisTarget = false;
             _lastHitWasTap = false;
+            _tapHitWhileStanding = false;
+            _lastSwingAt = double.NegativeInfinity;
+            _preparedTarget = null;
             _finisherStart = double.NegativeInfinity;
             _shaking = null;
             _shake = 0f;
+
+            _lastElapsed = simulation.Elapsed;
+            _runClock = simulation.Elapsed * Mathf.Max(1f, runAnimationFps);
+            _holdUntil = double.NegativeInfinity;
+            _holdLength = 0;
+            _holdingRun = false;
+            _lag = _lagPeak = 0;
+            _arrivedAt = double.NegativeInfinity;
+            _wasRunning = simulation.Miner.State == MinerState.Running;
+            ShowsStrikeWhileRunning = false;
 
             // Ao abrir (ou trocar de partida) o bioma vem na hora, sem a troca escurecida.
             _caveFade = -1f;
@@ -595,26 +669,99 @@ namespace MinersIdle.Presentation
 
         void OnHit(MiningHit hit)
         {
-            if (!hit.IsTap) _hitThisTarget = true;
+            if (!hit.IsTap)
+            {
+                _hitThisTarget = true;
+                _lastSwingAt = Simulation.Elapsed;
+                StartHold(hitStopSeconds);
+            }
+            else
+            {
+                // O estado antes da quebra: a simulação avisa o golpe antes de tirar o cristal e pôr o anão para correr.
+                _tapHitWhileStanding = Simulation.Miner.State == MinerState.Mining;
+            }
             _lastHitWasTap = hit.IsTap;
         }
 
         /// <summary>
-        /// O toque do jogador quebrou o cristal antes da picareta do anão descer (pela regra ele já pode correr): o anão
-        /// faz mesmo assim uma picaretada completa e rápida (pedido do Bruno). Só ilustra; nenhuma regra muda.
+        /// O toque do jogador quebrou o cristal com o anão parado nele antes da picareta descer (pela regra ele já pode
+        /// correr): o anão faz mesmo assim uma picaretada completa e rápida (pedido do Bruno). Se ele já tinha batido nesse
+        /// cristal, ou ainda corria até ele, não: segue correndo (D-125; com o golpe na chegada, a despedida repetia o golpe
+        /// e o anão deslizava com a picareta). Quebra pela picareta (D-125): o impacto fica parado um pouco mais e a descida
+        /// para junto; depois alcança a regra. Só ilustra; nenhuma regra muda.
         /// </summary>
         void OnCrystalBroken(Crystal crystal)
         {
             var simulation = Simulation;
-            if (!_lastHitWasTap || simulation == null) return;
+            if (simulation == null) return;
+            if (!_lastHitWasTap)
+            {
+                if (!strikeFeel) return;
+                StartHold(breakStopSeconds);
+                _holdingRun = true;
+                _heldDistance = ShownDistance;
+                return;
+            }
+            if (!_tapHitWhileStanding || _hitThisTarget) return;
             double gap = (crystal.Distance - simulation.Miner.Distance) * metersPerUnit;
             if (gap <= FinisherReach) _finisherStart = simulation.Elapsed;
+        }
+
+        /// <summary>Hit-stop (D-125): o quadro do impacto fica parado, no máximo uma fração do intervalo do golpe.</summary>
+        void StartHold(float seconds)
+        {
+            var simulation = Simulation;
+            if (!strikeFeel || simulation == null) return;
+            _holdLength = Math.Min(seconds, simulation.Stats.HitInterval * hitStopMaxShare);
+            _holdUntil = simulation.Elapsed + _holdLength;
+        }
+
+        bool IsHolding => strikeFeel && Simulation.Elapsed < _holdUntil;
+
+        /// <summary>Onde o anão aparece na trilha (un): a regra, menos o que a descida desenhada ainda não alcançou.</summary>
+        double ShownDistance => Simulation.Miner.Distance - _lag;
+
+        /// <summary>
+        /// Anda o golpe fluido um quadro (D-125): a parada da quebra segura a descida; depois dela a descida alcança a
+        /// regra, com a corrida mais rápida no começo (a arrancada); marca a chegada ao cristal (a freada).
+        /// </summary>
+        void UpdateStrikeFeel(MiningSimulation simulation)
+        {
+            double now = simulation.Elapsed;
+            double dt = Math.Max(0, now - _lastElapsed);
+            _lastElapsed = now;
+
+            if (IsHolding && _holdingRun)
+            {
+                _lag = Math.Max(0, simulation.Miner.Distance - _heldDistance);
+                _lagPeak = _lag;
+            }
+            else
+            {
+                _holdingRun = false;
+                if (_lag > 0)
+                {
+                    _lag *= Math.Exp(-dt / catchUpSeconds);
+                    if (_lag < 1e-4) _lag = _lagPeak = 0;
+                }
+            }
+
+            double boost = strikeFeel && _lagPeak > 0 ? launchRunBoost * _lag / _lagPeak : 0;
+            _runClock += dt * Mathf.Max(1f, runAnimationFps) * (1 + boost);
+
+            bool running = simulation.Miner.State == MinerState.Running;
+            if (_wasRunning && !running) _arrivedAt = now;
+            _wasRunning = running;
         }
 
         /// <summary>Se a picaretada de despedida está tocando agora (para testes).</summary>
         public bool IsFinishing => Simulation != null && Simulation.Elapsed - _finisherStart < FinisherSeconds;
 
-        void OnTargetChanged(Crystal target) => _hitThisTarget = false;
+        void OnTargetChanged(Crystal target)
+        {
+            _hitThisTarget = false;
+            _preparedTarget = null;
+        }
 
         /// <summary>O cristal treme rápido ao levar um golpe (feedback do M5); só ilustra.</summary>
         public void Shake(Crystal crystal, float amplitude)
@@ -647,7 +794,7 @@ namespace MinersIdle.Presentation
 
         /// <summary>Metros do anão até o cristal (z do cristal = distância da câmera ao anão − isto).</summary>
         float Ahead(double crystalDistance) =>
-            (float)((crystalDistance - Simulation.Miner.Distance) * metersPerUnit);
+            (float)((crystalDistance - ShownDistance) * metersPerUnit);
 
         /// <summary>Onde um cristal está no corredor (coordenadas locais do palco).</summary>
         public Vector3 CrystalLocalPosition(Crystal crystal) =>
@@ -788,35 +935,59 @@ namespace MinersIdle.Presentation
         {
             var simulation = Simulation;
             var miner = simulation.Miner;
+            UpdateStrikeFeel(simulation);
             float distance = framing.distance;
-            double run = miner.Distance * metersPerUnit;
+            double run = ShownDistance * metersPerUnit;
             bool running = miner.State == MinerState.Running;
             double front = run + distance; // posição na trilha (em metros) que está em z = 0, a câmera
             Shader.SetGlobalFloat(ScrollId, (float)(front % ScrollPeriod));
 
             bool sheets = dwarfRunSheet != null && dwarfMineSheet != null && dwarfRunCycle.Length > 0;
             int runFrameCount = sheets ? dwarfRunCycle.Length : DescentArt.Frames;
-            int runFrame = (int)Math.Floor(simulation.Elapsed * Mathf.Max(1f, runAnimationFps));
-            float runPhase = (float)(simulation.Elapsed * Mathf.Max(1f, runAnimationFps) / runFrameCount * Math.PI * 2.0);
+            int runFrame = (int)Math.Floor(_runClock);
+            float runPhase = (float)(_runClock / runFrameCount * Math.PI * 2.0);
 
             bool low = sheets && UseLowDwarf && lowDwarfRunSheet != null && lowDwarfMineSheet != null;
+            bool striking = false; // a regra diz que corre, mas o anão aparece golpeando (D-125)
+            bool holdingBreak = running && IsHolding && _holdingRun;
+            bool resting = false;
             if (sheets)
             {
-                int mine = running ? dwarfMineRest : MineFrame(miner, simulation.Stats.HitInterval);
+                int mine;
+                if (running) mine = dwarfMineRest;
+                else if (miner.State == MinerState.Recovering)
+                    mine = FollowThroughFrame(simulation, simulation.Elapsed - _lastSwingAt); // termina o golpe (D-126)
+                else mine = MineFrame(simulation);
                 bool finishing = IsFinishing && (running || mine == dwarfMineRest);
-                bool mining = !running || finishing;
                 if (finishing) mine = FinisherFrame(simulation.Elapsed - _finisherStart);
+                else if (holdingBreak)
+                {
+                    mine = DwarfImpactFrame; // a parada da quebra
+                    striking = true;
+                }
+                else if (running && strikeFeel && PreparingFrame(simulation, out int windUp))
+                {
+                    mine = windUp; // levanta a picareta nos últimos passos
+                    striking = true;
+                }
+                bool mining = !running || finishing || striking;
+                resting = !running && !finishing && mine == dwarfMineRest;
                 DwarfFrame = mining ? mine : dwarfRunCycle[runFrame % dwarfRunCycle.Length];
                 DwarfSheet = mining ? (low ? lowDwarfMineSheet : dwarfMineSheet) : (low ? lowDwarfRunSheet : dwarfRunSheet);
                 _dwarf.SetFrame(DwarfSheet, DwarfFrame, mining ? dwarfMineColumns : dwarfRunColumns);
             }
             else if (!running) _dwarf.SetTexture(_art.DwarfMine[SwingFrame(miner, simulation.Stats.HitInterval)]);
             else _dwarf.SetTexture(_art.DwarfRun[runFrame & 3]);
+            ShowsStrikeWhileRunning = striking;
+            IsHoldingBreak = holdingBreak;
+            IsPreparing = striking && !holdingBreak;
 
-            float bounce = running ? Mathf.Abs(Mathf.Sin(runPhase)) * Mathf.Max(0f, runBounceHeight) : 0f;
+            float bounce = running && !striking ? Mathf.Abs(Mathf.Sin(runPhase)) * Mathf.Max(0f, runBounceHeight) : 0f;
+            if (resting && strikeFeel) bounce = Breath(simulation.Elapsed - _arrivedAt);
             var lean = Quaternion.Euler(framing.tilt * spriteLean, 0f, 0f);
             PlaceOnFeet(_dwarf, new Vector3(0f, bounce, distance), lean,
-                        low ? lowDwarfSize : dwarfSize, low ? lowDwarfFootGap : dwarfFootGap);
+                        Squashed(low ? lowDwarfSize : dwarfSize, simulation.Elapsed - _arrivedAt),
+                        low ? lowDwarfFootGap : dwarfFootGap);
             PlaceShadow(_dwarfShadow, 0f, distance, DescentArt.ShadowSize.x);
             LayoutIntern(sheets, running, runFrame, bounce, distance);
 
@@ -960,20 +1131,99 @@ namespace MinersIdle.Presentation
         /// quadro dura no máximo <see cref="dwarfMineFrameSeconds"/>; com golpes rápidos, a animação se comprime para caber
         /// no intervalo. Antes do primeiro golpe no cristal, só o levantar (esperando o golpe).
         /// </summary>
-        int MineFrame(Miner miner, double hitInterval)
+        int MineFrame(MiningSimulation simulation)
+        {
+            var miner = simulation.Miner;
+            double hitInterval = simulation.Stats.HitInterval;
+            double untilHit = hitInterval - miner.HitTimer;
+            if (WindUpFrame(untilHit, MineFrameSeconds(hitInterval), out int windUp)) return windUp;
+            return _hitThisTarget ? FollowThroughFrame(simulation, miner.HitTimer) : dwarfMineRest;
+        }
+
+        /// <summary>
+        /// O quadro da volta da picareta, <paramref name="sinceHit"/> segundos depois do golpe; a pose parada quando ela
+        /// acabou. É o mesmo com o cristal vivo e com o cristal quebrado pelo toque no meio dela (D-126): o anão fica parado
+        /// até o fim, pela regra.
+        /// </summary>
+        int FollowThroughFrame(MiningSimulation simulation, double sinceHit)
+        {
+            if (dwarfMineStrike.Length == 0) return dwarfMineRest;
+            // Com o hit-stop (D-125), o impacto fica parado e o resto do golpe vem depois dele.
+            double hold = strikeFeel ? _holdLength : 0;
+            double since = sinceHit - hold;
+            int strike = since <= 0 ? 0 : (int)(since / FollowThroughFrameSeconds(simulation, hold));
+            return strike < dwarfMineStrike.Length ? dwarfMineStrike[strike] : dwarfMineRest;
+        }
+
+        /// <summary>
+        /// Quanto dura cada quadro da volta da picareta: o de <see cref="MineFrameSeconds"/>, mas cabendo na volta da
+        /// regra (<see cref="MiningSimulation.SwingRecovery"/>, D-126) junto com o impacto parado; assim o último quadro
+        /// acaba quando o anão volta a correr.
+        /// </summary>
+        double FollowThroughFrameSeconds(MiningSimulation simulation, double hold)
+        {
+            double frame = MineFrameSeconds(simulation.Stats.HitInterval);
+            double recovery = simulation.SwingRecovery;
+            return recovery > hold ? Math.Min(frame, (recovery - hold) / dwarfMineStrike.Length) : frame;
+        }
+
+        /// <summary>Quanto dura cada quadro do golpe: no máximo <see cref="dwarfMineFrameSeconds"/>, comprimido para caber no intervalo.</summary>
+        double MineFrameSeconds(double hitInterval)
         {
             int total = dwarfMineWindUp.Length + dwarfMineStrike.Length;
-            double frame = hitInterval > 0 ? Math.Min(dwarfMineFrameSeconds, hitInterval / Math.Max(1, total)) : dwarfMineFrameSeconds;
-            double untilHit = hitInterval - miner.HitTimer;
+            return hitInterval > 0 ? Math.Min(dwarfMineFrameSeconds, hitInterval / Math.Max(1, total)) : dwarfMineFrameSeconds;
+        }
+
+        /// <summary>O quadro de levantar a picareta, se faltam menos que os quadros de levantar até o golpe.</summary>
+        bool WindUpFrame(double untilHit, double frame, out int windUpFrame)
+        {
             int windUp = dwarfMineWindUp.Length;
-            if (windUp > 0 && untilHit < windUp * frame)
-                return dwarfMineWindUp[Mathf.Clamp(windUp - 1 - (int)(untilHit / frame), 0, windUp - 1)];
-            if (_hitThisTarget)
-            {
-                int strike = (int)(miner.HitTimer / frame);
-                if (strike < dwarfMineStrike.Length) return dwarfMineStrike[strike];
-            }
-            return dwarfMineRest;
+            windUpFrame = dwarfMineRest;
+            if (windUp == 0 || untilHit >= windUp * frame) return false;
+            windUpFrame = dwarfMineWindUp[Mathf.Clamp(windUp - 1 - (int)(untilHit / frame), 0, windUp - 1)];
+            return true;
+        }
+
+        /// <summary>
+        /// Preparo (D-125): correndo para um cristal em que vai chegar batendo, o anão levanta a picareta nos últimos passos,
+        /// para o impacto cair junto com a chegada. Com o golpe um intervalo depois da chegada (Wait), nunca acontece.
+        /// </summary>
+        bool PreparingFrame(MiningSimulation simulation, out int windUpFrame)
+        {
+            windUpFrame = dwarfMineRest;
+            var target = simulation.Miner.Target;
+            if (target == null || !CanPrepare(simulation, target)) return false;
+            if (!WindUpFrame(simulation.SecondsToNextHit, MineFrameSeconds(simulation.Stats.HitInterval), out windUpFrame))
+                return false;
+            _preparedTarget = target; // começou: vai até a chegada
+            return true;
+        }
+
+        /// <summary>
+        /// Com o jogador tocando (combo ativo), o toque costuma quebrar o cristal antes da chegada, e o levantar começava e
+        /// era cortado a cada cristal (achado do Bruno em 2026-11-02). Aí o anão só levanta se o alvo aguenta os toques que
+        /// cabem no levantar, no teto de toques por segundo (D-119) e sem crítico; uma vez começado, vai até o fim.
+        /// </summary>
+        bool CanPrepare(MiningSimulation simulation, Crystal target)
+        {
+            if (simulation.Combo == 0 || target == _preparedTarget) return true;
+            var strike = simulation.Strike;
+            if (strike.MaxTapsPerSecond <= 0) return false;
+            double windUp = dwarfMineWindUp.Length * MineFrameSeconds(simulation.Stats.HitInterval);
+            double taps = Math.Ceiling(windUp * strike.MaxTapsPerSecond);
+            return target.Health > taps * simulation.Stats.Damage * strike.TapFraction;
+        }
+
+        /// <summary>Respiração na pose parada (D-125): sobe e desce devagar desde a chegada, começando do chão.</summary>
+        float Breath(double sinceArrival) =>
+            breathHeight * 0.5f * (1f - Mathf.Cos((float)(sinceArrival * breathRate * 2.0 * Math.PI)));
+
+        /// <summary>Freada (D-125): o anão achata ao chegar no cristal e volta ao normal; os pés ficam no chão.</summary>
+        Vector2 Squashed(Vector2 size, double sinceArrival)
+        {
+            if (!strikeFeel || sinceArrival < 0 || sinceArrival >= arrivalSquashSeconds) return size;
+            float squash = arrivalSquash * (1f - (float)(sinceArrival / arrivalSquashSeconds));
+            return new Vector2(size.x * (1f + squash * 0.5f), size.y * (1f - squash));
         }
 
         /// <summary>

@@ -40,6 +40,10 @@ namespace MinersIdle.Core
         int _combo;
         double _lastTapTime;
 
+        // D-126: se a picareta já desceu no alvo atual, e quanto falta do golpe depois que o toque quebrou o cristal.
+        bool _swungAtTarget;
+        double _recoveryLeft;
+
         // Instantes dos últimos toques que valeram (D-119), em anel: cheio, o cursor aponta o mais antigo.
         readonly double[] _tapTimes;
         int _tapCursor;
@@ -62,6 +66,7 @@ namespace MinersIdle.Core
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
             _stats = MinerStats.Compute(_rules, _economy, _state);
+            ArrivalStrike = rules.ArrivalStrike;
             _miner = new Miner();
             _track = new CrystalTrack(rules);
             _track.SetCrystalValues(rules.CrystalHealthIn(_state.Cave), rules.CrystalRewardIn(_state.Cave));
@@ -112,6 +117,41 @@ namespace MinersIdle.Core
 
         /// <summary>Atalho do debug: todo golpe e todo toque saem críticos.</summary>
         public bool ForceCritical { get; set; }
+
+        /// <summary>
+        /// Quando sai o primeiro golpe num cristal (D-124). Começa no valor de <see cref="MiningRules.ArrivalStrike"/>; o DBG
+        /// troca no meio da partida para comparar.
+        /// </summary>
+        public ArrivalStrike ArrivalStrike { get; set; }
+
+        /// <summary>
+        /// Segundos de jogo até o próximo golpe do anão, se nada mudar (sem toque nem compra): a apresentação começa a
+        /// levantar a picareta antes dele, ainda correndo. Infinito sem alvo.
+        /// </summary>
+        public double SecondsToNextHit
+        {
+            get
+            {
+                if (_miner.Target == null) return double.PositiveInfinity;
+                double charge = Math.Max(0, _stats.HitInterval - _miner.HitTimer);
+                if (_miner.State == MinerState.Mining) return charge;
+
+                // Terminando o golpe (D-126), ele só corre depois.
+                double run = _recoveryLeft + Math.Max(0, ToGo()) / _stats.WalkSpeed;
+                switch (ArrivalStrike)
+                {
+                    case ArrivalStrike.Immediate: return run;
+                    case ArrivalStrike.Charge: return Math.Max(run, charge);
+                    default: return run + _stats.HitInterval;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Quanto dura a volta da picareta agora (D-126): <see cref="MiningRules.SwingRecovery"/>, nunca mais que o
+        /// intervalo do golpe. A apresentação toca o golpe nesse tempo, com o cristal vivo ou quebrado pelo toque.
+        /// </summary>
+        public double SwingRecovery => Math.Min(_rules.SwingRecovery, _stats.HitInterval);
 
         /// <summary>Atributos atuais do anão: valores base + melhorias.</summary>
         public MinerStats Stats => _stats;
@@ -234,7 +274,7 @@ namespace MinersIdle.Core
             double damage = _stats.Damage * _strike.TapFraction * (critical ? _strike.CritMultiplier : 1);
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(new MiningHit(target, damage, isTap: true, isCritical: critical));
-            if (broke) Break(target);
+            if (broke) Break(target, byTap: true);
             return true;
         }
 
@@ -315,6 +355,7 @@ namespace MinersIdle.Core
                 {
                     _miner.Target = null;
                     _miner.State = MinerState.Running;
+                    _recoveryLeft = 0;
                     TargetChanged?.Invoke(null);
                 }
             }
@@ -368,6 +409,15 @@ namespace MinersIdle.Core
                     changed = true;
                 }
 
+                if (_miner.State == MinerState.Recovering && _recoveryLeft <= Epsilon)
+                {
+                    // Terminou o golpe (D-126): corre, ou já bate se o próximo está no alcance.
+                    _recoveryLeft = 0;
+                    _miner.State = MinerState.Running;
+                    if (_miner.Target != null && ToGo() <= Epsilon) BeginMining();
+                    changed = true;
+                }
+
                 if (_miner.Target == null && _track.Front != null)
                 {
                     StartTarget(_track.Front);
@@ -401,6 +451,9 @@ namespace MinersIdle.Core
                 case MinerState.Mining:
                     next = Math.Min(next, Math.Max(0, _stats.HitInterval - _miner.HitTimer));
                     break;
+                case MinerState.Recovering:
+                    next = Math.Min(next, Math.Max(0, _recoveryLeft));
+                    break;
             }
 
             return next;
@@ -419,10 +472,39 @@ namespace MinersIdle.Core
             switch (_miner.State)
             {
                 case MinerState.Running:
+                    // A1 (D-124): o relógio do golpe enche correndo, até um intervalo; a chegada não o zera.
+                    if (ArrivalStrike == ArrivalStrike.Charge)
+                        _miner.HitTimer = Math.Min(_miner.HitTimer + step, _stats.HitInterval);
                     Run(step);
                     break;
                 case MinerState.Mining:
                     _miner.HitTimer += step;
+                    break;
+                case MinerState.Recovering:
+                    // Parado, terminando o golpe (D-126). O relógio do golpe conta desde a picaretada (A1 continua enchendo).
+                    _recoveryLeft = Math.Max(0, _recoveryLeft - step);
+                    _miner.HitTimer = Math.Min(_miner.HitTimer + step, _stats.HitInterval);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// O anão chegou ao alcance do alvo e começa a bater. O relógio do golpe fica como a <see cref="ArrivalStrike"/>
+        /// manda (D-124): zerado (o primeiro golpe um intervalo depois), como encheu correndo, ou cheio (golpe na hora).
+        /// </summary>
+        void BeginMining()
+        {
+            _miner.State = MinerState.Mining;
+            switch (ArrivalStrike)
+            {
+                case ArrivalStrike.Charge:
+                    _miner.HitTimer = Math.Min(_miner.HitTimer, _stats.HitInterval);
+                    break;
+                case ArrivalStrike.Immediate:
+                    _miner.HitTimer = _stats.HitInterval;
+                    break;
+                default:
+                    _miner.HitTimer = 0;
                     break;
             }
         }
@@ -447,8 +529,7 @@ namespace MinersIdle.Core
             {
                 // Chegou: para exatamente no alcance (nunca volta para trás, se o cristal foi posto atrás dele).
                 _miner.Distance = Math.Max(_miner.Distance, _miner.Target.Distance - _rules.MiningRange);
-                _miner.State = MinerState.Mining;
-                _miner.HitTimer = 0;
+                BeginMining();
             }
             else
             {
@@ -459,8 +540,20 @@ namespace MinersIdle.Core
         void StartTarget(Crystal target)
         {
             _miner.Target = target;
-            _miner.HitTimer = 0;
-            _miner.State = ToGo() <= Epsilon ? MinerState.Mining : MinerState.Running;
+            _swungAtTarget = false;
+            if (_miner.State == MinerState.Recovering)
+            {
+                // Ainda terminando o golpe (D-126): o alvo novo já vale para o toque; ele corre quando terminar.
+            }
+            else if (ToGo() <= Epsilon)
+            {
+                BeginMining();
+            }
+            else
+            {
+                _miner.State = MinerState.Running;
+                if (ArrivalStrike != ArrivalStrike.Charge) _miner.HitTimer = 0;
+            }
             TargetChanged?.Invoke(target);
         }
 
@@ -471,6 +564,7 @@ namespace MinersIdle.Core
             double damage = _stats.Damage * (critical ? _strike.CritMultiplier : 1);
 
             _state.RegisterHit();
+            _swungAtTarget = true;
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(new MiningHit(target, damage, isTap: false, isCritical: critical));
 
@@ -479,14 +573,26 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// A quebra de um cristal paga e conta; a da parede (M8) não, e leva à caverna seguinte ou, na última, ao coração
-        /// da montanha (D-112).
+        /// da montanha (D-112). Quebrado pelo toque no meio da picaretada, o anão termina o golpe antes de correr (D-126);
+        /// quebrado pela picareta, ou antes de ela descer nele, corre na hora.
         /// </summary>
-        void Break(Crystal target)
+        void Break(Crystal target, bool byTap = false)
         {
+            double recovery = SwingRecovery - _miner.HitTimer;
+            bool finishSwing = byTap && _miner.State == MinerState.Mining && _swungAtTarget && recovery > Epsilon;
+
             _track.Remove(target);
             if (!target.IsWall) _state.RegisterBreak(target.Reward * _stats.RewardMultiplier);
             _miner.Target = null;
-            _miner.State = MinerState.Running;
+            if (finishSwing)
+            {
+                _miner.State = MinerState.Recovering;
+                _recoveryLeft = recovery;
+            }
+            else if (_miner.State != MinerState.Recovering)
+            {
+                _miner.State = MinerState.Running;
+            }
 
             CrystalBroken?.Invoke(target);
             if (!target.IsWall) ShardsChanged?.Invoke(_state.Shards);

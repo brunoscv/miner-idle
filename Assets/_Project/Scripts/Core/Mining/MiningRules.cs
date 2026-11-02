@@ -18,7 +18,9 @@ namespace MinersIdle.Core
             int minCrystals = 0,
             int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int letradoBreaks = 100,
             double wallHealthFactor = 2,
-            double tapReach = double.PositiveInfinity)
+            double tapReach = double.PositiveInfinity,
+            ArrivalStrike arrivalStrike = ArrivalStrike.Wait,
+            double swingRecovery = 0)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -39,6 +41,7 @@ namespace MinersIdle.Core
             if (letradoBreaks < 0) throw new ArgumentOutOfRangeException(nameof(letradoBreaks));
             if (wallHealthFactor <= 0 || double.IsNaN(wallHealthFactor)) throw new ArgumentOutOfRangeException(nameof(wallHealthFactor));
             if (tapReach < 0 || double.IsNaN(tapReach)) throw new ArgumentOutOfRangeException(nameof(tapReach));
+            if (swingRecovery < 0 || double.IsNaN(swingRecovery)) throw new ArgumentOutOfRangeException(nameof(swingRecovery));
 
             InitialCrystals = initialCrystals;
             FirstCrystalDistance = firstCrystalDistance;
@@ -59,6 +62,8 @@ namespace MinersIdle.Core
             LetradoBreaks = letradoBreaks;
             WallHealthFactor = wallHealthFactor;
             TapReach = tapReach;
+            ArrivalStrike = arrivalStrike;
+            SwingRecovery = swingRecovery;
         }
 
         /// <summary>Cristais na fila no início (já na tela).</summary>
@@ -106,6 +111,16 @@ namespace MinersIdle.Core
         /// toque só conta no combo. Infinito = o toque vale a qualquer distância (a D-48a, antes de 2026-11-01).
         /// </summary>
         public double TapReach { get; }
+
+        /// <summary>Quando sai o primeiro golpe num cristal (D-124). <see cref="Core.ArrivalStrike.Wait"/> = o jogo até 2026-11-01.</summary>
+        public ArrivalStrike ArrivalStrike { get; }
+
+        /// <summary>
+        /// Quanto dura a volta da picareta depois do golpe, em segundos (D-126): se o toque quebra o cristal antes disso, o
+        /// anão termina o golpe parado e só então corre. Nunca passa do intervalo do golpe. 0 = corre na hora (o jogo até
+        /// 2026-11-02).
+        /// </summary>
+        public double SwingRecovery { get; }
 
         /// <summary>Vida do cristal na caverna <paramref name="cave"/> (1 = a primeira): base × crescimento^(c−1).</summary>
         public double CrystalHealthIn(int cave) => CrystalHealth * Math.Pow(CaveHealthGrowth, cave - 1);

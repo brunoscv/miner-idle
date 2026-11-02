@@ -189,3 +189,43 @@ Em batch: setup ok (`[Setup] Estatísticas do painel de debug atualizadas`), Edi
 - [ ] Nenhum teste apagado; os que mudaram medem o comportamento novo.
 
 **Esforço:** C1 4–6 h · C2 3–5 h.
+
+## Golpe fluido (pedido do Bruno em 2026-11-01) — ✅ aprovado pelo Bruno no Editor em 2026-11-02 ("agora ficou bom"); falta o Moto G75 e o batch
+
+> O Bruno achou pouco fluida a sequência correr → chegar → parar → bater até quebrar → correr. Causa principal: o relógio do golpe zerava na chegada, então o anão chegava e ficava **um intervalo inteiro parado** antes do primeiro golpe (2 s no começo do v5), quase todo numa pose congelada. Decisões: **D-124** (regra: quando sai o primeiro golpe), **D-125** (só apresentação) e **D-126** (regra: o toque no meio da picaretada espera o golpe terminar). Entra antes da E4, que mede o efeito na economia.
+
+### O que foi feito
+
+| Parte | O que mudou |
+|---|---|
+| **Regra (D-124)** | `ArrivalStrike` no núcleo (`Wait`, `Charge`, `Immediate`), em `MiningRules` e no campo `arrivalStrike` do `MiningRulesAsset` (padrão **Immediate**, a escolha do Bruno em 2026-11-02, em todos os balanços; um asset sem o campo abre nele). `MiningSimulation.ArrivalStrike` (troca no meio da partida) e `SecondsToNextHit` (quanto falta para o próximo golpe, para a apresentação levantar a picareta antes). Charge: o `HitTimer` enche também correndo, até um intervalo, e a chegada não o zera. Immediate: cheio na chegada. `MiningRunner.ArrivalStrike` guarda a escolha do DBG entre reinícios (não salva). |
+| **Apresentação (D-125)** | `DescentStage`: hit-stop (o impacto parado e o resto do golpe depois), preparo correndo (quadros de levantar da folha de mineração com a regra ainda correndo), freada (achata e volta), respiração na pose parada, e a arrancada: na parada da quebra a descida desenhada (`ShownDistance`) fica atrás da regra (`DrawnLag`) e alcança com constante de 0,08 s, com a corrida mais rápida enquanto isso. O golpe e o dano continuam na hora da regra; um quadro não aloca. Números no Inspector (cabeçalho "Golpe fluido"). |
+| **DBG** | DBG → Câmera → **Golpe** passa por: *Golpe hoje* (Wait, sem efeitos) → *Só efeitos* (Wait + D-125) → *Golpe A1* (Charge + D-125) → *Golpe A2* (Immediate + D-125, o padrão). Não fica salvo. Criado pelo `StrikeFeelSetup`. |
+| **Testes** | EditMode `ArrivalStrikeTests` (13): primeiro golpe em cada modo (corrida curta e longa), nunca mais rápido que o intervalo, troca no meio da partida, `SecondsToNextHit` acerta o golpe nos 3 modos, um `Tick` grande = muitos pequenos, e 59 s da caverna 1 (13 / 14 / 23 quebras). PlayMode: `DwarfArtTests` ganhou o teste do preparo e da arrancada (o anão levanta a picareta correndo; a descida alcança a regra antes da chegada); o "correndo nunca mostra a pose parada" passa a aceitar os quadros do golpe com o anão ainda correndo; `MiningSceneTests` passa a medir a posição dos cristais com o atraso desenhado (no máximo a corrida de uma parada). `FeedbackTests` (o do crítico e o da intensidade) param o jogo (`TimeScale = 0`) enquanto medem: com o golpe na chegada, o primeiro golpe automático sai antes de 1 s e as faíscas dele entravam na conta. |
+
+**Correção de 2026-11-02 (achado do Bruno no A2, tocando):** com toques, o anão repetia a picaretada umas 3 vezes e deslizava parado no último quadro do golpe antes de voltar a dar dano. Causa: a picaretada de despedida (D-125 manteve a do pedido antigo) tocava sempre que um toque quebrava o cristal a até 1 m, mesmo com o anão ainda correndo ou já tendo batido nele; ela dura 0,6 s e a corrida até o próximo cristal 0,5 s, então ele chegava "picaretando" e batia de novo. E o levantar da picareta nos últimos passos começava e era interrompido quando o toque quebrava o cristal antes da chegada. Agora: a despedida só toca com o anão **parado** no cristal **antes do primeiro golpe dele** (o caso do pedido antigo, que no A2 não acontece mais); e com o combo ativo o anão não levanta a picareta correndo. Teste novo: `DwarfArtTests.ArrivalStrike_Tapping_RunsStraightWithoutRepeatingTheSwing` (A2, um toque por quadro: correndo, nunca a despedida nem o levantar); o `TapBreak_StillShowsAFullSwing` passa a rodar em Wait, o único modo em que a despedida existe.
+
+**Picaretada inteira com toques (D-126, 2026-11-02):** depois da correção acima, o Bruno achou a picaretada rápida demais, sem o movimento suave da picaretada no cristal vivo: tocando, o cristal quebrava ~0,25 s depois do golpe da chegada e o anão corria na hora, cortando a volta da picareta (~0,7 s). Escolha do Bruno: o anão termina o golpe parado (regra nova). Núcleo: `MinerState.Recovering`, `MiningRules.SwingRecovery` (campo `swingRecovery` = 0,72 s em todos os balanços) e `MiningSimulation.SwingRecovery` (no máximo o intervalo); `Break` sabe se foi o toque (`byTap`) e se a picareta já desceu no alvo. Apresentação: a volta da picareta (`FollowThroughFrame`) é a mesma no cristal vivo e no `Recovering`, com o quadro ajustado para acabar junto com a volta da regra; o levantar com o combo ativo volta a aparecer quando o alvo aguenta os toques que cabem nele (teto de 15/s, sem crítico), e uma vez começado vai até a chegada. Testes: EditMode `SwingRecoveryTests` (8: termina parado e corre; volta já acabada corre; toque antes da chegada corre; quebra pela picareta corre; toques na volta acertam o próximo sem mexer nela; a volta não passa do intervalo; 0 desliga; um `Tick` grande = muitos pequenos com toques); PlayMode `DwarfArtTests.TapBreak_MidSwing_FinishesTheSwingStanding`. **Em batch (2026-11-02, tudo junto: D-124…D-126): setup ok, EditMode 187/187, PlayMode 76/76.**
+
+**O que os números mostram (v5, caverna 1, sem compras):** com 0,5 s de corrida entre cristais, o A1 tira só 0,5 s da espera na chegada (2,0 → 1,5 s); o A2 tira tudo, mas rende ~80% mais lascas/s no começo. Com o intervalo em 0,5 s ou menos (Velocidade 15+), A1 e A2 são iguais: o anão chega batendo.
+
+### Como testar (Bruno)
+
+1. Editor fechado: `bash tools/ci/run-tests.sh` (ou no Editor, `Window → General → Test Runner`).
+2. No Unity: `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`, cena `Game`, Play. No celular: `Tools → Miners Idle → Build → Rodar no celular (Android)`.
+3. Abrir **DBG → Câmera**: o botão **Golpe** mostra *Golpe A2* (o padrão). Fechar o painel da câmera e olhar alguns cristais.
+4. Apertar **Golpe** até *Golpe hoje* e comparar: a espera parada na chegada, sem o impacto segurado.
+5. *Só efeitos*: mesma espera, mas com o impacto segurado, a freada, a respiração e a arrancada depois da quebra.
+6. *Golpe A2*: o anão chega já batendo, com a picareta subindo nos últimos passos.
+7. Comprar Velocidade pelo DBG (5–10 níveis) e repetir 4–6: com golpes rápidos as paradas encurtam junto.
+8. Dizer qual modo fica (A1 ou A2) e se algum efeito está forte ou fraco demais (os números ficam no Inspector do `DescentStage`).
+
+### Critério de pronto
+
+- [x] O Bruno escolhe o modo da D-124: **A2** (teste no Editor, 2026-11-02), com a correção do toque abaixo.
+- [x] Os efeitos da D-125 e a picaretada inteira da D-126 aprovados no Editor (2026-11-02).
+- [ ] Conferido no Moto G75.
+- [x] Testes em batch: EditMode 187/187, PlayMode 76/76 (2026-11-02).
+- [ ] Nenhum teste apagado; os que mudaram medem o comportamento novo.
+
+**Esforço:** ~3–4 h.

@@ -5,6 +5,11 @@ namespace MinersIdle.Core
         /// <summary>Correndo: até o alvo ou, sem alvo, sem parar (a descida nunca para, D-55).</summary>
         Running,
         Mining,
+        /// <summary>
+        /// O toque quebrou o cristal no meio da picaretada: o anão termina o golpe parado e só depois corre (D-126). Os
+        /// toques continuam valendo no próximo alvo.
+        /// </summary>
+        Recovering,
     }
 
     /// <summary>
@@ -23,7 +28,10 @@ namespace MinersIdle.Core
         /// <summary>O alvo atual: o primeiro da fila; não muda até quebrar. <c>null</c> com a fila vazia.</summary>
         public Crystal Target { get; internal set; }
 
-        /// <summary>Segundos acumulados desde o último golpe (ou desde que chegou ao alvo).</summary>
+        /// <summary>
+        /// Segundos acumulados desde o último golpe (ou desde que chegou ao alvo). Com a <see cref="ArrivalStrike.Charge"/>
+        /// (D-124), enche também correndo, até um intervalo.
+        /// </summary>
         public double HitTimer { get; internal set; }
     }
 }

@@ -86,6 +86,13 @@ namespace MinersIdle.Game
                  "3,9 un ≈ 1,95 m: na câmera F1, uma tela 9:16 mostra 1,99 m de chão à frente do anão (as mais altas, mais).")]
         [SerializeField] double tapReach = 3.9;
 
+        [Tooltip("Quando sai o primeiro golpe num cristal (D-124). Wait: um intervalo depois da chegada (o jogo até 2026-11-01); " +
+                 "Charge: o relógio do golpe enche também correndo; Immediate: golpe no instante da chegada.")]
+        [SerializeField] ArrivalStrike arrivalStrike = ArrivalStrike.Immediate; // escolha do Bruno no teste (D-124)
+        [Tooltip("A volta da picareta depois do golpe, em segundos (D-126): se o toque quebra o cristal antes disso, o anão " +
+                 "termina o golpe parado e só então corre. Nunca passa do intervalo. 0,72 = os 9 quadros de 80 ms da folha (D-75); 0 desliga.")]
+        [SerializeField] double swingRecovery = 0.72;
+
         public MiningRules ToRules() => new MiningRules(
             initialCrystals, firstCrystalDistance, maxCrystals, spawnInterval,
             minCrystalSpacing, spawnDistance,
@@ -94,7 +101,7 @@ namespace MinersIdle.Game
             walkSpeed, miningRange,
             minCrystals,
             caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor,
-            tapReach);
+            tapReach, arrivalStrike, swingRecovery);
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond);

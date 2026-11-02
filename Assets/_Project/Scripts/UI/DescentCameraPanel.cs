@@ -77,6 +77,16 @@ namespace MinersIdle.UI
         [SerializeField] Button support;
         [Tooltip("Rótulo do botão do esteio para cada opção, na ordem do DescentStage.")]
         [SerializeField] string[] supportLabels;
+        [Tooltip("Compara o golpe fluido (D-124, D-125): como era, só os efeitos, A1 e A2; o botão mostra o atual (não fica salvo).")]
+        [SerializeField] Button strike;
+        [Tooltip("Rótulo do botão do golpe para cada opção, na ordem de StrikeLooks: como era, só efeitos, A1, A2 (A1 e A2 com os efeitos).")]
+        [SerializeField] string[] strikeLabels;
+
+        /// <summary>As opções do botão do golpe: quando sai o primeiro golpe (D-124) e se os efeitos estão ligados (D-125).</summary>
+        static readonly (ArrivalStrike arrival, bool feel)[] StrikeLooks =
+        {
+            (ArrivalStrike.Wait, false), (ArrivalStrike.Wait, true), (ArrivalStrike.Charge, true), (ArrivalStrike.Immediate, true),
+        };
 
         UnityAction[] _minus;
         UnityAction[] _plus;
@@ -84,8 +94,20 @@ namespace MinersIdle.UI
         TMP_Text _biomeLabel;
         TMP_Text _edgeLabel;
         TMP_Text _supportLabel;
+        TMP_Text _strikeLabel;
 
         public bool IsOpen => content.activeSelf;
+
+        /// <summary>A opção do golpe em uso (índice de <see cref="StrikeLooks"/>), ou −1 se não é nenhuma delas.</summary>
+        public int StrikeLook
+        {
+            get
+            {
+                for (int i = 0; i < StrikeLooks.Length; i++)
+                    if (StrikeLooks[i].arrival == runner.ArrivalStrike && StrikeLooks[i].feel == stage.StrikeFeel) return i;
+                return -1;
+            }
+        }
 
         void Awake()
         {
@@ -109,6 +131,7 @@ namespace MinersIdle.UI
             if (biome != null) _biomeLabel = biome.GetComponentInChildren<TMP_Text>();
             if (edge != null) _edgeLabel = edge.GetComponentInChildren<TMP_Text>();
             if (support != null) _supportLabel = support.GetComponentInChildren<TMP_Text>();
+            if (strike != null) _strikeLabel = strike.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -127,6 +150,7 @@ namespace MinersIdle.UI
             if (biome != null) biome.onClick.AddListener(NextBiome);
             if (edge != null) edge.onClick.AddListener(NextEdge);
             if (support != null) support.onClick.AddListener(NextSupport);
+            if (strike != null) strike.onClick.AddListener(NextStrike);
         }
 
         void OnDisable()
@@ -144,6 +168,7 @@ namespace MinersIdle.UI
             if (biome != null) biome.onClick.RemoveListener(NextBiome);
             if (edge != null) edge.onClick.RemoveListener(NextEdge);
             if (support != null) support.onClick.RemoveListener(NextSupport);
+            if (strike != null) strike.onClick.RemoveListener(NextStrike);
         }
 
         void Update()
@@ -175,6 +200,15 @@ namespace MinersIdle.UI
         void NextSupport()
         {
             stage.SupportLook = (stage.SupportLook + 1) % stage.SupportLooks;
+            _refresh = 0f;
+        }
+
+        /// <summary>Passa para a próxima opção do golpe (D-124, D-125): como era → só efeitos → A1 → A2.</summary>
+        public void NextStrike()
+        {
+            var (arrival, feel) = StrikeLooks[(StrikeLook + 1) % StrikeLooks.Length];
+            runner.ArrivalStrike = arrival;
+            stage.StrikeFeel = feel;
             _refresh = 0f;
         }
 
@@ -243,6 +277,9 @@ namespace MinersIdle.UI
                 _edgeLabel.text = edgeLabels[stage.EdgeLook];
             if (_supportLabel != null && supportLabels != null && stage.SupportLook < supportLabels.Length)
                 _supportLabel.text = supportLabels[stage.SupportLook];
+            int strikeLook = StrikeLook;
+            if (_strikeLabel != null && strikeLabels != null && strikeLook >= 0 && strikeLook < strikeLabels.Length)
+                _strikeLabel.text = strikeLabels[strikeLook];
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),
