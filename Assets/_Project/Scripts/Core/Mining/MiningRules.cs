@@ -17,7 +17,8 @@ namespace MinersIdle.Core
             double walkSpeed, double miningRange,
             int minCrystals = 0,
             int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int letradoBreaks = 100,
-            double wallHealthFactor = 2)
+            double wallHealthFactor = 2,
+            double tapReach = double.PositiveInfinity)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -37,6 +38,7 @@ namespace MinersIdle.Core
             if (caveRewardGrowth <= 0 || double.IsNaN(caveRewardGrowth)) throw new ArgumentOutOfRangeException(nameof(caveRewardGrowth));
             if (letradoBreaks < 0) throw new ArgumentOutOfRangeException(nameof(letradoBreaks));
             if (wallHealthFactor <= 0 || double.IsNaN(wallHealthFactor)) throw new ArgumentOutOfRangeException(nameof(wallHealthFactor));
+            if (tapReach < 0 || double.IsNaN(tapReach)) throw new ArgumentOutOfRangeException(nameof(tapReach));
 
             InitialCrystals = initialCrystals;
             FirstCrystalDistance = firstCrystalDistance;
@@ -56,6 +58,7 @@ namespace MinersIdle.Core
             CaveRewardGrowth = caveRewardGrowth;
             LetradoBreaks = letradoBreaks;
             WallHealthFactor = wallHealthFactor;
+            TapReach = tapReach;
         }
 
         /// <summary>Cristais na fila no início (já na tela).</summary>
@@ -97,6 +100,12 @@ namespace MinersIdle.Core
         public int LetradoBreaks { get; }
         /// <summary>A vida da parede é isto × a vida do cristal da caverna nova (D-98: 2).</summary>
         public double WallHealthFactor { get; }
+
+        /// <summary>
+        /// O toque só tira vida de um alvo a até esta distância do anão: o alvo que já está na tela (D-121). Mais longe, o
+        /// toque só conta no combo. Infinito = o toque vale a qualquer distância (a D-48a, antes de 2026-11-01).
+        /// </summary>
+        public double TapReach { get; }
 
         /// <summary>Vida do cristal na caverna <paramref name="cave"/> (1 = a primeira): base × crescimento^(c−1).</summary>
         public double CrystalHealthIn(int cave) => CrystalHealth * Math.Pow(CaveHealthGrowth, cave - 1);

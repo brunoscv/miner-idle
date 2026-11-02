@@ -16,7 +16,7 @@ MonoBehaviour:
   firstCrystalDistance: 3
   maxCrystals: 12
   spawnInterval: 5
-  minCrystals: 4
+  minCrystals: 10
   minCrystalSpacing: 2
   spawnDistance: 12
   crystalHealth: 10
@@ -64,3 +64,5 @@ MonoBehaviour:
   critMultiplier: 2
   tapFraction: 0.33
   comboWindow: 1
+  maxTapsPerSecond: 15
+  tapReach: 3.9

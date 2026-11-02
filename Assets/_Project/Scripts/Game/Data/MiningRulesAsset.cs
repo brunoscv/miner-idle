@@ -80,6 +80,11 @@ namespace MinersIdle.Game
         [SerializeField] double tapFraction = 0.1;
         [Tooltip("Segundos sem toque até o combo zerar.")]
         [SerializeField] double comboWindow = 1;
+        [Tooltip("Toques que valem por segundo, somando os dedos; acima disto o toque não dá dano, crítico nem combo (D-119). 0 = sem teto.")]
+        [SerializeField] int maxTapsPerSecond = 15;
+        [Tooltip("O toque só tira vida de um alvo a até esta distância do anão, em un: o que já está na tela (D-121). " +
+                 "3,9 un ≈ 1,95 m: na câmera F1, uma tela 9:16 mostra 1,99 m de chão à frente do anão (as mais altas, mais).")]
+        [SerializeField] double tapReach = 3.9;
 
         public MiningRules ToRules() => new MiningRules(
             initialCrystals, firstCrystalDistance, maxCrystals, spawnInterval,
@@ -88,9 +93,11 @@ namespace MinersIdle.Game
             damage, hitInterval,
             walkSpeed, miningRange,
             minCrystals,
-            caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor);
+            caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor,
+            tapReach);
 
-        public StrikeRules ToStrike() => new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow);
+        public StrikeRules ToStrike() =>
+            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond);
 
         public EconomyRules ToEconomy() => new EconomyRules(
             pickaxe.ToDefinition(), speed.ToDefinition(), mining.ToDefinition(),

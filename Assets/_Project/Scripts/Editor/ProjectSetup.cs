@@ -415,6 +415,7 @@ namespace MinersIdle.EditorTools
             serialized.FindProperty("critChance").doubleValue = 0.05;
             serialized.FindProperty("critMultiplier").doubleValue = 2;
             serialized.FindProperty("tapFraction").doubleValue = 0.33;
+            serialized.FindProperty("minCrystals").intValue = 10; // D-122: a fila repõe cada quebra
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             AssetDatabase.CreateAsset(asset, GddV5BalancePath);

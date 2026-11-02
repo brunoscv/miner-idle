@@ -24,7 +24,8 @@ namespace MinersIdle.EditorTools
         /// <summary>Modelo das estatísticas (ver o Tooltip de <c>DebugPanel.statsFormat</c>).</summary>
         const string StatsFormat =
             "Semente {0}\nTempo ×{1} · {2} min de jogo\nGolpes {3} · Quebras {4}\nLascas/min {5}\n" +
-            "Cristais {6}/{7} · Alvo #{8} · Descida {9} un";
+            "Cristais {6}/{7} · Alvo #{8} · Descida {9} un\n" +
+            "Toques/s {10} valeram · {11} acima do teto\nDedos: {12} começos · {13} repetidos · {15} juntos · {14} na tela";
 
         /// <summary>Modelo do nível e próximo custo das melhorias (ver o Tooltip de <c>DebugPanel.upgradesFormat</c>).</summary>
         const string UpgradesFormat =
@@ -174,7 +175,10 @@ namespace MinersIdle.EditorTools
             return true;
         }
 
-        /// <summary>M6 (E2): o modelo das estatísticas mudou (lote → distância descida); atualiza o texto da cena.</summary>
+        /// <summary>
+        /// O modelo das estatísticas mudou (M6 E2: lote → distância descida; 2026-11-01: o diagnóstico do toque, D-118);
+        /// atualiza o texto da cena.
+        /// </summary>
         static bool UpdateStatsFormat(Transform panel)
         {
             var serialized = new SerializedObject(panel.GetComponent<DebugPanel>());
@@ -183,7 +187,7 @@ namespace MinersIdle.EditorTools
 
             format.stringValue = StatsFormat;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log("[Setup] Estatísticas do painel de debug atualizadas para a fila.");
+            Debug.Log("[Setup] Estatísticas do painel de debug atualizadas (diagnóstico do toque).");
             return true;
         }
 

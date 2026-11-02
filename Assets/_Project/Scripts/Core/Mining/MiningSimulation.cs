@@ -24,6 +24,9 @@ namespace MinersIdle.Core
         /// <summary>Trava contra laço infinito por bug: 1 h de jogo tem poucos milhares de eventos.</summary>
         const int MaxStepsPerTick = 10_000_000;
 
+        /// <summary>A janela do teto de toques (D-119), em segundos de jogo.</summary>
+        const double TapRateWindow = 1;
+
         readonly MiningRules _rules;
         readonly CrystalTrack _track;
         readonly Miner _miner;
@@ -37,6 +40,11 @@ namespace MinersIdle.Core
         int _combo;
         double _lastTapTime;
 
+        // Instantes dos últimos toques que valeram (D-119), em anel: cheio, o cursor aponta o mais antigo.
+        readonly double[] _tapTimes;
+        int _tapCursor;
+        int _tapCount;
+
         /// <param name="random">
         /// Sorteio do crítico, o único da partida: desde a fila (M6) os cristais nascem em lugares fixos, então com ou sem
         /// toques a fila é a mesma.
@@ -49,6 +57,7 @@ namespace MinersIdle.Core
             _rules = rules ?? throw new ArgumentNullException(nameof(rules));
             _critRandom = random ?? throw new ArgumentNullException(nameof(random));
             _strike = strike ?? StrikeRules.NoCritical();
+            _tapTimes = new double[_strike.MaxTapsPerSecond];
             _state = state ?? new GameState();
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
@@ -204,24 +213,46 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// Toque do jogador (REQ-MIN-02, D-47, D-48): soma 1 no combo e, se o anão tem alvo (batendo ou correndo até ele),
-        /// tira dele 10% de um golpe (com a Picareta Dupla), podendo ser crítico. Quebra pelo toque paga como qualquer
-        /// quebra. Sem alvo, só o combo conta.
+        /// tira dele a fração de um golpe do <see cref="StrikeRules.TapFraction"/> (com a Picareta Dupla), podendo ser
+        /// crítico. Quebra pelo toque paga como qualquer quebra. Sem alvo, ou com ele além do
+        /// <see cref="MiningRules.TapReach"/> (ainda fora da tela, D-121), só o combo conta. Acima do teto de toques por
+        /// segundo (D-119), o toque não vale nada: devolve <c>false</c> e nenhum evento sai.
         /// </summary>
-        public void Tap()
+        public bool Tap()
         {
+            if (!TakeTapSlot()) return false;
+
             _combo++;
             _lastTapTime = Elapsed;
             ComboChanged?.Invoke(_combo);
             if (_combo % 10 == 0) ComboMilestone?.Invoke(_combo);
 
             var target = _miner.Target;
-            if (target == null) return;
+            if (target == null || target.Distance - _miner.Distance > _rules.TapReach + Epsilon) return true;
 
             bool critical = RollCritical();
             double damage = _stats.Damage * _strike.TapFraction * (critical ? _strike.CritMultiplier : 1);
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(new MiningHit(target, damage, isTap: true, isCritical: critical));
             if (broke) Break(target);
+            return true;
+        }
+
+        /// <summary>
+        /// O teto da D-119: com <see cref="StrikeRules.MaxTapsPerSecond"/> toques valendo no último segundo de jogo, o
+        /// próximo espera o mais antigo deles sair da janela. Toques no mesmo instante (vários dedos num quadro) contam
+        /// um a um.
+        /// </summary>
+        bool TakeTapSlot()
+        {
+            int max = _tapTimes.Length;
+            if (max == 0) return true;
+            if (_tapCount == max && Elapsed < _tapTimes[_tapCursor] + TapRateWindow - Epsilon) return false;
+
+            _tapTimes[_tapCursor] = Elapsed;
+            _tapCursor = (_tapCursor + 1) % max;
+            if (_tapCount < max) _tapCount++;
+            return true;
         }
 
         /// <summary>

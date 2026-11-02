@@ -118,3 +118,74 @@ Em batch: setup ok (`[Setup]` do cristal por caverna, do botão embaixo e das op
 | **Um cristal por caverna (D-116)** | A fila usa só o cristal do bioma: caverna 1 branca, depois azul, amarela, em ciclo (dado em `Data/Biomes/Caverna_NN`). A parede continua com os três misturados. Teste: `CrystalArtTests` passa a medir um cristal por caverna e o revezamento só na parede. |
 
 **Como testar:** no Unity, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`, abrir a cena `Game` e dar Play. (1) **DBG → Encher 100 cristais**, comprar o Letrado na LOJA: PASSAR DE CAVERNA aparece embaixo, no meio, com o livro. (2) Olhar o chão: o desenho do tile como no PNG (`Art/Tile/tileset_ground_01`), não de cabeça para baixo, e andando junto com as pedras da beira. (3) Na caverna 1 só cristais brancos; **DBG → Câmera → Bioma** passa pelas cavernas: 2 azul, 3 amarelo, 4 branco… (4) **DBG → Câmera → Esteio**: passar por 4,5 / 3,0 / 2,8 / 2,4 (o jogo abre no 3,0 m, com um lampião pequeno no poste da esquerda de cada esteio). No Moto G75: `Tools → Miners Idle → Build → Rodar no celular (Android)`.
+
+## Correções do toque e da fila (pedido do Bruno em 2026-11-01) — ✅ testadas pelo Bruno no Moto G75 em 2026-11-01
+
+> Vem do teste de um amigo do Bruno, no celular dele (modelo ainda não anotado), batendo com 3 dedos depois de comprar muita melhoria. Decisões, todas aprovadas pelo Bruno em 2026-11-01: **D-118** (um toque por dedo), **D-119** (teto de 15/s), **D-120** (a tela nunca sem cristais), **D-121** (toque só no alvo na tela), **D-122** (fila mínima de 10) e **D-123** (um toque de cada vez: dedos juntos valem 1). O `tapReach` medido (3,9 un) foi aprovado no teste do celular. Entra antes da E4. Pendente: o modelo do celular do amigo e o print do DBG nele.
+
+### O que aconteceu
+
+1. **Dedo parado contando toque (D-118).** Com 3 dedos parados na tela, o combo foi a **x640 em menos de 3 s**, e cada um desses toques deu dano de toque (33% de um golpe): uns 210 golpes de dano de uma vez. A conta bate com um toque **por dedo por quadro** (3 dedos × 90–120 quadros/s). O `TapInput` lê os dedos direto do `Touchscreen` (`press.wasPressedThisFrame`), um jeito que o manual do Input System desaconselha para ler toques quadro a quadro; em alguns aparelhos o dedo parado volta a parecer "encostou agora". O combo e o dano nunca se multiplicam (o combo é só visual, D-48b); o que multiplicou foi o número de toques.
+2. **Tela sem cristais (D-120).** O toque acerta o alvo mesmo com ele ainda longe (D-48a), e o cristal novo nasce a 12 un (6 m) à frente, fora da tela (D-60, D-80). Com o anão forte e muitos toques, o alvo quebra **antes de entrar na tela**, o próximo nasce mais longe ainda e tem o mesmo destino: a fila tem 4 cristais o tempo todo, todos fora da tela, e o anão corre num corredor vazio.
+
+### Decididas para a C2 (Bruno aprovou as duas recomendações em 2026-11-01)
+
+| # | Decisão | Por quê |
+|---|---|---|
+| **D-121** | **O toque só acerta um alvo que já está na tela.** Muda a D-48a: com o anão andando, o toque vale se o alvo já apareceu; com ele ainda fora da tela, o toque só conta no combo (como hoje sem alvo). O alcance (`tapReach`, em un) é medido na C2, na câmera F1 (D-69): a distância em que o cristal entra pela base da tela. O número medido é mostrado ao Bruno e registrado antes de valer. | É a peça principal: ninguém quebra um cristal que não viu. |
+| **D-122** | **Fila mínima de 4 para 10** (`minCrystals` no `Balance_GDD_v5`, = os 10 iniciais): cada cristal comum quebrado faz nascer outro no fim da fila, no mesmo lugar de sempre (D-60). O relógio continua enchendo até 12. | Com 4, depois que os cristais da tela acabam, o próximo está a 12 un; com 10, a fila vai do anão até lá, um a cada 2 un, e o próximo alvo está sempre perto. |
+
+A parede continua igual (D-107): com ela de pé nada nasce, e os cristais antes dela o anão quebra. Efeito na economia: o ritmo de lascas com toque passa a depender do anão chegar no cristal; entra no relatório da E4.
+
+### C1 — Um toque por dedo e o teto de 15/s (D-118, D-119)
+
+- **Presentation (`TapInput`):** liga o `EnhancedTouch` no `OnEnable` e desliga no `OnDisable`; percorre `Touch.activeTouches` e conta só a fase **Began** de um dedo (`touchId`) que ainda não contou. O id sai da lista na fase **Ended/Canceled**. A lista é um vetor fixo (10 dedos), sem alocação no `Update`. O mouse do Editor continua igual; os testes e o DBG continuam passando por `TapAt`.
+- **Core (`StrikeRules`, `MiningSimulation.Tap`):** `MaxTapsPerSecond` (15, campo `maxTapsPerSecond` ao lado de `tapFraction`). `Tap()` guarda os instantes dos últimos 15 toques contados (anel fixo, relógio da simulação); se o 15º foi há menos de 1 s, o toque é ignorado e `Tap()` devolve `false`: nada de dano, crítico ou combo. A faísca no dedo sai mesmo assim (o jogador vê que tocou). No ×20 do DBG o teto acompanha o relógio do jogo.
+- **DBG:** linha **"Toques/s: contados · ignorados"** e o botão **"Registro de toques"**: guarda os eventos de dedo dos últimos 10 s (id, fase, quadro) e mostra na tela, para o celular do amigo dizer o que o aparelho manda.
+- **Testes EditMode:** 100 `Tap()` no mesmo instante dão 15 danos e combo 15; 1 s depois volta a contar; crítico e quebra só nos contados; toque ignorado não mexe no combo nem na janela dele. Os testes que dão mais de 15 toques seguidos sem o tempo andar (ex.: `StrikeTests` com 25) passam a andar o relógio entre os toques, para medir o comportamento novo.
+- **Testes PlayMode (dedos simulados do Input System):** 3 dedos encostam e ficam **parados 120 quadros** → **3 toques**; 3 dedos arrastando → 3 toques; 3 dedos batendo (encosta, solta) 5 vezes com intervalo → 15 toques; dedo sobre a interface não conta; nenhuma alocação por quadro com 3 dedos na tela.
+
+### C2 — A tela sempre com cristais (D-120, D-121, D-122)
+
+- **Core:** `MiningRules.TapReach`; `Tap()` só tira vida do alvo com `alvo − anão ≤ TapReach`. `minCrystals = 10` no `Balance_GDD_v5` (o protótipo fica como está).
+- **Medir:** o `tapReach` numa captura da câmera F1, no ponto em que o cristal aparece inteiro na base da tela.
+- **Testes EditMode:** toque num alvo além do alcance não tira vida (mas conta no combo); sem parede, a fila nunca fica abaixo de 10; com a parede de pé, nada nasce; **tela nunca vazia:** 120 s de jogo com toque no teto e o anão forte, e o tempo sem nenhum cristal dentro do alcance fica no máximo no tempo de correr 2 un.
+
+### O que foi feito (2026-11-01)
+
+Em batch: setup ok (`[Setup] Estatísticas do painel de debug atualizadas`), EditMode **166/166**, PlayMode **73/73** (depois da D-123).
+
+| Parte | O que mudou |
+|---|---|
+| **Teto de 15/s (D-119)** | `StrikeRules.MaxTapsPerSecond` (campo `maxTapsPerSecond` no `MiningRulesAsset`, 15). `MiningSimulation.Tap()` passa a devolver `bool`: guarda os instantes dos últimos 15 toques que valeram num anel fixo (relógio do jogo); o 16º dentro de 1 s volta `false`, sem dano, crítico, combo nem evento. O toque sem alvo no alcance também gasta o teto (senão o combo, que vai dar bônus pela D-96, subiria sem limite). No núcleo, 0 = sem teto (o padrão dos testes antigos). |
+| **Um toque por dedo (D-118)** | `TapInput` lê `EnhancedTouch` (`Touch.activeTouches`) e guarda os `touchId` dos dedos na tela (vetor fixo de 10, sem alocação). Conta o dedo que aparece pela 1ª vez; um "Began" repetido de um dedo já guardado não conta; o dedo é esquecido no Ended/Canceled ou se sumir da lista. Primeiro trata os dedos que saíram, para um id solto e encostado de novo no mesmo quadro contar. Um toque que começou e acabou entre dois quadros conta uma vez. |
+| **Um toque de cada vez (D-123)** | Pedido do Bruno depois da primeira versão. O dedo novo só vale se a tela estava livre (nenhum outro dedo guardado) e se nenhum outro dedo já contou no mesmo quadro: 2 ou 3 dedos juntos = 1 toque; dedo novo com outro segurado = não conta; um dedo de cada vez (alternando) = cada um conta. |
+| **Rendering Debugger do URP (achado)** | Em build de desenvolvimento, **dois toques de 3 dedos abrem o Rendering Debugger do URP**, um painel invisível na tela de jogo que engole os toques seguintes (achado pelo teste de 3 dedos batendo). O `TapInput` desliga esse gesto (`DebugManager.instance.enableRuntimeUI = false`). Os APKs de teste são de desenvolvimento: quem bate com 3 dedos (como o amigo do Bruno) caía nele. |
+| **Toque só na tela (D-121)** | `MiningRules.TapReach` (campo `tapReach`). Com o alvo além disso, o toque só conta no combo. **Valor medido: 3,9 un (1,95 m)**: na câmera F1, a tela 9:16 mostra 1,99 m de chão à frente do anão (`DescentFraming.GroundAhead`); o Moto G75 (20:9) mostra 2,43 m. 4 un passava 1 cm da borda. O teste `GameValues_TapReachIsOnScreen` trava isso se a câmera mudar. **Aprovado pelo Bruno no Moto G75 em 2026-11-01.** |
+| **Fila de 10 (D-122)** | `minCrystals: 10` no `Balance_GDD_v5` (e no setup que cria o asset). |
+| **DBG** | Duas linhas novas nas estatísticas: **"Toques/s N valeram · N acima do teto"** e **"Dedos: N começos · N repetidos · N juntos · N na tela"** (*juntos* = dedos que não valeram pela D-123) (o último segundo completo). No lugar do botão "Registro de toques" do plano: a grade de botões já está cheia, e essas contagens dizem o que importa do aparelho (muitos *repetidos* = o aparelho repete o começo do toque, o caso da D-118; muitos *começos* com os dedos parados = o contato pisca, e quem segura é o teto). |
+| **Testes** | EditMode `TapGuardTests` (10): teto (100 de uma vez → 15; volta depois de 1 s; 20/s por 3 s → 15 em cada segundo; acima do teto sem crítico nem evento; 0 = sem teto), alcance (fora só combo; dentro com o anão correndo; o limite conta), fila de 10 e **a tela nunca vazia** (2 min de anão forte e toque a cada quadro: nenhum cristal quebra fora do alcance, e o maior tempo sem cristal no alcance é o de correr 2 un). PlayMode `TouchFingerTests` (11), com uma tela de toque virtual: 3 dedos parados → 1; aparelho repetindo "Began" a cada quadro → 1; 3 dedos juntos × 4 encostadas com os mesmos ids → 4 (e o Rendering Debugger não abre); um dedo de cada vez, 3 dedos × 2 → 6; dedo novo com outro segurado → não conta; arrastar → 1; toque dentro de um quadro → 1; dois toques no mesmo quadro → 1; 30 de uma vez → 15 valem e 30 faíscas; os valores do jogo; ler os dedos não aloca. Nenhum teste antigo mudou. |
+
+**O que os números mostram:** com o toque só no alcance, o tempo sem cristal no alcance fica em no máximo ~0,5 s (o anão correndo 2 un até o próximo); antes, com o toque a qualquer distância, podia não acabar nunca. Com o D-121 valendo, a fila de 10 muda pouco esse tempo: o que segura o cristal na tela é o alcance; a fila maior garante a reposição 1 por 1 que você pediu. Batendo 60 vezes por segundo, os 15 do teto acabam no primeiro quarto de segundo, e o cristal que entra no alcance depois espera a janela abrir (ou a picareta).
+
+### Como testar (Bruno)
+
+1. Editor fechado: `bash tools/ci/run-tests.sh` (ou o Claude roda em batch e mostra o resultado).
+2. `Tools → Miners Idle → Build → Rodar no celular (Android)`; no jogo, compre melhorias pelo DBG (lascas).
+3. **3 dedos juntos e parados** na tela por 5 s: conta **1 toque** só (o combo não aparece: "x1" não é mostrado) e a barra de vida desce uma vez.
+4. **Bater com os 3 dedos juntos** várias vezes: cada batida vale 1 (o combo sobe de 1 em 1). O Rendering Debugger do URP não abre mais.
+5. **Segurar um dedo e bater com outro:** o segundo não conta. **Alternar os dedos** (um sai, o outro encosta): cada um conta.
+6. **Bater o mais rápido possível** por 10 s e abrir o DBG logo depois: "Toques/s" mostra no máximo **15 valeram**; "juntos" mostra os dedos que não valeram.
+7. Um dedo só, toque normal: igual a hoje.
+8. (C2) Bater rápido por 1 min com o anão forte: **sempre há cristal na tela**; nenhum quebra antes de aparecer, e o toque só acerta o cristal quando ele já está inteiro na tela (é o 3,9 un a aprovar).
+9. (C2) Comprar o Letrado e PASSAR DE CAVERNA: os cristais antes da parede quebram e só então ela aparece (igual a hoje).
+10. **No celular do amigo:** anotar o modelo, segurar 3 dedos parados por uns segundos, abrir o DBG e mandar print das linhas "Toques/s" e "Dedos".
+
+### Critério de pronto
+
+- [ ] Dedo parado vale 1 toque em qualquer aparelho testado (Moto G75 e o do amigo).
+- [ ] No máximo 15 toques com dano por segundo, com teste no núcleo.
+- [ ] (C2) A tela nunca fica sem cristal fora da passagem; a parede como antes.
+- [ ] Nenhum teste apagado; os que mudaram medem o comportamento novo.
+
+**Esforço:** C1 4–6 h · C2 3–5 h.

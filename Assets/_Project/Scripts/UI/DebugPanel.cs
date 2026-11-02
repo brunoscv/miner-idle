@@ -11,7 +11,7 @@ namespace MinersIdle.UI
     /// Painel de debug do Marco 2 (E5): tempo ×1/×5/×20, gerar cristal, quebrar o alvo, +100 lascas, reiniciar com a
     /// mesma semente ou com uma nova e estatísticas. Desde o M3 (E3, D-37): comprar cada melhoria e ver
     /// nível e próximo custo. Desde o M4 (E3): salvar agora e apagar o save; "Reiniciar" mantém o progresso. Desde o M5
-    /// (E2): toques automáticos e crítico sempre; tremor on/off (E3), som on/off (E4) e a medição de desempenho
+    /// (E2): toques automáticos e crítico sempre (desde 2026-11-01, o diagnóstico do toque nas estatísticas, D-118); tremor on/off (E3), som on/off (E4) e a medição de desempenho
     /// (<see cref="FrameStats"/>, E5), que só conta com o painel fechado. Desde o M6 (E3): "Câmera" abre os controles da
     /// câmera da descida (<see cref="DescentCameraPanel"/>) no lugar do "Mostrar ordem" do mapa. Os atalhos chamam os mesmos comandos das regras.
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
@@ -32,7 +32,9 @@ namespace MinersIdle.UI
         [SerializeField] GameObject content;
         [SerializeField] TMP_Text stats;
         [Tooltip("{0} semente · {1} escala do tempo · {2} minutos de jogo · {3} golpes · {4} quebras · {5} lascas/min · " +
-                 "{6} cristais na fila · {7} máximo · {8} alvo (id) · {9} distância descida (un)")]
+                 "{6} cristais na fila · {7} máximo · {8} alvo (id) · {9} distância descida (un) · toques no último " +
+                 "segundo (D-118, D-119): {10} valeram · {11} acima do teto · {12} começos do aparelho · " +
+                 "{13} começos repetidos · {14} dedos na tela agora · {15} dedos que encostaram com outro na tela (D-123)")]
         [SerializeField, TextArea(3, 8)] string statsFormat;
         [SerializeField] TMP_Text upgrades;
         [Tooltip("Pares nível/próximo custo, na ordem: {0}/{1} Picareta · {2}/{3} Velocidade · {4}/{5} Mineração · " +
@@ -69,6 +71,8 @@ namespace MinersIdle.UI
         [Tooltip("M8 (E3): a última caverna, com os 100 cristais e as lascas do último Letrado (para testar o fim).")]
         [SerializeField] Button lastCave;
         [SerializeField] DescentCameraPanel cameraPanel;
+
+        readonly object[] _statsArgs = new object[16];
 
         /// <summary>Nível e próximo custo de cada linha, na ordem de <see cref="UpgradeId"/> (o Letrado entrou no M8).</summary>
         readonly object[] _upgradeArgs = new object[2 * System.Enum.GetValues(typeof(UpgradeId)).Length];
@@ -218,17 +222,24 @@ namespace MinersIdle.UI
             var state = simulation.State;
             double minutes = simulation.Elapsed / 60;
             var target = simulation.Miner.Target;
-            stats.text = string.Format(statsFormat,
-                runner.Seed,
-                NumberFormatter.Format(runner.TimeScale),
-                NumberFormatter.Format(minutes),
-                NumberFormatter.Format(state.Hits),
-                NumberFormatter.Format(state.Breaks),
-                NumberFormatter.Format(minutes > 0 ? state.Shards / minutes : 0),
-                simulation.Crystals.Count,
-                simulation.Rules.MaxCrystals,
-                target != null ? target.Id.ToString() : "-",
-                NumberFormatter.Format(simulation.Miner.Distance));
+            var taps = tapInput.LastSecond;
+            _statsArgs[0] = runner.Seed;
+            _statsArgs[1] = NumberFormatter.Format(runner.TimeScale);
+            _statsArgs[2] = NumberFormatter.Format(minutes);
+            _statsArgs[3] = NumberFormatter.Format(state.Hits);
+            _statsArgs[4] = NumberFormatter.Format(state.Breaks);
+            _statsArgs[5] = NumberFormatter.Format(minutes > 0 ? state.Shards / minutes : 0);
+            _statsArgs[6] = simulation.Crystals.Count;
+            _statsArgs[7] = simulation.Rules.MaxCrystals;
+            _statsArgs[8] = target != null ? target.Id.ToString() : "-";
+            _statsArgs[9] = NumberFormatter.Format(simulation.Miner.Distance);
+            _statsArgs[10] = taps.Counted;
+            _statsArgs[11] = taps.Capped;
+            _statsArgs[12] = taps.Began;
+            _statsArgs[13] = taps.Repeated;
+            _statsArgs[14] = tapInput.FingersDown;
+            _statsArgs[15] = taps.Together;
+            stats.text = string.Format(statsFormat, _statsArgs);
 
             var economy = simulation.Economy;
             int i = 0;

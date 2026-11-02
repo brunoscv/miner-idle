@@ -14977,7 +14977,7 @@ MonoBehaviour:
   toggleButton: {fileID: 681867810}
   content: {fileID: 1799707627}
   stats: {fileID: 1614003941}
-  statsFormat: "Semente {0}\nTempo \xD7{1} \xB7 {2} min de jogo\nGolpes {3} \xB7 Quebras {4}\nLascas/min {5}\nCristais {6}/{7} \xB7 Alvo #{8} \xB7 Descida {9} un"
+  statsFormat: "Semente {0}\nTempo \xD7{1} \xB7 {2} min de jogo\nGolpes {3} \xB7 Quebras {4}\nLascas/min {5}\nCristais {6}/{7} \xB7 Alvo #{8} \xB7 Descida {9} un\nToques/s {10} valeram \xB7 {11} acima do teto\nDedos: {12} come\xE7os \xB7 {13} repetidos \xB7 {15} juntos \xB7 {14} na tela"
   upgrades: {fileID: 1658855448}
   upgradesFormat: "Picareta nv {0} (pr\xF3x. {1}) \xB7 Velocidade nv {2} (pr\xF3x. {3}) \xB7 Minera\xE7\xE3o nv {4} (pr\xF3x. {5}) \xB7 Dupla nv {6} (pr\xF3x. {7}) \xB7 Botas nv {8} (pr\xF3x. {9}) \xB7 Letrado nv {10} (pr\xF3x. {11})"
   maxedLabel: "m\xE1x."
