@@ -184,7 +184,7 @@ namespace MinersIdle.Presentation
             {
                 var at = stage.ToScreenWorld(middle + Vector3.right * (side * 0.9f));
                 sparks.Emit(at, Count(12), HitSparkColor, 6f * sizeScale, size * 1.2f);
-                sparks.Emit(at, Count(24), stage.CrystalShardColor(wall.Id + side + 1), 8f * sizeScale, size * 3f, 0.8f);
+                sparks.Emit(at, Count(24), stage.MixedCrystalShardColor(wall.Id + side + 1), 8f * sizeScale, size * 3f, 0.8f);
             }
         }
 

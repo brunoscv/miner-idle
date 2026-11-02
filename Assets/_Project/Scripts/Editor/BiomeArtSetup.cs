@@ -47,21 +47,27 @@ namespace MinersIdle.EditorTools
             public Color WallTint;
             public string Fog;
             public int LampEvery;
+            /// <summary>O cristal da fila (D-116): índice em <see cref="CrystalArtSetup.QueueCrystals"/>.</summary>
+            public int Crystal;
         }
 
-        /// <summary>As 10 cavernas (D-102). Nomes: coluna "Sensação" do GDD v5 §6.</summary>
+        /// <summary>
+        /// As 10 cavernas (D-102). Nomes: coluna "Sensação" do GDD v5 §6. Cristal (D-116): um só por caverna, a 1 com o
+        /// branco (vidro) e depois azul e amarelo em ciclo, enquanto só existem os 3 desenhos do Bruno (os próprios de cada
+        /// caverna são do M10).
+        /// </summary>
         static readonly Cave[] Caves =
         {
-            new Cave { Name = "Entrada da mina", Ramp = new[] { "#AD7757", "#C09473", "#D7B594", "#E7D5B3" }, WallTint = new Color(1.35f, 1.35f, 1.35f), Fog = "#140D09", LampEvery = 2 },
-            new Cave { Name = "Galeria rochosa", Ramp = new[] { "#7A4841", "#AD7757", "#C09473", "#D7B594" }, WallTint = new Color(1.25f, 1.18f, 1.12f), Fog = "#120B09", LampEvery = 2 },
-            new Cave { Name = "Veio profundo", Ramp = new[] { "#4D2B32", "#7A4841", "#AD7757", "#C09473" }, WallTint = new Color(1.15f, 1.05f, 1f), Fog = "#0F090A", LampEvery = 3 },
-            new Cave { Name = "Zona metálica", Ramp = new[] { "#241527", "#341C27", "#7A4841", "#AD7757" }, WallTint = new Color(1f, 0.92f, 0.98f), Fog = "#0B060B", LampEvery = 3 },
-            new Cave { Name = "Câmara subterrânea", Ramp = new[] { "#10201C", "#1C342C", "#2E4E40", "#4F7560" }, WallTint = new Color(0.85f, 1.05f, 0.95f), Fog = "#06100C", LampEvery = 4 },
-            new Cave { Name = "Fenda cristalina", Ramp = new[] { "#1E1530", "#2E2047", "#463466", "#6A5590" }, WallTint = new Color(0.95f, 0.88f, 1.15f), Fog = "#0C0816", LampEvery = 4 },
-            new Cave { Name = "Profundidade térmica", Ramp = new[] { "#2A120E", "#4A2016", "#723622", "#9C5A36" }, WallTint = new Color(1.15f, 0.85f, 0.75f), Fog = "#140806", LampEvery = 5 },
-            new Cave { Name = "Abismo mineral", Ramp = new[] { "#0E0B14", "#1A1524", "#2C2440", "#4A3E66" }, WallTint = new Color(0.8f, 0.75f, 0.95f), Fog = "#07050B", LampEvery = 0 },
-            new Cave { Name = "Núcleo profundo", Ramp = new[] { "#090B14", "#121628", "#1E2440", "#343E66" }, WallTint = new Color(0.7f, 0.78f, 1f), Fog = "#04060E", LampEvery = 0 },
-            new Cave { Name = "Coração do vulcão", Ramp = new[] { "#1A0E0C", "#3A1A12", "#7A2E14", "#E0662A" }, WallTint = new Color(1.3f, 0.8f, 0.6f), Fog = "#1C0804", LampEvery = 0 },
+            new Cave { Name = "Entrada da mina", Ramp = new[] { "#AD7757", "#C09473", "#D7B594", "#E7D5B3" }, WallTint = new Color(1.35f, 1.35f, 1.35f), Fog = "#140D09", LampEvery = 1, Crystal = 0 },
+            new Cave { Name = "Galeria rochosa", Ramp = new[] { "#7A4841", "#AD7757", "#C09473", "#D7B594" }, WallTint = new Color(1.25f, 1.18f, 1.12f), Fog = "#120B09", LampEvery = 1, Crystal = 1 },
+            new Cave { Name = "Veio profundo", Ramp = new[] { "#4D2B32", "#7A4841", "#AD7757", "#C09473" }, WallTint = new Color(1.15f, 1.05f, 1f), Fog = "#0F090A", LampEvery = 1, Crystal = 2 },
+            new Cave { Name = "Zona metálica", Ramp = new[] { "#241527", "#341C27", "#7A4841", "#AD7757" }, WallTint = new Color(1f, 0.92f, 0.98f), Fog = "#0B060B", LampEvery = 1, Crystal = 0 },
+            new Cave { Name = "Câmara subterrânea", Ramp = new[] { "#10201C", "#1C342C", "#2E4E40", "#4F7560" }, WallTint = new Color(0.85f, 1.05f, 0.95f), Fog = "#06100C", LampEvery = 1, Crystal = 1 },
+            new Cave { Name = "Fenda cristalina", Ramp = new[] { "#1E1530", "#2E2047", "#463466", "#6A5590" }, WallTint = new Color(0.95f, 0.88f, 1.15f), Fog = "#0C0816", LampEvery = 1, Crystal = 2 },
+            new Cave { Name = "Profundidade térmica", Ramp = new[] { "#2A120E", "#4A2016", "#723622", "#9C5A36" }, WallTint = new Color(1.15f, 0.85f, 0.75f), Fog = "#140806", LampEvery = 1, Crystal = 0 },
+            new Cave { Name = "Abismo mineral", Ramp = new[] { "#0E0B14", "#1A1524", "#2C2440", "#4A3E66" }, WallTint = new Color(0.8f, 0.75f, 0.95f), Fog = "#07050B", LampEvery = 1, Crystal = 1 },
+            new Cave { Name = "Núcleo profundo", Ramp = new[] { "#090B14", "#121628", "#1E2440", "#343E66" }, WallTint = new Color(0.7f, 0.78f, 1f), Fog = "#04060E", LampEvery = 1, Crystal = 2 },
+            new Cave { Name = "Coração do vulcão", Ramp = new[] { "#1A0E0C", "#3A1A12", "#7A2E14", "#E0662A" }, WallTint = new Color(1.3f, 0.8f, 0.6f), Fog = "#1C0804", LampEvery = 1, Crystal = 0 },
         };
 
         static string FloorPath(int cave) => $"{FloorFolder}/floor_cave_{cave + 1:00}.png";
@@ -113,6 +119,28 @@ namespace MinersIdle.EditorTools
                 created++;
             }
             if (created > 0) Debug.Log($"[Setup] Biomas das cavernas criados em {DataFolder}: {created} (M1b E8, D-102).");
+
+            int crystals = 0;
+            for (int c = 0; c < Caves.Length; c++) crystals += EnsureCrystal(c) ? 1 : 0;
+            if (crystals > 0) Debug.Log($"[Setup] Cristal de uma cor por caverna em {crystals} biomas (D-116).");
+        }
+
+        /// <summary>
+        /// O cristal da caverna, só se o bioma está sem nenhum (um posto à mão no asset fica). Devolve se mudou.
+        /// </summary>
+        static bool EnsureCrystal(int cave)
+        {
+            var biome = AssetDatabase.LoadAssetAtPath<BiomeDefinition>(BiomePath(cave));
+            var (name, shards) = CrystalArtSetup.QueueCrystals[Caves[cave].Crystal];
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{CrystalArtSetup.Folder}/{name}.png");
+            if (biome == null || biome.CrystalTexture != null || texture == null) return false;
+
+            var so = new SerializedObject(biome);
+            so.FindProperty("crystalTexture").objectReferenceValue = texture;
+            so.FindProperty("crystalShardColor").colorValue = shards;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(biome);
+            return true;
         }
 
         /// <summary>No DescentStage da cena Game (já aberta): os biomas, o esteio com lampião e o botão do DBG.</summary>

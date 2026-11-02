@@ -14,7 +14,7 @@ namespace MinersIdle.EditorTools
     static class CrystalArtSetup
     {
         const string SourcePath = "Assets/_Project/Art/Crystals/icon_crystal.png";
-        const string Folder = "Assets/_Project/Art/Crystals";
+        internal const string Folder = "Assets/_Project/Art/Crystals";
         static readonly string[] Names = { "white", "gold", "blue", "purple", "red" };
 
         /// <summary>Tamanho do cristal na fila, em metros (o das prévias aprovadas).</summary>
@@ -54,7 +54,7 @@ namespace MinersIdle.EditorTools
         /// Os cristais desenhados pelo Bruno (D-77), em revezamento na fila, com a cor dos estilhaços de cada um. O raro
         /// (<c>crystal_glass_rare</c>) fica guardado para um futuro cristal raro (regra nova, precisa de decisão).
         /// </summary>
-        static readonly (string name, Color32 shards)[] QueueCrystals =
+        internal static readonly (string name, Color32 shards)[] QueueCrystals =
         {
             ("crystal_glass", new Color32(0xD8, 0xE2, 0xDF, 0xFF)),
             ("crystal_sapphire", new Color32(0x6A, 0xA8, 0xDA, 0xFF)),

@@ -58,6 +58,8 @@ namespace MinersIdle.Presentation
 
         /// <summary>Folga, em metros, entre o anão e o esteio mais próximo da câmera que ainda é desenhado.</summary>
         const float SupportClearance = 0.6f;
+        /// <summary>Largura do poste no desenho do esteio (12 dos 96 px do <c>mine_wood</c>).</summary>
+        const float SupportPostFraction = 12f / 96f;
 
         /// <summary>Cristais desenhados ao mesmo tempo: o máximo da fila mais os que o debug põe além dele.</summary>
         const int CrystalSlots = 20;
@@ -118,7 +120,8 @@ namespace MinersIdle.Presentation
         [Tooltip("Largura da textura de render, em pixels (D-14: 270). 0 = resolução do aparelho.")]
         [SerializeField] int internalWidth = 270;
 
-        [Tooltip("Os cristais da fila, em revezamento pelo id (D-77: os do Bruno). Vazio = o cristal gerado por código.")]
+        [Tooltip("Os cristais do Bruno (D-77), em revezamento pelo id: na parede e na fila de bioma sem cristal próprio (D-116). " +
+                 "Vazio = o cristal gerado por código.")]
         [SerializeField] Texture2D[] crystalTextures;
         [Tooltip("A cor dos estilhaços de cada cristal da lista acima (mesma ordem).")]
         [SerializeField] Color[] crystalShardColors;
@@ -195,6 +198,20 @@ namespace MinersIdle.Presentation
         [SerializeField] Texture2D supportLampTexture;
         [Tooltip("Largura e altura do esteio em sprite, em metros.")]
         [SerializeField] Vector2 supportSize = new Vector2(3.4f, 4.5f);
+
+        [Header("Esteio baixo, prévia (2026-10-31)")]
+        [Tooltip("O mesmo esteio mais baixo (linhas do meio dos postes tiradas), com a largura de supportSize. Com 4,5 m a " +
+                 "viga fica acima da câmera e nunca aparece.")]
+        [SerializeField] SupportOption[] supportOptions;
+        [Tooltip("0 = o esteio de hoje (4,5 m, lampião desenhado nele); 1 em diante = supportOptions, com o lampião solto.")]
+        [SerializeField, Min(0)] int supportLook;
+        [Tooltip("Lampião solto, preso no poste da esquerda (a alça encosta no lado esquerdo da imagem).")]
+        [SerializeField] Texture2D lampTexture;
+        [Tooltip("Lado do lampião solto, em metros (fixo: não cresce com o esteio).")]
+        [SerializeField, Min(0.05f)] float lampSize = 0.45f;
+        [Tooltip("Do alto do esteio até o alto do lampião, em metros (a viga tem ~0,42 m).")]
+        [SerializeField, Min(0f)] float lampDrop = 0.55f;
+
         [Tooltip("Pedra da beira do caminho, no encontro do chão com a parede, dos dois lados. Vazio = sem pedras.")]
         [SerializeField] Texture2D edgeRockTexture;
         [Tooltip("Metros entre uma pedra e a próxima, em cada lado.")]
@@ -257,6 +274,32 @@ namespace MinersIdle.Presentation
         float _caveFade = -1f;
 
         public Camera SceneCamera => sceneCamera;
+
+        /// <summary>Um esteio da prévia: a textura (já mais baixa) e a altura dela, em metros.</summary>
+        [Serializable]
+        public sealed class SupportOption
+        {
+            public Texture2D texture;
+            public float height;
+        }
+
+        /// <summary>Quantas opções de esteio o botão do DBG percorre (a de hoje e as da prévia).</summary>
+        public int SupportLooks => 1 + (supportOptions != null ? supportOptions.Length : 0);
+
+        /// <summary>O esteio mostrado (DBG; não fica salvo): 0 = o de hoje, 1 em diante = os mais baixos da prévia.</summary>
+        public int SupportLook
+        {
+            get => supportLook;
+            set => supportLook = Mathf.Clamp(value, 0, SupportLooks - 1);
+        }
+
+        /// <summary>A opção da prévia em uso, ou null no esteio de hoje (ou sem a textura dela).</summary>
+        SupportOption CurrentSupportOption =>
+            supportLook > 0 && supportOptions != null && supportLook <= supportOptions.Length
+            && supportOptions[supportLook - 1].texture != null ? supportOptions[supportLook - 1] : null;
+
+        /// <summary>A altura do esteio mostrado agora, em metros (para testes).</summary>
+        public float SupportHeight => CurrentSupportOption is SupportOption option ? option.height : supportSize.y;
 
         /// <summary>
         /// A beira do caminho da prévia (M1b E11): 0 = A (como era), 1 = B (sombra no canto), 2 = C (+ pedras variadas e
@@ -385,7 +428,8 @@ namespace MinersIdle.Presentation
             _box = DescentMeshes.Box();
 
             float uvPerMeter = 1f / DescentArt.CorridorTileMeters;
-            _floor = CreateSurface("DescentFloor", floorTexture, _art.Floor, new Vector2(0f, uvPerMeter), Color.white);
+            // O v do chão cresce com z (DescentMeshes.Corridor): a rolagem tem o sinal trocado para andar junto da trilha.
+            _floor = CreateSurface("DescentFloor", floorTexture, _art.Floor, new Vector2(0f, -uvPerMeter), Color.white);
             _wall = CreateSurface("DescentWall", wallTexture, _art.Wall, new Vector2(uvPerMeter, 0f), wallTint);
             _ceiling = CreateSurface("DescentCeiling", ceilingTexture, _art.Ceiling, new Vector2(0f, uvPerMeter), wallTint);
             _wood = CreateMaterial("DescentWood", _art.Wood, Vector2.zero);
@@ -822,7 +866,7 @@ namespace MinersIdle.Presentation
             for (int k = 0; k < _wallBlocks.Length; k++)
             {
                 var block = _wallBlocks[k];
-                block.SetTexture(CrystalTexture(wall.Id + k));
+                block.SetTexture(MixedCrystalTexture(wall.Id + k));
                 float x = -width * 0.5f + lane * (k + 0.5f);
                 float front = (k & 1) == 1 ? 0.06f : 0f; // um sim, um não, um pouco à frente: sem briga de profundidade
                 block.Place(new Vector3(x + shake, 0f, z - front), new Vector2(lane * WallBlockOverlap, WallBlockHeights[k]));
@@ -832,8 +876,25 @@ namespace MinersIdle.Presentation
 
         bool HasCrystalArt => crystalTextures != null && crystalTextures.Length > 0;
 
-        /// <summary>A textura do cristal pelo id: os cristais da lista em revezamento (a mesma regra dos estilhaços).</summary>
+        /// <summary>
+        /// A textura do cristal da fila: o da caverna mostrada (D-116, uma cor por caverna) ou, sem ele no bioma, o
+        /// revezamento pelo id (a mesma regra dos estilhaços).
+        /// </summary>
         public Texture CrystalTexture(int id)
+        {
+            var biome = Biome;
+            return biome != null && biome.CrystalTexture != null ? biome.CrystalTexture : MixedCrystalTexture(id);
+        }
+
+        /// <summary>A cor dos estilhaços do cristal da fila: a do cristal que aparece nela.</summary>
+        public Color CrystalShardColor(int id)
+        {
+            var biome = Biome;
+            return biome != null && biome.CrystalTexture != null ? biome.CrystalShardColor : MixedCrystalShardColor(id);
+        }
+
+        /// <summary>Os cristais da lista em revezamento pelo id (D-77): hoje só a parede, que mistura as cores.</summary>
+        public Texture MixedCrystalTexture(int id)
         {
             if (HasCrystalArt)
             {
@@ -843,8 +904,8 @@ namespace MinersIdle.Presentation
             return _art.Crystals[id % DescentArt.CrystalColorCount];
         }
 
-        /// <summary>A cor dos estilhaços do cristal pelo id: a do cristal que aparece na fila.</summary>
-        public Color CrystalShardColor(int id)
+        /// <summary>A cor dos estilhaços de <see cref="MixedCrystalTexture"/>.</summary>
+        public Color MixedCrystalShardColor(int id)
         {
             if (HasCrystalArt && crystalShardColors != null && crystalShardColors.Length == crystalTextures.Length)
                 return crystalShardColors[id % crystalShardColors.Length];
@@ -958,7 +1019,8 @@ namespace MinersIdle.Presentation
 
         /// <summary>
         /// Esteios a cada 4 m (caixas de madeira ou o sprite do esteio inteiro), com uma lanterna alternando de lado; com o
-        /// esteio com lampião (D-102), o lampião vem nele, a cada N esteios conforme o bioma.
+        /// esteio com lampião (D-102), o lampião vem nele, a cada N esteios conforme o bioma. No esteio baixo da prévia, o
+        /// lampião é solto, preso no poste da esquerda num tamanho fixo.
         /// Nenhum esteio entre a câmera e o anão (M1b: o mais próximo cobria o anão inteiro).
         /// </summary>
         void LayoutPosts(double front)
@@ -966,9 +1028,17 @@ namespace MinersIdle.Presentation
             float halfWidth = framing.corridorWidth * 0.5f;
             bool beams = framing.height < WallHeight + 2f;
             bool sprite = supportTexture != null;
+            var option = sprite ? CurrentSupportOption : null;
+            var supportArt = option != null ? option.texture : supportTexture;
+            var size = option != null ? new Vector2(supportSize.x, option.height) : supportSize;
+            bool looseLamp = option != null && lampTexture != null;
             // Com o esteio com lampião (D-102), a luz vem da arte e as lanternas desenhadas por código saem.
-            bool lampSprites = sprite && supportLampTexture != null;
+            bool lampSprites = sprite && option == null && supportLampTexture != null;
             int lampEvery = Biome != null ? Biome.LampEvery : 0;
+            // O lampião solto: a alça na face de dentro do poste da esquerda (12 dos 96 px do esteio), abaixo da viga.
+            var lampScale = new Vector3(lampSize, lampSize, 1f);
+            float lampX = -size.x * 0.5f + size.x * SupportPostFraction + lampSize * 0.5f;
+            float lampY = size.y - lampDrop - lampSize;
             float nearest = framing.distance + SupportClearance;
             double first = Math.Ceiling((front - CorridorFar) / PostSpacing) * PostSpacing;
 
@@ -987,11 +1057,11 @@ namespace MinersIdle.Presentation
                 if (sprite || inFront)
                     _postsLeft[i].Visible = _postsRight[i].Visible = _beams[i].Visible = false;
                 long postIndex = (long)Math.Round(k / PostSpacing);
+                bool lampHere = lampEvery > 0 && (postIndex % lampEvery + lampEvery) % lampEvery == 0;
                 if (sprite && !inFront)
                 {
-                    bool lamp = lampSprites && lampEvery > 0 && (postIndex % lampEvery + lampEvery) % lampEvery == 0;
-                    _supports[i].SetTexture(lamp ? supportLampTexture : supportTexture);
-                    _supports[i].Place(new Vector3(0f, 0f, z), supportSize);
+                    _supports[i].SetTexture(lampSprites && lampHere ? supportLampTexture : supportArt);
+                    _supports[i].Place(new Vector3(0f, 0f, z), size);
                 }
                 else _supports[i].Visible = false;
 
@@ -1004,11 +1074,22 @@ namespace MinersIdle.Presentation
                     else _beams[i].Visible = false;
                 }
 
+                if (looseLamp)
+                {
+                    if (lampHere && !inFront)
+                    {
+                        _lanterns[i].SetTexture(lampTexture);
+                        _lanterns[i].Place(new Vector3(lampX, lampY, z - 0.03f), lampScale);
+                    }
+                    else _lanterns[i].Visible = false;
+                    continue;
+                }
                 if (lampSprites)
                 {
                     _lanterns[i].Visible = false;
                     continue;
                 }
+                _lanterns[i].SetTexture(_art.Lantern);
                 float side = (postIndex & 1) == 0 ? -1f : 1f;
                 float lanternX = side * (halfWidth - PostWidth - DescentArt.LanternSize.x * 0.5f);
                 _lanterns[i].Place(new Vector3(lanternX, LanternHeight, z - PostWidth * 0.5f - 0.02f), DescentArt.LanternSize);

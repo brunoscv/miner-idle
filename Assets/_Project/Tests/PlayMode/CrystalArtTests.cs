@@ -9,15 +9,36 @@ using UnityEngine.TestTools;
 namespace MinersIdle.Tests
 {
     /// <summary>
-    /// M1b (E5, D-77): a fila reveza os cristais desenhados pelo Bruno (glass, sapphire, yellow), e os estilhaços de cada
-    /// um saem na cor dele.
+    /// M1b (E5, D-77) e D-116: cada caverna tem um cristal só na fila (a 1 com o vidro branco, depois safira e amarelo em
+    /// ciclo); a parede mistura os três, em revezamento pelo id; os estilhaços de cada cristal saem na cor dele.
     /// </summary>
     public class CrystalArtTests
     {
         static readonly string[] Names = { "crystal_glass", "crystal_sapphire", "crystal_yellow" };
 
         [UnityTest]
-        public IEnumerator QueueCrystals_RotateBrunosCrystals()
+        public IEnumerator EachCave_HasOneCrystal_StartingWithTheWhiteGlass()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                "Assets/_Project/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            if (stage.Biome == null || stage.Biome.CrystalTexture == null) Assert.Ignore("Sem o cristal nos biomas (rode o setup).");
+            for (int cave = 0; cave < 10; cave++)
+            {
+                stage.ApplyBiome(cave);
+                for (int id = 0; id < 6; id++)
+                {
+                    var texture = stage.CrystalTexture(id);
+                    Assert.That(texture.name, Is.EqualTo(Names[cave % Names.Length]), $"caverna {cave + 1}, cristal {id}");
+                    Assert.That(texture.filterMode, Is.EqualTo(FilterMode.Point), $"caverna {cave + 1}, cristal {id}");
+                }
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator TheWall_RotatesBrunosCrystals()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 "Assets/_Project/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
@@ -25,11 +46,7 @@ namespace MinersIdle.Tests
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
             for (int id = 0; id < 9; id++)
-            {
-                var texture = stage.CrystalTexture(id);
-                Assert.That(texture.name, Is.EqualTo(Names[id % Names.Length]), $"cristal {id}");
-                Assert.That(texture.filterMode, Is.EqualTo(FilterMode.Point), $"cristal {id}");
-            }
+                Assert.That(stage.MixedCrystalTexture(id).name, Is.EqualTo(Names[id % Names.Length]), $"bloco {id}");
         }
 
         [UnityTest]
@@ -40,6 +57,7 @@ namespace MinersIdle.Tests
             yield return null;
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
+            if (stage.Biome == null || stage.Biome.CrystalTexture == null) Assert.Ignore("Sem o cristal nos biomas (rode o setup).");
             for (int c = 1; c < Names.Length; c++) // o vidro quase não tem matiz
             {
                 // Lê o PNG do disco (no modo batch sem placa de vídeo não dá para ler a textura da GPU).
@@ -59,10 +77,16 @@ namespace MinersIdle.Tests
                     sy += Mathf.Sin(h * 2f * Mathf.PI);
                 }
                 float hue = Mathf.Repeat(Mathf.Atan2(sy, sx) / (2f * Mathf.PI), 1f);
-                Color.RGBToHSV(stage.CrystalShardColor(c), out float shardHue, out _, out _);
-                float diff = Mathf.Abs(Mathf.DeltaAngle(hue * 360f, shardHue * 360f));
-                Assert.That(diff, Is.LessThan(20f), $"{Names[c]}: cristal {hue * 360f:0}°, estilhaço {shardHue * 360f:0}°");
                 Object.Destroy(copy);
+
+                // Na fila (a caverna c + 1 tem esse cristal) e na parede (o bloco c do revezamento).
+                stage.ApplyBiome(c);
+                foreach (var (where, shard) in new[] { ("fila", stage.CrystalShardColor(0)), ("parede", stage.MixedCrystalShardColor(c)) })
+                {
+                    Color.RGBToHSV(shard, out float shardHue, out _, out _);
+                    float diff = Mathf.Abs(Mathf.DeltaAngle(hue * 360f, shardHue * 360f));
+                    Assert.That(diff, Is.LessThan(20f), $"{Names[c]} ({where}): cristal {hue * 360f:0}°, estilhaço {shardHue * 360f:0}°");
+                }
             }
         }
     }

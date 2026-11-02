@@ -16,4 +16,6 @@ MonoBehaviour:
   floorTexture: {fileID: 2800000, guid: 76b06e822590b594980962ee71f6a98f, type: 3}
   wallTint: {r: 1.15, g: 1.05, b: 1, a: 1}
   fogColor: {r: 0.05882353, g: 0.03529412, b: 0.039215688, a: 1}
-  lampEvery: 3
+  lampEvery: 1
+  crystalTexture: {fileID: 2800000, guid: 9247c7bf8f47e5848be613a3306f3669, type: 3}
+  crystalShardColor: {r: 0.9411765, g: 0.7019608, b: 0.3529412, a: 1}

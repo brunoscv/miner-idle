@@ -73,12 +73,17 @@ namespace MinersIdle.UI
         [SerializeField] Button edge;
         [Tooltip("Rótulo do botão da beira para cada prévia, na ordem A–D.")]
         [SerializeField] string[] edgeLabels;
+        [Tooltip("Passa pelas alturas do esteio (4,5 m de hoje e as mais baixas da prévia); o botão mostra a atual (não fica salvo).")]
+        [SerializeField] Button support;
+        [Tooltip("Rótulo do botão do esteio para cada opção, na ordem do DescentStage.")]
+        [SerializeField] string[] supportLabels;
 
         UnityAction[] _minus;
         UnityAction[] _plus;
         float _refresh;
         TMP_Text _biomeLabel;
         TMP_Text _edgeLabel;
+        TMP_Text _supportLabel;
 
         public bool IsOpen => content.activeSelf;
 
@@ -103,6 +108,7 @@ namespace MinersIdle.UI
 
             if (biome != null) _biomeLabel = biome.GetComponentInChildren<TMP_Text>();
             if (edge != null) _edgeLabel = edge.GetComponentInChildren<TMP_Text>();
+            if (support != null) _supportLabel = support.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -120,6 +126,7 @@ namespace MinersIdle.UI
             if (lowDwarf != null) lowDwarf.onClick.AddListener(ToggleLowDwarf);
             if (biome != null) biome.onClick.AddListener(NextBiome);
             if (edge != null) edge.onClick.AddListener(NextEdge);
+            if (support != null) support.onClick.AddListener(NextSupport);
         }
 
         void OnDisable()
@@ -136,6 +143,7 @@ namespace MinersIdle.UI
             if (lowDwarf != null) lowDwarf.onClick.RemoveListener(ToggleLowDwarf);
             if (biome != null) biome.onClick.RemoveListener(NextBiome);
             if (edge != null) edge.onClick.RemoveListener(NextEdge);
+            if (support != null) support.onClick.RemoveListener(NextSupport);
         }
 
         void Update()
@@ -161,6 +169,12 @@ namespace MinersIdle.UI
         void NextEdge()
         {
             stage.EdgeLook = (stage.EdgeLook + 1) % DescentStage.EdgeLooks;
+            _refresh = 0f;
+        }
+
+        void NextSupport()
+        {
+            stage.SupportLook = (stage.SupportLook + 1) % stage.SupportLooks;
             _refresh = 0f;
         }
 
@@ -227,6 +241,8 @@ namespace MinersIdle.UI
             if (_biomeLabel != null && stage.Biome != null) _biomeLabel.text = stage.Biome.DisplayName;
             if (_edgeLabel != null && edgeLabels != null && stage.EdgeLook < edgeLabels.Length)
                 _edgeLabel.text = edgeLabels[stage.EdgeLook];
+            if (_supportLabel != null && supportLabels != null && stage.SupportLook < supportLabels.Length)
+                _supportLabel.text = supportLabels[stage.SupportLook];
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),

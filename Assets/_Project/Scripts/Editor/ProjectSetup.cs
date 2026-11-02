@@ -91,6 +91,7 @@ namespace MinersIdle.EditorTools
             UiSkinSetup.EnsureAssets();
             CorridorArtSetup.EnsureAssets();
             BiomeArtSetup.EnsureAssets();
+            SupportArtSetup.EnsureAssets();
             CrystalArtSetup.EnsureAssets();
             DwarfArtSetup.EnsureAssets();
             DwarfVariantsSetup.EnsureAssets();

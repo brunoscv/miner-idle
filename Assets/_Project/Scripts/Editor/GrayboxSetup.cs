@@ -109,6 +109,7 @@ namespace MinersIdle.EditorTools
             changed |= DescentSetup.EnsureInGameScene();
             changed |= CorridorArtSetup.EnsureInScene();
             changed |= BiomeArtSetup.EnsureInScene();
+            changed |= SupportArtSetup.EnsureInScene();
             changed |= CrystalArtSetup.EnsureInScene();
             changed |= DwarfArtSetup.EnsureInScene();
             changed |= DwarfVariantsSetup.EnsureInScene();

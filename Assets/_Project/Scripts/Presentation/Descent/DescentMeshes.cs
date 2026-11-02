@@ -71,7 +71,7 @@ namespace MinersIdle.Presentation
 
         /// <summary>
         /// O corredor parado de <paramref name="zNear"/> a <paramref name="zFar"/> (a câmera está em z = 0). Quem se move é a
-        /// textura: o uv ao longo do corredor é −z (em repetições de <see cref="DescentArt.CorridorTileMeters"/>), e o
+        /// textura: o uv ao longo do corredor é −z (no chão, +z), em repetições de <see cref="DescentArt.CorridorTileMeters"/>, e o
         /// shader soma a distância corrida (<c>_DescentScroll</c>). Sem <paramref name="ceiling"/>, o teto fica vazio (câmera
         /// acima dele).
         /// </summary>
@@ -88,9 +88,10 @@ namespace MinersIdle.Presentation
                 uvs[i] = new Vector2(u / tile, v / tile);
             }
 
-            // Chão e teto: u atravessa o corredor, v corre ao longo dele.
-            Put(0, -hw, 0f, zNear, -hw, -zNear); Put(1, hw, 0f, zNear, hw, -zNear);
-            Put(2, hw, 0f, zFar, hw, -zFar); Put(3, -hw, 0f, zFar, -hw, -zFar);
+            // Chão e teto: u atravessa o corredor, v corre ao longo dele. No chão, v cresce para longe da câmera: o alto do
+            // PNG fica no alto da tela, como foi desenhado (com −z, o desenho do chão aparecia de cabeça para baixo).
+            Put(0, -hw, 0f, zNear, -hw, zNear); Put(1, hw, 0f, zNear, hw, zNear);
+            Put(2, hw, 0f, zFar, hw, zFar); Put(3, -hw, 0f, zFar, -hw, zFar);
             Put(4, -hw, height, zNear, -hw, -zNear); Put(5, hw, height, zNear, hw, -zNear);
             Put(6, hw, height, zFar, hw, -zFar); Put(7, -hw, height, zFar, -hw, -zFar);
             // Paredes: u corre ao longo do corredor, v sobe.

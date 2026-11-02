@@ -84,5 +84,61 @@ namespace MinersIdle.Tests
             Assert.That(left, Is.GreaterThan(10), "pedras do lado esquerdo");
             Assert.That(right, Is.GreaterThan(10), "pedras do lado direito");
         }
+
+        /// <summary>
+        /// Esteio baixo (D-117): o jogo abre no de 3,0 m; o botão do DBG passa pelas alturas; nas baixas, o esteio fica
+        /// abaixo da câmera (a viga pode aparecer) e cada um tem o seu lampião solto, num tamanho fixo, no poste da
+        /// esquerda, nunca na frente do anão.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ShortSupports_StayBelowTheCamera_WithASmallLooseLamp()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            if (stage.SupportLooks < 2) Assert.Ignore("Sem as opções do esteio (rode o setup).");
+            Assert.That(stage.SupportHeight, Is.EqualTo(3f).Within(0.05f), "o jogo abre no esteio de 3,0 m (D-117)");
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            runner.TimeScale = 20f;
+
+            for (int look = 1; look < stage.SupportLooks; look++)
+            {
+                stage.SupportLook = look;
+                Assert.That(stage.SupportHeight, Is.LessThan(stage.Framing.height), $"opção {look}: o esteio abaixo da câmera");
+
+                int lamps = 0;
+                for (int frame = 0; frame < 60; frame++)
+                {
+                    yield return null;
+                    int supports = 0, lampsNow = 0;
+                    foreach (Transform child in stage.transform)
+                    {
+                        if (!child.TryGetComponent<MeshRenderer>(out var renderer) || !renderer.enabled) continue;
+                        if (child.name == "Support")
+                        {
+                            supports++;
+                            Assert.That(child.localScale.y, Is.EqualTo(stage.SupportHeight).Within(0.001f), $"opção {look}: altura");
+                        }
+                        else if (child.name == "Lantern")
+                        {
+                            lamps++;
+                            lampsNow++;
+                            Assert.That(child.localScale.y, Is.LessThan(0.6f), $"opção {look}: lampião pequeno");
+                            Assert.That(child.localPosition.x, Is.LessThan(0f), $"opção {look}: no poste da esquerda");
+                            Assert.That(child.localPosition.y + child.localScale.y, Is.LessThan(stage.SupportHeight),
+                                        $"opção {look}: abaixo da viga");
+                            Assert.That(child.localPosition.z, Is.GreaterThan(stage.Framing.distance), $"opção {look}: atrás do anão");
+                        }
+                    }
+                    Assert.That(lampsNow, Is.EqualTo(supports), $"opção {look}: um lampião em cada esteio (D-117)");
+                }
+                Assert.That(lamps, Is.GreaterThan(0), $"opção {look}: algum lampião aparece na caverna 1");
+            }
+
+            stage.SupportLook = stage.SupportLooks; // passa do fim: fica na última
+            Assert.That(stage.SupportLook, Is.EqualTo(stage.SupportLooks - 1));
+        }
     }
 }
