@@ -4,6 +4,7 @@
 > O nome de trabalho no GDD é "Idle Miner"; o repositório e este índice usam **Miners Idle** (decisão D-03 pendente).
 
 > **2026-10-24:** a referência de design passou a ser o **GDD v5** (`gdd v5.pdf`, D-85); o GDD v1 fica como histórico.
+> **2026-11-02:** a referência passou a ser o **GDD v6** (`gdd v6.pdf`, D-127); o v5 fica como histórico.
 
 ## Documentos originais (fonte histórica — não alterar)
 
@@ -11,6 +12,7 @@
 |---|---|
 | [GDD_Idle_Miner.docx](GDD_Idle_Miner.docx) | Game Design Document do MVP v1.0 (inclui o mockup da tela) |
 | [gdd v5.pdf](gdd%20v5.pdf) | GDD versão 5.0 ("Idle Miner roguelite"): estagiário redesenhado, offline, bônus do combo, cristal raro. Diferenças para o v1: [Análise - GDD v5](planning/Analise%20-%20GDD%20v5.md) |
+| [gdd v6.pdf](gdd%20v6.pdf) | **GDD versão 6.0 (a referência desde 2026-11-02, D-127):** runs de um dia, lascas vermelhas e melhorias permanentes; Letrado vira Mapa; 100 níveis. Diferenças para o v5: [Análise - GDD v6](planning/Analise%20-%20GDD%20v6.md) |
 | [Designer (2).png](Designer%20(2).png) | Mockup da tela (referência visual **oficial** do estilo — D-05) |
 | [Roadmap_MVP_Idle_Miner_Unity_CSharp.docx](Roadmap_MVP_Idle_Miner_Unity_CSharp.docx) | Proposta de roadmap de 11 semanas, stack e testes |
 
@@ -33,6 +35,7 @@
 | Referência de tela | [design/Referencia de tela - mapa.jpg](design/Referencia%20de%20tela%20-%20mapa.jpg) | Layout da tela com o mapa (D-26), bioma de gelo |
 | Qualidade | [planning/Qualidade e Fluxo de Trabalho.md](planning/Qualidade%20e%20Fluxo%20de%20Trabalho.md) | Git, testes, DoR/DoD, triagem |
 | Decisões e riscos | [planning/Decisoes e Riscos.md](planning/Decisoes%20e%20Riscos.md) | **Decisões a aprovar**, perguntas, riscos |
+| Ideia guardada | [planning/Ideia guardada - Turma e conquistas.md](planning/Ideia%20guardada%20-%20Turma%20e%20conquistas.md) | Turma de amigos, recados prontos e conquistas com servidor (2026-11-02; **fora do escopo e do Roadmap**, só para não perder) |
 
 **Convenções:** **[DOC]** = escrito nos documentos originais · **[INT]** = interpretação · **[REC]** = recomendação ainda sem decisão. Valores de economia marcados "provisório" **não são balanceamento**.
 

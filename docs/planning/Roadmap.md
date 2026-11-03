@@ -17,6 +17,8 @@
 
 > **Atualização de 2026-10-31 — D-92…D-101:** as perguntas **G1–G10 do GDD v5 foram respondidas** ([Decisões e Riscos §1.7](Decisoes%20e%20Riscos.md)). Valem sobre as notas "GDD v5" dos marcos abaixo: penalidade fora do jogo (D-93), parede da passagem com vida (D-98), Picareta Online fora (D-94), linha Crítico (D-100), modal de volta do offline (D-99). Pontas abertas: G11–G16. **D-86…D-89 aprovadas no mesmo dia:** toque de 33% e `Balance_GDD_v5` entram juntos na E5 do M6; **o M8 vem antes do M7** (os números ficam); o marco **"Bônus temporários"** entra depois do M8 e leva o boost do AD.
 
+> **Atualização de 2026-11-02 — GDD v6 (D-127):** o v6 passa a ser a referência. Muda o lado roguelite (runs de um dia, **lascas vermelhas** e **melhorias permanentes**), o Letrado vira **Mapa** (custo zero, sem ×2 de dano) e a descida vai a **100 níveis** em 10 biomas; os números do anão e dos cristais mudam todos. Cada marco abaixo tem uma nota "GDD v6"; o que depende do Bruno está nas D-128…D-131 e o que depende do autor do GDD nas G18…G25 ([Decisões e Riscos §2.4](Decisoes%20e%20Riscos.md)). Diferenças completas: [Análise - GDD v6](Analise%20-%20GDD%20v6.md). Proposta: uma etapa **E3b** no M8 antes da E4 e o marco novo **"Dia e melhorias permanentes"** entre o M8 e o M7 (D-131, pendente).
+
 ## 1. Como este roadmap se relaciona com o do RM
 
 | RM (semanas) | Aqui | Mudança e motivo |
@@ -53,7 +55,9 @@ M5  Toque, crítico, combo e feedback (graybox) ✅
                               ▼
 M6  Descida em corrida (câmera de frente, corredor 3D) ← nova visão, D-52 ✅
                               ▼ ◄─── M1b Art Spike (depois da E1 do M6, para o corredor)
-M8  Letrado, parede, 10 cavernas  (antes do M7, D-88)
+M8  Letrado, parede, 10 cavernas  (antes do M7, D-88; no v6: Mapa e 100 níveis, E3b)
+                              ▼
+Dia e melhorias permanentes  (GDD v6, proposto: D-131)
                               ▼
 M7  Estagiário  ·  Bônus temporários + boost do AD (D-89)  (ordem entre os dois: a definir)
                               ▼
@@ -150,6 +154,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Testes:** **matriz** (principal primeiro, estagiário primeiro, simultâneo, 5º cristal, troca de lote, compra no meio do lote, pausa); nenhum alvo duplicado; nenhuma espera infinita (P0); quebra do estagiário não conta p/ penalidade; Dupla não altera estagiário (REQ-INT-05).
 - **DoD:** matriz verde + 30 min de sessão sem travar; **Bruno testa**. **Riscos:** C-08 mal resolvido. **Fora:** mais mineradores. **Esforço:** 35–50 h.
 - **GDD v5 (D-85) — muda bastante:** o estagiário **bate no mesmo cristal do anão** e avança junto (somem a reserva de alvo, a matriz de ordem de quebra, o R-24 e a [spec do mapa](../design/Spec%20-%20Estagiario%20no%20mapa.md)); nasce no cristal atual do anão; dano online 10% × nível de uma picareta. Ganha **árvore própria** de melhorias (Picareta Offline, Velocidade Offline, Mineração Offline, Picareta Dupla do Estagiário 20.000, Picareta Online), compradas depois de contratar: a loja precisa de uma aba ou seção "Estagiário". O **offline** é dele (só ele minera fora do jogo), mas o cálculo offline fica no M9; o M7 já salva os níveis do estagiário. Perguntas: G3, G4, G9, G10. Ordem com o M8: D-88.
+- **GDD v6 (D-127):** o dano do estagiário vem **das melhorias dele**, online e offline (a D-94 fica em xeque); a árvore vira **Picareta, Velocidade e Mineração** (sem "Offline" no nome, mesmos números) e a **Picareta Dupla do Estagiário sumiu** (a D-101 em xeque). Entram duas melhorias permanentes dele, compradas com lascas vermelhas: **Treinar Estagiário** (`3 + 2 × nível`, +10% de dano por nível, nível 10) e **Promoção do Estagiário** (50, a run já começa com ele; pede Treinar 10). Depende do marco "Dia e melhorias permanentes" (D-131) e da G24.
 
 ### M8 — Progressão: Letrado, penalidade, passagem e 10 cavernas
 - **Plano detalhado (aprovado em 2026-10-31, D-107…D-113):** [Marco 8 - Letrado, parede e 10 cavernas.md](Marco%208%20-%20Letrado,%20parede%20e%2010%20cavernas.md) (E1 cavernas e Letrado · E2 parede · E3 save e fim · E4 economia 1→10 e celular). O texto abaixo é o do v1; vale o plano.
@@ -159,6 +164,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Testes:** nova caverna remove a penalidade e gera 5 cristais novos; Letrado *n* só dobra o dano na caverna *n*; bônus não acumula (REQ-ECO-06); progressão 1→10 **alcançável** no simulador e jogando; botão desabilitado/habilitado.
 - **DoD:** **marco C parcial:** caverna 1→10 funcional com arte provisória; REQ-CAVE-01…03. **Riscos:** C-01/C-09 mal calibrados fazem o final inatingível — rodar o simulador em cada alteração. **Fora:** arte final das caves 2–10. **Esforço:** 35–45 h.
 - **GDD v5 (D-85):** Letrado custa `100 × 10^(n−1)`; **Letrado *n* leva à caverna *n+1*** e o nível 10 leva ao **"coração da montanha", o fim do jogo**; só pode ser comprado **depois de quebrar 100 cristais na caverna atual**. A passagem depende do Letrado **e da parede** (D-07, G7); na descida, a parede fica no fim do corredor. A **penalidade** saiu das regras do v5 (G2, D-19). Vida e lascas por caverna dependem da G1. Os biomas (E8 do Art Spike, D-72) entram aqui.
+- **GDD v6 (D-127):** o Letrado vira **Mapa**: custo **zero** (só a trava dos 100 cristais, que a Memória permanente reduz), **sem o ×2 de dano**, **100 níveis** (o 100 leva ao coração da montanha); as cavernas viram **níveis 1–100**, com o bioma trocando a cada 10; vida `1 × 1,25^(nível−1)` e lascas = vida × 0,5. Proposta (D-128…D-130, pendentes): etapa **E3b** antes da E4, com o `Balance_GDD_v6`, o Mapa, os 100 níveis e o save v3; a E4 mede até onde uma run chega sem as permanentes. Perguntas: G18–G20. Detalhe no [plano do M8](Marco%208%20-%20Letrado,%20parede%20e%2010%20cavernas.md), seção "GDD v6".
 
 ### M9 — AD simulado, persistência completa, offline e ajustes
 - **Objetivo:** fechar os sistemas. **Jogador:** assiste (simulado) para ganhar boost; fecha e volta sem perder nada.
@@ -167,11 +173,19 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **Testes:** fechar/minimizar não duplica bônus/compra/moeda (RM sem. 8, P0); save corrompido recupera; versão futura tratada; teste de migração; manipular o relógio do aparelho; sessão longa (2 h).
 - **DoD:** **marco C** (RM): loja, estagiário, penalidade, progressão, boost e save integrados; testes de estados simultâneos feitos. **Riscos:** relógio do aparelho, *backgrounding* do Android. **Fora:** SDK de anúncios real. **Esforço:** 40–55 h.
 - **GDD v5 (D-85):** o offline existe e é **só do estagiário**, por até 4 h, com as melhorias offline dele (resolve a D-04; detalhes na G8). Pela D-89 (aprovada), o boost do AD vai para o marco "Bônus temporários" e este marco fica com save completo, offline e ajustes.
+- **GDD v6 (D-127):** o teto do offline passa a **6 h** (G15). O save completo já nasce separado em **run** (lascas, melhorias, nível, estagiário) e **permanente** (lascas vermelhas, melhorias permanentes), que o marco "Dia e melhorias permanentes" cria.
 
 ### Bônus temporários (D-89, aprovado em 2026-10-31) ← *GDD v5*
 - **Objetivo:** o lado "10% roguelite" do v5. **Jogador:** combo longo dá bônus (×10: +10% de dano por 5 s · ×30: +15% por 10 s · ×50: crítico garantido por 20 s · ×100: "Frenesi", +50% por 30 s), sempre visível na tela; quebrar um **cristal raro** abre uma janela com **2 melhorias temporárias** para escolher.
 - **Técnica:** modificadores com tempo no núcleo (o mesmo mecanismo serviria ao boost do AD); indicador de bônus ativo no HUD; o `crystal_glass_rare` do Bruno (D-77) como arte do raro.
 - **Posição:** depois do M8 (D-89). **Já decidido:** bônus quando o combo para, cumulativos (D-96); raro com 15% e bônus de 60 s (D-97); leva também o boost do AD. **Pendências:** G11 (acúmulo), G12 (lista de melhorias), G13 (base dos 15% e pausa). **Esforço:** a estimar quando a G12 for respondida.
+- **GDD v6 (D-127):** o combo escreve "bônus acumulativos" (confirma a D-96; a G11 continua). O cristal raro está marcado no próprio GDD como "[ainda a definir a mecânica]": confirmar se a D-97 (15%, 60 s) continua, junto da G12/G13. Sem mudança de escopo.
+
+### Dia e melhorias permanentes (proposto: D-131) ← *GDD v6*
+- **Objetivo:** o novo loop do v6. A montanha se regenera todo dia; cada run é um dia. No fim do dia, as melhorias da run somem e o jogador leva as **lascas vermelhas** do coração da montanha, que compram **melhorias permanentes** para descer mais fundo e mais rápido na run seguinte. **Jogador:** termina o dia, vê quantas lascas vermelhas ganhou, compra uma permanente e recomeça mais forte.
+- **Regras do v6:** lascas vermelhas 5 nos níveis 1–50 e 10 nos 51–100 (o motivo é a G22). Permanentes do anão: **Memória** (`5 + 2 × nível`, −10 cristais na trava do Mapa, nível 10), **Sangue da Montanha** (`2 + 2 × nível`, +10% de dano, nível 20), **Coração Ardente** (`2 + 2 × nível`, +10% de lascas, nível 20, máximo 100%: G23), **Alma dos Anões** (`2 + 2 × nível`, a run começa com +1 nível de Picareta por nível, nível 10). As duas do estagiário entram no M7.
+- **Técnica:** estado separado em run × permanente no núcleo; reset da run com a mesma semente/regras; save com as duas partes (versão nova, migração); segunda moeda no HUD e uma tela das permanentes.
+- **Posição:** depois do M8 (usa os 100 níveis), antes do M7. **Pendências:** G21 (o que encerra o dia e o que zera), G22, G23, G25 (o §10 do v6 ainda põe meta-progressão e múltiplas moedas fora do MVP); a D-112 (o jogo continua sem reset) precisa ser revista. **Esforço:** a estimar quando a G21 e a G22 forem respondidas.
 
 ### M10 — Arte, áudio e integração visual das cavernas 2–10
 - **Objetivo:** os 10 ambientes e a UI final. **Jogador:** cada caverna parece outro lugar; interface com cara de jogo.
