@@ -5,6 +5,7 @@
 
 > **2026-10-24:** a referência de design passou a ser o **GDD v5** (`gdd v5.pdf`, D-85); o GDD v1 fica como histórico.
 > **2026-11-02:** a referência passou a ser o **GDD v6** (`gdd v6.pdf`, D-127); o v5 fica como histórico.
+> **2026-11-04:** a referência passou a ser o **GDD v7** (`gdd v7.pdf`, D-132); o v6 fica como histórico.
 
 ## Documentos originais (fonte histórica — não alterar)
 
@@ -12,7 +13,8 @@
 |---|---|
 | [GDD_Idle_Miner.docx](GDD_Idle_Miner.docx) | Game Design Document do MVP v1.0 (inclui o mockup da tela) |
 | [gdd v5.pdf](gdd%20v5.pdf) | GDD versão 5.0 ("Idle Miner roguelite"): estagiário redesenhado, offline, bônus do combo, cristal raro. Diferenças para o v1: [Análise - GDD v5](planning/Analise%20-%20GDD%20v5.md) |
-| [gdd v6.pdf](gdd%20v6.pdf) | **GDD versão 6.0 (a referência desde 2026-11-02, D-127):** runs de um dia, lascas vermelhas e melhorias permanentes; Letrado vira Mapa; 100 níveis. Diferenças para o v5: [Análise - GDD v6](planning/Analise%20-%20GDD%20v6.md) |
+| [gdd v6.pdf](gdd%20v6.pdf) | GDD versão 6.0 (referência de 2026-11-02 a 2026-11-04, D-127): runs de um dia, lascas vermelhas e melhorias permanentes; Letrado vira Mapa; 100 níveis. Diferenças para o v5: [Análise - GDD v6](planning/Analise%20-%20GDD%20v6.md) |
+| [gdd v7.pdf](gdd%20v7.pdf) | **GDD versão 7.0 (a referência desde 2026-11-04, D-132):** Picareta Dupla fora, Chance de Crítico, estagiário de compra única, lascas vermelhas por nível, permanentes revistas. Diferenças e respostas do Bruno: [Análise - GDD v7](planning/Analise%20-%20GDD%20v7.md) |
 | [Designer (2).png](Designer%20(2).png) | Mockup da tela (referência visual **oficial** do estilo — D-05) |
 | [Roadmap_MVP_Idle_Miner_Unity_CSharp.docx](Roadmap_MVP_Idle_Miner_Unity_CSharp.docx) | Proposta de roadmap de 11 semanas, stack e testes |
 

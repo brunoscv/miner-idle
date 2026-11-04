@@ -58,30 +58,60 @@ O jogo jogável com cavernas, ainda sem a parede: comprar o Letrado e apertar Pa
 - **DBG:** **Ir para a caverna 10** (para testar o fim sem jogar horas).
 - **Testes:** ida e volta do save v2; migração do v1; corte de valores fora do lugar (caverna 0 ou 15 vira 1 ou 10); o fim aparece uma vez só.
 
-### E3b — O M8 no GDD v6 (proposta de 2026-11-02, aguardando D-128…D-130)
+### E3b — O M8 no GDD v7 (aprovada em 2026-11-04: D-128…D-130, D-133…D-136, D-143)
 
-> O GDD v6 virou a referência (D-127). Ele muda o que a E1–E3 fizeram: o Letrado vira **Mapa** e a descida vai a **100 níveis**. Diferenças: [Análise - GDD v6](Analise%20-%20GDD%20v6.md). Nada disto vale antes de o Bruno aprovar.
+> O GDD v7 é a referência (D-132), e o Bruno aprovou a E3b em 2026-11-04. Ela muda o que a E1–E3 fizeram: o Letrado vira **Mapa**, a descida vai a **100 níveis** e os números do anão passam aos do v7. **O padrão é sempre o que o GDD diz**; as variações ficam no DBG (D-143). Diferenças: [Análise - GDD v7](Analise%20-%20GDD%20v7.md). A proposta anterior, pelo v6, fica superada.
 
-| Hoje (E1–E3, v5) | Com o v6 | Decisão |
+| Hoje (E1–E3, v5) | Com o v7 | Decisão |
 |---|---|---|
-| Letrado `100 × 10^(n−1)` | **Mapa**, custo **zero**: só a trava dos 100 cristais | D-128 |
-| Letrado dobra o dano da caverna 2 em diante | **sem ×2** (sai do `MinerStats`) | D-128 |
+| Vida `10 × 8^(c−1)`, lascas `1 × 3^(c−1)` | vida `1 × 1,25^(nível−1)`, lascas = **vida × 1,2** | D-130, D-134 |
+| Picareta: dano `5 × 2^(n−1)`, custo `50 × 4^(n−1)` | **`Dano Base + taxa^(nível da caverna − 1)`**; Dano Base 1, taxa 1,2; cada compra +1 no Dano Base; custo 2 × Dano Base; até 50 | D-133 |
+| Velocidade `50 × 5^(n−1)`, 2,0 → 0,1 s | `50 × 2^(n−1)`, 2,0 → 0,1 s (19 compras) | D-135 |
+| Mineração `50 × 1,2^(n−1)` | `20 × 5^(n−1)`, +100% por nível, 10 níveis | D-130 |
+| Crítico fixo de 5% em todo golpe | linha **Chance de Crítico** `50 × 2^(n−1)`, +5% por compra, 10 compras; base **0% no automático, 5% no toque**; a linha soma nos dois | D-136 |
+| Picareta Dupla 5.000 | **sai** (limite 0, como as Botas na D-103) | D-136 |
+| Letrado `100 × 10^(n−1)`, ×2 de dano da caverna 2 em diante | **Mapa**, custo zero (só a trava dos 100 cristais), **sem ×2** | D-128 |
 | 10 cavernas; Letrado 10 → coração | **100 níveis**; Mapa 100 → coração (a última parede e a tela da D-112 vão para o nível 100) | D-128, D-129 |
-| Bioma muda a cada caverna | bioma muda a cada **10 níveis** (os 10 da D-102 servem); escurece só na troca de bioma, a faixa aparece em todo nível | D-129 |
-| Vida `10 × 8^(c−1)`, lascas `1 × 3^(c−1)` | vida `1 × 1,25^(nível−1)`, lascas = vida × 0,5 | D-130 |
-| Picareta `5 × 2^`, Velocidade `50 × 5^`, Mineração `50 × 1,2^` | Picareta `1 × 1,25^` até 50, Velocidade `50 × 2^`, Mineração `20 × 5^` | D-130 (G18, G19) |
+| Bioma muda a cada caverna | bioma a cada **10 níveis** (os 10 da D-102 servem); escurece só na troca de bioma; a faixa em todo nível | D-129 |
 | Save v2, caverna 1–10 | **save v3**, nível 1–100, migração do v2 | D-129 |
 
-- **Núcleo:** `Balance_GDD_v6` novo (o setup cria; o v5 fica para comparação); `UpgradeId.Letrado` passa a se chamar **Mapa** no texto (o id interno pode continuar, para o save); custo zero; `caveCount = 100`; `MiningRules` ganha o "nível do bioma" (`(nível − 1) / 10`); o `×2` sai do `MinerStats`; a lasca fracionária (0,5) já funciona, porque o estado é `double`.
-- **Tela:** "Mapa" na loja ("Quebre 100 cristais: 37/100" continua); CAVERNA no HUD mostra o nível; o `DescentStage` troca o bioma só nos múltiplos de 10; a faixa vira "Nível 12 · Galeria rochosa" (texto em dados).
-- **DBG:** **Próxima caverna** continua; **Caverna 10 (fim)** vira **Nível 100 (fim)**; um atalho **+10 níveis** para ver os biomas.
-- **Testes:** os da E1–E3 que medem o custo do Letrado, o ×2 e as 10 cavernas **mudam para medir o v6** (nenhum é apagado); novos: bioma troca no 11, 21…; save v2 → v3; nível 100 leva ao coração.
-- **Fora desta etapa:** lascas vermelhas, permanentes e o fim do dia (marco "Dia e melhorias permanentes", D-131); a Memória (a trava fica fixa em 100).
-- **Esforço:** 6–10 h.
+A E3b é dividida em três partes, mais o formato dos números (feito antes). Cada uma termina com o jogo rodando e é testada por você antes da seguinte.
+
+#### E3b-1 — Fórmulas de custo e o `Balance_GDD_v7`
+
+- **Núcleo:** hoje o custo só sabe uma conta (`base × crescimento^nível`, `UpgradeDefinition.CostAt`). Ele passa a ter um **tipo de fórmula**: exponencial (`base × taxa^(n−1)`), "soma" (`base + taxa^(n−1)`, a das permanentes), linear (`base + passo × (n−1)`) e "× Dano Base" (a Picareta do anão). O efeito também ganha o tipo da Picareta pela caverna (`MinerStats`): `Dano Base + taxa^(nível − 1)`. Nova linha `UpgradeId.Critical`; o `StrikeRules` separa a chance base do golpe automático (0%) e a do toque (5%), e a linha soma nas duas.
+- **Dados:** `Balance_GDD_v7` (o setup cria; o v5 fica para comparação) com os números da tabela acima; a taxa (1,2) e o incremento (+1) da Picareta ficam no asset (D-133). Dupla com limite 0; Chance de Crítico na loja, com o texto em dados.
+- **Ainda sem o Mapa:** nesta parte o Letrado e as 10 cavernas continuam como estão, só com os números novos. É o jogo do v7 nas 10 cavernas de hoje.
+- **Testes EditMode:** custo e efeito de todos os níveis de cada tipo de fórmula (inclusive o limite); Picareta pela caverna (caverna 1 com Dano Base 1 dá 2); crítico 0% no automático e 5% no toque (100.000 golpes, como no M3), e a linha somando nos dois; os testes que medem os números do v5 continuam com o `Balance_GDD_v5` (nenhum é apagado).
+- **Esforço:** 6–9 h.
+
+#### E3b-2 — Mapa e 100 níveis
+
+- **Núcleo:** `UpgradeId.Letrado` vira **Mapa** no texto (o id interno continua, para o save); custo zero; o `×2` sai do `MinerStats`; `caveCount = 100`; `MiningRules` ganha o bioma do nível (`(nível − 1) / 10`). A vida da última parede segue a D-98 no nível 100 (a D-114 é revista pela conta nova).
+- **Tela:** "Mapa" na loja ("Quebre 100 cristais: 37/100" continua); CAVERNA do HUD mostra o nível; o `DescentStage` troca o bioma só nos múltiplos de 10 e escurece só nessa troca; a faixa vira "Nível 12 · Galeria rochosa" (texto em `FeedbackTexts`). O botão PASSAR e o livro ficam até haver um ícone de mapa (D-142).
+- **Save v3:** nível 1–100; o v2 abre no mesmo nível (1–10), com o Mapa correspondente.
+- **DBG:** **Próxima caverna** continua; **Caverna 10 (fim)** vira **Nível 100 (fim)**; atalho novo **+10 níveis**, para ver os biomas.
+- **Testes:** os da E1–E3 que medem o custo do Letrado, o ×2 e as 10 cavernas **mudam para medir o v7**; novos: bioma troca no 11, 21…; escurecimento só na troca; save v2 → v3; nível 100 leva ao coração.
+- **Esforço:** 6–9 h.
+
+#### E3b-3 — DBG → Cálculos e o aviso na tela (D-143)
+
+- **DBG → Cálculos** (página nova): um seletor geral **GDD v5 (o jogo de antes) / GDD v7** e, embaixo, uma linha por melhoria que tem alternativas: cada toque passa para a próxima fórmula, mostrando o nome dela e o total da linha (como o DBG → Câmera → Golpe). Nesta etapa entram a **taxa** e o **incremento** da Picareta do anão (passos de 0,01 e de 1), porque são os números que a D-133 deixou configuráveis. As alternativas do estagiário (M7) e das permanentes (marco "Dia e melhorias permanentes") entram na mesma página quando essas linhas existirem.
+- **Reiniciar run** no DBG: volta ao nível 1, lascas zeradas e melhorias base no zero, para comparar fórmulas do começo. O "Apagar save" continua.
+- **Aviso fixo na tela**, só no build de teste (some no release, como o DBG): "Cálculo: GDD v7" quando tudo está no padrão; em âmbar, quando algo saiu do GDD, com a lista ("Cálculo: GDD v7 · Picareta taxa 1,22"). A escolha fica salva no aparelho.
+- **Núcleo:** nenhuma regra nova; a troca reconstrói a economia com as mesmas regras e outra fórmula na linha. O núcleo continua sem saber do DBG.
+- **Testes:** PlayMode: trocar a fórmula muda o custo na loja e o aviso; Reiniciar run volta ao nível 1; a escolha sobrevive a reabrir o jogo; o build de release não tem o aviso.
+- **Esforço:** 5–8 h.
+
+#### Formato dos números (D-144) — feito antes, à parte
+
+O `NumberFormatter` passa a abreviar a partir de mil, com 2 casas (K, M, B, T, Qa, Qi). Independe das outras partes e é feito primeiro.
+
+- **Fora desta etapa:** lascas vermelhas, permanentes e o botão de descansar (marco "Dia e melhorias permanentes", D-131); a Memória (a trava fica fixa em 100); o estagiário (M7).
 
 ### E4 — Economia 1→10 e celular
 
-> **Com o v6 (se a E3b for aprovada):** o relatório vai do nível 1 ao 100, com o `Balance_GDD_v6`, e diz **até que nível uma run chega sem melhorias permanentes** em 1, 2, 4 e 8 h. É o número que o marco "Dia e melhorias permanentes" vai precisar para calibrar as lascas vermelhas.
+> **Com o v7 (E3b aprovada em 2026-11-04):** o relatório vai do nível 1 ao 100, com o `Balance_GDD_v7`, e diz **até que nível uma run chega sem melhorias permanentes** em 1, 2, 4 e 8 h. É o número que o marco "Dia e melhorias permanentes" vai precisar para calibrar as lascas vermelhas.
 
 - **Relatório de economia** com cavernas: a estratégia "compra o mais barato, passa assim que puder" e o tempo para chegar a cada caverna (até 8 h de jogo simulado, sem toque). Mede se a descida 1→10 é **alcançável** (o risco do Roadmap). Se não for, os números vão para você e para o Apellon; **nada muda sem decisão**.
 - **Moto G75:** descer pelo menos até a caverna 3 jogando, e o resto pelos atalhos do DBG, olhando os 10 biomas na passagem.
@@ -127,8 +157,11 @@ E1 10–14 h · E2 10–14 h · E3 6–8 h · E4 4–6 h → **30–42 h** (~2 s
 | E1 Cavernas e Letrado, passagem direta | ✅ testada pelo Bruno no Moto G75 em 2026-10-31 (junto com a E2) | Core: `GameState.Cave` e `CaveBreaks`; `MiningRules` com `CaveCount`, crescimento da vida e das lascas e `LetradoBreaks`; os cristais nascem com os valores da caverna (`CrystalTrack.SetCrystalValues`); `UpgradeId.Letrado` com a trava em `Purchases.Blocked` (`Locked`: faltam cristais; `PassFirst`: o desta caverna já foi comprado); dano × 2 da caverna 2 em diante (`MinerStats`); `PassCave`, `CanPassCave` e o evento `CaveChanged`. Os cristais já na fila continuam da caverna anterior. Tela: CAVERNA do HUD; Letrado na loja ("Quebre 100 cristais: 37/100", D-109; "DESCER" no botão depois de comprado); botão **DESCER** (`CavePassButton`, âmbar com o livro, abaixo de AJUSTES, D-110); o corredor troca para o bioma da caverna. DBG: **Encher 100 cristais**, **Próxima caverna** (dá o Letrado de graça) e o Letrado na linha das melhorias. Dados: o setup põe as 10 cavernas e o Letrado no `Balance_GDD_v5` (o protótipo fica com uma caverna) e tira o Letrado do "Em breve" no catálogo. O relatório de economia ainda não compra o Letrado (E4). Nome do botão: "DESCER", porque "Passar de caverna" não cabe no quadrado. Testes: EditMode `CaveTests` (10), PlayMode `CaveFlowTests`; `ShopTests` passa a esperar só o Estagiário bloqueado. Em batch: setup ok, EditMode **136/136**, PlayMode **58/58** |
 | E2 A parede | ✅ testada pelo Bruno no Moto G75 em 2026-10-31: Letrado com os 100 cristais, parede, escuro e faixa da caverna 2. Achado: o save v1 guarda o nível do Letrado mas não a caverna (ao reabrir, volta à caverna 1 com o Letrado comprado); corrigido pelo save v2 da E3 | Core: a parede é um `Crystal` com `IsWall` (recompensa 0), posta por `CrystalTrack.PlaceWall` no fim da fila; `PassCave()` a põe a 12 un do anão (D-107), ou logo depois do alvo se ele estiver além disso, para o anão nunca perder o alvo; os cristais depois dela somem, e também um que ficaria a menos do espaço mínimo dela. Vida: `MiningRules.WallHealthFactor` (2, D-98) × a vida do cristal da caverna nova; campo `wallHealthFactor` no `MiningRulesAsset`. Enquanto ela está de pé, nada nasce (nem pelo DBG) e `CanPassCave` é falso; golpe, toque, crítico e combo batem nela; quebrada, não paga lascas nem conta nos 100 (D-108), e `EnterCave` leva à caverna seguinte. **DBG → Próxima caverna** tira a parede, se houver. Tela: `DescentStage` desenha a parede em graybox (7 blocos de cristal de lado a lado, baixos no meio para não esconder o anão), com barra de vida maior; a troca de caverna escurece só o corredor por 0,5 s e troca o bioma no escuro; `MiningFeedbackView` faz estilhaços em três pontos e tremor forte na quebra, sem lasca voando; `CaveBanner` (novo, `Effects/CaveBanner` na cena) mostra "Caverna 2 · Galeria rochosa" por ~2 s, texto em `FeedbackTexts.caveBannerFormat` (D-111). Testes: EditMode `CaveTests` (+7; o da passagem mudou para medir a caverna trocando só na queda da parede), PlayMode `CaveFlowTests` (o fluxo inteiro) e `AllocationTests.HittingTheWall_DoesNotAllocate` (0 alocações num intervalo de golpe com a parede na tela). Em batch: setup ok, EditMode **143/143**, PlayMode **59/59** |
 | E3 Save e o fim da descida | 🔨 implementada em 2026-10-31; aguardando validação no Moto G75 | **Save v2** (`SaveData.CurrentVersion = 2`): caverna, quebras nela, tempo de jogo, lascas ganhas e coração da montanha. O v1 abre migrado na caverna 1, com 0 quebras e as lascas atuais como "ganhas" (o save do Moto G75 com o Letrado 1 vira caverna 1 com DESCER na tela). `GameState.Restore` corrige o que estiver fora do lugar: caverna entre 1 e a última; o Letrado acompanha a caverna (na caverna *c*, nível *c−1* ou *c*); o coração só vale na última caverna com o último Letrado. Uma parede de pé não é salva: ao reabrir, DESCER volta. O `MiningRunner` grava também a cada troca de caverna e no coração, não só a cada 30 s. **Fim (D-112):** na caverna 10, o Letrado 10 libera DESCER para a última parede; a vida dela segue a fórmula da D-98 uma caverna além (`2 × 10 × 8^10` ≈ 21,5 bi, D-114). Quebrada, o evento `HeartReached` e, 1,2 s depois, a tela **"Coração da montanha"** (`HeartScreen`, graybox nas cores da loja) com o tempo de jogo (`NumberFormatter.FormatDuration`) e as lascas coletadas (`GameState.ShardsEarned`: só as das quebras); CONTINUAR fecha e o jogo segue na caverna 10, sem passagem. Textos em `FeedbackTexts`. **DBG → Caverna 10 (fim)** (`SkipToCave`): a última caverna, os 100 cristais e as lascas do Letrado 10. Testes: EditMode `CaveTests` (o da última caverna mudou para medir o fim; +2), `SaveServiceTests` (+4: v2, migração do v1, valores fora do lugar, parede não salva e coração mantido), `NumberFormatterTests` (+7 casos do tempo); PlayMode `CaveFlowTests.LastCave_TheLastWall_ShowsTheHeartOnce`. Em batch: setup ok, EditMode **156/156**, PlayMode **60/60** |
-| E3b O M8 no GDD v6 | 📝 proposta (2026-11-02), aguardando D-128…D-130 | Ver a seção E3b |
-| E4 Economia 1→10 e celular | ⏳ | Com o v6, 1→100 (depois da E3b) |
+| Formato dos números (D-144) | 🔨 implementado em 2026-11-04; aguardando validação do Bruno | `NumberFormatter`: a partir de mil, centésimos inteiros do grupo (valor ÷ 10^(3·grupo − 2)), arredondados (`Format`) ou truncados (`FormatShards`), sufixos K/M/B/T/Qa/Qi, sobe de grupo em 1.000,00; acima de Qi, notação científica. `NumberFormatterTests` mudou para medir o formato novo (+15 casos). Em batch: EditMode **201/201**, PlayMode **76/76** |
+| E3b-1 Fórmulas de custo e `Balance_GDD_v7` | ⏳ aprovada em 2026-11-04 | Ver a seção E3b |
+| E3b-2 Mapa e 100 níveis | ⏳ | Depois da E3b-1 |
+| E3b-3 DBG → Cálculos e aviso | ⏳ | Depois da E3b-2 |
+| E4 Economia 1→100 e celular | ⏳ | Depois da E3b, com o `Balance_GDD_v7` |
 
 ## Ajustes pedidos pelo Bruno em 2026-10-31 (depois da E3) — implementados, aguardando validação
 
