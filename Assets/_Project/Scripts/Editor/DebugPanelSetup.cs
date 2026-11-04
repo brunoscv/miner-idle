@@ -30,7 +30,7 @@ namespace MinersIdle.EditorTools
         /// <summary>Modelo do nível e próximo custo das melhorias (ver o Tooltip de <c>DebugPanel.upgradesFormat</c>).</summary>
         const string UpgradesFormat =
             "Picareta nv {0} (próx. {1}) · Velocidade nv {2} (próx. {3}) · Mineração nv {4} (próx. {5}) · " +
-            "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9}) · Letrado nv {10} (próx. {11})";
+            "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9}) · Letrado nv {10} (próx. {11}) · Crítico nv {12} (próx. {13})";
         const string MaxedLabel = "máx.";
 
         /// <summary>Medição do M5 E5 (ver o Tooltip de <c>BuildInfoLabel.statsFormat</c>).</summary>
@@ -149,7 +149,7 @@ namespace MinersIdle.EditorTools
                 ("buySpeed", CreateButton(grid.transform, "BuySpeed", "Comprar Velocidade")),
                 ("buyMining", CreateButton(grid.transform, "BuyMining", "Comprar Mineração")),
                 ("buyDoublePickaxe", CreateButton(grid.transform, "BuyDoublePickaxe", "Comprar P. Dupla")),
-                ("buyBoots", CreateButton(grid.transform, "BuyBoots", "Comprar Botas")),
+                ("buyCritical", CreateButton(grid.transform, BuyCriticalName, BuyCriticalLabel)),
                 ("saveNow", CreateButton(grid.transform, "SaveNow", "Salvar agora")),
                 ("deleteSave", CreateButton(grid.transform, "DeleteSave", "Apagar save")),
                 ("autoTap", CreateButton(grid.transform, "AutoTap", "Toques auto")),
@@ -219,6 +219,17 @@ namespace MinersIdle.EditorTools
                 changed = true;
             }
 
+            // E3b do M8: o Comprar Botas (linha desligada desde o GDD v5) vira Comprar Crítico, no mesmo lugar.
+            var boots = grid.Find("BuyBoots");
+            if (grid.Find(BuyCriticalName) == null && boots != null)
+            {
+                boots.name = BuyCriticalName;
+                boots.GetComponentInChildren<TMP_Text>().text = BuyCriticalLabel;
+                GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(), ("buyCritical", boots.GetComponent<Button>()));
+                Debug.Log("[Setup] Painel de debug: Comprar Crítico no lugar de Comprar Botas (E3b do M8).");
+                changed = true;
+            }
+
             // M8 (E3): o atalho do fim da descida.
             if (grid.Find("LastCave") == null)
             {
@@ -231,6 +242,8 @@ namespace MinersIdle.EditorTools
         }
 
         const string LastCaveLabel = "Caverna 10 (fim)";
+        const string BuyCriticalName = "BuyCritical";
+        const string BuyCriticalLabel = "Comprar Crítico";
 
         internal static bool EnsureEventSystem()
         {

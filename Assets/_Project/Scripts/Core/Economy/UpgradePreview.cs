@@ -46,7 +46,7 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// O atributo que a linha melhora, agora: dano (Picareta e Dupla), intervalo em segundos (Velocidade), multiplicador
-        /// de lascas (Mineração, 1,08 = +8%) ou caminhada (Botas).
+        /// de lascas (Mineração, 1,08 = +8%), caminhada (Botas) ou a chance de crítico que a linha soma (Crítico, 0,05 = +5%).
         /// </summary>
         public double CurrentValue { get; }
         /// <summary>O mesmo atributo depois da próxima compra (igual a <see cref="CurrentValue"/> no limite).</summary>
@@ -104,6 +104,8 @@ namespace MinersIdle.Core
                     return stats.RewardMultiplier;
                 case UpgradeId.Boots:
                     return stats.WalkSpeed;
+                case UpgradeId.Critical:
+                    return stats.CritBonus;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(id), id, null);
             }

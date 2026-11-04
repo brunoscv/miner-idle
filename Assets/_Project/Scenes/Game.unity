@@ -15254,7 +15254,7 @@ MonoBehaviour:
   stats: {fileID: 1614003941}
   statsFormat: "Semente {0}\nTempo \xD7{1} \xB7 {2} min de jogo\nGolpes {3} \xB7 Quebras {4}\nLascas/min {5}\nCristais {6}/{7} \xB7 Alvo #{8} \xB7 Descida {9} un\nToques/s {10} valeram \xB7 {11} acima do teto\nDedos: {12} come\xE7os \xB7 {13} repetidos \xB7 {15} juntos \xB7 {14} na tela"
   upgrades: {fileID: 1658855448}
-  upgradesFormat: "Picareta nv {0} (pr\xF3x. {1}) \xB7 Velocidade nv {2} (pr\xF3x. {3}) \xB7 Minera\xE7\xE3o nv {4} (pr\xF3x. {5}) \xB7 Dupla nv {6} (pr\xF3x. {7}) \xB7 Botas nv {8} (pr\xF3x. {9}) \xB7 Letrado nv {10} (pr\xF3x. {11})"
+  upgradesFormat: "Picareta nv {0} (pr\xF3x. {1}) \xB7 Velocidade nv {2} (pr\xF3x. {3}) \xB7 Minera\xE7\xE3o nv {4} (pr\xF3x. {5}) \xB7 Dupla nv {6} (pr\xF3x. {7}) \xB7 Botas nv {8} (pr\xF3x. {9}) \xB7 Letrado nv {10} (pr\xF3x. {11}) \xB7 Cr\xEDtico nv {12} (pr\xF3x. {13})"
   maxedLabel: "m\xE1x."
   speed1: {fileID: 1633506316}
   speed5: {fileID: 1643961453}
@@ -15269,7 +15269,7 @@ MonoBehaviour:
   buySpeed: {fileID: 2031072815}
   buyMining: {fileID: 517962055}
   buyDoublePickaxe: {fileID: 436852653}
-  buyBoots: {fileID: 2039298820}
+  buyCritical: {fileID: 2039298820}
   saveNow: {fileID: 1017876842}
   deleteSave: {fileID: 499211907}
   autoTap: {fileID: 1119745319}
@@ -18378,7 +18378,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dce09e198a0b704e96381f67b7d2180, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MinersIdle.Game::MinersIdle.Game.MiningRunner
-  rules: {fileID: 11400000, guid: fc8918cab8eb24e49813f627a9430606, type: 2}
+  rules: {fileID: 11400000, guid: 2715192753fdc194d976d018d944201a, type: 2}
   useFixedSeed: 0
   fixedSeed: 1
 --- !u!4 &1673760090
@@ -20000,7 +20000,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Comprar Botas
+  m_text: "Comprar Cr\xEDtico"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -21641,7 +21641,7 @@ GameObject:
   - component: {fileID: 2039298821}
   - component: {fileID: 2039298820}
   m_Layer: 0
-  m_Name: BuyBoots
+  m_Name: BuyCritical
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

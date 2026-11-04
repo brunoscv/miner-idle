@@ -96,6 +96,7 @@ namespace MinersIdle.Tests
             var hud = Object.FindAnyObjectByType<HudView>();
             bool arrived = false;
             _flight.Arrived += () => arrived = true;
+            _runner.TimeScale = 0f; // só a quebra do teste: no v7 o anão quebra um cristal a cada golpe
 
             _runner.Simulation.BreakTarget();
             Assert.That(_flight.ActiveCount, Is.EqualTo(1), "uma lasca a caminho");

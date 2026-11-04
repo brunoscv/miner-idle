@@ -22,10 +22,14 @@ namespace MinersIdle.Core
         /// <see cref="UpgradeDefinition.Effect"/> = multiplicador do dano a partir da caverna 2 (GDD v5: 2). Sem ela, a linha
         /// fica desligada e o jogo tem uma caverna só.
         /// </param>
+        /// <param name="critical">
+        /// <see cref="UpgradeDefinition.Effect"/> = chance de crítico a mais por nível (GDD v7: 0,05). Sem ela, a linha fica
+        /// desligada (o jogo até o GDD v5).
+        /// </param>
         public EconomyRules(
             UpgradeDefinition pickaxe, UpgradeDefinition speed, UpgradeDefinition mining,
             UpgradeDefinition doublePickaxe, UpgradeDefinition boots, double minHitInterval,
-            UpgradeDefinition letrado = null)
+            UpgradeDefinition letrado = null, UpgradeDefinition critical = null)
         {
             if (minHitInterval <= 0 || double.IsNaN(minHitInterval)) throw new ArgumentOutOfRangeException(nameof(minHitInterval));
 
@@ -37,6 +41,7 @@ namespace MinersIdle.Core
                 doublePickaxe ?? throw new ArgumentNullException(nameof(doublePickaxe)),
                 boots ?? throw new ArgumentNullException(nameof(boots)),
                 letrado ?? Off,
+                critical ?? Off,
             };
             MinHitInterval = minHitInterval;
         }

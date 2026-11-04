@@ -62,13 +62,14 @@ namespace MinersIdle.Tests
 
             int taps = _sound.PlayedCount(Sfx.Tap);
             int criticals = _sound.PlayedCount(Sfx.Critical);
+            int breaks = _sound.PlayedCount(Sfx.Break);
             simulation.Tap();
             Assert.That(_sound.PlayedCount(Sfx.Tap), Is.EqualTo(taps + 1), "toque");
             Assert.That(_sound.PlayedCount(Sfx.Critical), Is.EqualTo(criticals + 1), "crítico");
 
-            int breaks = _sound.PlayedCount(Sfx.Break);
+            // No v7 o toque crítico já quebra o cristal da caverna 1; o BreakTarget só quebra se ainda houver alvo.
             simulation.BreakTarget();
-            Assert.That(_sound.PlayedCount(Sfx.Break), Is.EqualTo(breaks + 1), "quebra");
+            Assert.That(_sound.PlayedCount(Sfx.Break), Is.GreaterThan(breaks), "quebra");
 
             simulation.AddShards(1e9);
             bool bought = false;

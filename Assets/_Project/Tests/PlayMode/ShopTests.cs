@@ -39,14 +39,17 @@ namespace MinersIdle.Tests
         public IEnumerator OpenBuyAndClose()
         {
             yield return LoadGame();
+            _runner.TimeScale = 0f;         // no v7 dois cristais já pagam a Picareta: sem mineração, sem lascas
+            _runner.UseRules(_runner.Rules); // partida nova, sem as lascas dos primeiros quadros
             var simulation = _runner.Simulation;
+            yield return null;
 
             Assert.That(_shop.IsOpen, Is.False, "começa fechada");
             Assert.That(_shop.IsBadgeShown, Is.False, "sem lascas, sem selo");
 
             Click("ShopButton");
             Assert.That(_shop.IsOpen, Is.True);
-            Assert.That(_shop.Rows.Count, Is.EqualTo(7), "5 melhorias + Estagiário + Letrado");
+            Assert.That(_shop.Rows.Count, Is.EqualTo(8), "6 melhorias (Crítico desde o v7) + Estagiário + Letrado");
             Assert.That(_shop.Rows.Count(r => r.IsLocked), Is.EqualTo(1), "só o Estagiário (o Letrado é de verdade desde o M8)");
             Assert.That(_shop.Rows.Where(r => r.IsLocked).All(r => !r.CanBuy), Is.True, "linhas bloqueadas não compram (D-42)");
 
@@ -73,6 +76,7 @@ namespace MinersIdle.Tests
         public IEnumerator SinglePurchase_ShowsBought_AfterBuying()
         {
             yield return LoadGame();
+            _runner.UseRules(TestBalance.GddV5); // a Picareta Dupla (compra única) saiu no v7 (D-136)
             var simulation = _runner.Simulation;
             Click("ShopButton");
 

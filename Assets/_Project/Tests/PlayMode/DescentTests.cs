@@ -93,6 +93,7 @@ namespace MinersIdle.Tests
         public IEnumerator Dwarf_RunsStopsBreaksAndRunsAgain()
         {
             yield return Load();
+            _runner.UseRules(TestBalance.GddV5); // no v7 o cristal da caverna 1 morre num golpe: o anão nem para
             var simulation = _runner.Simulation;
             double start = simulation.Miner.Distance;
             _runner.TimeScale = 20f;

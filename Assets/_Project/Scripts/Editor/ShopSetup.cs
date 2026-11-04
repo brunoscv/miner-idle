@@ -48,6 +48,7 @@ namespace MinersIdle.EditorTools
             if (File.Exists(CatalogPath))
             {
                 EnsureLetrado();
+                EnsureCritical();
                 return;
             }
 
@@ -69,6 +70,7 @@ namespace MinersIdle.EditorTools
             AddEntry(entries, false, UpgradeId.Pickaxe, "Picareta", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0xB0, 0xB7, 0xBD, 0xFF));
             AddEntry(entries, false, UpgradeId.Speed, "Velocidade", "Golpe a cada {0} » {1}", ShopCatalog.EffectStyle.Seconds, new Color32(0x4F, 0xC3, 0xF7, 0xFF));
             AddEntry(entries, false, UpgradeId.Mining, "Mineração", "Lascas {0} » {1}", ShopCatalog.EffectStyle.BonusPercent, new Color32(0xC2, 0x3C, 0xFF, 0xFF));
+            AddEntry(entries, false, UpgradeId.Critical, CriticalTitle, CriticalEffect, ShopCatalog.EffectStyle.ChancePercent, CriticalColor);
             AddEntry(entries, false, UpgradeId.DoublePickaxe, "Picareta Dupla", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0xF2, 0xA9, 0x00, 0xFF));
             AddEntry(entries, false, UpgradeId.Boots, "Botas", "Caminhada {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0x8D, 0x6E, 0x63, 0xFF));
             AddEntry(entries, true, UpgradeId.Pickaxe, "Estagiário", "Um ajudante que minera junto", ShopCatalog.EffectStyle.Number, new Color32(0x9E, 0x9E, 0x9E, 0xFF));
@@ -116,6 +118,45 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Letrado na loja de verdade (M8, D-109).");
+        }
+
+        const string CriticalTitle = "Crítico";
+        const string CriticalEffect = "Chance {0} » {1}";
+        static readonly Color CriticalColor = new Color32(0xD8, 0x42, 0x35, 0xFF);
+
+        /// <summary>
+        /// E3b do M8 (D-136): a linha Chance de Crítico entra no catálogo de antes, logo depois da Mineração. Ícone
+        /// provisório: o quadrado na cor da linha (graybox), até haver um ícone.
+        /// </summary>
+        static void EnsureCritical()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
+            var so = new SerializedObject(catalog);
+            var entries = so.FindProperty("entries");
+            int after = -1;
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var entry = entries.GetArrayElementAtIndex(i);
+                if (entry.FindPropertyRelative("locked").boolValue) continue;
+                int upgrade = entry.FindPropertyRelative("upgrade").enumValueIndex;
+                if (upgrade == (int)UpgradeId.Critical) return;
+                if (upgrade == (int)UpgradeId.Mining) after = i;
+            }
+
+            int index = after + 1;
+            entries.InsertArrayElementAtIndex(index);
+            var added = entries.GetArrayElementAtIndex(index);
+            added.FindPropertyRelative("locked").boolValue = false;
+            added.FindPropertyRelative("upgrade").enumValueIndex = (int)UpgradeId.Critical;
+            added.FindPropertyRelative("title").stringValue = CriticalTitle;
+            added.FindPropertyRelative("effectFormat").stringValue = CriticalEffect;
+            added.FindPropertyRelative("style").enumValueIndex = (int)ShopCatalog.EffectStyle.ChancePercent;
+            added.FindPropertyRelative("iconColor").colorValue = CriticalColor;
+            added.FindPropertyRelative("icon").objectReferenceValue = null;
+            added.FindPropertyRelative("frame").objectReferenceValue = null;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Linha Crítico na loja (E3b do M8, D-136).");
         }
 
         static void AddEntry(SerializedProperty entries, bool locked, UpgradeId upgrade, string title, string effect,

@@ -26,6 +26,7 @@ namespace MinersIdle.Tests
             yield return null;
             _stage = Object.FindAnyObjectByType<DescentStage>();
             _runner = Object.FindAnyObjectByType<MiningRunner>();
+            _runner.UseRules(TestBalance.GddV5); // a pose e o golpe pedem cristais de vários golpes (no v7 morrem num só)
             yield return null;
             if (_stage.DwarfFrame < 0) Assert.Ignore("Sem as folhas do anão na cena (rode o setup).");
         }

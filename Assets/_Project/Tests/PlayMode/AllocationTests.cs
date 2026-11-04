@@ -51,7 +51,7 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>Abre a cena e aquece tudo com quadros passando: pools crescem e devolvem, textos e sons já tocaram.</summary>
-        IEnumerator LoadAndWarmUp()
+        IEnumerator LoadAndWarmUp(MiningRulesAsset rules = null)
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
@@ -60,6 +60,7 @@ namespace MinersIdle.Tests
 
             _runner = UnityEngine.Object.FindAnyObjectByType<MiningRunner>();
             _tapInput = UnityEngine.Object.FindAnyObjectByType<TapInput>();
+            if (rules != null) _runner.UseRules(rules);
 
             _tapInput.AutoTap = true;
             _runner.TimeScale = 20f;
@@ -158,7 +159,7 @@ namespace MinersIdle.Tests
         [UnityTest]
         public IEnumerator HittingTheWall_DoesNotAllocate()
         {
-            yield return LoadAndWarmUp();
+            yield return LoadAndWarmUp(TestBalance.GddV5); // no v7 o dano da caverna 2 derruba a parede antes da medida
             var simulation = _runner.Simulation;
             if (!simulation.Economy.Get(UpgradeId.Letrado).IsEnabled)
                 Assert.Ignore("O balanço ativo não tem o Letrado (rode o setup do projeto).");

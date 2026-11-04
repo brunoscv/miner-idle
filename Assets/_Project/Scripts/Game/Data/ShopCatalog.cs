@@ -20,6 +20,8 @@ namespace MinersIdle.Game
             Seconds,
             /// <summary>Multiplicador mostrado como bônus em %: 1,08 → "+8%" (Mineração).</summary>
             BonusPercent,
+            /// <summary>Fração mostrada como chance em %: 0,05 → "+5%" (Crítico, D-136).</summary>
+            ChancePercent,
         }
 
         [Serializable]

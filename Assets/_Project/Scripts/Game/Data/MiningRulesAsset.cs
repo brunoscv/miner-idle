@@ -7,8 +7,8 @@ namespace MinersIdle.Game
     /// <summary>
     /// Os valores do jogo editáveis no Inspector (Arquitetura Técnica, D-T3): o loop de mineração (M2) e as melhorias (M3).
     /// Os padrões abaixo são os valores de protótipo (<c>Data/Balance_Prototipo</c>, D-29, D-35), das tabelas dos planos
-    /// dos Marcos 2 e 3. Desde a D-103 o asset ativo é <c>Data/Balance_GDD_v5</c> (os números do GDD v5);
-    /// <c>Data/Balance_GDD_v1</c> e o protótipo ficam para comparação. O Núcleo recebe cópias somente leitura (<see cref="ToRules"/>, <see cref="ToEconomy"/>).
+    /// dos Marcos 2 e 3. Desde a E3b do M8 (D-130) o asset ativo é <c>Data/Balance_GDD_v7</c> (os números do GDD v7);
+    /// <c>Data/Balance_GDD_v5</c>, <c>Data/Balance_GDD_v1</c> e o protótipo ficam para comparação. O Núcleo recebe cópias somente leitura (<see cref="ToRules"/>, <see cref="ToEconomy"/>).
     /// </summary>
     [CreateAssetMenu(menuName = "Miners Idle/Valores de mineração", fileName = "Balance_Prototipo")]
     public sealed class MiningRulesAsset : ScriptableObject
@@ -54,9 +54,15 @@ namespace MinersIdle.Game
         [SerializeField] double walkSpeed = 4;
         [Tooltip("Distância do cristal em que o anão para e começa a bater.")]
         [SerializeField] double miningRange = 1;
+        [Tooltip("Multiply: dano = base × Picareta.efeito^nível (até o GDD v5). CaveScaled (GDD v7, D-133): dano = base + " +
+                 "Picareta.efeito × nível + taxa^(caverna − 1).")]
+        [SerializeField] PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply;
+        [Tooltip("A taxa da Picareta no CaveScaled (D-133, configurável): o dano ganha taxa^(caverna − 1). GDD v7: 1,2.")]
+        [SerializeField] double pickaxeCaveGrowth = 1.2;
 
-        [Header("Melhorias (custo da próxima compra = inicial × crescimento^nível; nível = compras feitas)")]
-        [Tooltip("Efeito: o dano multiplica por este valor a cada nível.")]
+        [Header("Melhorias (custo da próxima compra = inicial × crescimento^nível, ou inicial + passo × nível na fórmula " +
+                "Linear; nível = compras feitas)")]
+        [Tooltip("Efeito: o dano multiplica por este valor a cada nível (Multiply) ou soma no Dano Base (CaveScaled).")]
         [SerializeField] UpgradeLineValues pickaxe = new UpgradeLineValues(10, 4, 19, 2);
         [Tooltip("Efeito: segundos a menos no intervalo a cada nível.")]
         [SerializeField] UpgradeLineValues speed = new UpgradeLineValues(15, 3, 10, 0.05);
@@ -68,12 +74,16 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues boots = new UpgradeLineValues(10, 2, 10, 0.1);
         [Tooltip("Letrado (M8): o nível n leva à caverna n+1. Efeito: multiplicador do dano dali em diante. Limite 0 desliga.")]
         [SerializeField] UpgradeLineValues letrado = new UpgradeLineValues(100, 10, 0, 2);
+        [Tooltip("Chance de Crítico (GDD v7, D-136). Efeito: chance a mais por nível, no golpe e no toque. Limite 0 desliga.")]
+        [SerializeField] UpgradeLineValues critical = new UpgradeLineValues(50, 2, 0, 0.05);
         [Tooltip("Intervalo mínimo entre golpes, em segundos.")]
         [SerializeField] double minHitInterval = 0.5;
 
         [Header("Golpe e toque (valores do GDD: 5%, ×2, 10%, 1 s)")]
-        [Tooltip("Chance de crítico por golpe e por toque (0–1).")]
+        [Tooltip("Chance base de crítico do golpe automático (0–1). GDD v7: 0 (D-136).")]
         [SerializeField] double critChance = 0.05;
+        [Tooltip("Chance base de crítico do toque (0–1). GDD v7: 0,05 (D-136); até o v5, igual à do golpe.")]
+        [SerializeField] double tapCritChance = 0.05;
         [Tooltip("Quanto o dano multiplica no crítico.")]
         [SerializeField] double critMultiplier = 2;
         [Tooltip("Fração de um golpe que o toque dá (0,1 = 10%).")]
@@ -101,23 +111,27 @@ namespace MinersIdle.Game
             walkSpeed, miningRange,
             minCrystals,
             caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor,
-            tapReach, arrivalStrike, swingRecovery);
+            tapReach, arrivalStrike, swingRecovery,
+            pickaxeFormula, pickaxeCaveGrowth);
 
         public StrikeRules ToStrike() =>
-            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond);
+            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance);
 
         public EconomyRules ToEconomy() => new EconomyRules(
             pickaxe.ToDefinition(), speed.ToDefinition(), mining.ToDefinition(),
-            doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, letrado.ToDefinition());
+            doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, letrado.ToDefinition(),
+            critical.ToDefinition());
     }
 
     /// <summary>Uma linha de melhoria no Inspector (vira uma <see cref="UpgradeDefinition"/> do Núcleo).</summary>
     [Serializable]
     public sealed class UpgradeLineValues
     {
+        [Tooltip("Exponential: inicial × crescimento^nível. Linear: inicial + passo × nível (o passo é o crescimento).")]
+        [SerializeField] CostFormula costFormula;
         [Tooltip("Custo da 1ª compra.")]
         [SerializeField] double baseCost;
-        [Tooltip("Quanto o custo multiplica a cada compra.")]
+        [Tooltip("Quanto o custo multiplica a cada compra (na Linear, quanto soma).")]
         [SerializeField] double costGrowth;
         [Tooltip("Número máximo de compras (0 desliga a linha).")]
         [SerializeField] int maxLevel;
@@ -126,14 +140,16 @@ namespace MinersIdle.Game
         /// <summary>Para o serializador do Unity.</summary>
         public UpgradeLineValues() { }
 
-        public UpgradeLineValues(double baseCost, double costGrowth, int maxLevel, double effect)
+        public UpgradeLineValues(double baseCost, double costGrowth, int maxLevel, double effect,
+                                 CostFormula costFormula = CostFormula.Exponential)
         {
+            this.costFormula = costFormula;
             this.baseCost = baseCost;
             this.costGrowth = costGrowth;
             this.maxLevel = maxLevel;
             this.effect = effect;
         }
 
-        public UpgradeDefinition ToDefinition() => new UpgradeDefinition(baseCost, costGrowth, maxLevel, effect);
+        public UpgradeDefinition ToDefinition() => new UpgradeDefinition(baseCost, costGrowth, maxLevel, effect, costFormula);
     }
 }

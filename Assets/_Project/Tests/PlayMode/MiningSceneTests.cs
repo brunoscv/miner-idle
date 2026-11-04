@@ -43,7 +43,7 @@ namespace MinersIdle.Tests
 
             Assert.That(simulation.Elapsed, Is.GreaterThan(20), "o tempo de jogo andou");
             Assert.That(simulation.State.Breaks, Is.GreaterThan(0), "quebrou cristais sem nenhum toque");
-            Assert.That(simulation.State.Shards, Is.EqualTo(simulation.State.Breaks * simulation.Rules.CrystalReward));
+            Assert.That(simulation.State.Shards, Is.EqualTo(simulation.State.Breaks * simulation.Rules.CrystalReward).Within(1e-9));
             Assert.That(simulation.Miner.Distance, Is.GreaterThan(start), "o anão correu pela fila");
             Assert.That(stage.DrawnCrystals, Is.EqualTo(simulation.Crystals.Count), "um desenho por cristal vivo");
 

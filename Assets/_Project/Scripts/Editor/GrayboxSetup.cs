@@ -238,8 +238,9 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>
-        /// O balanço do jogo passa do protótipo para o GDD v5 (D-103). Só troca se a partida ainda estiver no protótipo;
-        /// outro asset posto à mão fica. Devolve se mudou.
+        /// O balanço do jogo passa ao ativo (<see cref="ProjectSetup.ActiveBalancePath"/>): o GDD v5 pela D-103 e o GDD v7
+        /// pela D-130. Só troca se a partida ainda estiver num desses de antes (protótipo ou v5); outro asset posto à mão
+        /// fica. Devolve se mudou.
         /// </summary>
         static bool EnsureActiveBalance()
         {
@@ -249,13 +250,14 @@ namespace MinersIdle.EditorTools
             var so = new SerializedObject(runner);
             var rules = so.FindProperty("rules");
             if (rules.objectReferenceValue != null
-                && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.PrototypeBalancePath) return false;
+                && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.PrototypeBalancePath
+                && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.GddV5BalancePath) return false;
 
             var active = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(ProjectSetup.ActiveBalancePath);
             if (active == null || rules.objectReferenceValue == active) return false;
             rules.objectReferenceValue = active;
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log($"[Setup] Balanço do jogo = {active.name} (D-103).");
+            Debug.Log($"[Setup] Balanço do jogo = {active.name} (D-103, D-130).");
             return true;
         }
 

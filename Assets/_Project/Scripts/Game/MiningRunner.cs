@@ -66,6 +66,9 @@ namespace MinersIdle.Game
         public MiningSimulation Simulation { get; private set; }
         public ulong Seed { get; private set; }
 
+        /// <summary>O balanço em uso (Balance_GDD_v7 no jogo, D-130).</summary>
+        public MiningRulesAsset Rules => rules;
+
         /// <summary>Se esta partida grava o progresso (só quando veio pelo <c>GameBootstrap</c>).</summary>
         public bool HasSave => _save != null;
 
@@ -112,6 +115,16 @@ namespace MinersIdle.Game
 
         /// <summary>Refaz o mapa com a semente dada, <b>mantendo o progresso</b> (o "Reiniciar" do debug, M4).</summary>
         public void StartNew(ulong seed) => Begin(seed, Simulation?.State ?? new GameState());
+
+        /// <summary>
+        /// Troca o balanço e recomeça do zero com a mesma semente, <b>sem apagar o save</b>. Usado pelos testes de tela que
+        /// precisam de cristais que aguentam vários golpes (v5) e, na E3b-3, pelo DBG → Cálculos.
+        /// </summary>
+        public void UseRules(MiningRulesAsset asset)
+        {
+            rules = asset != null ? asset : throw new ArgumentNullException(nameof(asset));
+            Begin(Seed, new GameState());
+        }
 
         /// <summary>Apaga o save e começa do zero (o "Apagar save" do debug).</summary>
         public void ResetProgress()

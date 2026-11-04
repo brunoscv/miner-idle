@@ -119,7 +119,7 @@ namespace MinersIdle.EditorTools
         /// <summary>
         /// Ícone e moldura (cor de raridade) de cada linha. As bloqueadas, pela ordem: Estagiário (capacete), Letrado
         /// (livro, até o M8). Picareta comum, Velocidade raro, Mineração épico, Picareta Dupla lendário, Botas incomum,
-        /// Letrado raro (livro, desde o M8).
+        /// Letrado raro (livro, desde o M8), Crítico lendário (estrela de impacto, GDD v7 — D-136).
         /// </summary>
         static (Sprite icon, Sprite frame) ArtFor(bool locked, UpgradeId upgrade, ref int lockedIndex)
         {
@@ -134,6 +134,7 @@ namespace MinersIdle.EditorTools
                 case UpgradeId.DoublePickaxe: return (Load(DoublePickaxeIconPath), Load(Wood("slots/slot_rarity_legendary")));
                 case UpgradeId.Boots: return (Load(Ponk(224)), Load(Wood("slots/slot_rarity_uncommon")));
                 case UpgradeId.Letrado: return (Load(Ponk(299)), Load(Wood("slots/slot_rarity_rare")));
+                case UpgradeId.Critical: return (Load(Ponk(18)), Load(Wood("slots/slot_rarity_legendary")));
                 default: return (null, null);
             }
         }

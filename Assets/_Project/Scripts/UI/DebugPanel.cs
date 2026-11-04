@@ -56,7 +56,8 @@ namespace MinersIdle.UI
         [SerializeField] Button buySpeed;
         [SerializeField] Button buyMining;
         [SerializeField] Button buyDoublePickaxe;
-        [SerializeField] Button buyBoots;
+        [Tooltip("E3b do M8: no lugar do antigo Comprar Botas (linha desligada desde o GDD v5).")]
+        [SerializeField] Button buyCritical;
         [SerializeField] Button saveNow;
         [SerializeField] Button deleteSave;
         [SerializeField] Button autoTap;
@@ -109,7 +110,7 @@ namespace MinersIdle.UI
             buySpeed.onClick.AddListener(BuySpeed);
             buyMining.onClick.AddListener(BuyMining);
             buyDoublePickaxe.onClick.AddListener(BuyDoublePickaxe);
-            buyBoots.onClick.AddListener(BuyBoots);
+            buyCritical.onClick.AddListener(BuyCritical);
             saveNow.onClick.AddListener(SaveNow);
             deleteSave.onClick.AddListener(DeleteSave);
             autoTap.onClick.AddListener(ToggleAutoTap);
@@ -138,7 +139,7 @@ namespace MinersIdle.UI
             buySpeed.onClick.RemoveListener(BuySpeed);
             buyMining.onClick.RemoveListener(BuyMining);
             buyDoublePickaxe.onClick.RemoveListener(BuyDoublePickaxe);
-            buyBoots.onClick.RemoveListener(BuyBoots);
+            buyCritical.onClick.RemoveListener(BuyCritical);
             saveNow.onClick.RemoveListener(SaveNow);
             deleteSave.onClick.RemoveListener(DeleteSave);
             autoTap.onClick.RemoveListener(ToggleAutoTap);
@@ -203,7 +204,7 @@ namespace MinersIdle.UI
         void BuySpeed() => Buy(UpgradeId.Speed);
         void BuyMining() => Buy(UpgradeId.Mining);
         void BuyDoublePickaxe() => Buy(UpgradeId.DoublePickaxe);
-        void BuyBoots() => Buy(UpgradeId.Boots);
+        void BuyCritical() => Buy(UpgradeId.Critical);
 
         void Buy(UpgradeId id)
         {

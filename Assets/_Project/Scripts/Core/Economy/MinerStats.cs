@@ -8,8 +8,10 @@ namespace MinersIdle.Core
     /// </summary>
     public readonly struct MinerStats
     {
-        public MinerStats(double damage, double hitInterval, double walkSpeed, double rewardMultiplier)
+        public MinerStats(double damage, double hitInterval, double walkSpeed, double rewardMultiplier,
+                          double critBonus = 0)
         {
+            CritBonus = critBonus;
             Damage = damage;
             HitInterval = hitInterval;
             WalkSpeed = walkSpeed;
@@ -24,10 +26,16 @@ namespace MinersIdle.Core
         public double WalkSpeed { get; }
         /// <summary>Multiplica as lascas de cada cristal (Mineração).</summary>
         public double RewardMultiplier { get; }
+        /// <summary>
+        /// Chance de crítico que a linha Chance de Crítico soma, no golpe automático e no toque (D-136; 0,05 = +5%). A
+        /// chance base de cada um está nas <see cref="StrikeRules"/>.
+        /// </summary>
+        public double CritBonus { get; }
 
         /// <summary>
-        /// Fórmulas (formato do GDD, REQ-ECO): dano = base × Picareta.efeito^n × (Dupla.efeito se comprada) × (Letrado.efeito
-        /// da caverna 2 em diante, com o Letrado dela comprado: GDD v5, M8);
+        /// Fórmulas (formato do GDD, REQ-ECO): dano = base × Picareta.efeito^n (até o GDD v5) ou base + Picareta.efeito × n +
+        /// taxa^(caverna − 1) (GDD v7, D-133; <see cref="MiningRules.PickaxeFormula"/>), × (Dupla.efeito se comprada) ×
+        /// (Letrado.efeito da caverna 2 em diante, com o Letrado dela comprado: GDD v5, M8); crítico = Crítico.efeito × n;
         /// intervalo = max(mínimo, base − Velocidade.efeito × n); caminhada = base × (1 + Botas.efeito × n);
         /// lascas = × (1 + Mineração.efeito × n).
         /// </summary>
@@ -48,7 +56,10 @@ namespace MinersIdle.Core
 
             int Level(UpgradeId id) => state.LevelOf(id) + (raised == id ? 1 : 0);
 
-            double damage = rules.Damage * Math.Pow(economy.Get(UpgradeId.Pickaxe).Effect, Level(UpgradeId.Pickaxe));
+            double pickaxe = economy.Get(UpgradeId.Pickaxe).Effect;
+            double damage = rules.PickaxeFormula == PickaxeFormula.CaveScaled
+                ? rules.Damage + pickaxe * Level(UpgradeId.Pickaxe) + Math.Pow(rules.PickaxeCaveGrowth, state.Cave - 1)
+                : rules.Damage * Math.Pow(pickaxe, Level(UpgradeId.Pickaxe));
             if (Level(UpgradeId.DoublePickaxe) > 0) damage *= economy.Get(UpgradeId.DoublePickaxe).Effect;
             // O Letrado n dobra o dano na caverna n+1, a que ele abriu (só se chega nela com ele comprado).
             if (state.Cave > 1 && Level(UpgradeId.Letrado) >= state.Cave - 1) damage *= economy.Get(UpgradeId.Letrado).Effect;
@@ -60,7 +71,9 @@ namespace MinersIdle.Core
             double walk = rules.WalkSpeed * (1 + economy.Get(UpgradeId.Boots).Effect * Level(UpgradeId.Boots));
             double reward = 1 + economy.Get(UpgradeId.Mining).Effect * Level(UpgradeId.Mining);
 
-            return new MinerStats(damage, interval, walk, reward);
+            double crit = economy.Get(UpgradeId.Critical).Effect * Level(UpgradeId.Critical);
+
+            return new MinerStats(damage, interval, walk, reward, crit);
         }
     }
 }

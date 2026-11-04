@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using MinersIdle.Core;
 using MinersIdle.Game;
 using MinersIdle.UI;
 using TMPro;
@@ -49,8 +50,11 @@ namespace MinersIdle.EditorTools
         /// <summary>Os números do GDD v5 (D-87, D-92; toque de 33%, D-86), para comparação. Não é o asset ativo.</summary>
         public const string GddV5BalancePath = "Assets/_Project/Data/Balance_GDD_v5.asset";
 
-        /// <summary>O balanço que o jogo usa: o GDD v5 desde a D-103 (antes, o protótipo).</summary>
-        public const string ActiveBalancePath = GddV5BalancePath;
+        /// <summary>Os números do GDD v7 (D-130, D-133…D-136): o balanço do jogo desde a E3b do M8.</summary>
+        public const string GddV7BalancePath = "Assets/_Project/Data/Balance_GDD_v7.asset";
+
+        /// <summary>O balanço que o jogo usa: o GDD v7 desde a D-130 (antes, o v5 pela D-103 e o protótipo).</summary>
+        public const string ActiveBalancePath = GddV7BalancePath;
 
         public const string PackageId = "com.brunocarvalho.minersidle";
         public const string VersionName = "0.1.0";
@@ -85,6 +89,7 @@ namespace MinersIdle.EditorTools
             EnsureGddBalance();
             EnsureGddV5Balance();
             EnsureGddV5Caves();
+            EnsureGddV7Balance();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -422,8 +427,53 @@ namespace MinersIdle.EditorTools
             Debug.Log($"[Setup] Valores do GDD v5 criados em {GddV5BalancePath} (D-87).");
         }
 
-        static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect)
+        /// <summary>
+        /// Cria o <c>Balance_GDD_v7</c> (E3b do M8, D-130) a partir do v5 (a fila, o toque, o golpe e as cavernas iguais),
+        /// com os números do GDD v7 e das decisões de 2026-11-04: vida <c>1 × 1,25^(c−1)</c> e lascas = vida × 1,2 (D-134);
+        /// Picareta pela caverna, Dano Base 1 + 1 por compra, taxa 1,2, custo 2 × Dano Base, até o nível 50 (D-133);
+        /// Velocidade <c>50 × 2^(n−1)</c> de 2,0 s até 0,1 s (D-135); Mineração <c>20 × 5^(n−1)</c>; Chance de Crítico
+        /// <c>50 × 2^(n−1)</c>, +5%, 10 níveis, com base de 0% no golpe e 5% no toque (D-136); a Dupla desligada (D-136).
+        /// Até a E3b-2, as 10 cavernas e o Letrado continuam, já com custo zero e sem ×2 de dano (o Mapa da D-128).
+        /// </summary>
+        static void EnsureGddV7Balance()
         {
+            if (File.Exists(GddV7BalancePath)) return;
+            if (!AssetDatabase.CopyAsset(GddV5BalancePath, GddV7BalancePath))
+            {
+                Debug.LogError($"[Setup] Não consegui copiar {GddV5BalancePath} para {GddV7BalancePath}.");
+                return;
+            }
+
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7BalancePath);
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("crystalHealth").doubleValue = 1;
+            serialized.FindProperty("crystalReward").doubleValue = 1.2;
+            serialized.FindProperty("caveHealthGrowth").doubleValue = 1.25;
+            serialized.FindProperty("caveRewardGrowth").doubleValue = 1.25;
+            serialized.FindProperty("damage").doubleValue = 1;
+            serialized.FindProperty("hitInterval").doubleValue = 2;
+            serialized.FindProperty("pickaxeFormula").enumValueIndex = (int)PickaxeFormula.CaveScaled;
+            serialized.FindProperty("pickaxeCaveGrowth").doubleValue = 1.2;
+            SetLine(serialized, "pickaxe", 2, 2, 49, 1, CostFormula.Linear);
+            SetLine(serialized, "speed", 50, 2, 19, 0.1);
+            SetLine(serialized, "mining", 20, 5, 10, 1);
+            SetLine(serialized, "doublePickaxe", 5000, 1, 0, 2);
+            SetLine(serialized, "boots", 0, 1, 0, 0);
+            SetLine(serialized, "letrado", 0, 1, 10, 1);
+            SetLine(serialized, "critical", 50, 2, 10, 0.05);
+            serialized.FindProperty("minHitInterval").doubleValue = 0.1;
+            serialized.FindProperty("critChance").doubleValue = 0;
+            serialized.FindProperty("tapCritChance").doubleValue = 0.05;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Setup] Valores do GDD v7 criados em {GddV7BalancePath} (D-130).");
+        }
+
+        static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,
+                            CostFormula formula = CostFormula.Exponential)
+        {
+            serialized.FindProperty(line + ".costFormula").enumValueIndex = (int)formula;
             serialized.FindProperty(line + ".baseCost").doubleValue = baseCost;
             serialized.FindProperty(line + ".costGrowth").doubleValue = costGrowth;
             serialized.FindProperty(line + ".maxLevel").intValue = maxLevel;

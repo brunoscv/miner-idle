@@ -139,16 +139,16 @@ namespace MinersIdle.Tests
             Assert.That(simulation.Stats.HitInterval, Is.LessThan(interval));
             Assert.That(hud.SpeedText, Is.EqualTo(NumberFormatter.FormatSeconds(simulation.Stats.HitInterval)));
 
-            // As Botas só existem no protótipo; no GDD v5 (D-103) a linha vem desligada e o botão não compra nada.
-            double walk = simulation.Stats.WalkSpeed;
-            Click("Content/Buttons/BuyBoots");
-            if (economy.Get(UpgradeId.Boots).IsEnabled)
-                Assert.That(simulation.Stats.WalkSpeed, Is.GreaterThan(walk));
-            else
+            // O Crítico (GDD v7, D-136) entrou no lugar das Botas: +5% de chance no golpe e no toque.
+            double crit = simulation.Stats.CritBonus;
+            Click("Content/Buttons/BuyCritical");
+            if (economy.Get(UpgradeId.Critical).IsEnabled)
             {
-                Assert.That(simulation.State.LevelOf(UpgradeId.Boots), Is.EqualTo(0), "linha desligada: nada comprado");
-                Assert.That(simulation.Stats.WalkSpeed, Is.EqualTo(walk));
+                Assert.That(simulation.State.LevelOf(UpgradeId.Critical), Is.EqualTo(1));
+                Assert.That(simulation.Stats.CritBonus, Is.GreaterThan(crit));
             }
+            else
+                Assert.That(simulation.State.LevelOf(UpgradeId.Critical), Is.EqualTo(0), "linha desligada: nada comprado");
 
             Click("Content/Buttons/BuyMining");
             Assert.That(simulation.State.LevelOf(UpgradeId.Mining), Is.EqualTo(1));

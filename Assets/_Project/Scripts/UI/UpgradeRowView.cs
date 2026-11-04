@@ -129,6 +129,8 @@ namespace MinersIdle.UI
                     return NumberFormatter.FormatSeconds(value);
                 case ShopCatalog.EffectStyle.BonusPercent:
                     return string.Format(_catalog.BonusPercentFormat, NumberFormatter.Format((value - 1) * 100));
+                case ShopCatalog.EffectStyle.ChancePercent:
+                    return string.Format(_catalog.BonusPercentFormat, NumberFormatter.Format(value * 100));
                 default:
                     return NumberFormatter.Format(value);
             }

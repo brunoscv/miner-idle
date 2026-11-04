@@ -9,24 +9,30 @@ namespace MinersIdle.Core
     /// </summary>
     public sealed class StrikeRules
     {
+        /// <param name="tapCritChance">Chance base do toque; <c>null</c> = a mesma do golpe (o jogo até o GDD v5).</param>
         public StrikeRules(double critChance, double critMultiplier, double tapFraction, double comboWindow,
-                           int maxTapsPerSecond = 0)
+                           int maxTapsPerSecond = 0, double? tapCritChance = null)
         {
             if (double.IsNaN(critChance) || critChance < 0 || critChance > 1) throw new ArgumentOutOfRangeException(nameof(critChance));
+            double tapCrit = tapCritChance ?? critChance;
+            if (double.IsNaN(tapCrit) || tapCrit < 0 || tapCrit > 1) throw new ArgumentOutOfRangeException(nameof(tapCritChance));
             if (double.IsNaN(critMultiplier) || critMultiplier < 1) throw new ArgumentOutOfRangeException(nameof(critMultiplier));
             if (double.IsNaN(tapFraction) || tapFraction < 0) throw new ArgumentOutOfRangeException(nameof(tapFraction));
             if (double.IsNaN(comboWindow) || comboWindow <= 0) throw new ArgumentOutOfRangeException(nameof(comboWindow));
             if (maxTapsPerSecond < 0) throw new ArgumentOutOfRangeException(nameof(maxTapsPerSecond));
 
             CritChance = critChance;
+            TapCritChance = tapCrit;
             CritMultiplier = critMultiplier;
             TapFraction = tapFraction;
             ComboWindow = comboWindow;
             MaxTapsPerSecond = maxTapsPerSecond;
         }
 
-        /// <summary>Chance de crítico por golpe automático e por toque (0–1).</summary>
+        /// <summary>Chance base de crítico do golpe automático (0–1; GDD v7: 0%, D-136).</summary>
         public double CritChance { get; }
+        /// <summary>Chance base de crítico do toque (0–1; GDD v7: 5%, D-136). Até o GDD v5, a mesma do golpe.</summary>
+        public double TapCritChance { get; }
         /// <summary>Quanto o dano multiplica no crítico.</summary>
         public double CritMultiplier { get; }
         /// <summary>Fração de um golpe do principal que o toque dá (0,1 = 10%).</summary>

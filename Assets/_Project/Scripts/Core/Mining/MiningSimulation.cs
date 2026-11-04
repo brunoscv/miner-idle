@@ -270,7 +270,7 @@ namespace MinersIdle.Core
             var target = _miner.Target;
             if (target == null || target.Distance - _miner.Distance > _rules.TapReach + Epsilon) return true;
 
-            bool critical = RollCritical();
+            bool critical = RollCritical(isTap: true);
             double damage = _stats.Damage * _strike.TapFraction * (critical ? _strike.CritMultiplier : 1);
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(new MiningHit(target, damage, isTap: true, isCritical: critical));
@@ -372,8 +372,16 @@ namespace MinersIdle.Core
             CaveChanged?.Invoke(cave);
         }
 
-        bool RollCritical() =>
-            ForceCritical || (_strike.CritChance > 0 && _critRandom.NextDouble() < _strike.CritChance);
+        /// <summary>
+        /// Crítico: a chance base do golpe ou do toque (<see cref="StrikeRules"/>) mais a da linha Chance de Crítico
+        /// (<see cref="MinerStats.CritBonus"/>, D-136). Com chance 0, nenhum número é sorteado.
+        /// </summary>
+        bool RollCritical(bool isTap)
+        {
+            if (ForceCritical) return true;
+            double chance = (isTap ? _strike.TapCritChance : _strike.CritChance) + _stats.CritBonus;
+            return chance > 0 && _critRandom.NextDouble() < chance;
+        }
 
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id);
@@ -560,7 +568,7 @@ namespace MinersIdle.Core
         void Hit()
         {
             var target = _miner.Target;
-            bool critical = RollCritical();
+            bool critical = RollCritical(isTap: false);
             double damage = _stats.Damage * (critical ? _strike.CritMultiplier : 1);
 
             _state.RegisterHit();
