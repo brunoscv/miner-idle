@@ -11,6 +11,8 @@ namespace MinersIdle.UI
     /// O fim da descida (M8, E3, D-112): quando a última parede cai, a tela "Coração da montanha" com o tempo de jogo e as
     /// lascas coletadas. Aparece uma vez só, pelo evento (reabrir o jogo depois não mostra de novo); CONTINUAR fecha e o
     /// jogo segue na última caverna. Como a loja, escurece e bloqueia o mapa, mas não pausa nada. Textos em dados.
+    /// Marco 8b (E3, D-157): ao lado de CONTINUAR, DESCANSAR (quando dá para descansar) fecha a tela e abre o modal do
+    /// descanso.
     /// </summary>
     public sealed class HeartScreen : MiningViewBase
     {
@@ -21,6 +23,9 @@ namespace MinersIdle.UI
         [SerializeField] TMP_Text body;
         [SerializeField] Button continueButton;
         [SerializeField] TMP_Text continueLabel;
+        [SerializeField] RestScreen restScreen;
+        [SerializeField] Button restButton;
+        [SerializeField] TMP_Text restLabel;
         [Tooltip("Segundos reais entre a quebra da parede e a tela (os estilhaços aparecem antes).")]
         [SerializeField, Min(0f)] float showDelay = 1.2f;
 
@@ -33,10 +38,14 @@ namespace MinersIdle.UI
 
         public string BodyText => body.text;
 
+        /// <summary>Se o DESCANSAR está na tela (para testes).</summary>
+        public bool IsRestShown => restButton.gameObject.activeSelf;
+
         void Awake()
         {
             title.text = texts.HeartTitle;
             continueLabel.text = texts.HeartContinue;
+            restLabel.text = texts.RestLabel;
             screen.SetActive(false);
         }
 
@@ -44,12 +53,14 @@ namespace MinersIdle.UI
         {
             base.OnEnable();
             continueButton.onClick.AddListener(Close);
+            restButton.onClick.AddListener(Rest);
         }
 
         protected override void OnDisable()
         {
             base.OnDisable();
             continueButton.onClick.RemoveListener(Close);
+            restButton.onClick.RemoveListener(Rest);
         }
 
         protected override void Subscribe(MiningSimulation simulation) => simulation.HeartReached += OnHeartReached;
@@ -80,9 +91,16 @@ namespace MinersIdle.UI
 
             body.text = string.Format(texts.HeartBodyFormat, NumberFormatter.FormatDuration(state.PlaySeconds),
                                       NumberFormatter.FormatShards(state.ShardsEarned));
+            restButton.gameObject.SetActive(Simulation.CanRest);
             screen.SetActive(true);
         }
 
         public void Close() => screen.SetActive(false);
+
+        void Rest()
+        {
+            Close();
+            restScreen.Open();
+        }
     }
 }

@@ -19,3 +19,21 @@ MonoBehaviour:
   heartTitle: "Cora\xE7\xE3o da montanha"
   heartBodyFormat: "Voc\xEA desceu as dez cavernas.\n\nTempo de jogo: {0}\nLascas coletadas: {1}"
   heartContinue: CONTINUAR
+  restLabel: DESCANSAR
+  restTitle: DESCANSAR
+  dayFormat: DIA {0}
+  restLevelLabel: "N\xEDvel alcan\xE7ado"
+  restTimeLabel: Tempo do dia
+  restShardsLabel: Lascas da run
+  restTakeLabel: "Voc\xEA leva"
+  restNextFormat: "No pr\xF3ximo n\xEDvel: +{0}"
+  restNoNext: "Voc\xEA chegou ao \xFAltimo n\xEDvel."
+  restNote: "Amanh\xE3 voc\xEA recome\xE7a do n\xEDvel 1, sem as lascas e as melhorias desta run. As permanentes ficam."
+  restContinue: CONTINUAR
+  summaryTitleFormat: DIA {0} ENCERRADO
+  summaryLevelLabel: "Chegou ao n\xEDvel"
+  summaryTimeLabel: Tempo do dia
+  summaryGainedLabel: Lascas vermelhas
+  summaryGainedFormat: +{0}
+  summaryBankLabel: No banco
+  summaryStart: "COME\xC7AR"

@@ -121,6 +121,7 @@ namespace MinersIdle.EditorTools
             changed |= ShopSetup.EnsureInScene();
             changed |= HeartScreenSetup.EnsureInScene();
             changed |= UiSkinSetup.EnsureInScene();
+            changed |= RestSetup.EnsureInScene(); // depois da pele: usa a barra de baixo e as fontes
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

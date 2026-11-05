@@ -34,6 +34,7 @@ namespace MinersIdle.EditorTools
             {
                 EnsureCaveBannerText();
                 EnsureHeartTexts();
+                EnsureRestTexts();
                 return;
             }
 
@@ -48,6 +49,7 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.CreateAsset(texts, TextsPath);
             Debug.Log($"[Setup] Textos do feedback criados em {TextsPath}.");
+            EnsureRestTexts();
         }
 
         const string CaveBannerFormat = "Nível {0} · {1}";
@@ -83,6 +85,38 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(texts);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Textos do coração da montanha nos textos do feedback (M8).");
+        }
+
+        /// <summary>Marco 8b (E3): os textos do descanso e do resumo do dia (D-151…D-154), nos textos que já existem.</summary>
+        static void EnsureRestTexts()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null || !string.IsNullOrEmpty(texts.RestLabel)) return;
+
+            var so = new SerializedObject(texts);
+            so.FindProperty("restLabel").stringValue = "DESCANSAR";
+            so.FindProperty("restTitle").stringValue = "DESCANSAR";
+            so.FindProperty("dayFormat").stringValue = "DIA {0}";
+            so.FindProperty("restLevelLabel").stringValue = "Nível alcançado";
+            so.FindProperty("restTimeLabel").stringValue = "Tempo do dia";
+            so.FindProperty("restShardsLabel").stringValue = "Lascas da run";
+            so.FindProperty("restTakeLabel").stringValue = "Você leva";
+            so.FindProperty("restNextFormat").stringValue = "No próximo nível: +{0}";
+            so.FindProperty("restNoNext").stringValue = "Você chegou ao último nível.";
+            so.FindProperty("restNote").stringValue =
+                "Amanhã você recomeça do nível 1, sem as lascas e as melhorias desta run. As permanentes ficam.";
+            so.FindProperty("restContinue").stringValue = "CONTINUAR";
+            so.FindProperty("summaryTitleFormat").stringValue = "DIA {0} ENCERRADO";
+            so.FindProperty("summaryLevelLabel").stringValue = "Chegou ao nível";
+            so.FindProperty("summaryTimeLabel").stringValue = "Tempo do dia";
+            so.FindProperty("summaryGainedLabel").stringValue = "Lascas vermelhas";
+            so.FindProperty("summaryGainedFormat").stringValue = "+{0}";
+            so.FindProperty("summaryBankLabel").stringValue = "No banco";
+            so.FindProperty("summaryStart").stringValue = "COMEÇAR";
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Textos do descanso e do resumo do dia nos textos do feedback (Marco 8b, E3).");
         }
 
         static void SetHeartTexts(SerializedObject so)

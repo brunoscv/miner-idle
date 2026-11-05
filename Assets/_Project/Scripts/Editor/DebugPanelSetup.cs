@@ -40,12 +40,34 @@ namespace MinersIdle.EditorTools
             "{0:0} fps (média {2:0})\n{1:1} min · lentos {3:0}\npior quadro {4:0} ms\nGC {5:0} quadros · {6:0} B";
 
         const float ContentHeight = 264f;
+        // Marco 8b (E3, mockup aprovado): o DBG e o aviso do cálculo ficam acima da barra de baixo (Descansar e PASSAR).
+        static readonly Vector2 TogglePosition = new Vector2(6f, 54f);
+        internal static readonly Vector2 WarningPosition = new Vector2(40f, 54f);
+        const float ContentBottom = 74f;
         const float TopBand = 0.70f;      // estatísticas e diagnóstico acima disto
         const float ButtonsBand = 0.53f;  // botões abaixo disto (7 fileiras); melhorias no meio
 
         static readonly Color PanelColor = new Color(0f, 0f, 0f, 0.8f);
         static readonly Color ButtonColor = new Color32(0x3A, 0x2A, 0x1E, 0xFF);
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
+
+        /// <summary>
+        /// Marco 8b (E3): o botão DBG, o painel aberto e o aviso do cálculo sobem para cima da barra de baixo, onde antes
+        /// ficavam por baixo do Descansar. Só no build de teste (o painel some no release). Devolve se mudou algo.
+        /// </summary>
+        internal static bool LiftAboveTheBar(Transform safeArea)
+        {
+            var panel = safeArea.Find(PanelName);
+            if (panel == null || !(panel.Find("Toggle") is RectTransform toggle) || toggle.anchoredPosition == TogglePosition)
+                return false;
+
+            toggle.anchoredPosition = TogglePosition;
+            if (panel.Find("Content") is RectTransform content) content.anchoredPosition = new Vector2(0f, ContentBottom);
+            if (panel.Find("CalcWarning") is RectTransform warning) warning.anchoredPosition = WarningPosition;
+            EditorUtility.SetDirty(panel.gameObject);
+            Debug.Log("[Setup] Botão DBG e aviso do cálculo acima da barra de baixo (Marco 8b, E3).");
+            return true;
+        }
 
         public static bool Ensure()
         {
@@ -73,7 +95,7 @@ namespace MinersIdle.EditorTools
             var toggle = CreateButton(root.transform, "Toggle", "DBG");
             var toggleRect = (RectTransform)toggle.transform;
             toggleRect.anchorMin = toggleRect.anchorMax = toggleRect.pivot = Vector2.zero;
-            toggleRect.anchoredPosition = new Vector2(4f, 4f);
+            toggleRect.anchoredPosition = TogglePosition;
             toggleRect.sizeDelta = new Vector2(30f, 16f);
 
             var content = new GameObject("Content", typeof(RectTransform), typeof(Image));
@@ -82,7 +104,7 @@ namespace MinersIdle.EditorTools
             contentRect.anchorMin = new Vector2(0f, 0f);
             contentRect.anchorMax = new Vector2(1f, 0f);
             contentRect.pivot = new Vector2(0.5f, 0f);
-            contentRect.anchoredPosition = new Vector2(0f, 24f);
+            contentRect.anchoredPosition = new Vector2(0f, ContentBottom);
             contentRect.sizeDelta = new Vector2(-8f, ContentHeight);
             content.GetComponent<Image>().color = PanelColor;
 

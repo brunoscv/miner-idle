@@ -107,7 +107,7 @@ namespace MinersIdle.EditorTools
             back.transform.SetParent(panel, false);
             var rect = (RectTransform)back.transform;
             rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.zero;
-            rect.anchoredPosition = new Vector2(38f, 4f);
+            rect.anchoredPosition = DebugPanelSetup.WarningPosition;
             rect.sizeDelta = new Vector2(60f, 16f);
             var image = back.GetComponent<Image>();
             image.color = WarningBack;

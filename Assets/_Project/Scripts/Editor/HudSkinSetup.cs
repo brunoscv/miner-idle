@@ -46,12 +46,23 @@ namespace MinersIdle.EditorTools
         static readonly Color DisabledLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
-        /// <summary>O nome do botão de passar de caverna, o do GDD (D-115; no quadrado da coluna era "DESCER").</summary>
-        const string PassCaveTitle = "PASSAR DE CAVERNA";
+        /// <summary>
+        /// O nome do botão de passar de caverna, o do GDD (D-115; no quadrado da coluna era "DESCER"). Em duas linhas desde
+        /// a barra de baixo do Marco 8b (D-152), para caber na metade da tela.
+        /// </summary>
+        const string PassCaveTitle = "PASSAR\nDE CAVERNA";
         // Embaixo, no meio (D-115): acima do DBG (4 a 20 px), longe do anão (os pés ficam a ~60% da tela, de cima).
         const float PassCaveBottom = 12f;
         const float PassCaveHeight = 30f;
         const int PassCavePadding = 8;
+        // A barra de baixo (Marco 8b, D-152, mockup da E3 aprovado em 2026-11-05): Descansar à esquerda, PASSAR à direita,
+        // cada um sempre no seu lado, do mesmo tamanho. O RestSetup usa as mesmas medidas.
+        internal const float BarButtonWidth = 126f;
+        internal const float BarButtonHeight = 36f;
+        internal const float BarMargin = 6f;
+        internal const float BarBottom = 12f;
+        internal const float BarLabelSize = ValueSize;
+        internal const float BarLineSpacing = -8f;
         /// <summary>Âmbar sobre a madeira (D-110): destaca o botão dos outros da coluna.</summary>
         static readonly Color AmberTint = new Color32(0xFF, 0xD0, 0x6A, 0xFF);
 
@@ -101,6 +112,7 @@ namespace MinersIdle.EditorTools
             if (changed) Debug.Log("[Setup] HUD e botões da direita com a pele de madeira (M1b E2).");
             changed |= EnsurePassCaveButton(safeArea.transform);
             changed |= PlacePassCaveAtBottom(safeArea.transform);
+            changed |= PlacePassCaveOnTheRight(safeArea.transform);
             changed |= PlaceSideIcons(safeArea.transform);
             return ApplyArtButtons(safeArea.transform) | changed;
         }
@@ -503,6 +515,40 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(rect.gameObject);
             Debug.Log("[Setup] PASSAR DE CAVERNA embaixo, no meio, com o livro (D-115).");
             return true;
+        }
+
+        /// <summary>
+        /// D-152 (Marco 8b, E3): o PASSAR sai do meio e fica no lado direito da barra de baixo, com a largura fixa da metade
+        /// e o nome em duas linhas. O lado esquerdo é do Descansar. Devolve se mudou algo.
+        /// </summary>
+        static bool PlacePassCaveOnTheRight(Transform safeArea)
+        {
+            var rect = safeArea.Find("PassCave/PassCaveButton") as RectTransform;
+            if (rect == null || rect.GetComponent<HorizontalLayoutGroup>() == null) return false;
+            var fitter = rect.GetComponent<ContentSizeFitter>();
+            if (fitter == null && rect.anchorMin == Vector2.right) return false;
+
+            if (fitter != null) Object.DestroyImmediate(fitter);
+            PlaceOnTheBar(rect, right: true);
+            if (rect.Find("Label") is Transform labelNode && labelNode.TryGetComponent(out TMP_Text label))
+            {
+                label.text = PassCaveTitle;
+                label.fontSize = BarLabelSize;
+                label.lineSpacing = BarLineSpacing;
+                EditorUtility.SetDirty(label);
+            }
+            EditorUtility.SetDirty(rect.gameObject);
+            Debug.Log("[Setup] PASSAR DE CAVERNA no lado direito da barra de baixo (D-152).");
+            return true;
+        }
+
+        /// <summary>Um botão da barra de baixo no seu lado (D-152).</summary>
+        internal static void PlaceOnTheBar(RectTransform rect, bool right)
+        {
+            var corner = right ? Vector2.right : Vector2.zero;
+            rect.anchorMin = rect.anchorMax = rect.pivot = corner;
+            rect.anchoredPosition = new Vector2(right ? -BarMargin : BarMargin, BarBottom);
+            rect.sizeDelta = new Vector2(BarButtonWidth, BarButtonHeight);
         }
 
         /// <summary>AD e AJUSTES (D-67): aparecem já, abaixo da LOJA, e ao tocar mostram "Em breve".</summary>
