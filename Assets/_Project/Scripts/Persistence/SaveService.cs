@@ -18,11 +18,13 @@ namespace MinersIdle.Persistence
     /// Carrega e salva o progresso (Marco 4, E3; D-43, D-44). Nunca deixa um save ruim travar o jogo: o arquivo é separado
     /// (<see cref="ISaveStore.SetAsideBad"/>) e começa um jogo novo, com aviso no log. M8 (E3): a versão 2 guarda a
     /// descida (caverna, quebras nela, tempo de jogo, lascas ganhas, coração da montanha); a versão 1 abre migrada, na
-    /// caverna 1 com 0 quebras.
+    /// caverna 1 com 0 quebras. Marco 8b (E2): a versão 4 guarda também a parte permanente (banco de lascas vermelhas,
+    /// dia e níveis das permanentes); até a 3, ela abre zerada. Um arquivo só: Apagar save apaga as duas partes.
     /// </summary>
     public sealed class SaveService
     {
         static readonly UpgradeId[] Lines = (UpgradeId[])Enum.GetValues(typeof(UpgradeId));
+        static readonly PermanentId[] PermanentLines = (PermanentId[])Enum.GetValues(typeof(PermanentId));
 
         readonly ISaveStore _store;
 
@@ -35,8 +37,19 @@ namespace MinersIdle.Persistence
         /// Carrega o progresso, com os níveis cortados nos limites de <paramref name="economy"/> e a caverna nas
         /// <paramref name="caveCount"/> do balanço ativo.
         /// </summary>
-        public GameState Load(EconomyRules economy, out SaveLoadStatus status, int caveCount = 1)
+        public GameState Load(EconomyRules economy, out SaveLoadStatus status, int caveCount = 1) =>
+            Load(economy, PermanentRules.None, out _, out status, caveCount);
+
+        /// <summary>
+        /// Carrega as duas partes (Marco 8b): a run, como no outro <c>Load</c>, e a parte permanente, com os níveis cortados
+        /// nos limites de <paramref name="permanentRules"/> (<see cref="PermanentState.Restore"/>). Sem save, ou com um save
+        /// ruim, as duas começam do zero.
+        /// </summary>
+        public GameState Load(EconomyRules economy, PermanentRules permanentRules, out PermanentState permanent,
+                              out SaveLoadStatus status, int caveCount = 1)
         {
+            if (permanentRules == null) throw new ArgumentNullException(nameof(permanentRules));
+            permanent = new PermanentState();
             string text;
             try
             {
@@ -79,6 +92,7 @@ namespace MinersIdle.Persistence
                 if (saved != null && saved.upgrade != null) levels[saved.upgrade] = saved.level;
 
             status = SaveLoadStatus.Loaded;
+            permanent = RestorePermanent(data, permanentRules);
             Func<UpgradeId, int> levelOf = id => levels.TryGetValue(id.ToString(), out int level) ? level : 0; // linha desconhecida: ignorada
             if (data.version == 1)
             {
@@ -101,7 +115,25 @@ namespace MinersIdle.Persistence
                                      data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart);
         }
 
-        public void Save(GameState state)
+        /// <summary>
+        /// A parte permanente do save. Até a versão 3 não existe: zerada, no dia 1. Valores fora do lugar são corrigidos
+        /// pelo <see cref="PermanentState.Restore"/>, sem mexer na run.
+        /// </summary>
+        static PermanentState RestorePermanent(SaveData data, PermanentRules rules)
+        {
+            if (data.version < 4 || data.permanent == null) return new PermanentState();
+
+            var levels = new Dictionary<string, int>();
+            foreach (var saved in data.permanent.levels ?? new List<SavedLevel>())
+                if (saved != null && saved.upgrade != null) levels[saved.upgrade] = saved.level;
+            return PermanentState.Restore(data.permanent.redShards, data.permanent.day,
+                                          id => levels.TryGetValue(id.ToString(), out int level) ? level : 0, rules);
+        }
+
+        /// <param name="permanent">
+        /// A parte permanente (Marco 8b). Sem ela, grava zerada: quem joga sempre passa a dele (o <c>MiningRunner</c>).
+        /// </param>
+        public void Save(GameState state, PermanentState permanent = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
 
@@ -113,6 +145,13 @@ namespace MinersIdle.Persistence
             };
             foreach (var id in Lines)
                 data.levels.Add(new SavedLevel { upgrade = id.ToString(), level = state.LevelOf(id) });
+            if (permanent != null)
+            {
+                data.permanent.redShards = permanent.RedShards;
+                data.permanent.day = permanent.Day;
+                foreach (var id in PermanentLines)
+                    data.permanent.levels.Add(new SavedLevel { upgrade = id.ToString(), level = permanent.LevelOf(id) });
+            }
 
             _store.Write(JsonUtility.ToJson(data, prettyPrint: true));
         }

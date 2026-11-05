@@ -21,11 +21,17 @@ namespace MinersIdle.Persistence
     /// Save em arquivo com escrita atômica (D-44): grava em <c>save.json.tmp</c> e só então troca pelo <c>save.json</c>
     /// (ou o arquivo dado).
     /// Se o app morrer no meio, o save anterior continua inteiro. Um <c>.tmp</c> que sobrou de uma escrita interrompida
-    /// é descartado na leitura.
+    /// é descartado na leitura. No Windows (Editor), a troca às vezes falha por um instante porque outro processo
+    /// (antivírus, indexador) ainda segura o arquivo gravado logo antes; ela é tentada de novo algumas vezes, e o save
+    /// anterior continua inteiro enquanto isso.
     /// </summary>
     public sealed class FileSaveStore : ISaveStore
     {
         public const string FileName = "save.json";
+
+        /// <summary>Quantas vezes a troca do arquivo é tentada antes de desistir (e o erro ir para o log de quem grava).</summary>
+        const int ReplaceAttempts = 4;
+        const int ReplaceRetryMilliseconds = 15;
 
         /// <param name="fileName">Outro arquivo na mesma pasta (a escolha do DBG → Cálculos, E3b-3, usa um à parte do save).</param>
         public FileSaveStore(string directory, string fileName = FileName)
@@ -50,10 +56,21 @@ namespace MinersIdle.Persistence
             System.IO.Directory.CreateDirectory(Directory);
             File.WriteAllText(TempPath, text);
 
-            if (File.Exists(FilePath))
-                File.Replace(TempPath, FilePath, null);
-            else
-                File.Move(TempPath, FilePath);
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    if (File.Exists(FilePath))
+                        File.Replace(TempPath, FilePath, null);
+                    else
+                        File.Move(TempPath, FilePath);
+                    return;
+                }
+                catch (IOException) when (attempt < ReplaceAttempts)
+                {
+                    System.Threading.Thread.Sleep(ReplaceRetryMilliseconds * attempt);
+                }
+            }
         }
 
         public void SetAsideBad()

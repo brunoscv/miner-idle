@@ -15,7 +15,7 @@ namespace MinersIdle.Tests
 {
     /// <summary>
     /// Marco 4, E3: comprar, salvar, "fechar" (recarregar a cena) e achar o mesmo progresso. Usa uma pasta temporária,
-    /// nunca o save de quem joga.
+    /// nunca o save de quem joga. Marco 8b, E2: o dia e as permanentes também voltam.
     /// </summary>
     public class SaveFlowTests
     {
@@ -84,6 +84,31 @@ namespace MinersIdle.Tests
 
             yield return OpenGameWithSave(r => runner = r);
             Assert.That(runner.Simulation.State.Shards, Is.EqualTo(0), "não havia mais save para carregar");
+        }
+
+        [UnityTest]
+        public IEnumerator RestAndPermanents_SurviveClosingAndReopening()
+        {
+            MiningRunner runner = null;
+            yield return OpenGameWithSave(r => runner = r);
+            runner.Simulation.SkipToCave(12);
+            Assert.That(runner.Rest(), Is.Not.Null, "nível 12: dá para descansar");
+            Assert.That(runner.Simulation.PurchasePermanent(PermanentId.MountainBlood), Is.EqualTo(PurchaseResult.NotEnoughShards), "7 não paga 11");
+            runner.Simulation.AddRedShards(20);
+            Assert.That(runner.Simulation.PurchasePermanent(PermanentId.MountainBlood), Is.EqualTo(PurchaseResult.Purchased)); // grava sozinho
+
+            yield return OpenGameWithSave(r => runner = r);
+            var permanent = runner.Simulation.Permanents.State;
+            Assert.That(permanent.Day, Is.EqualTo(2));
+            Assert.That(permanent.RedShards, Is.EqualTo(7 + 20 - 11));
+            Assert.That(permanent.LevelOf(PermanentId.MountainBlood), Is.EqualTo(1));
+            Assert.That(runner.Simulation.State.Cave, Is.EqualTo(1), "a run de amanhã");
+            Assert.That(runner.Simulation.Permanents.DamageMultiplier, Is.EqualTo(1.1).Within(1e-9), "o efeito volta junto");
+
+            runner.ResetProgress();
+            yield return OpenGameWithSave(r => runner = r);
+            Assert.That(runner.Simulation.Permanents.State.Day, Is.EqualTo(1), "Apagar save apaga as duas partes");
+            Assert.That(runner.Simulation.Permanents.State.LevelOf(PermanentId.MountainBlood), Is.EqualTo(0));
         }
     }
 }

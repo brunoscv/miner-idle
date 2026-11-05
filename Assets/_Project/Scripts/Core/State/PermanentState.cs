@@ -22,7 +22,9 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// Recria o estado a partir de um save (E2). Corrige o que estiver fora do lugar em vez de falhar: banco inválido
-        /// vira 0, dia abaixo de 1 vira 1, níveis ficam entre 0 e o limite da linha em <paramref name="rules"/>.
+        /// vira 0, dia abaixo de 1 vira 1, níveis ficam entre 0 e o limite da linha em <paramref name="rules"/>. Uma linha
+        /// desligada nas regras (o GDD v5, que não tem permanentes) guarda o nível como veio: sem efeito ali, e de volta no
+        /// balanço que a tem.
         /// </summary>
         public static PermanentState Restore(double redShards, int day, Func<PermanentId, int> levelOf, PermanentRules rules)
         {
@@ -35,7 +37,10 @@ namespace MinersIdle.Core
                 Day = Math.Max(1, day),
             };
             foreach (PermanentId id in Enum.GetValues(typeof(PermanentId)))
-                state._levels[(int)id] = Math.Min(Math.Max(0, levelOf(id)), rules.Get(id).MaxLevel);
+            {
+                var line = rules.Get(id);
+                state._levels[(int)id] = Math.Min(Math.Max(0, levelOf(id)), line.IsEnabled ? line.MaxLevel : int.MaxValue);
+            }
             return state;
         }
 

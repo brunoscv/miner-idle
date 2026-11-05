@@ -20,7 +20,8 @@ namespace MinersIdle.Game
     /// pelo caminho do <c>GameBootstrap</c>, como o save, e nunca num build de release (lá vale sempre o GDD).
     ///
     /// Dia e melhorias permanentes (Marco 8b): o <see cref="PermanentState"/> fica aqui, de uma partida para a outra;
-    /// <see cref="Rest"/> encerra o dia e começa a run nova com ele. (Até a E2 do 8b, ele não vai para o save.)
+    /// <see cref="Rest"/> encerra o dia e começa a run nova com ele. Vai para o save junto com a run (save v4, E2): a cada
+    /// descanso e a cada compra ou atalho das permanentes, além das gravações de sempre.
     /// </summary>
     public sealed class MiningRunner : MonoBehaviour
     {
@@ -145,8 +146,10 @@ namespace MinersIdle.Game
                 ApplyCalculation(CalculationChoice.FromData(calculations.Load()));
                 if (!_calculation.IsDefault) Debug.Log($"[Cálculos] O jogo abre com o cálculo do DBG (balanço {_calculation.Balance}).");
             }
-            var state = save.Load(Economy(), out var status, CurrentRules().CaveCount);
-            Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas, caverna {state.Cave}.");
+            var state = save.Load(Economy(), rules.ToPermanents(), out var permanent, out var status, CurrentRules().CaveCount);
+            _permanent = permanent;
+            Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas, caverna {state.Cave}; dia {permanent.Day}, " +
+                      $"{NumberFormatter.Format(permanent.RedShards)} lascas vermelhas.");
             Begin(Seed, state);
         }
 
@@ -238,7 +241,7 @@ namespace MinersIdle.Game
             if (_save == null || Simulation == null) return;
             try
             {
-                _save.Save(Simulation.State);
+                _save.Save(Simulation.State, _permanent);
             }
             catch (Exception e)
             {
@@ -268,6 +271,7 @@ namespace MinersIdle.Game
             Simulation.UpgradePurchased += OnUpgradePurchased;
             Simulation.CaveChanged += OnCaveChanged;
             Simulation.HeartReached += SaveNow;
+            Simulation.PermanentsChanged += SaveNow;
             NotifyStarted();
         }
 
@@ -277,6 +281,7 @@ namespace MinersIdle.Game
             Simulation.UpgradePurchased -= OnUpgradePurchased;
             Simulation.CaveChanged -= OnCaveChanged;
             Simulation.HeartReached -= SaveNow;
+            Simulation.PermanentsChanged -= SaveNow;
         }
 
         void OnUpgradePurchased(UpgradeId id, int level) => SaveNow();

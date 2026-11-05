@@ -11,7 +11,8 @@ namespace MinersIdle.Tests
     /// <summary>
     /// Marco 4, E3: o save guarda e devolve o progresso, e um arquivo ruim nunca trava o jogo (D-43, D-44). Marco 8, E3: a
     /// versão 2 guarda a descida (caverna, quebras nela, tempo de jogo, lascas ganhas, coração da montanha) e a versão 1
-    /// abre migrada.
+    /// abre migrada. Marco 8b, E2: a versão 4 guarda também a parte permanente (banco, dia e níveis das permanentes); até
+    /// a 3, ela abre zerada.
     /// </summary>
     public class SaveServiceTests
     {
@@ -200,7 +201,7 @@ namespace MinersIdle.Tests
             Assert.That(loaded.PlaySeconds, Is.EqualTo(25).Within(1e-9));
             Assert.That(loaded.ShardsEarned, Is.EqualTo(state.ShardsEarned).And.GreaterThan(0));
             Assert.That(loaded.ReachedHeart, Is.False);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*3"), "save v3 (E3b-2, D-129)");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*4"), "save v4 (Marco 8b, E2)");
         }
 
         [Test]
@@ -223,7 +224,7 @@ namespace MinersIdle.Tests
             Assert.That(sim.CanPassCave, Is.True, "o botão de passar volta");
 
             _save.Save(state);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*3"), "regravado na versão nova");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*4"), "regravado na versão nova");
         }
 
         /// <summary>
@@ -254,7 +255,7 @@ namespace MinersIdle.Tests
             Assert.That(end.ReachedHeart, Is.False, "o coração passou para o nível 100");
 
             _save.Save(end);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*3"));
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*4"));
         }
 
         [Test]
@@ -307,14 +308,107 @@ namespace MinersIdle.Tests
             Assert.That(hearts, Is.EqualTo(0), "o fim não aparece de novo");
         }
 
+        // ── A parte permanente (Marco 8b, E2) ──────────────────────────────────────────────────────────────────
+
+        static UpgradeDefinition PermanentLine(int max, double effect) =>
+            new UpgradeDefinition(10, 2, max, effect, CostFormula.OffsetExponential);
+
+        static PermanentRules V7Permanents() => new PermanentRules(
+            10, new RedShardTable(10, 10, 5, 50, 10, 1),
+            PermanentLine(10, 10), PermanentLine(20, 0.1), PermanentLine(20, 0.5), PermanentLine(10, 0.05), PermanentLine(10, 1));
+
+        static PermanentState PlayedPermanent()
+        {
+            var permanent = new PermanentState();
+            var sim = new MiningSimulation(Rules(), new SeededRandom(1), economy: Prototype(),
+                                           permanents: new Permanents(V7Permanents(), permanent));
+            sim.AddRedShards(40);
+            sim.PurchasePermanent(PermanentId.MountainBlood); // 11
+            sim.PurchasePermanent(PermanentId.MountainBlood); // 12
+            sim.PurchasePermanent(PermanentId.DwarfSoul);     // 11
+            sim.Rest(force: true);                            // dia 2
+            return permanent;
+        }
+
+        [Test]
+        public void SaveThenLoad_KeepsThePermanentPart_NextToTheRun()
+        {
+            var state = PlayedState();
+            _save.Save(state, PlayedPermanent());
+
+            var loaded = _save.Load(Prototype(), V7Permanents(), out var permanent, out var status);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(loaded.Shards, Is.EqualTo(state.Shards), "a run, como antes");
+            Assert.That(permanent.RedShards, Is.EqualTo(6));
+            Assert.That(permanent.Day, Is.EqualTo(2));
+            Assert.That(permanent.LevelOf(PermanentId.MountainBlood), Is.EqualTo(2));
+            Assert.That(permanent.LevelOf(PermanentId.DwarfSoul), Is.EqualTo(1));
+            Assert.That(permanent.LevelOf(PermanentId.Memory), Is.EqualTo(0));
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Contain("\"permanent\""));
+        }
+
+        /// <summary>Um save de antes do Marco 8b: a run abre como estava, as permanentes zeradas, no dia 1.</summary>
+        [Test]
+        public void Version3_OpensTheRun_WithThePermanentsZeroed()
+        {
+            WriteSave("{ \"version\": 3, \"shards\": 77.0, \"levels\": [ { \"upgrade\": \"Pickaxe\", \"level\": 2 } ] }");
+
+            var state = _save.Load(Prototype(), V7Permanents(), out var permanent, out var status);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(state.Shards, Is.EqualTo(77));
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(2));
+            Assert.That(permanent.RedShards, Is.EqualTo(0));
+            Assert.That(permanent.Day, Is.EqualTo(1));
+            foreach (PermanentId id in Enum.GetValues(typeof(PermanentId)))
+                Assert.That(permanent.LevelOf(id), Is.EqualTo(0), id.ToString());
+        }
+
+        /// <summary>Valores errados na parte permanente zeram ou vão para o limite só nela; a run abre inteira.</summary>
+        [Test]
+        public void PermanentValuesOutOfPlace_AreCorrected_WithoutTouchingTheRun()
+        {
+            WriteSave("{ \"version\": 4, \"shards\": 77.0, \"cave\": 5, " +
+                      "\"permanent\": { \"redShards\": -3, \"day\": -2, \"levels\": [ " +
+                      "{ \"upgrade\": \"Memory\", \"level\": 99 }, { \"upgrade\": \"DwarfSoul\", \"level\": -4 }, " +
+                      "{ \"upgrade\": \"Unknown\", \"level\": 3 } ] } }");
+
+            var state = _save.Load(Prototype(), V7Permanents(), out var permanent, out _, 10);
+
+            Assert.That(state.Shards, Is.EqualTo(77));
+            Assert.That(state.Cave, Is.EqualTo(5));
+            Assert.That(permanent.RedShards, Is.EqualTo(0));
+            Assert.That(permanent.Day, Is.EqualTo(1));
+            Assert.That(permanent.LevelOf(PermanentId.Memory), Is.EqualTo(10), "no limite da linha");
+            Assert.That(permanent.LevelOf(PermanentId.DwarfSoul), Is.EqualTo(0));
+        }
+
+        /// <summary>Num balanço sem permanentes (o GDD v5 do DBG → Cálculos), os níveis guardados não se perdem.</summary>
+        [Test]
+        public void ABalanceWithoutPermanents_KeepsTheSavedLevels()
+        {
+            _save.Save(PlayedState(), PlayedPermanent());
+
+            _save.Load(Prototype(), PermanentRules.None, out var permanent, out _);
+            Assert.That(permanent.LevelOf(PermanentId.MountainBlood), Is.EqualTo(2), "sem efeito ali, mas guardado");
+            Assert.That(new Permanents(PermanentRules.None, permanent).DamageMultiplier, Is.EqualTo(1));
+
+            _save.Save(PlayedState(), permanent);
+            _save.Load(Prototype(), V7Permanents(), out var back, out _);
+            Assert.That(back.LevelOf(PermanentId.MountainBlood), Is.EqualTo(2), "de volta no balanço que tem a linha");
+        }
+
         [Test]
         public void Delete_RemovesTheSave()
         {
             _save.Save(PlayedState());
             _save.Delete();
 
-            _save.Load(Prototype(), out var status);
+            _save.Load(Prototype(), V7Permanents(), out var permanent, out var status);
             Assert.That(status, Is.EqualTo(SaveLoadStatus.NewGame));
+            Assert.That(permanent.RedShards, Is.EqualTo(0), "as duas partes saem juntas");
+            Assert.That(permanent.Day, Is.EqualTo(1));
         }
     }
 }
