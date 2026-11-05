@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MinersIdle.Core;
 using MinersIdle.Persistence;
 using UnityEngine;
@@ -13,6 +14,10 @@ namespace MinersIdle.Game
     /// progresso é carregado e salvo depois de cada compra, a cada troca de caverna (M8), a cada 30 s, ao minimizar e ao
     /// sair. Aberta direto (Play na
     /// cena Game, testes PlayMode), a cena roda sem save: os testes nunca mexem no progresso de quem joga.
+    ///
+    /// Cálculos (M8 E3b-3, D-143): o balanço sai de <see cref="Balances"/> (o primeiro é o do GDD) e a taxa e o incremento
+    /// da Picareta podem ser trocados pelo DBG (<see cref="UseCalculation"/>). A escolha só é lida e gravada no aparelho
+    /// pelo caminho do <c>GameBootstrap</c>, como o save, e nunca num build de release (lá vale sempre o GDD).
     /// </summary>
     public sealed class MiningRunner : MonoBehaviour
     {
@@ -24,11 +29,17 @@ namespace MinersIdle.Game
 
         [SerializeField] MiningRulesAsset rules;
 
+        [Tooltip("Os balanços do DBG → Cálculos (E3b-3), na ordem do seletor. O primeiro é o do GDD (o padrão, o mesmo do " +
+                 "campo acima): Balance_GDD_v7, depois Balance_GDD_v5.")]
+        [SerializeField] MiningRulesAsset[] balances = Array.Empty<MiningRulesAsset>();
+
         [Tooltip("Ligado: toda partida usa a semente abaixo (para reproduzir um caso). Desligado: semente nova a cada partida.")]
         [SerializeField] bool useFixedSeed;
         [SerializeField] int fixedSeed = 1;
 
         SaveService _save;
+        CalculationStore _calculations;
+        CalculationChoice _calculation;
         float _autosaveTimer;
 
         /// <summary>Multiplicador do tempo de jogo (o ×5/×20 do painel de debug).</summary>
@@ -69,6 +80,12 @@ namespace MinersIdle.Game
         /// <summary>O balanço em uso (Balance_GDD_v7 no jogo, D-130).</summary>
         public MiningRulesAsset Rules => rules;
 
+        /// <summary>Os balanços do seletor do DBG → Cálculos; o primeiro é o do GDD.</summary>
+        public IReadOnlyList<MiningRulesAsset> Balances => balances;
+
+        /// <summary>O cálculo em uso (o padrão é tudo como o GDD diz).</summary>
+        public CalculationChoice Calculation => _calculation;
+
         /// <summary>Se esta partida grava o progresso (só quando veio pelo <c>GameBootstrap</c>).</summary>
         public bool HasSave => _save != null;
 
@@ -104,11 +121,21 @@ namespace MinersIdle.Game
             Unsubscribe();
         }
 
-        /// <summary>Liga o save: carrega o progresso e recomeça a partida com ele (chamado pelo <c>GameBootstrap</c>).</summary>
-        public void UseSave(SaveService save)
+        /// <summary>
+        /// Liga o save: carrega o progresso e recomeça a partida com ele (chamado pelo <c>GameBootstrap</c>). Com
+        /// <paramref name="calculations"/>, antes aplica o cálculo escolhido no DBG (E3b-3), para o progresso abrir nas
+        /// regras em que foi jogado; num build de release a escolha é ignorada.
+        /// </summary>
+        public void UseSave(SaveService save, CalculationStore calculations = null)
         {
             _save = save ?? throw new ArgumentNullException(nameof(save));
-            var state = save.Load(rules.ToEconomy(), out var status, rules.ToRules().CaveCount);
+            if (calculations != null && Debug.isDebugBuild)
+            {
+                _calculations = calculations;
+                ApplyCalculation(CalculationChoice.FromData(calculations.Load()));
+                if (!_calculation.IsDefault) Debug.Log($"[Cálculos] O jogo abre com o cálculo do DBG (balanço {_calculation.Balance}).");
+            }
+            var state = save.Load(Economy(), out var status, CurrentRules().CaveCount);
             Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas, caverna {state.Cave}.");
             Begin(Seed, state);
         }
@@ -125,6 +152,44 @@ namespace MinersIdle.Game
             rules = asset != null ? asset : throw new ArgumentNullException(nameof(asset));
             Begin(Seed, new GameState());
         }
+
+        /// <summary>
+        /// Troca o cálculo (o DBG → Cálculos, E3b-3) e grava a escolha no aparelho, se veio pelo <c>GameBootstrap</c>. Outro
+        /// balanço recomeça a run do zero (as regras são outras); a taxa e o incremento da Picareta mudam com o progresso
+        /// mantido, como uma loja com outra fórmula. Um balanço fora da lista volta ao do GDD.
+        /// </summary>
+        public void UseCalculation(CalculationChoice choice)
+        {
+            bool restart = choice.Balance != _calculation.Balance;
+            ApplyCalculation(choice);
+            try
+            {
+                _calculations?.Save(_calculation.ToData());
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, this);
+            }
+            if (restart) RestartRun();
+            else Begin(Seed, Simulation?.State ?? new GameState());
+        }
+
+        /// <summary>
+        /// "Reiniciar run" do DBG (E3b-3): volta ao nível 1, com as lascas e as melhorias base zeradas, numa fila nova. O
+        /// save não é apagado: a run nova o substitui na próxima gravação. (Quando houver melhorias permanentes, elas ficam.)
+        /// </summary>
+        public void RestartRun() => Begin(useFixedSeed ? (ulong)fixedSeed : NewSeed(), new GameState());
+
+        void ApplyCalculation(CalculationChoice choice)
+        {
+            if (choice.Balance < 0 || choice.Balance >= balances.Length || balances[choice.Balance] == null)
+                choice = choice.WithBalance(0);
+            _calculation = choice;
+            if (choice.Balance < balances.Length && balances[choice.Balance] != null) rules = balances[choice.Balance];
+        }
+
+        MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth);
+        EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep);
 
         /// <summary>Apaga o save e começa do zero (o "Apagar save" do debug).</summary>
         public void ResetProgress()
@@ -160,7 +225,7 @@ namespace MinersIdle.Game
 
             Seed = seed;
             Simulation = new MiningSimulation(
-                rules.ToRules(), new SeededRandom(CritSeed(seed)), state, rules.ToEconomy(), rules.ToStrike())
+                CurrentRules(), new SeededRandom(CritSeed(seed)), state, Economy(), rules.ToStrike())
             {
                 ForceCritical = _forceCritical,
             };

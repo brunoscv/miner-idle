@@ -186,8 +186,8 @@ namespace MinersIdle.Tests
 
             var main = _panel.transform.Find("Content/Buttons");
             Assert.That(main.Cast<Transform>().Select(t => t.name),
-                        Is.EqualTo(new[] { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave" }),
-                        "o DBG fica só com o tempo, a câmera e os menus");
+                        Is.EqualTo(new[] { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc" }),
+                        "o DBG fica só com o tempo, a câmera e os menus (Cálculos desde a E3b-3)");
             Assert.That(_panel.transform.Find("ShopMenu/Content/Buttons/BuyDoublePickaxe"), Is.Null, "a Dupla saiu (D-136)");
             foreach (var name in new[] { "AutoTap", "ForceCritical", "Shake", "Sound" })
                 Assert.That(_panel.transform.Find("EffectsMenu/Content/Buttons/" + name), Is.Not.Null, name);

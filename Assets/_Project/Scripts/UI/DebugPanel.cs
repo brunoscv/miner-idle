@@ -16,7 +16,8 @@ namespace MinersIdle.UI
     /// câmera da descida (<see cref="DescentCameraPanel"/>) no lugar do "Mostrar ordem" do mapa. Os atalhos chamam os mesmos comandos das regras.
     /// Desde 2026-11-05 (D-147) os atalhos ficam em menus que abrem em cima, como a câmera: Loja (lascas, cristais, compras,
     /// níveis), Efeitos (toques, crítico, tremor, som) e Caverna (quebrar, próxima, salvar, reiniciar, apagar, medição); no
-    /// DBG ficam o tempo, as estatísticas e os botões dos menus. Um menu aberto fecha os outros e a câmera.
+    /// DBG ficam o tempo, as estatísticas e os botões dos menus. Um menu aberto fecha os outros e a câmera. Desde a E3b-3 do
+    /// M8 (D-143), o menu Cálculos (<see cref="CalculationsPanel"/>).
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
     /// Os textos (rótulos e o modelo das estatísticas) ficam na cena.
     /// </summary>
@@ -84,6 +85,9 @@ namespace MinersIdle.UI
         [SerializeField] DebugMenu effectsMenu;
         [SerializeField] Button caveButton;
         [SerializeField] DebugMenu caveMenu;
+        [Tooltip("DBG → Cálculos (M8 E3b-3, D-143): balanço, taxa e incremento da Picareta, Reiniciar run.")]
+        [SerializeField] Button calcButton;
+        [SerializeField] DebugMenu calcMenu;
 
         readonly object[] _statsArgs = new object[16];
 
@@ -136,6 +140,7 @@ namespace MinersIdle.UI
             if (shopButton != null) shopButton.onClick.AddListener(ToggleShop);
             if (effectsButton != null) effectsButton.onClick.AddListener(ToggleEffects);
             if (caveButton != null) caveButton.onClick.AddListener(ToggleCave);
+            if (calcButton != null) calcButton.onClick.AddListener(ToggleCalc);
         }
 
         void OnDisable()
@@ -168,6 +173,7 @@ namespace MinersIdle.UI
             if (shopButton != null) shopButton.onClick.RemoveListener(ToggleShop);
             if (effectsButton != null) effectsButton.onClick.RemoveListener(ToggleEffects);
             if (caveButton != null) caveButton.onClick.RemoveListener(ToggleCave);
+            if (calcButton != null) calcButton.onClick.RemoveListener(ToggleCalc);
         }
 
         void Update()
@@ -188,7 +194,7 @@ namespace MinersIdle.UI
             if (frameStats != null) frameStats.Measuring = !content.activeSelf; // o painel aberto não conta como jogo
         }
 
-        /// <summary>A Loja, os Efeitos ou a Caverna (D-147): abre fechando os outros menus e a câmera; aberto, fecha.</summary>
+        /// <summary>A Loja, os Efeitos, a Caverna (D-147) ou os Cálculos (E3b-3): abre fechando os outros menus e a câmera; aberto, fecha.</summary>
         void ToggleMenu(DebugMenu menu)
         {
             if (menu == null) return;
@@ -201,8 +207,10 @@ namespace MinersIdle.UI
 
         void CloseMenus()
         {
-            foreach (var menu in new[] { shopMenu, effectsMenu, caveMenu })
-                if (menu != null) menu.Hide();
+            if (shopMenu != null) shopMenu.Hide();
+            if (effectsMenu != null) effectsMenu.Hide();
+            if (caveMenu != null) caveMenu.Hide();
+            if (calcMenu != null) calcMenu.Hide();
         }
 
         static bool IsMenuOpen(DebugMenu menu) => menu != null && menu.IsOpen;
@@ -210,6 +218,7 @@ namespace MinersIdle.UI
         void ToggleShop() => ToggleMenu(shopMenu);
         void ToggleEffects() => ToggleMenu(effectsMenu);
         void ToggleCave() => ToggleMenu(caveMenu);
+        void ToggleCalc() => ToggleMenu(calcMenu);
 
         void SetSpeed1() => runner.TimeScale = 1f;
         void SetSpeed5() => runner.TimeScale = 5f;

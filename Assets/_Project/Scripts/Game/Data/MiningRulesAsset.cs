@@ -105,7 +105,17 @@ namespace MinersIdle.Game
                  "termina o golpe parado e só então corre. Nunca passa do intervalo. 0,72 = os 9 quadros de 80 ms da folha (D-75); 0 desliga.")]
         [SerializeField] double swingRecovery = 0.72;
 
-        public MiningRules ToRules() => new MiningRules(
+        /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos só valem no CaveScaled.</summary>
+        public PickaxeFormula PickaxeFormula => pickaxeFormula;
+
+        /// <summary>A taxa da Picareta deste balanço (GDD v7: 1,2).</summary>
+        public double PickaxeCaveGrowth => pickaxeCaveGrowth;
+
+        /// <summary>O incremento da Picareta deste balanço: Dano Base a mais por compra no CaveScaled (GDD v7: 1).</summary>
+        public double PickaxeStep => pickaxe.Effect;
+
+        /// <param name="pickaxeCaveGrowth">A taxa trocada no DBG → Cálculos (E3b-3); <c>null</c> = a do asset.</param>
+        public MiningRules ToRules(double? pickaxeCaveGrowth = null) => new MiningRules(
             initialCrystals, firstCrystalDistance, maxCrystals, spawnInterval,
             minCrystalSpacing, spawnDistance,
             crystalHealth, crystalReward,
@@ -114,15 +124,31 @@ namespace MinersIdle.Game
             minCrystals,
             caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor,
             tapReach, arrivalStrike, swingRecovery,
-            pickaxeFormula, pickaxeCaveGrowth, levelsPerBiome);
+            pickaxeFormula, pickaxeFormula == PickaxeFormula.CaveScaled ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
+            levelsPerBiome);
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance);
 
-        public EconomyRules ToEconomy() => new EconomyRules(
-            pickaxe.ToDefinition(), speed.ToDefinition(), mining.ToDefinition(),
+        /// <param name="pickaxeStep">
+        /// O incremento trocado no DBG → Cálculos (E3b-3); <c>null</c> = o do asset. Só no CaveScaled. O custo segue
+        /// "2 × Dano Base" (D-133): o passo do custo cresce na mesma proporção do incremento.
+        /// </param>
+        public EconomyRules ToEconomy(double? pickaxeStep = null) => new EconomyRules(
+            PickaxeLine(pickaxeStep), speed.ToDefinition(), mining.ToDefinition(),
             doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, letrado.ToDefinition(),
             critical.ToDefinition());
+
+        UpgradeDefinition PickaxeLine(double? step)
+        {
+            var line = pickaxe.ToDefinition();
+            if (!step.HasValue || pickaxeFormula != PickaxeFormula.CaveScaled || step.Value == line.Effect) return line;
+
+            double costGrowth = line.CostFormula == CostFormula.Linear && line.Effect != 0
+                ? line.CostGrowth * step.Value / line.Effect
+                : line.CostGrowth;
+            return new UpgradeDefinition(line.BaseCost, costGrowth, line.MaxLevel, step.Value, line.CostFormula);
+        }
     }
 
     /// <summary>Uma linha de melhoria no Inspector (vira uma <see cref="UpgradeDefinition"/> do Núcleo).</summary>
@@ -151,6 +177,8 @@ namespace MinersIdle.Game
             this.maxLevel = maxLevel;
             this.effect = effect;
         }
+
+        public double Effect => effect;
 
         public UpgradeDefinition ToDefinition() => new UpgradeDefinition(baseCost, costGrowth, maxLevel, effect, costFormula);
     }

@@ -197,10 +197,18 @@ namespace MinersIdle.EditorTools
             {
                 "BreakTarget", "NextCave", "SaveNow", "RestartSameSeed", "RestartNewSeed", "DeleteSave", "ResetStats",
             }),
+            // Os botões dos Cálculos (E3b-3) nascem no próprio menu (CalculationsSetup), não vêm da grade do DBG.
+            (CalcMenuName, "Calc", "Cálculos", CalcMenuHeight, System.Array.Empty<string>()),
         };
 
+        internal const string CalcMenuName = "CalcMenu";
+
+        /// <summary>O menu Cálculos: a linha da Picareta no alto (<see cref="CalcTextHeight"/>) e 4 fileiras de botões.</summary>
+        internal const float CalcMenuHeight = 106f;
+        internal const float CalcTextHeight = 24f;
+
         /// <summary>A ordem dos botões que ficam no DBG.</summary>
-        static readonly string[] MainButtons = { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave" };
+        static readonly string[] MainButtons = { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc" };
 
         /// <summary>Altura da faixa do nível e custo das melhorias, no alto da Loja.</summary>
         const float ShopUpgradesHeight = 34f;
@@ -230,7 +238,8 @@ namespace MinersIdle.EditorTools
                 var menu = panel.Find(name);
                 if (menu == null)
                 {
-                    menu = CreateMenu(panel, name, height, name == "ShopMenu" ? ShopUpgradesHeight : 0f);
+                    menu = CreateMenu(panel, name, height,
+                                      name == "ShopMenu" ? ShopUpgradesHeight : name == CalcMenuName ? CalcTextHeight : 0f);
                     var open = CreateButton(grid, buttonName, label);
                     GrayboxSetup.SetReferences(debugPanel, (MenuField(name, "Button"), open),
                                                (MenuField(name, "Menu"), menu.GetComponent<DebugMenu>()));

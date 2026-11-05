@@ -116,6 +116,7 @@ namespace MinersIdle.EditorTools
             changed |= DwarfVariantsSetup.EnsureInScene();
             changed |= FeedbackSetup.EnsureInScene();
             changed |= DebugPanelSetup.Ensure();
+            changed |= CalculationsSetup.EnsureInScene();
             changed |= ShopSetup.EnsureInScene();
             changed |= HeartScreenSetup.EnsureInScene();
             changed |= UiSkinSetup.EnsureInScene();

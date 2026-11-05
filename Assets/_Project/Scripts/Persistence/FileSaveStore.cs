@@ -18,7 +18,8 @@ namespace MinersIdle.Persistence
     }
 
     /// <summary>
-    /// Save em arquivo com escrita atômica (D-44): grava em <c>save.json.tmp</c> e só então troca pelo <c>save.json</c>.
+    /// Save em arquivo com escrita atômica (D-44): grava em <c>save.json.tmp</c> e só então troca pelo <c>save.json</c>
+    /// (ou o arquivo dado).
     /// Se o app morrer no meio, o save anterior continua inteiro. Um <c>.tmp</c> que sobrou de uma escrita interrompida
     /// é descartado na leitura.
     /// </summary>
@@ -26,10 +27,11 @@ namespace MinersIdle.Persistence
     {
         public const string FileName = "save.json";
 
-        public FileSaveStore(string directory)
+        /// <param name="fileName">Outro arquivo na mesma pasta (a escolha do DBG → Cálculos, E3b-3, usa um à parte do save).</param>
+        public FileSaveStore(string directory, string fileName = FileName)
         {
             Directory = directory;
-            FilePath = Path.Combine(directory, FileName);
+            FilePath = Path.Combine(directory, fileName);
         }
 
         public string Directory { get; }

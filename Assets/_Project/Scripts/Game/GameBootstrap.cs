@@ -63,7 +63,8 @@ namespace MinersIdle.Game
         {
             var runner = FindAnyObjectByType<MiningRunner>(); // uma vez, na troca de cena
             if (runner != null)
-                runner.UseSave(new SaveService(new FileSaveStore(Application.persistentDataPath)));
+                runner.UseSave(new SaveService(new FileSaveStore(Application.persistentDataPath)),
+                               new CalculationStore(new FileSaveStore(Application.persistentDataPath, CalculationStore.FileName)));
             else
                 Debug.LogError("[Bootstrap] A cena Game não tem MiningRunner: o jogo vai rodar sem save.");
 
