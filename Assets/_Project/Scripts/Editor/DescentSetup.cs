@@ -64,7 +64,54 @@ namespace MinersIdle.EditorTools
             bool changed = RemoveMapViews(mining.transform);
             changed |= EnsureStage(mining, rendererIndex);
             changed |= EnsureCameraPanel();
+            changed |= EnsureCameraCycleButton(SetbackButton, "setback", "setbackLabels", SetbackLabels, 0,
+                                               "Botão \"Recuo\" no DBG → Câmera (o anão mais longe da câmera, D-148).");
             return changed;
+        }
+
+        const string SetbackButton = "Setback";
+
+        /// <summary>
+        /// Na ordem de <c>DescentCameraPanel.Setbacks</c> (0, 20, 30, 40, 50, 60, 70, 80% mais longe) e, no fim, o de uma distância
+        /// fora deles (depois de um Distância ±). Cabem nos 48 px do botão.
+        /// </summary>
+        static readonly string[] SetbackLabels = { "Recuo 0%", "Recuo 20%", "Recuo 30%", "Recuo 40%", "Recuo 50%", "Recuo 60%", "Recuo 70%", "Recuo 80%", "Recuo ?" };
+
+        /// <summary>
+        /// Um botão do DBG → Câmera que passa por opções (Monte, Recuo…): cria se faltar, liga no campo
+        /// <paramref name="field"/> do painel e grava os rótulos em <paramref name="labelsField"/> (o botão mostra
+        /// <paramref name="defaultLabel"/> até o painel abrir).
+        /// </summary>
+        internal static bool EnsureCameraCycleButton(string name, string field, string labelsField, string[] labels,
+                                                     int defaultLabel, string log)
+        {
+            var panel = Object.FindAnyObjectByType<DescentCameraPanel>(FindObjectsInactive.Include);
+            var buttons = panel != null ? panel.transform.Find("Content/Buttons") : null;
+            if (buttons == null) return false;
+
+            bool changed = false;
+            var button = buttons.Find(name);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(buttons, name, labels[defaultLabel]).transform;
+                GrayboxSetup.SetReferences(panel, (field, button.GetComponent<Button>()));
+                Debug.Log("[Setup] " + log);
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            var property = so.FindProperty(labelsField);
+            bool same = property.arraySize == labels.Length;
+            for (int i = 0; same && i < labels.Length; i++) same = property.GetArrayElementAtIndex(i).stringValue == labels[i];
+            if (same) return changed;
+
+            property.arraySize = labels.Length;
+            for (int i = 0; i < labels.Length; i++) property.GetArrayElementAtIndex(i).stringValue = labels[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            var text = button.GetComponentInChildren<TMP_Text>();
+            text.text = labels[defaultLabel];
+            EditorUtility.SetDirty(text);
+            return true;
         }
 
         /// <summary>O índice de um renderer Universal na lista do URP; se não houver, acrescenta um sem mexer no padrão.</summary>

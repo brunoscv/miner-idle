@@ -190,5 +190,67 @@ namespace MinersIdle.Tests
             Click("Content/Buttons/Close");
             Assert.That(panel.IsOpen, Is.False);
         }
+
+        /// <summary>
+        /// D-148: na tela do Moto G75 (9:20), cada recuo põe o anão mais alto na tela e mostra mais chão à frente dele (mais
+        /// cristais, um por metro), sem a cabeça sair por cima. Hoje: pés a 61% e ~2,4 m; no recuo de 80%: pés a ~35% e ~6,4 m.
+        /// </summary>
+        [Test]
+        public void Setbacks_PutTheDwarfHigher_AndShowMoreGroundAhead()
+        {
+            const float phone = 9f / 20f;
+            float lastFeet = float.MaxValue, lastGround = -1f;
+            for (int i = 0; i < DescentCameraPanel.Setbacks.Length; i++)
+            {
+                var framing = DescentFraming.Validated;
+                framing.distance = DescentCameraPanel.SetbackDistance(i);
+                float head = framing.FromTop(DescentFraming.DwarfHeight, framing.distance, phone);
+                float feet = framing.FromTop(0f, framing.distance, phone);
+                float ground = framing.GroundAhead(phone);
+                Assert.That(feet, Is.LessThan(lastFeet), $"recuo {i}: o anão sobe na tela");
+                Assert.That(ground, Is.GreaterThan(lastGround), $"recuo {i}: mais chão à frente");
+                Assert.That(head, Is.GreaterThan(0.15f), $"recuo {i}: a cabeça fica abaixo do HUD");
+                lastFeet = feet;
+                lastGround = ground;
+            }
+            Assert.That(DescentCameraPanel.SetbackDistance(DescentCameraPanel.Setbacks.Length - 1), Is.EqualTo(9f), "80% de 5 m");
+            Assert.That(lastGround, Is.GreaterThan(6f), "no recuo de 80%, mais de 6 m de chão (6 cristais)");
+        }
+
+        /// <summary>D-148: o botão Recuo passa pelos recuos e volta; a névoa recua junto; fora dos recuos, mostra "Recuo ?".</summary>
+        [UnityTest]
+        public IEnumerator CameraPanel_Setback_CyclesTheDistance_AndTheFogFollows()
+        {
+            yield return Load();
+            var panel = Object.FindAnyObjectByType<DescentCameraPanel>();
+            var button = panel.transform.Find("Content/Buttons/Setback");
+            Assert.That(button, Is.Not.Null, "botão Recuo (rode o setup do projeto)");
+            var label = button.GetComponentInChildren<TMPro.TMP_Text>();
+            panel.Toggle();
+
+            float fogStart = Shader.GetGlobalFloat("_DescentFogStart");
+            float fogEnd = Shader.GetGlobalFloat("_DescentFogEnd");
+            Assert.That(panel.SetbackLook, Is.EqualTo(0), "abre sem recuo (a F1)");
+
+            float[] expected = { 6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f, 5f };
+            string[] labels = { "Recuo 20%", "Recuo 30%", "Recuo 40%", "Recuo 50%", "Recuo 60%", "Recuo 70%", "Recuo 80%", "Recuo 0%" };
+            for (int i = 0; i < expected.Length; i++)
+            {
+                button.GetComponent<Button>().onClick.Invoke();
+                Assert.That(_stage.Framing.distance, Is.EqualTo(expected[i]).Within(1e-4f));
+                float shift = expected[i] - DescentFraming.Validated.distance;
+                Assert.That(Shader.GetGlobalFloat("_DescentFogStart"), Is.EqualTo(fogStart + shift).Within(1e-4f), "a névoa recua junto");
+                Assert.That(Shader.GetGlobalFloat("_DescentFogEnd"), Is.EqualTo(fogEnd + shift).Within(1e-4f));
+                yield return null;
+                Assert.That(label.text, Is.EqualTo(labels[i]));
+            }
+
+            panel.transform.Find("Content/Rows/Row2/Plus").GetComponent<Button>().onClick.Invoke(); // Distância + 0,1
+            yield return null;
+            Assert.That(panel.SetbackLook, Is.EqualTo(-1));
+            Assert.That(label.text, Is.EqualTo("Recuo ?"), "fora dos recuos");
+            button.GetComponent<Button>().onClick.Invoke();
+            Assert.That(_stage.Framing.distance, Is.EqualTo(5f).Within(1e-4f), "fora dos recuos, volta ao primeiro");
+        }
     }
 }

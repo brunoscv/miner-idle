@@ -76,11 +76,11 @@ namespace MinersIdle.EditorTools
         internal static readonly Vector2 CameraButtonCell = new Vector2(48f, 16f);
 
         /// <summary>
-        /// Altura do painel de câmera e o topo da área dos botões (fração do painel): duas linhas de botões (43 px) desde a
-        /// E9; antes, 166 px com uma linha (0,2).
+        /// Altura do painel de câmera e o topo da área dos botões (fração do painel): três linhas de botões (62 px) desde o
+        /// recuo do anão (D-148); antes, 190 px com duas (0,23, E9) e 166 px com uma (0,2).
         /// </summary>
-        internal const float CameraPanelHeight = 190f;
-        internal const float CameraButtonsTop = 0.23f;
+        internal const float CameraPanelHeight = 209f;
+        internal const float CameraButtonsTop = 62f / CameraPanelHeight;
 
         public static bool EnsureInScene()
         {
@@ -117,7 +117,7 @@ namespace MinersIdle.EditorTools
                 changed = true;
             }
 
-            // O painel cresce para a 2ª linha de botões caber dentro dele (E9).
+            // O painel cresce para as linhas de botões caberem dentro dele (2ª linha na E9, 3ª na D-148).
             var content = buttons != null ? (RectTransform)buttons.parent : null;
             var rows = content != null ? content.Find("Rows") as RectTransform : null;
             if (content != null && rows != null && !Mathf.Approximately(content.sizeDelta.y, CameraPanelHeight))
@@ -125,7 +125,7 @@ namespace MinersIdle.EditorTools
                 content.sizeDelta = new Vector2(content.sizeDelta.x, CameraPanelHeight);
                 ((RectTransform)buttons).anchorMax = new Vector2(1f, CameraButtonsTop);
                 rows.anchorMin = new Vector2(0f, CameraButtonsTop);
-                Debug.Log("[Setup] Painel de câmera do DBG com duas linhas de botões (M1b E9).");
+                Debug.Log("[Setup] Painel de câmera do DBG com três linhas de botões (D-148).");
                 changed = true;
             }
 

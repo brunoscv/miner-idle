@@ -244,37 +244,9 @@ namespace MinersIdle.EditorTools
         const int DefaultMound = 1;
 
         /// <summary>O botão "Monte" do DBG → Câmera (D-146): chão plano, arco (∩) e platô, para comparar.</summary>
-        static bool EnsureMoundButton()
-        {
-            var panel = Object.FindAnyObjectByType<MinersIdle.UI.DescentCameraPanel>(FindObjectsInactive.Include);
-            var buttons = panel != null ? panel.transform.Find("Content/Buttons") : null;
-            if (buttons == null) return false;
-
-            bool changed = false;
-            var button = buttons.Find(MoundButton);
-            if (button == null)
-            {
-                button = DebugPanelSetup.CreateButton(buttons, MoundButton, MoundLabels[DefaultMound]).transform;
-                GrayboxSetup.SetReferences(panel, ("mound", button.GetComponent<UnityEngine.UI.Button>()));
-                Debug.Log("[Setup] Botão \"Monte\" no DBG → Câmera (montinho de areia das beiras, D-146).");
-                changed = true;
-            }
-
-            var so = new SerializedObject(panel);
-            var labels = so.FindProperty("moundLabels");
-            bool same = labels.arraySize == MoundLabels.Length;
-            for (int i = 0; same && i < MoundLabels.Length; i++) same = labels.GetArrayElementAtIndex(i).stringValue == MoundLabels[i];
-            if (same) return changed;
-
-            labels.arraySize = MoundLabels.Length;
-            for (int i = 0; i < MoundLabels.Length; i++) labels.GetArrayElementAtIndex(i).stringValue = MoundLabels[i];
-            so.ApplyModifiedPropertiesWithoutUndo();
-            // O botão mostra o padrão até o painel abrir (aí mostra o atual).
-            var text = button.GetComponentInChildren<TMPro.TMP_Text>();
-            text.text = MoundLabels[DefaultMound];
-            EditorUtility.SetDirty(text);
-            return true;
-        }
+        static bool EnsureMoundButton() =>
+            DescentSetup.EnsureCameraCycleButton(MoundButton, "mound", "moundLabels", MoundLabels, DefaultMound,
+                                                 "Botão \"Monte\" no DBG → Câmera (montinho de areia das beiras, D-146).");
 
         /// <summary>O botão "Chão" da E9 vira o "Bioma" (mesmo objeto, a referência do painel continua); sem ele, cria.</summary>
         static bool EnsureBiomeButton()

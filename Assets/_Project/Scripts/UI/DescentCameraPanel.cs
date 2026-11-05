@@ -86,12 +86,20 @@ namespace MinersIdle.UI
         [SerializeField] Button mound;
         [Tooltip("Rótulo do botão do montinho para cada opção, na ordem do DescentStage.MoundLook.")]
         [SerializeField] string[] moundLabels;
+        [Tooltip("Passa pelos recuos do anão (D-148): 0, 20, 30, 40, 50, 60, 70 e 80% mais longe da câmera que os 5 m da F1, para " +
+                 "caberem mais cristais à frente dele. Não fica salvo; a Distância ± e o Padrão F1 também mexem nisso.")]
+        [SerializeField] Button setback;
+        [Tooltip("Rótulo do botão do recuo para cada opção, na ordem de Setbacks, e mais um no fim para uma distância fora deles.")]
+        [SerializeField] string[] setbackLabels;
 
         /// <summary>As opções do botão do golpe: quando sai o primeiro golpe (D-124) e se os efeitos estão ligados (D-125).</summary>
         static readonly (ArrivalStrike arrival, bool feel)[] StrikeLooks =
         {
             (ArrivalStrike.Wait, false), (ArrivalStrike.Wait, true), (ArrivalStrike.Charge, true), (ArrivalStrike.Immediate, true),
         };
+
+        /// <summary>Os recuos do botão (D-148): quanto o anão fica mais longe da câmera que na F1 (0,2 = 20%).</summary>
+        public static readonly float[] Setbacks = { 0f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f };
 
         UnityAction[] _minus;
         UnityAction[] _plus;
@@ -101,8 +109,24 @@ namespace MinersIdle.UI
         TMP_Text _supportLabel;
         TMP_Text _strikeLabel;
         TMP_Text _moundLabel;
+        TMP_Text _setbackLabel;
 
         public bool IsOpen => content.activeSelf;
+
+        /// <summary>O recuo em uso (índice de <see cref="Setbacks"/>), ou −1 se a distância não é nenhum deles.</summary>
+        public int SetbackLook
+        {
+            get
+            {
+                float distance = stage.Framing.distance;
+                for (int i = 0; i < Setbacks.Length; i++)
+                    if (Mathf.Abs(distance - SetbackDistance(i)) < 0.01f) return i;
+                return -1;
+            }
+        }
+
+        /// <summary>A distância da câmera ao anão no recuo <paramref name="look"/>, em metros (5 m da F1 × (1 + recuo)).</summary>
+        public static float SetbackDistance(int look) => Round(DescentFraming.Validated.distance * (1f + Setbacks[look]));
 
         /// <summary>A opção do golpe em uso (índice de <see cref="StrikeLooks"/>), ou −1 se não é nenhuma delas.</summary>
         public int StrikeLook
@@ -139,6 +163,7 @@ namespace MinersIdle.UI
             if (support != null) _supportLabel = support.GetComponentInChildren<TMP_Text>();
             if (strike != null) _strikeLabel = strike.GetComponentInChildren<TMP_Text>();
             if (mound != null) _moundLabel = mound.GetComponentInChildren<TMP_Text>();
+            if (setback != null) _setbackLabel = setback.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -159,6 +184,7 @@ namespace MinersIdle.UI
             if (support != null) support.onClick.AddListener(NextSupport);
             if (strike != null) strike.onClick.AddListener(NextStrike);
             if (mound != null) mound.onClick.AddListener(NextMound);
+            if (setback != null) setback.onClick.AddListener(NextSetback);
         }
 
         void OnDisable()
@@ -178,6 +204,7 @@ namespace MinersIdle.UI
             if (support != null) support.onClick.RemoveListener(NextSupport);
             if (strike != null) strike.onClick.RemoveListener(NextStrike);
             if (mound != null) mound.onClick.RemoveListener(NextMound);
+            if (setback != null) setback.onClick.RemoveListener(NextSetback);
         }
 
         void Update()
@@ -215,6 +242,19 @@ namespace MinersIdle.UI
         void NextMound()
         {
             stage.MoundLook = (stage.MoundLook + 1) % DescentStage.MoundLooks;
+            _refresh = 0f;
+        }
+
+        /// <summary>
+        /// Próximo recuo do anão (D-148): 0 → 20 → 30 → 40 → 50 → 60 → 70 → 80% → 0. Só a distância muda; altura, inclinação e campo de
+        /// visão ficam, então o anão sobe na tela, fica um pouco menor e o chão à frente dele cresce. Fora dos recuos (depois
+        /// de um Distância ±), volta ao primeiro.
+        /// </summary>
+        public void NextSetback()
+        {
+            var framing = stage.Framing;
+            framing.distance = SetbackDistance((SetbackLook + 1) % Setbacks.Length);
+            stage.Framing = framing;
             _refresh = 0f;
         }
 
@@ -298,6 +338,10 @@ namespace MinersIdle.UI
 
             if (_moundLabel != null && moundLabels != null && stage.MoundLook < moundLabels.Length)
                 _moundLabel.text = moundLabels[stage.MoundLook];
+            int setbackLook = SetbackLook;
+            if (setbackLook < 0) setbackLook = Setbacks.Length; // o rótulo de "fora dos recuos"
+            if (_setbackLabel != null && setbackLabels != null && setbackLook < setbackLabels.Length)
+                _setbackLabel.text = setbackLabels[setbackLook];
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),

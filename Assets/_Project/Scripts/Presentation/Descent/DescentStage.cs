@@ -56,7 +56,10 @@ namespace MinersIdle.Presentation
         const double FinisherFrameSeconds = 0.05;
         double FinisherSeconds => (dwarfMineWindUp.Length + dwarfMineStrike.Length) * FinisherFrameSeconds;
 
-        /// <summary>Folga, em metros, entre o anão e o esteio mais próximo da câmera que ainda é desenhado.</summary>
+        /// <summary>
+        /// Folga, em metros, entre o anão na F1 (5 m) e o esteio mais próximo da câmera que ainda é desenhado. Com o recuo
+        /// (D-148) o limite fica onde está: os esteios continuam perto da câmera, agora também na frente do anão.
+        /// </summary>
         const float SupportClearance = 0.6f;
         /// <summary>Largura do poste no desenho do esteio (12 dos 96 px do <c>mine_wood</c>).</summary>
         const float SupportPostFraction = 12f / 96f;
@@ -649,8 +652,6 @@ namespace MinersIdle.Presentation
             screenRenderer.sortingOrder = short.MinValue; // atrás de todos os sprites
 
             ApplyFog(fogColor);
-            Shader.SetGlobalFloat(FogStartId, fogStart);
-            Shader.SetGlobalFloat(FogEndId, fogEnd);
             ApplyBiome(0);
 
             EnsureTarget();
@@ -962,9 +963,23 @@ namespace MinersIdle.Presentation
             sceneCamera.transform.localPosition = new Vector3(0f, framing.height, 0f);
             sceneCamera.transform.localRotation = Quaternion.Euler(framing.tilt, 0f, 0f);
             sceneCamera.fieldOfView = RenderFieldOfView();
+            ApplyFogDistance();
 
             EnsureCorridor();
             ApplyEdgeShade();
+        }
+
+        /// <summary>Quanto a névoa recua (m): o mesmo que o anão está além dos 5 m da câmera F1.</summary>
+        public float FogShift => framing.distance - DescentFraming.Validated.distance;
+
+        /// <summary>
+        /// A névoa conta da câmera; com o anão mais longe (o recuo do DBG, D-148, ou a Distância), ela recua junto, para o
+        /// anão e os cristais em volta dele ficarem com a mesma luz de hoje.
+        /// </summary>
+        void ApplyFogDistance()
+        {
+            Shader.SetGlobalFloat(FogStartId, fogStart + FogShift);
+            Shader.SetGlobalFloat(FogEndId, fogEnd + FogShift);
         }
 
         /// <summary>
@@ -1401,8 +1416,12 @@ namespace MinersIdle.Presentation
         /// Esteios a cada 4 m (caixas de madeira ou o sprite do esteio inteiro), com uma lanterna alternando de lado; com o
         /// esteio com lampião (D-102), o lampião vem nele, a cada N esteios conforme o bioma. No esteio baixo da prévia, o
         /// lampião é solto, preso no poste da esquerda num tamanho fixo.
-        /// Nenhum esteio entre a câmera e o anão (M1b: o mais próximo cobria o anão inteiro).
+        /// Nenhum esteio a menos de 5,6 m da câmera (M1b: o mais próximo cobria o anão inteiro). O limite é o da F1, não o do
+        /// anão: com o recuo (D-148) o anão vai para o fundo e os esteios entre ele e a câmera continuam lá.
         /// </summary>
+        /// <summary>O esteio mais perto da câmera que é desenhado (m): 0,6 m além do anão na F1, ou do anão se ele estiver mais perto.</summary>
+        public float NearestSupport => Mathf.Min(framing.distance, DescentFraming.Validated.distance) + SupportClearance;
+
         void LayoutPosts(double front)
         {
             float halfWidth = framing.corridorWidth * 0.5f;
@@ -1419,7 +1438,7 @@ namespace MinersIdle.Presentation
             var lampScale = new Vector3(lampSize, lampSize, 1f);
             float lampX = -size.x * 0.5f + size.x * SupportPostFraction + lampSize * 0.5f;
             float lampY = size.y - lampDrop - lampSize;
-            float nearest = framing.distance + SupportClearance;
+            float nearest = NearestSupport;
             double first = Math.Ceiling((front - CorridorFar) / PostSpacing) * PostSpacing;
 
             for (int i = 0; i < PostSlots; i++)

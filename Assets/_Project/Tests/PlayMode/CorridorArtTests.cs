@@ -63,6 +63,42 @@ namespace MinersIdle.Tests
             if (seen == 0) Assert.Ignore("Sem o esteio em sprite (pack fora do git, D-65).");
         }
 
+        /// <summary>
+        /// D-148: com o anão recuado (80%, 9 m), os esteios continuam perto da câmera, a partir dos mesmos 5,6 m da F1, e
+        /// também na frente do anão, para o começo da caverna não ficar sem arco.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Supports_WithTheDwarfSetBack_StayNearTheCamera()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            var framing = stage.Framing;
+            float nearest = stage.NearestSupport;
+            framing.distance = 9f;
+            stage.Framing = framing;
+            Assert.That(stage.NearestSupport, Is.EqualTo(nearest), "o limite dos esteios não anda com o anão");
+            runner.TimeScale = 20f;
+
+            int seen = 0, inFrontOfTheDwarf = 0;
+            for (int frame = 0; frame < 120; frame++)
+            {
+                yield return null;
+                foreach (Transform child in stage.transform)
+                {
+                    if (child.name != "Support" || !child.TryGetComponent<MeshRenderer>(out var renderer) || !renderer.enabled) continue;
+                    seen++;
+                    Assert.That(child.localPosition.z, Is.GreaterThanOrEqualTo(nearest - 1e-4f), "nenhum esteio colado na câmera");
+                    if (child.localPosition.z < framing.distance) inFrontOfTheDwarf++;
+                }
+            }
+            if (seen == 0) Assert.Ignore("Sem o esteio em sprite (pack fora do git, D-65).");
+            Assert.That(inFrontOfTheDwarf, Is.GreaterThan(0), "esteios entre a câmera e o anão recuado");
+        }
+
         [UnityTest]
         public IEnumerator EdgeRocks_LineBothSidesOfThePath_NeverTheMiddle()
         {
