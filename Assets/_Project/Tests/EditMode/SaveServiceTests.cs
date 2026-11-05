@@ -182,7 +182,7 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Version2_KeepsTheDescent()
+        public void CurrentVersion_KeepsTheDescent()
         {
             var state = new GameState();
             var sim = new MiningSimulation(CaveRules(), new SeededRandom(1), state, WithLetrado());
@@ -200,7 +200,7 @@ namespace MinersIdle.Tests
             Assert.That(loaded.PlaySeconds, Is.EqualTo(25).Within(1e-9));
             Assert.That(loaded.ShardsEarned, Is.EqualTo(state.ShardsEarned).And.GreaterThan(0));
             Assert.That(loaded.ReachedHeart, Is.False);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*2"));
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*3"), "save v3 (E3b-2, D-129)");
         }
 
         [Test]
@@ -223,7 +223,38 @@ namespace MinersIdle.Tests
             Assert.That(sim.CanPassCave, Is.True, "o botão de passar volta");
 
             _save.Save(state);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*2"), "regravado na versão nova");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*3"), "regravado na versão nova");
+        }
+
+        /// <summary>
+        /// E3b-2 do M8 (D-129): as 10 cavernas do save v2 viram os 10 primeiros dos 100 níveis do GDD v7. O nível e o Mapa
+        /// (o Letrado) ficam como estavam; o coração da caverna 10 não vale mais (ele está no nível 100).
+        /// </summary>
+        [Test]
+        public void Version2_OpensAtTheSameLevel_OfTheHundred()
+        {
+            var off = new UpgradeDefinition(0, 1, 0, 0);
+            var map = new EconomyRules(off, off, off, off, off, 0.1, letrado: new UpgradeDefinition(0, 1, 100, 1));
+            WriteSave("{ \"version\": 2, \"shards\": 50.0, \"cave\": 7, \"caveBreaks\": 40, \"playSeconds\": 600, " +
+                      "\"shardsEarned\": 900, \"levels\": [ { \"upgrade\": \"Letrado\", \"level\": 7 } ] }");
+
+            var state = _save.Load(map, out var status, 100);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(state.Cave, Is.EqualTo(7));
+            Assert.That(state.CaveBreaks, Is.EqualTo(40));
+            Assert.That(state.LevelOf(UpgradeId.Letrado), Is.EqualTo(7), "o Mapa do nível 7 comprado: falta passar");
+            Assert.That(state.PlaySeconds, Is.EqualTo(600));
+            Assert.That(state.ShardsEarned, Is.EqualTo(900));
+
+            WriteSave("{ \"version\": 2, \"cave\": 10, \"reachedHeart\": true, " +
+                      "\"levels\": [ { \"upgrade\": \"Letrado\", \"level\": 10 } ] }");
+            var end = _save.Load(map, out _, 100);
+            Assert.That(end.Cave, Is.EqualTo(10));
+            Assert.That(end.ReachedHeart, Is.False, "o coração passou para o nível 100");
+
+            _save.Save(end);
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*3"));
         }
 
         [Test]

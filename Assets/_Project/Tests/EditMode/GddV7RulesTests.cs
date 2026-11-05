@@ -222,6 +222,94 @@ namespace MinersIdle.Tests
 
         // ── O asset (D-130) ──────────────────────────────────────────────────────────────────────────────────────
 
+        // ---- E3b-2: Mapa e 100 níveis (D-128, D-129) ----
+
+        static MiningRules HundredLevels() =>
+            new MiningRules(
+                initialCrystals: 4, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2,
+                spawnDistance: 12, crystalHealth: 1, crystalReward: 1.2, damage: 1, hitInterval: 1, walkSpeed: 4,
+                miningRange: 1, minCrystals: 4, caveCount: 100, caveHealthGrowth: 1.25, caveRewardGrowth: 1.25,
+                pickaxeFormula: PickaxeFormula.CaveScaled, pickaxeCaveGrowth: 1.2, levelsPerBiome: 10);
+
+        static EconomyRules Map() => new EconomyRules(
+            pickaxe: new UpgradeDefinition(2, 2, 49, 1, CostFormula.Linear),
+            speed: new UpgradeDefinition(50, 2, 19, 0.1),
+            mining: new UpgradeDefinition(20, 5, 10, 1),
+            doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
+            boots: new UpgradeDefinition(0, 1, 0, 0),
+            minHitInterval: 0.1,
+            letrado: new UpgradeDefinition(0, 1, 100, 1),
+            critical: new UpgradeDefinition(50, 2, 10, 0.05));
+
+        [TestCase(1, 0), TestCase(10, 0), TestCase(11, 1), TestCase(20, 1), TestCase(21, 2), TestCase(91, 9), TestCase(100, 9)]
+        public void Biome_ChangesEveryTenLevels(int level, int biome)
+        {
+            Assert.That(HundredLevels().BiomeOf(level), Is.EqualTo(biome));
+        }
+
+        [Test]
+        public void Biome_OnePerCave_UpToGddV5()
+        {
+            var rules = Rules();
+            Assert.That(rules.LevelsPerBiome, Is.EqualTo(1));
+            Assert.That(Enumerable.Range(1, 10).Select(rules.BiomeOf), Is.EqualTo(Enumerable.Range(0, 10)));
+        }
+
+        [Test]
+        public void LevelsPerBiome_BelowOne_IsRejected()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new MiningRules(0, 3, 12, 1, 2, 12, 1, 1, 1, 1, 4, 1, levelsPerBiome: 0));
+        }
+
+        [Test]
+        public void Map_IsFree_AfterTheHundredCrystals_AndDoesNotDoubleTheDamage()
+        {
+            var sim = new MiningSimulation(HundredLevels(), new SeededRandom(1), economy: Map(), strike: V7Strike());
+            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Locked), "a trava dos 100 cristais");
+
+            sim.FillCaveBreaks();
+            Assert.That(sim.State.Shards, Is.EqualTo(0));
+            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased), "de graça (D-128)");
+            Assert.That(sim.PassCave(), Is.True);
+            double before = sim.Stats.Damage;
+
+            for (int i = 0; i < 40 && sim.Wall != null; i++)
+            {
+                sim.Tick(0);
+                sim.BreakTarget();
+            }
+            Assert.That(sim.State.Cave, Is.EqualTo(2));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(1 + Math.Pow(1.2, 1)).Within(1e-9), "só a taxa da caverna, sem ×2");
+            Assert.That(sim.Stats.Damage, Is.GreaterThan(before));
+        }
+
+        [Test]
+        public void LevelHundred_TheLastMapLeadsToTheHeart()
+        {
+            var sim = new MiningSimulation(HundredLevels(), new SeededRandom(1), economy: Map(), strike: V7Strike());
+            int hearts = 0;
+            sim.HeartReached += () => hearts++;
+
+            Assert.That(sim.SkipToCave(150), Is.True, "vai até o último nível");
+            Assert.That(sim.State.Cave, Is.EqualTo(100));
+            Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(99));
+            sim.FillCaveBreaks();
+            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased), "o Mapa 100");
+            Assert.That(sim.PassCave(), Is.True, "a última parede");
+            Assert.That(sim.Wall.MaxHealth, Is.EqualTo(2 * Math.Pow(1.25, 100)).Within(1e-6).Percent, "D-98: 2 × a vida de um nível além");
+
+            for (int i = 0; i < 40 && sim.Wall != null; i++)
+            {
+                sim.Tick(0);
+                sim.BreakTarget();
+            }
+            Assert.That(hearts, Is.EqualTo(1));
+            Assert.That(sim.State.ReachedHeart, Is.True);
+            Assert.That(sim.State.Cave, Is.EqualTo(100));
+            Assert.That(sim.CanPassCave, Is.False);
+        }
+
         [Test]
         public void BalanceGddV7Asset_HasTheNumbersOfTheGdd()
         {
@@ -253,7 +341,11 @@ namespace MinersIdle.Tests
             Assert.That(economy.Get(UpgradeId.DoublePickaxe).IsEnabled, Is.False);
             Assert.That(economy.Get(UpgradeId.Boots).IsEnabled, Is.False);
             var letrado = economy.Get(UpgradeId.Letrado);
-            Assert.That((letrado.CostAt(0), letrado.Effect), Is.EqualTo((0.0, 1.0)), "custo zero e sem ×2 (D-128)");
+            Assert.That((letrado.CostAt(0), letrado.CostAt(99), letrado.Effect), Is.EqualTo((0.0, 0.0, 1.0)), "Mapa: custo zero e sem ×2 (D-128)");
+            Assert.That(letrado.MaxLevel, Is.EqualTo(100), "um Mapa por nível; o 100º leva à parede do coração");
+            Assert.That(rules.CaveCount, Is.EqualTo(100), "100 níveis (D-129)");
+            Assert.That(rules.LevelsPerBiome, Is.EqualTo(10), "um bioma a cada 10 níveis (D-129)");
+            Assert.That(rules.LetradoBreaks, Is.EqualTo(100), "a trava dos 100 cristais continua");
 
             Assert.That(strike.CritChance, Is.EqualTo(0));
             Assert.That(strike.TapCritChance, Is.EqualTo(0.05));

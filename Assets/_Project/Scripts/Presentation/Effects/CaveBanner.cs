@@ -49,11 +49,13 @@ namespace MinersIdle.Presentation
         void OnCaveChanged(int cave)
         {
             if (cave == _cave) return; // os 100 cristais do debug avisam sem mudar de caverna
+            bool newBiome = Simulation.Rules.BiomeOf(cave) != Simulation.Rules.BiomeOf(_cave);
             _cave = cave;
 
             string name = stage != null ? stage.BiomeName(cave) : null;
             label.SetText(string.Format(texts.CaveBannerFormat, cave, name ?? ""));
-            _age = -DescentStage.CaveFadeSeconds * 0.5f; // entra no escuro, quando o bioma troca
+            // Bioma novo: entra no escuro, quando ele troca. Mesmo bioma (GDD v7, D-129): não escurece, entra na hora.
+            _age = newBiome ? -DescentStage.CaveFadeSeconds * 0.5f : 0f;
             label.gameObject.SetActive(true);
             label.alpha = 0f;
         }

@@ -44,6 +44,8 @@ namespace MinersIdle.Game
         [SerializeField] int letradoBreaks = 100;
         [Tooltip("A parede da passagem tem esta vez a vida do cristal da caverna nova (D-98).")]
         [SerializeField] double wallHealthFactor = 2;
+        [Tooltip("Níveis seguidos no mesmo bioma: 1 = um bioma por caverna (v5); 10 = um a cada 10 níveis (v7, D-129).")]
+        [SerializeField] int levelsPerBiome = 1;
 
         [Header("Anão")]
         [Tooltip("Dano base por golpe, sem melhorias.")]
@@ -112,7 +114,7 @@ namespace MinersIdle.Game
             minCrystals,
             caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor,
             tapReach, arrivalStrike, swingRecovery,
-            pickaxeFormula, pickaxeCaveGrowth);
+            pickaxeFormula, pickaxeCaveGrowth, levelsPerBiome);
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance);

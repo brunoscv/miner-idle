@@ -74,14 +74,17 @@ namespace MinersIdle.EditorTools
             AddEntry(entries, false, UpgradeId.DoublePickaxe, "Picareta Dupla", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0xF2, 0xA9, 0x00, 0xFF));
             AddEntry(entries, false, UpgradeId.Boots, "Botas", "Caminhada {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0x8D, 0x6E, 0x63, 0xFF));
             AddEntry(entries, true, UpgradeId.Pickaxe, "Estagiário", "Um ajudante que minera junto", ShopCatalog.EffectStyle.Number, new Color32(0x9E, 0x9E, 0x9E, 0xFF));
-            AddEntry(entries, false, UpgradeId.Letrado, "Letrado", LetradoEffect, ShopCatalog.EffectStyle.Number, new Color32(0x4F, 0x7C, 0xF7, 0xFF));
+            AddEntry(entries, false, UpgradeId.Letrado, MapTitle, LetradoEffect, ShopCatalog.EffectStyle.Number, new Color32(0x4F, 0x7C, 0xF7, 0xFF));
             so.ApplyModifiedPropertiesWithoutUndo();
 
             AssetDatabase.CreateAsset(catalog, CatalogPath);
             Debug.Log($"[Setup] Catálogo da loja criado em {CatalogPath}.");
         }
 
-        const string LetradoEffect = "Caverna {0} » {1}";
+        const string LetradoEffect = "Nível {0} » {1}";
+        const string OldLetradoEffect = "Caverna {0} » {1}";
+        /// <summary>GDD v7 (D-128): o Letrado vira o Mapa (o id interno continua <c>Letrado</c>, para o save).</summary>
+        const string MapTitle = "Mapa";
         const string ProgressFormat = "Quebre {1} cristais: {0}/{1}";
         const string PassFirstLabel = "DESCER";
 
@@ -111,6 +114,20 @@ namespace MinersIdle.EditorTools
                 entry.FindPropertyRelative("upgrade").enumValueIndex = (int)UpgradeId.Letrado;
                 entry.FindPropertyRelative("effectFormat").stringValue = LetradoEffect;
                 entry.FindPropertyRelative("frame").objectReferenceValue = null;
+                changed = true;
+            }
+
+            // E3b-2 do M8 (D-128): o Letrado de verdade vira o Mapa, com o nível no efeito.
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var entry = entries.GetArrayElementAtIndex(i);
+                if (entry.FindPropertyRelative("locked").boolValue
+                    || entry.FindPropertyRelative("upgrade").enumValueIndex != (int)UpgradeId.Letrado
+                    || entry.FindPropertyRelative("title").stringValue != "Letrado") continue;
+                entry.FindPropertyRelative("title").stringValue = MapTitle;
+                if (entry.FindPropertyRelative("effectFormat").stringValue == OldLetradoEffect)
+                    entry.FindPropertyRelative("effectFormat").stringValue = LetradoEffect;
+                Debug.Log("[Setup] O Letrado da loja vira o Mapa (D-128).");
                 changed = true;
             }
 

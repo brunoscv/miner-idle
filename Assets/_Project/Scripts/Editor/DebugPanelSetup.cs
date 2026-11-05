@@ -15,7 +15,8 @@ namespace MinersIdle.EditorTools
     /// desde o M6 E3), na cena Game já aberta:
     /// o EventSystem (sem ele nenhum botão recebe toque) e o painel com o botão "DBG" no canto de baixo. Os rótulos e os
     /// modelos de texto são dados da cena. Só cria o que falta; um painel de versão anterior (sem os botões de compra) é
-    /// refeito do zero, porque é todo gerado aqui.
+    /// refeito do zero, porque é todo gerado aqui. Desde 2026-11-05 (D-147) os atalhos vão para os menus Loja, Efeitos e
+    /// Caverna (<see cref="DebugMenu"/>), que abrem em cima como a câmera; os botões são os mesmos objetos, só mudam de pai.
     /// </summary>
     static class DebugPanelSetup
     {
@@ -28,9 +29,10 @@ namespace MinersIdle.EditorTools
             "Toques/s {10} valeram · {11} acima do teto\nDedos: {12} começos · {13} repetidos · {15} juntos · {14} na tela";
 
         /// <summary>Modelo do nível e próximo custo das melhorias (ver o Tooltip de <c>DebugPanel.upgradesFormat</c>).</summary>
+        /// <remarks>A Dupla e as Botas saíram no GDD v7 (D-136): os índices {6}–{9} ficam sem uso.</remarks>
         const string UpgradesFormat =
-            "Picareta nv {0} (próx. {1}) · Velocidade nv {2} (próx. {3}) · Mineração nv {4} (próx. {5}) · " +
-            "Dupla nv {6} (próx. {7}) · Botas nv {8} (próx. {9}) · Letrado nv {10} (próx. {11}) · Crítico nv {12} (próx. {13})";
+            "Picareta nv {0} (próx. {1}) · Velocidade nv {2} (próx. {3})\nMineração nv {4} (próx. {5}) · " +
+            "Crítico nv {12} (próx. {13})\nMapa nv {10} (próx. {11})";
         const string MaxedLabel = "máx.";
 
         /// <summary>Medição do M5 E5 (ver o Tooltip de <c>BuildInfoLabel.statsFormat</c>).</summary>
@@ -56,7 +58,7 @@ namespace MinersIdle.EditorTools
             if (existing != null)
             {
                 if (existing.Find("Content/Buttons/Camera") != null)
-                    return UpdateStatsFormat(existing) | EnsureCaveButtons(existing) || changed;
+                    return UpdateStatsFormat(existing) | EnsureCaveButtons(existing) | EnsureMenus(existing) || changed;
 
                 var oldInfo = existing.Find("Content/BuildInfo");
                 if (oldInfo != null) oldInfo.SetParent(safeArea.transform, false);
@@ -148,7 +150,6 @@ namespace MinersIdle.EditorTools
                 ("buyPickaxe", CreateButton(grid.transform, "BuyPickaxe", "Comprar Picareta")),
                 ("buySpeed", CreateButton(grid.transform, "BuySpeed", "Comprar Velocidade")),
                 ("buyMining", CreateButton(grid.transform, "BuyMining", "Comprar Mineração")),
-                ("buyDoublePickaxe", CreateButton(grid.transform, "BuyDoublePickaxe", "Comprar P. Dupla")),
                 ("buyCritical", CreateButton(grid.transform, BuyCriticalName, BuyCriticalLabel)),
                 ("saveNow", CreateButton(grid.transform, "SaveNow", "Salvar agora")),
                 ("deleteSave", CreateButton(grid.transform, "DeleteSave", "Apagar save")),
@@ -160,6 +161,7 @@ namespace MinersIdle.EditorTools
                 ("fillCaveBreaks", CreateButton(grid.transform, "FillCaveBreaks", "Encher 100 cristais")),
                 ("nextCave", CreateButton(grid.transform, "NextCave", "Próxima caverna")),
                 ("lastCave", CreateButton(grid.transform, "LastCave", LastCaveLabel)),
+                ("tenLevels", CreateButton(grid.transform, TenLevelsName, TenLevelsLabel)),
                 ("cameraPanel", Object.FindAnyObjectByType<DescentCameraPanel>()),
                 ("frameStats", frameStats),
                 ("upgrades", upgrades));
@@ -171,8 +173,182 @@ namespace MinersIdle.EditorTools
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             content.SetActive(false);
+            EnsureMenus(root.transform);
             Debug.Log("[Setup] Painel de debug criado na cena Game.");
             return true;
+        }
+
+        // ── Menus (D-147) ────────────────────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>Altura do DBG só com o tempo, as estatísticas e os botões dos menus.</summary>
+        const float MenuContentHeight = 150f;
+        const float MenuButtonsBand = 0.42f; // 3 fileiras de botões abaixo disto; estatísticas acima
+
+        /// <summary>Um menu: nome do objeto, nome e rótulo do botão no DBG, altura e os botões que moram nele, na ordem.</summary>
+        static readonly (string name, string button, string label, float height, string[] buttons)[] Menus =
+        {
+            ("ShopMenu", "Shop", "Loja", 128f, new[]
+            {
+                "SpawnCrystal", "AddShards", "FillCaveBreaks", "BuyPickaxe", "BuySpeed", "BuyMining", BuyCriticalName,
+                TenLevelsName, "LastCave",
+            }),
+            ("EffectsMenu", "Effects", "Efeitos", 48f, new[] { "AutoTap", "ForceCritical", "Shake", "Sound" }),
+            ("CaveMenu", "Cave", "Caverna", 68f, new[]
+            {
+                "BreakTarget", "NextCave", "SaveNow", "RestartSameSeed", "RestartNewSeed", "DeleteSave", "ResetStats",
+            }),
+        };
+
+        /// <summary>A ordem dos botões que ficam no DBG.</summary>
+        static readonly string[] MainButtons = { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave" };
+
+        /// <summary>Altura da faixa do nível e custo das melhorias, no alto da Loja.</summary>
+        const float ShopUpgradesHeight = 34f;
+
+        /// <summary>
+        /// Cria o que falta dos menus e põe neles os botões que ainda estão na grade do DBG (os de versões anteriores e os
+        /// que algum passo do setup criou lá). Tira o "Comprar P. Dupla" (linha que saiu no GDD v7, D-136).
+        /// </summary>
+        static bool EnsureMenus(Transform panel)
+        {
+            var debugPanel = panel.GetComponent<DebugPanel>();
+            var content = (RectTransform)panel.Find("Content");
+            var grid = content != null ? content.Find("Buttons") : null;
+            if (debugPanel == null || grid == null) return false;
+            bool changed = false;
+
+            var dupla = grid.Find("BuyDoublePickaxe");
+            if (dupla != null)
+            {
+                Object.DestroyImmediate(dupla.gameObject);
+                Debug.Log("[Setup] Painel de debug: \"Comprar P. Dupla\" removido (a Dupla saiu no GDD v7, D-136).");
+                changed = true;
+            }
+
+            foreach (var (name, buttonName, label, height, buttons) in Menus)
+            {
+                var menu = panel.Find(name);
+                if (menu == null)
+                {
+                    menu = CreateMenu(panel, name, height, name == "ShopMenu" ? ShopUpgradesHeight : 0f);
+                    var open = CreateButton(grid, buttonName, label);
+                    GrayboxSetup.SetReferences(debugPanel, (MenuField(name, "Button"), open),
+                                               (MenuField(name, "Menu"), menu.GetComponent<DebugMenu>()));
+                    Debug.Log($"[Setup] Painel de debug: menu \"{label}\" (D-147).");
+                    changed = true;
+                }
+
+                var menuButtons = menu.Find("Content/Buttons");
+                foreach (var b in buttons)
+                {
+                    var button = grid.Find(b);
+                    if (button == null) continue;
+                    button.SetParent(menuButtons, false);
+                    changed = true;
+                }
+                // Na ordem da lista, com o Fechar por último.
+                int index = 0;
+                foreach (var b in buttons)
+                {
+                    var child = menuButtons.Find(b);
+                    if (child != null) child.SetSiblingIndex(index++);
+                }
+                var close = menuButtons.Find("Close");
+                if (close != null) close.SetAsLastSibling();
+            }
+
+            // O nível e o custo das melhorias vão para o alto da Loja.
+            var upgrades = content.Find("Upgrades");
+            var shopContent = panel.Find("ShopMenu/Content");
+            if (upgrades != null && shopContent != null)
+            {
+                upgrades.SetParent(shopContent, false);
+                var rect = (RectTransform)upgrades;
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(0.5f, 1f);
+                rect.offsetMin = new Vector2(0f, -ShopUpgradesHeight);
+                rect.offsetMax = Vector2.zero;
+                changed = true;
+            }
+
+            for (int i = 0; i < MainButtons.Length; i++)
+            {
+                var child = grid.Find(MainButtons[i]);
+                if (child != null && child.GetSiblingIndex() != i)
+                {
+                    child.SetSiblingIndex(i);
+                    changed = true;
+                }
+            }
+
+            // O DBG fica só com o tempo, as estatísticas e os botões dos menus.
+            if (!Mathf.Approximately(content.sizeDelta.y, MenuContentHeight))
+            {
+                content.sizeDelta = new Vector2(content.sizeDelta.x, MenuContentHeight);
+                Stretch((RectTransform)grid, Vector2.zero, new Vector2(1f, MenuButtonsBand));
+                var stats = content.Find("Stats");
+                if (stats != null) Stretch((RectTransform)stats, new Vector2(0f, MenuButtonsBand), new Vector2(0.64f, 1f));
+                var info = content.Find("BuildInfo");
+                if (info != null) Stretch((RectTransform)info, new Vector2(0.64f, MenuButtonsBand), new Vector2(1f, 1f));
+                changed = true;
+            }
+            return changed;
+        }
+
+        /// <summary>"ShopMenu" + "Button" → "shopButton"; + "Menu" → "shopMenu" (os campos do DebugPanel).</summary>
+        static string MenuField(string menuName, string suffix)
+        {
+            string stem = menuName.Substring(0, menuName.Length - "Menu".Length);
+            return char.ToLowerInvariant(stem[0]) + stem.Substring(1) + suffix;
+        }
+
+        /// <summary>Um menu em cima da tela, logo abaixo do HUD, como os controles da câmera; o Fechar já vem na grade.</summary>
+        static Transform CreateMenu(Transform panel, string name, float height, float textTop)
+        {
+            var root = new GameObject(name, typeof(RectTransform));
+            root.transform.SetParent(panel, false);
+            Stretch((RectTransform)root.transform, Vector2.zero, Vector2.one);
+
+            var content = new GameObject("Content", typeof(RectTransform), typeof(Image));
+            content.transform.SetParent(root.transform, false);
+            var contentRect = (RectTransform)content.transform;
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = new Vector2(0f, -42f); // logo abaixo do HUD, como a câmera
+            contentRect.sizeDelta = new Vector2(-8f, height);
+            content.GetComponent<Image>().color = PanelColor; // recebe raycast: tocar no menu não vira toque no jogo
+
+            var grid = new GameObject("Buttons", typeof(RectTransform), typeof(GridLayoutGroup));
+            grid.transform.SetParent(content.transform, false);
+            var gridRect = (RectTransform)grid.transform;
+            Stretch(gridRect, Vector2.zero, Vector2.one);
+            gridRect.offsetMax = new Vector2(0f, -textTop);
+            var layout = grid.GetComponent<GridLayoutGroup>();
+            layout.padding = new RectOffset(4, 4, 4, 4);
+            layout.cellSize = new Vector2(82f, 16f);
+            layout.spacing = new Vector2(3f, 3f);
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = 3;
+
+            var close = CreateButton(grid.transform, "Close", "Fechar");
+            var menu = root.AddComponent<DebugMenu>();
+            GrayboxSetup.SetReferences(menu, ("content", content), ("close", close));
+            return root.transform;
+        }
+
+        /// <summary>Um botão do painel onde quer que esteja (na grade do DBG ou já dentro de um menu).</summary>
+        static Transform FindButton(Transform panel, string name)
+        {
+            var inGrid = panel.Find("Content/Buttons/" + name);
+            if (inGrid != null) return inGrid;
+            foreach (var menu in Menus)
+            {
+                var inMenu = panel.Find($"{menu.name}/Content/Buttons/{name}");
+                if (inMenu != null) return inMenu;
+            }
+            return null;
         }
 
         /// <summary>
@@ -210,7 +386,7 @@ namespace MinersIdle.EditorTools
             var grid = panel.Find("Content/Buttons");
             if (grid == null) return changed;
 
-            if (grid.Find("FillCaveBreaks") == null)
+            if (FindButton(panel, "FillCaveBreaks") == null)
             {
                 GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
                     ("fillCaveBreaks", CreateButton(grid, "FillCaveBreaks", "Encher 100 cristais")),
@@ -221,7 +397,7 @@ namespace MinersIdle.EditorTools
 
             // E3b do M8: o Comprar Botas (linha desligada desde o GDD v5) vira Comprar Crítico, no mesmo lugar.
             var boots = grid.Find("BuyBoots");
-            if (grid.Find(BuyCriticalName) == null && boots != null)
+            if (FindButton(panel, BuyCriticalName) == null && boots != null)
             {
                 boots.name = BuyCriticalName;
                 boots.GetComponentInChildren<TMP_Text>().text = BuyCriticalLabel;
@@ -231,17 +407,34 @@ namespace MinersIdle.EditorTools
             }
 
             // M8 (E3): o atalho do fim da descida.
-            if (grid.Find("LastCave") == null)
+            if (FindButton(panel, "LastCave") == null)
             {
                 GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
                     ("lastCave", CreateButton(grid, "LastCave", LastCaveLabel)));
                 Debug.Log("[Setup] Painel de debug: atalho da última caverna (M8).");
                 changed = true;
             }
+
+            // E3b-2 do M8 (D-129): os 100 níveis do v7. O fim vira "Nível 100 (fim)" e entra o "+10 níveis", para ver os biomas.
+            var lastCaveLabel = FindButton(panel, "LastCave")?.GetComponentInChildren<TMP_Text>();
+            if (lastCaveLabel != null && lastCaveLabel.text != LastCaveLabel)
+            {
+                lastCaveLabel.text = LastCaveLabel;
+                changed = true;
+            }
+            if (FindButton(panel, TenLevelsName) == null)
+            {
+                GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
+                    ("tenLevels", CreateButton(grid, TenLevelsName, TenLevelsLabel)));
+                Debug.Log("[Setup] Painel de debug: \"Nível 100 (fim)\" e \"+10 níveis\" (E3b-2 do M8).");
+                changed = true;
+            }
             return changed;
         }
 
-        const string LastCaveLabel = "Caverna 10 (fim)";
+        const string LastCaveLabel = "Nível 100 (fim)";
+        const string TenLevelsName = "TenLevels";
+        const string TenLevelsLabel = "+10 níveis";
         const string BuyCriticalName = "BuyCritical";
         const string BuyCriticalLabel = "Comprar Crítico";
 

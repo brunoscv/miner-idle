@@ -50,13 +50,18 @@ namespace MinersIdle.EditorTools
             Debug.Log($"[Setup] Textos do feedback criados em {TextsPath}.");
         }
 
-        const string CaveBannerFormat = "Caverna {0} · {1}";
+        const string CaveBannerFormat = "Nível {0} · {1}";
+        const string OldCaveBannerFormat = "Caverna {0} · {1}";
 
-        /// <summary>M8 (E2): o texto da faixa da caverna nova nos textos que já existem.</summary>
+        /// <summary>
+        /// M8 (E2): o texto da faixa da caverna nova nos textos que já existem. E3b-2 (D-129): os 100 níveis do GDD v7,
+        /// "Nível 12 · Galeria rochosa" (o texto de antes, "Caverna 2 · …", é trocado).
+        /// </summary>
         static void EnsureCaveBannerText()
         {
             var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
-            if (texts == null || !string.IsNullOrEmpty(texts.CaveBannerFormat)) return;
+            if (texts == null) return;
+            if (!string.IsNullOrEmpty(texts.CaveBannerFormat) && texts.CaveBannerFormat != OldCaveBannerFormat) return;
 
             var so = new SerializedObject(texts);
             so.FindProperty("caveBannerFormat").stringValue = CaveBannerFormat;

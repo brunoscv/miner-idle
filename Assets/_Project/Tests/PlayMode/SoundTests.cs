@@ -108,8 +108,8 @@ namespace MinersIdle.Tests
         {
             yield return LoadGame();
             var panel = Object.FindAnyObjectByType<MinersIdle.UI.DebugPanel>();
-            var button = panel.transform.Find("Content/Buttons/Sound");
-            Assert.That(button, Is.Not.Null, "botão Som on/off no DBG");
+            var button = panel.transform.Find("EffectsMenu/Content/Buttons/Sound");
+            Assert.That(button, Is.Not.Null, "botão Som on/off no DBG → Efeitos (D-147)");
 
             button.GetComponent<Button>().onClick.Invoke();
             Assert.That(_sound.SoundEnabled, Is.False);

@@ -15,7 +15,7 @@ MonoBehaviour:
   criticalLabel: "CR\xCDTICO!"
   comboFormat: x{0}
   milestoneFormat: x{0}!
-  caveBannerFormat: "Caverna {0} \xB7 {1}"
+  caveBannerFormat: "N\xEDvel {0} \xB7 {1}"
   heartTitle: "Cora\xE7\xE3o da montanha"
   heartBodyFormat: "Voc\xEA desceu as dez cavernas.\n\nTempo de jogo: {0}\nLascas coletadas: {1}"
   heartContinue: CONTINUAR

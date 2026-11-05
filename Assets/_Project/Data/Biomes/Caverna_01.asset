@@ -14,6 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: MinersIdle.Presentation::MinersIdle.Presentation.BiomeDefinition
   displayName: Entrada da mina
   floorTexture: {fileID: 2800000, guid: 2ab6b472d79825143a917dc2ba8e89ad, type: 3}
+  floorTiles:
+  - {fileID: 2800000, guid: b595acad775882a4ea0de65e15b07ba1, type: 3}
+  - {fileID: 2800000, guid: 87306a899a5f79348b12ec28bf229e15, type: 3}
+  - {fileID: 2800000, guid: f1224b55b0f5e7b41a9bcf65b83d5f1c, type: 3}
+  - {fileID: 2800000, guid: 489777972476c214d8a80c52c8291af3, type: 3}
+  - {fileID: 2800000, guid: 13339c8ea55ae1f4287f9f5fdf979f77, type: 3}
+  edgeRocks: 0
+  edgeMound: 1
   wallTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
   fogColor: {r: 0.078431375, g: 0.050980393, b: 0.03529412, a: 1}
   lampEvery: 1

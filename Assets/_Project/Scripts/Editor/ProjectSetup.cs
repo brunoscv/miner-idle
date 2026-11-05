@@ -90,6 +90,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV5Balance();
             EnsureGddV5Caves();
             EnsureGddV7Balance();
+            EnsureGddV7HundredLevels();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -468,6 +469,26 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log($"[Setup] Valores do GDD v7 criados em {GddV7BalancePath} (D-130).");
+        }
+
+        /// <summary>
+        /// E3b-2 do M8 (D-128, D-129): o v7 desce 100 níveis, um bioma a cada 10; o Letrado vira o Mapa, de graça (só a
+        /// trava dos 100 cristais), sem o ×2 do dano, até o nível 100 (o último leva à parede do coração, D-112).
+        /// </summary>
+        static void EnsureGddV7HundredLevels()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            if (serialized.FindProperty("caveCount").intValue == 100 && serialized.FindProperty("levelsPerBiome").intValue == 10) return;
+
+            serialized.FindProperty("caveCount").intValue = 100;
+            serialized.FindProperty("levelsPerBiome").intValue = 10;
+            SetLine(serialized, "letrado", 0, 1, 100, 1);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v7: 100 níveis, bioma a cada 10 e o Mapa de graça até o nível 100 (D-128, D-129).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

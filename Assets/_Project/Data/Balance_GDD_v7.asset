@@ -21,11 +21,12 @@ MonoBehaviour:
   spawnDistance: 12
   crystalHealth: 1
   crystalReward: 1.2
-  caveCount: 10
+  caveCount: 100
   caveHealthGrowth: 1.25
   caveRewardGrowth: 1.25
   letradoBreaks: 100
   wallHealthFactor: 2
+  levelsPerBiome: 10
   damage: 1
   hitInterval: 2
   walkSpeed: 4
@@ -66,7 +67,7 @@ MonoBehaviour:
     costFormula: 0
     baseCost: 0
     costGrowth: 1
-    maxLevel: 10
+    maxLevel: 100
     effect: 1
   critical:
     costFormula: 0

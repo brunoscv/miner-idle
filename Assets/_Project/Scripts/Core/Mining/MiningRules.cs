@@ -33,7 +33,8 @@ namespace MinersIdle.Core
             double tapReach = double.PositiveInfinity,
             ArrivalStrike arrivalStrike = ArrivalStrike.Wait,
             double swingRecovery = 0,
-            PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply, double pickaxeCaveGrowth = 1.2)
+            PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply, double pickaxeCaveGrowth = 1.2,
+            int levelsPerBiome = 1)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -56,6 +57,7 @@ namespace MinersIdle.Core
             if (tapReach < 0 || double.IsNaN(tapReach)) throw new ArgumentOutOfRangeException(nameof(tapReach));
             if (swingRecovery < 0 || double.IsNaN(swingRecovery)) throw new ArgumentOutOfRangeException(nameof(swingRecovery));
             if (!Enum.IsDefined(typeof(PickaxeFormula), pickaxeFormula)) throw new ArgumentOutOfRangeException(nameof(pickaxeFormula));
+            if (levelsPerBiome < 1) throw new ArgumentOutOfRangeException(nameof(levelsPerBiome));
             if (pickaxeCaveGrowth <= 0 || double.IsNaN(pickaxeCaveGrowth)) throw new ArgumentOutOfRangeException(nameof(pickaxeCaveGrowth));
 
             InitialCrystals = initialCrystals;
@@ -81,6 +83,7 @@ namespace MinersIdle.Core
             SwingRecovery = swingRecovery;
             PickaxeFormula = pickaxeFormula;
             PickaxeCaveGrowth = pickaxeCaveGrowth;
+            LevelsPerBiome = levelsPerBiome;
         }
 
         /// <summary>Cristais na fila no início (já na tela).</summary>
@@ -143,6 +146,15 @@ namespace MinersIdle.Core
         public PickaxeFormula PickaxeFormula { get; }
         /// <summary>A "taxa" da D-133: no <see cref="Core.PickaxeFormula.CaveScaled"/>, o dano ganha taxa^(caverna − 1) (GDD v7: 1,2).</summary>
         public double PickaxeCaveGrowth { get; }
+
+        /// <summary>
+        /// Quantos níveis (cavernas) seguidos ficam no mesmo bioma: 1 até o GDD v5 (um bioma por caverna, D-102), 10 no GDD
+        /// v7 (100 níveis, um bioma a cada 10, D-129).
+        /// </summary>
+        public int LevelsPerBiome { get; }
+
+        /// <summary>O bioma do nível <paramref name="level"/>, a partir de 0: (nível − 1) ÷ <see cref="LevelsPerBiome"/>.</summary>
+        public int BiomeOf(int level) => (Math.Max(1, level) - 1) / LevelsPerBiome;
 
         /// <summary>Vida do cristal na caverna <paramref name="cave"/> (1 = a primeira): base × crescimento^(c−1).</summary>
         public double CrystalHealthIn(int cave) => CrystalHealth * Math.Pow(CaveHealthGrowth, cave - 1);

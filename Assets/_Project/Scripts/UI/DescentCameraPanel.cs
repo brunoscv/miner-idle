@@ -81,6 +81,11 @@ namespace MinersIdle.UI
         [SerializeField] Button strike;
         [Tooltip("Rótulo do botão do golpe para cada opção, na ordem de StrikeLooks: como era, só efeitos, A1, A2 (A1 e A2 com os efeitos).")]
         [SerializeField] string[] strikeLabels;
+        [Tooltip("Passa pelas opções do montinho de areia nas beiras (D-146; só nos biomas com montinho): chão plano, arco e " +
+                 "platô. Não fica salvo.")]
+        [SerializeField] Button mound;
+        [Tooltip("Rótulo do botão do montinho para cada opção, na ordem do DescentStage.MoundLook.")]
+        [SerializeField] string[] moundLabels;
 
         /// <summary>As opções do botão do golpe: quando sai o primeiro golpe (D-124) e se os efeitos estão ligados (D-125).</summary>
         static readonly (ArrivalStrike arrival, bool feel)[] StrikeLooks =
@@ -95,6 +100,7 @@ namespace MinersIdle.UI
         TMP_Text _edgeLabel;
         TMP_Text _supportLabel;
         TMP_Text _strikeLabel;
+        TMP_Text _moundLabel;
 
         public bool IsOpen => content.activeSelf;
 
@@ -132,6 +138,7 @@ namespace MinersIdle.UI
             if (edge != null) _edgeLabel = edge.GetComponentInChildren<TMP_Text>();
             if (support != null) _supportLabel = support.GetComponentInChildren<TMP_Text>();
             if (strike != null) _strikeLabel = strike.GetComponentInChildren<TMP_Text>();
+            if (mound != null) _moundLabel = mound.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -151,6 +158,7 @@ namespace MinersIdle.UI
             if (edge != null) edge.onClick.AddListener(NextEdge);
             if (support != null) support.onClick.AddListener(NextSupport);
             if (strike != null) strike.onClick.AddListener(NextStrike);
+            if (mound != null) mound.onClick.AddListener(NextMound);
         }
 
         void OnDisable()
@@ -169,6 +177,7 @@ namespace MinersIdle.UI
             if (edge != null) edge.onClick.RemoveListener(NextEdge);
             if (support != null) support.onClick.RemoveListener(NextSupport);
             if (strike != null) strike.onClick.RemoveListener(NextStrike);
+            if (mound != null) mound.onClick.RemoveListener(NextMound);
         }
 
         void Update()
@@ -200,6 +209,12 @@ namespace MinersIdle.UI
         void NextSupport()
         {
             stage.SupportLook = (stage.SupportLook + 1) % stage.SupportLooks;
+            _refresh = 0f;
+        }
+
+        void NextMound()
+        {
+            stage.MoundLook = (stage.MoundLook + 1) % DescentStage.MoundLooks;
             _refresh = 0f;
         }
 
@@ -280,6 +295,9 @@ namespace MinersIdle.UI
             int strikeLook = StrikeLook;
             if (_strikeLabel != null && strikeLabels != null && strikeLook >= 0 && strikeLook < strikeLabels.Length)
                 _strikeLabel.text = strikeLabels[strikeLook];
+
+            if (_moundLabel != null && moundLabels != null && stage.MoundLook < moundLabels.Length)
+                _moundLabel.text = moundLabels[stage.MoundLook];
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),

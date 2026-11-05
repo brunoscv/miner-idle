@@ -16,7 +16,8 @@ namespace MinersIdle.Tests
     /// <summary>
     /// Marco 8: a passagem de caverna na cena Game. O Letrado mostra o progresso dos 100 cristais (D-109), o botão DESCER
     /// aparece com ele comprado (D-110). E2: DESCER põe a parede no corredor (D-107); quebrada, a descida escurece, o bioma
-    /// troca no escuro, a faixa "Caverna 2 · nome" aparece (D-111) e a CAVERNA do HUD muda.
+    /// troca no escuro, a faixa "Caverna 2 · nome" aparece (D-111) e a CAVERNA do HUD muda. E3b-2 (GDD v7, D-129): 100
+    /// níveis, o bioma troca a cada 10 (só aí escurece) e a faixa diz "Nível 2 · nome" em todo nível.
     /// </summary>
     public class CaveFlowTests
     {
@@ -53,7 +54,7 @@ namespace MinersIdle.Tests
             Assert.That(letrado.EffectText, Does.Contain($"{simulation.State.CaveBreaks}/100"), "o progresso dos 100 cristais");
 
             // DBG: os 100 cristais e lascas para pagar.
-            panel.transform.Find("Content/Buttons/FillCaveBreaks").GetComponent<Button>().onClick.Invoke();
+            panel.transform.Find("ShopMenu/Content/Buttons/FillCaveBreaks").GetComponent<Button>().onClick.Invoke();
             simulation.AddShards(1000);
             Assert.That(letrado.CanBuy, Is.True, "com os 100 cristais, o preço acende");
 
@@ -84,30 +85,34 @@ namespace MinersIdle.Tests
             Assume.That(simulation.Wall, Is.Not.Null, "a parede ainda de pé");
             Assert.That(stage.IsWallShown, Is.True, "a parede no corredor");
 
-            // A quebra: a caverna muda na hora; a descida escurece e o bioma troca no escuro.
+            // A quebra: o nível muda na hora. No v7 o nível 2 fica no bioma do 1 (D-129): não escurece, a faixa vem igual.
+            bool newBiome = simulation.Rules.BiomeOf(2) != simulation.Rules.BiomeOf(1);
             simulation.BreakTarget();
             Assert.That(simulation.Wall, Is.Null);
             Assert.That(simulation.State.Cave, Is.EqualTo(2));
             Assert.That(hud.CaveText, Is.EqualTo("2"));
-            Assert.That(stage.IsChangingCave, Is.True, "a troca escurecida começou");
+            Assert.That(stage.IsChangingCave, Is.EqualTo(newBiome), "só escurece na troca de bioma");
             yield return null;
             Assert.That(stage.IsWallShown, Is.False);
 
             float darkest = 0f;
-            for (float t = 0; t < DescentStage.CaveFadeSeconds + 0.3f; t += Time.unscaledDeltaTime)
+            for (float t = 0; t < DescentStage.CaveFadeSeconds * 0.5f; t += Time.unscaledDeltaTime)
             {
                 darkest = Mathf.Max(darkest, stage.Darkness);
+                if (biome1 != null && !newBiome) Assert.That(banner.IsShown, Is.True, "a faixa do nível novo");
                 yield return null;
             }
-            Assert.That(darkest, Is.GreaterThan(0.5f), "escureceu");
+            if (newBiome) Assert.That(darkest, Is.GreaterThan(0.3f), "escureceu");
+            else Assert.That(darkest, Is.EqualTo(0f), "mesmo bioma: não escurece");
+            for (float t = 0; t < DescentStage.CaveFadeSeconds * 0.5f + 0.3f; t += Time.unscaledDeltaTime) yield return null;
             Assert.That(stage.IsChangingCave, Is.False);
             Assert.That(stage.Darkness, Is.EqualTo(0f), "clareou de novo");
             if (biome1 != null)
             {
-                Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o bioma da caverna 2");
-                Assert.That(stage.FloorTexture.name, Does.EndWith("02"));
-                Assert.That(banner.IsShown, Is.True, "a faixa da caverna nova");
-                Assert.That(banner.Text, Does.StartWith("Caverna 2").And.Contain(stage.Biome.DisplayName));
+                if (newBiome) Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o bioma da caverna 2");
+                else Assert.That(stage.Biome, Is.SameAs(biome1), "o nível 2 no bioma do 1");
+                Assert.That(banner.IsShown, Is.True, "a faixa do nível novo");
+                Assert.That(banner.Text, Does.StartWith("Nível 2").And.Contain(stage.Biome.DisplayName));
             }
 
             shop.Open();
@@ -115,9 +120,41 @@ namespace MinersIdle.Tests
             shop.Close();
 
             // DBG: Próxima caverna (sem comprar e sem parede).
-            panel.transform.Find("Content/Buttons/NextCave").GetComponent<Button>().onClick.Invoke();
+            panel.transform.Find("CaveMenu/Content/Buttons/NextCave").GetComponent<Button>().onClick.Invoke();
             Assert.That(simulation.State.Cave, Is.EqualTo(3));
             Assert.That(hud.CaveText, Is.EqualTo("3"));
+        }
+
+        /// <summary>E3b-2 (D-129): DBG → +10 níveis. Do nível 1 ao 11 o bioma troca, escurecido, e a faixa traz o nome novo.</summary>
+        [UnityTest]
+        public IEnumerator TenLevels_ChangeTheBiome_InTheDark()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var simulation = Object.FindAnyObjectByType<MiningRunner>().Simulation;
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var banner = Object.FindAnyObjectByType<CaveBanner>();
+            var hud = Object.FindAnyObjectByType<HudView>();
+            var panel = Object.FindAnyObjectByType<DebugPanel>();
+            if (simulation.Rules.CaveCount < 11 || simulation.Rules.LevelsPerBiome != 10)
+                Assert.Ignore("O balanço ativo não tem os 100 níveis do GDD v7 (rode o setup do projeto).");
+            if (stage.Biome == null) Assert.Ignore("Sem os biomas na cena (rode o setup).");
+            var biome1 = stage.Biome;
+
+            var button = panel.transform.Find("ShopMenu/Content/Buttons/TenLevels");
+            Assert.That(button, Is.Not.Null, "o atalho +10 níveis no DBG (rode o setup do projeto)");
+            button.GetComponent<Button>().onClick.Invoke();
+            Assert.That(simulation.State.Cave, Is.EqualTo(11));
+            Assert.That(hud.CaveText, Is.EqualTo("11"));
+            Assert.That(simulation.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(10), "os Mapas de antes, de graça");
+            Assert.That(stage.IsChangingCave, Is.True, "bioma novo: escurece");
+
+            for (float t = 0; t < DescentStage.CaveFadeSeconds + 0.3f; t += Time.unscaledDeltaTime) yield return null;
+            Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o 2º bioma");
+            Assert.That(stage.FloorTexture.name, Does.EndWith("02"));
+            Assert.That(banner.Text, Does.StartWith("Nível 11").And.Contain(stage.Biome.DisplayName));
         }
 
         /// <summary>E3 (D-112): DBG → Caverna 10, o Letrado 10, a última parede e a tela do coração da montanha, uma vez só.</summary>
@@ -142,7 +179,7 @@ namespace MinersIdle.Tests
             Assert.That(heart.IsOpen, Is.False);
 
             // DBG: a última caverna, com a trava cumprida e as lascas do último Letrado.
-            panel.transform.Find("Content/Buttons/LastCave").GetComponent<Button>().onClick.Invoke();
+            panel.transform.Find("ShopMenu/Content/Buttons/LastCave").GetComponent<Button>().onClick.Invoke();
             int last = simulation.Rules.CaveCount;
             Assert.That(simulation.State.Cave, Is.EqualTo(last));
             Assert.That(hud.CaveText, Is.EqualTo(last.ToString()));

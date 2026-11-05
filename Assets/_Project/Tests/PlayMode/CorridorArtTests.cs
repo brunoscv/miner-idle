@@ -72,6 +72,9 @@ namespace MinersIdle.Tests
             yield return null;
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
+            // Bioma sem pedras (o 1, com a faixa de tiles, D-145): passa para o próximo que tem.
+            for (int i = 0; i < 10 && stage.Biome != null && !stage.Biome.EdgeRocks; i++) stage.NextBiome();
+            yield return null;
             float half = stage.Framing.corridorWidth * 0.5f;
             int left = 0, right = 0;
             foreach (Transform child in stage.transform)

@@ -152,6 +152,57 @@ namespace MinersIdle.Presentation
             return Build(name, size, size, pixels, TextureWrapMode.Repeat, mipmaps: true);
         }
 
+        /// <summary>Tiles de um chão em faixa (D-145): beira esquerda, transição, miolo, transição, beira direita.</summary>
+        public const int FloorStripTiles = 5;
+
+        /// <summary>O nome da textura da faixa feita com estes tiles ("ground_01a" … → "floor_ground_01").</summary>
+        public static string FloorStripName(Texture2D[] tiles)
+        {
+            string first = tiles[0].name;
+            return "floor_" + (first.Length > 1 ? first.Substring(0, first.Length - 1) : first);
+        }
+
+        /// <summary>
+        /// O chão em faixa (D-145): uma fileira de <paramref name="columns"/> tiles de parede a parede — beira esquerda,
+        /// transição, o miolo repetido, transição, beira direita — que se repete ao longo do corredor. Os tiles precisam ser
+        /// legíveis (Read/Write, o setup marca) e do mesmo tamanho; senão devolve null (o chão fica o de antes).
+        /// </summary>
+        public static Texture2D FloorStrip(Texture2D[] tiles, int columns)
+        {
+            if (tiles == null || tiles.Length != FloorStripTiles) return null;
+            int width = tiles[0].width, height = tiles[0].height;
+            foreach (var tile in tiles)
+                if (tile == null || !tile.isReadable || tile.width != width || tile.height != height)
+                {
+                    Debug.LogWarning("[Descida] Os 5 tiles do chão em faixa precisam ser legíveis e do mesmo tamanho (rodar o setup).");
+                    return null;
+                }
+
+            columns = Mathf.Max(4, columns);
+            var texture = new Texture2D(width * columns, height, TextureFormat.RGBA32, false)
+            {
+                name = FloorStripName(tiles),
+                filterMode = FilterMode.Point,
+                // Na largura a faixa cobre o corredor certinho (sem repetir); ao longo dele, repete.
+                wrapModeU = TextureWrapMode.Clamp,
+                wrapModeV = TextureWrapMode.Repeat,
+            };
+            for (int c = 0; c < columns; c++)
+                texture.SetPixels32(c * width, 0, width, height, tiles[FloorStripTileAt(c, columns)].GetPixels32());
+            texture.Apply(false, false);
+            return texture;
+        }
+
+        /// <summary>Qual dos 5 tiles vai na coluna <paramref name="column"/> de uma faixa com <paramref name="columns"/>.</summary>
+        public static int FloorStripTileAt(int column, int columns)
+        {
+            if (column <= 0) return 0;
+            if (column >= columns - 1) return 4;
+            if (column == 1) return 1;
+            if (column == columns - 2) return 3;
+            return 2;
+        }
+
         static Texture2D Solid(string name, int width, int height, Color32 color)
         {
             var pixels = new Color32[width * height];

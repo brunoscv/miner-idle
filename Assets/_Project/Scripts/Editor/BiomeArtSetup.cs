@@ -8,7 +8,8 @@ using UnityEngine;
 namespace MinersIdle.EditorTools
 {
     /// <summary>
-    /// Parte do <see cref="ProjectSetup"/> para a E8 do M1b (D-72, D-102): os biomas das 10 cavernas. O chão de cada uma é
+    /// Parte do <see cref="ProjectSetup"/> para a E8 do M1b (D-72, D-102): os biomas das 10 cavernas. Teste da D-145: o
+    /// bioma 1 (níveis 1–10 no GDD v7) usa o chão em faixa <c>ground_01a…e</c>; os outros seguem com o chão gerado abaixo. O chão de cada uma é
     /// o tile do Apellon (<c>tileset_ground_01</c>, desenho de 4 cores) com as 4 cores trocadas pela paleta da caverna, e
     /// com pedra pequena, pedra grande e buraco sorteados (semente fixa: sai sempre igual). Cavernas 1–4 = os tons
     /// <c>01</c>…<c>04</c> dele; 5–10 = paletas novas seguindo o piso do GDD v5 §6. Põe os 10 biomas no
@@ -21,6 +22,7 @@ namespace MinersIdle.EditorTools
     {
         const string TileFolder = "Assets/_Project/Art/Tile";
         const string FloorFolder = TileFolder + "/Biomes";
+        const string GroundFolder = TileFolder + "/Ground";
         const string DataFolder = "Assets/_Project/Data/Biomes";
         const string LampSupportPath = "Assets/_Project/Art/Corridor/mine_wood_lamp.png";
 
@@ -49,6 +51,11 @@ namespace MinersIdle.EditorTools
             public int LampEvery;
             /// <summary>O cristal da fila (D-116): índice em <see cref="CrystalArtSetup.QueueCrystals"/>.</summary>
             public int Crystal;
+            /// <summary>
+            /// Chão em faixa (D-145): o conjunto <c>{nome}a</c> … <c>{nome}e</c> em <see cref="GroundFolder"/>. Vazio = o chão
+            /// gerado da paleta (como antes).
+            /// </summary>
+            public string FloorTiles;
         }
 
         /// <summary>
@@ -58,7 +65,7 @@ namespace MinersIdle.EditorTools
         /// </summary>
         static readonly Cave[] Caves =
         {
-            new Cave { Name = "Entrada da mina", Ramp = new[] { "#AD7757", "#C09473", "#D7B594", "#E7D5B3" }, WallTint = new Color(1.35f, 1.35f, 1.35f), Fog = "#140D09", LampEvery = 1, Crystal = 0 },
+            new Cave { Name = "Entrada da mina", Ramp = new[] { "#AD7757", "#C09473", "#D7B594", "#E7D5B3" }, WallTint = new Color(1.35f, 1.35f, 1.35f), Fog = "#140D09", LampEvery = 1, Crystal = 0, FloorTiles = "ground_01" },
             new Cave { Name = "Galeria rochosa", Ramp = new[] { "#7A4841", "#AD7757", "#C09473", "#D7B594" }, WallTint = new Color(1.25f, 1.18f, 1.12f), Fog = "#120B09", LampEvery = 1, Crystal = 1 },
             new Cave { Name = "Veio profundo", Ramp = new[] { "#4D2B32", "#7A4841", "#AD7757", "#C09473" }, WallTint = new Color(1.15f, 1.05f, 1f), Fog = "#0F090A", LampEvery = 1, Crystal = 2 },
             new Cave { Name = "Zona metálica", Ramp = new[] { "#241527", "#341C27", "#7A4841", "#AD7757" }, WallTint = new Color(1f, 0.92f, 0.98f), Fog = "#0B060B", LampEvery = 1, Crystal = 0 },
@@ -71,6 +78,7 @@ namespace MinersIdle.EditorTools
         };
 
         static string FloorPath(int cave) => $"{FloorFolder}/floor_cave_{cave + 1:00}.png";
+        static string FloorTilePath(string set, int tile) => $"{GroundFolder}/{set}{(char)('a' + tile)}.png";
         static string BiomePath(int cave) => $"{DataFolder}/Caverna_{cave + 1:00}.asset";
 
         public static void EnsureAssets()
@@ -123,6 +131,57 @@ namespace MinersIdle.EditorTools
             int crystals = 0;
             for (int c = 0; c < Caves.Length; c++) crystals += EnsureCrystal(c) ? 1 : 0;
             if (crystals > 0) Debug.Log($"[Setup] Cristal de uma cor por caverna em {crystals} biomas (D-116).");
+
+            int tiled = 0;
+            for (int c = 0; c < Caves.Length; c++) tiled += EnsureFloorTiles(c) ? 1 : 0;
+            if (tiled > 0) Debug.Log($"[Setup] Chão em faixa de tiles em {tiled} bioma(s) (D-145).");
+        }
+
+        /// <summary>
+        /// Os 5 tiles do chão em faixa no bioma (D-145), importados como pixel art e legíveis (a faixa é montada no jogo, na
+        /// largura do corredor). Só preenche um bioma sem tiles: o que foi posto à mão fica. Devolve se mudou o bioma.
+        /// </summary>
+        static bool EnsureFloorTiles(int cave)
+        {
+            var set = Caves[cave].FloorTiles;
+            if (string.IsNullOrEmpty(set)) return false;
+            var tiles = new Texture2D[DescentArt.FloorStripTiles];
+            int configured = 0;
+            for (int t = 0; t < tiles.Length; t++)
+            {
+                var path = FloorTilePath(set, t);
+                if (!File.Exists(path)) return false;
+                configured += ConfigureReadable(path);
+                tiles[t] = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (tiles[t] == null) return false;
+            }
+            if (configured > 0) Debug.Log($"[Setup] Tiles {set}a…e configurados (pixel art, legíveis): {configured}.");
+
+            var biome = AssetDatabase.LoadAssetAtPath<BiomeDefinition>(BiomePath(cave));
+            if (biome == null || biome.FloorTiles is { Length: > 0 }) return false;
+
+            var so = new SerializedObject(biome);
+            var property = so.FindProperty("floorTiles");
+            property.arraySize = tiles.Length;
+            for (int t = 0; t < tiles.Length; t++) property.GetArrayElementAtIndex(t).objectReferenceValue = tiles[t];
+            so.FindProperty("edgeRocks").boolValue = false; // a faixa já tem a beira desenhada: sem pedras por cima
+            so.FindProperty("edgeMound").boolValue = true;  // e a beira sobe em montinho de areia (D-146)
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(biome);
+            return true;
+        }
+
+        /// <summary>Como os chãos (pixel art, sem compressão nem mipmaps), e legível. Devolve 1 se mudou.</summary>
+        static int ConfigureReadable(string path)
+        {
+            int changed = CorridorArtSetup.Configure(path, TextureWrapMode.Clamp);
+            if (AssetImporter.GetAtPath(path) is TextureImporter importer && !importer.isReadable)
+            {
+                importer.isReadable = true;
+                importer.SaveAndReimport();
+                changed = 1;
+            }
+            return changed;
         }
 
         /// <summary>
@@ -172,7 +231,49 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             changed |= EnsureBiomeButton();
+            changed |= EnsureMoundButton();
             return changed;
+        }
+
+        const string MoundButton = "Mound";
+
+        /// <summary>Na ordem do <c>DescentStage.MoundLook</c>: chão plano, arco (∩), platô; cabem nos 48 px do botão.</summary>
+        static readonly string[] MoundLabels = { "Plano", "Arco", "Platô" };
+
+        /// <summary>O jogo abre no arco (o moundLook padrão do DescentStage).</summary>
+        const int DefaultMound = 1;
+
+        /// <summary>O botão "Monte" do DBG → Câmera (D-146): chão plano, arco (∩) e platô, para comparar.</summary>
+        static bool EnsureMoundButton()
+        {
+            var panel = Object.FindAnyObjectByType<MinersIdle.UI.DescentCameraPanel>(FindObjectsInactive.Include);
+            var buttons = panel != null ? panel.transform.Find("Content/Buttons") : null;
+            if (buttons == null) return false;
+
+            bool changed = false;
+            var button = buttons.Find(MoundButton);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(buttons, MoundButton, MoundLabels[DefaultMound]).transform;
+                GrayboxSetup.SetReferences(panel, ("mound", button.GetComponent<UnityEngine.UI.Button>()));
+                Debug.Log("[Setup] Botão \"Monte\" no DBG → Câmera (montinho de areia das beiras, D-146).");
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            var labels = so.FindProperty("moundLabels");
+            bool same = labels.arraySize == MoundLabels.Length;
+            for (int i = 0; same && i < MoundLabels.Length; i++) same = labels.GetArrayElementAtIndex(i).stringValue == MoundLabels[i];
+            if (same) return changed;
+
+            labels.arraySize = MoundLabels.Length;
+            for (int i = 0; i < MoundLabels.Length; i++) labels.GetArrayElementAtIndex(i).stringValue = MoundLabels[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            // O botão mostra o padrão até o painel abrir (aí mostra o atual).
+            var text = button.GetComponentInChildren<TMPro.TMP_Text>();
+            text.text = MoundLabels[DefaultMound];
+            EditorUtility.SetDirty(text);
+            return true;
         }
 
         /// <summary>O botão "Chão" da E9 vira o "Bioma" (mesmo objeto, a referência do painel continua); sem ele, cria.</summary>

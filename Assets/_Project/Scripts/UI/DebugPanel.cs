@@ -14,6 +14,9 @@ namespace MinersIdle.UI
     /// (E2): toques automáticos e crítico sempre (desde 2026-11-01, o diagnóstico do toque nas estatísticas, D-118); tremor on/off (E3), som on/off (E4) e a medição de desempenho
     /// (<see cref="FrameStats"/>, E5), que só conta com o painel fechado. Desde o M6 (E3): "Câmera" abre os controles da
     /// câmera da descida (<see cref="DescentCameraPanel"/>) no lugar do "Mostrar ordem" do mapa. Os atalhos chamam os mesmos comandos das regras.
+    /// Desde 2026-11-05 (D-147) os atalhos ficam em menus que abrem em cima, como a câmera: Loja (lascas, cristais, compras,
+    /// níveis), Efeitos (toques, crítico, tremor, som) e Caverna (quebrar, próxima, salvar, reiniciar, apagar, medição); no
+    /// DBG ficam o tempo, as estatísticas e os botões dos menus. Um menu aberto fecha os outros e a câmera.
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
     /// Os textos (rótulos e o modelo das estatísticas) ficam na cena.
     /// </summary>
@@ -37,8 +40,8 @@ namespace MinersIdle.UI
                  "{13} começos repetidos · {14} dedos na tela agora · {15} dedos que encostaram com outro na tela (D-123)")]
         [SerializeField, TextArea(3, 8)] string statsFormat;
         [SerializeField] TMP_Text upgrades;
-        [Tooltip("Pares nível/próximo custo, na ordem: {0}/{1} Picareta · {2}/{3} Velocidade · {4}/{5} Mineração · " +
-                 "{6}/{7} Picareta Dupla · {8}/{9} Botas")]
+        [Tooltip("Pares nível/próximo custo, na ordem de UpgradeId: {0}/{1} Picareta · {2}/{3} Velocidade · {4}/{5} Mineração · " +
+                 "{6}/{7} Picareta Dupla · {8}/{9} Botas · {10}/{11} Mapa · {12}/{13} Crítico")]
         [SerializeField, TextArea(2, 6)] string upgradesFormat;
         [Tooltip("Mostrado no lugar do próximo custo quando a linha está no limite.")]
         [SerializeField] string maxedLabel;
@@ -55,7 +58,6 @@ namespace MinersIdle.UI
         [SerializeField] Button buyPickaxe;
         [SerializeField] Button buySpeed;
         [SerializeField] Button buyMining;
-        [SerializeField] Button buyDoublePickaxe;
         [Tooltip("E3b do M8: no lugar do antigo Comprar Botas (linha desligada desde o GDD v5).")]
         [SerializeField] Button buyCritical;
         [SerializeField] Button saveNow;
@@ -71,7 +73,17 @@ namespace MinersIdle.UI
         [SerializeField] Button nextCave;
         [Tooltip("M8 (E3): a última caverna, com os 100 cristais e as lascas do último Letrado (para testar o fim).")]
         [SerializeField] Button lastCave;
+        [Tooltip("M8 (E3b-2): dez níveis abaixo de uma vez, com os Mapas de graça (para ver a troca de bioma).")]
+        [SerializeField] Button tenLevels;
         [SerializeField] DescentCameraPanel cameraPanel;
+
+        [Header("Menus (D-147)")]
+        [SerializeField] Button shopButton;
+        [SerializeField] DebugMenu shopMenu;
+        [SerializeField] Button effectsButton;
+        [SerializeField] DebugMenu effectsMenu;
+        [SerializeField] Button caveButton;
+        [SerializeField] DebugMenu caveMenu;
 
         readonly object[] _statsArgs = new object[16];
 
@@ -109,7 +121,6 @@ namespace MinersIdle.UI
             buyPickaxe.onClick.AddListener(BuyPickaxe);
             buySpeed.onClick.AddListener(BuySpeed);
             buyMining.onClick.AddListener(BuyMining);
-            buyDoublePickaxe.onClick.AddListener(BuyDoublePickaxe);
             buyCritical.onClick.AddListener(BuyCritical);
             saveNow.onClick.AddListener(SaveNow);
             deleteSave.onClick.AddListener(DeleteSave);
@@ -121,6 +132,10 @@ namespace MinersIdle.UI
             if (fillCaveBreaks != null) fillCaveBreaks.onClick.AddListener(FillCaveBreaks);
             if (nextCave != null) nextCave.onClick.AddListener(NextCave);
             if (lastCave != null) lastCave.onClick.AddListener(GoToLastCave);
+            if (tenLevels != null) tenLevels.onClick.AddListener(SkipTenLevels);
+            if (shopButton != null) shopButton.onClick.AddListener(ToggleShop);
+            if (effectsButton != null) effectsButton.onClick.AddListener(ToggleEffects);
+            if (caveButton != null) caveButton.onClick.AddListener(ToggleCave);
         }
 
         void OnDisable()
@@ -138,7 +153,6 @@ namespace MinersIdle.UI
             buyPickaxe.onClick.RemoveListener(BuyPickaxe);
             buySpeed.onClick.RemoveListener(BuySpeed);
             buyMining.onClick.RemoveListener(BuyMining);
-            buyDoublePickaxe.onClick.RemoveListener(BuyDoublePickaxe);
             buyCritical.onClick.RemoveListener(BuyCritical);
             saveNow.onClick.RemoveListener(SaveNow);
             deleteSave.onClick.RemoveListener(DeleteSave);
@@ -150,11 +164,16 @@ namespace MinersIdle.UI
             if (fillCaveBreaks != null) fillCaveBreaks.onClick.RemoveListener(FillCaveBreaks);
             if (nextCave != null) nextCave.onClick.RemoveListener(NextCave);
             if (lastCave != null) lastCave.onClick.RemoveListener(GoToLastCave);
+            if (tenLevels != null) tenLevels.onClick.RemoveListener(SkipTenLevels);
+            if (shopButton != null) shopButton.onClick.RemoveListener(ToggleShop);
+            if (effectsButton != null) effectsButton.onClick.RemoveListener(ToggleEffects);
+            if (caveButton != null) caveButton.onClick.RemoveListener(ToggleCave);
         }
 
         void Update()
         {
-            if (!content.activeSelf) return;
+            // A Loja mostra nível e custo das melhorias, e fica aberta com o DBG fechado.
+            if (!content.activeSelf && !IsMenuOpen(shopMenu)) return;
 
             _refresh -= Time.unscaledDeltaTime;
             if (_refresh > 0f) return;
@@ -169,6 +188,29 @@ namespace MinersIdle.UI
             if (frameStats != null) frameStats.Measuring = !content.activeSelf; // o painel aberto não conta como jogo
         }
 
+        /// <summary>A Loja, os Efeitos ou a Caverna (D-147): abre fechando os outros menus e a câmera; aberto, fecha.</summary>
+        void ToggleMenu(DebugMenu menu)
+        {
+            if (menu == null) return;
+            bool open = !menu.IsOpen;
+            CloseMenus();
+            if (cameraPanel != null && cameraPanel.IsOpen) cameraPanel.Toggle();
+            if (open) menu.Show();
+            _refresh = 0f;
+        }
+
+        void CloseMenus()
+        {
+            foreach (var menu in new[] { shopMenu, effectsMenu, caveMenu })
+                if (menu != null) menu.Hide();
+        }
+
+        static bool IsMenuOpen(DebugMenu menu) => menu != null && menu.IsOpen;
+
+        void ToggleShop() => ToggleMenu(shopMenu);
+        void ToggleEffects() => ToggleMenu(effectsMenu);
+        void ToggleCave() => ToggleMenu(caveMenu);
+
         void SetSpeed1() => runner.TimeScale = 1f;
         void SetSpeed5() => runner.TimeScale = 5f;
         void SetSpeed20() => runner.TimeScale = 20f;
@@ -177,6 +219,7 @@ namespace MinersIdle.UI
         void AddShards() => runner.Simulation?.AddShards(ShardsToAdd);
         void FillCaveBreaks() => runner.Simulation?.FillCaveBreaks();
         void NextCave() => runner.Simulation?.SkipToNextCave();
+        void SkipTenLevels() => runner.Simulation?.SkipToCave(runner.Simulation.State.Cave + 10);
 
         /// <summary>A última caverna, a trava cumprida e lascas para o último Letrado: falta comprar, DESCER e quebrar.</summary>
         void GoToLastCave()
@@ -203,7 +246,6 @@ namespace MinersIdle.UI
         void BuyPickaxe() => Buy(UpgradeId.Pickaxe);
         void BuySpeed() => Buy(UpgradeId.Speed);
         void BuyMining() => Buy(UpgradeId.Mining);
-        void BuyDoublePickaxe() => Buy(UpgradeId.DoublePickaxe);
         void BuyCritical() => Buy(UpgradeId.Critical);
 
         void Buy(UpgradeId id)
@@ -212,8 +254,15 @@ namespace MinersIdle.UI
             _refresh = 0f; // mostra o nível e o custo novos já no próximo quadro
         }
 
-        /// <summary>M6 (E3): os controles da câmera da descida (D-61), num painel que fica aberto com o DBG fechado.</summary>
-        void ToggleCamera() => cameraPanel.Toggle();
+        /// <summary>
+        /// M6 (E3): os controles da câmera da descida (D-61), num painel que fica aberto com o DBG fechado. Abrir fecha os
+        /// menus (D-147), que ocupam o mesmo lugar.
+        /// </summary>
+        void ToggleCamera()
+        {
+            if (!cameraPanel.IsOpen) CloseMenus();
+            cameraPanel.Toggle();
+        }
 
         void RefreshStats()
         {

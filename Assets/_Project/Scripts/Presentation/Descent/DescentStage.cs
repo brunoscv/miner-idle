@@ -103,6 +103,8 @@ namespace MinersIdle.Presentation
         static readonly int ScrollAxisId = Shader.PropertyToID("_ScrollAxis");
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         static readonly int EdgeShadeId = Shader.PropertyToID("_EdgeShade");
+        static readonly int MoundId = Shader.PropertyToID("_Mound");
+        static readonly int MoundShapeId = Shader.PropertyToID("_MoundShape");
 
         [SerializeField] Shader shader;
         [Tooltip("Shader do quadro que mostra a descida na tela (URP Unlit).")]
@@ -253,6 +255,21 @@ namespace MinersIdle.Presentation
         [Tooltip("Quanto escurece bem no canto (0 = nada, 1 = preto).")]
         [SerializeField, Range(0f, 1f)] float edgeShadeStrength = 0.75f;
 
+        [Header("Montinho de areia nas beiras (D-146; só nos biomas com Edge Mound)")]
+        [Tooltip("A opção ao abrir (o botão \"Monte\" do DBG → Câmera passa por elas): 0 = chão plano, 1 = arco (∩), " +
+                 "2 = platô (laterais curvas, topo achatado).")]
+        [SerializeField, Range(0, 2)] int moundOption = 1;
+        [Tooltip("Altura do montinho, em metros (o arco no meio, o platô no topo).")]
+        [SerializeField, Min(0f)] float moundHeight = 0.2f;
+        [Tooltip("Platô: fração da largura do montinho que cada lateral ocupa (0,3 = 30% para subir, 30% para descer).")]
+        [SerializeField, Range(0.05f, 0.5f)] float plateauSide = 0.3f;
+        [Tooltip("Platô: arredondado das quinas (0 = vivas, 1 = bem redondas).")]
+        [SerializeField, Range(0f, 1f)] float plateauRoundness = 0.6f;
+        [Tooltip("Até onde o montinho entra no chão a partir da parede, em metros (0,5 = um tile, o a e o e).")]
+        [SerializeField, Min(0.05f)] float moundWidth = 0.5f;
+        [Tooltip("Quanto a inclinação do montinho clareia o lado virado para o meio do corredor (0 = nada).")]
+        [SerializeField, Range(0f, 4f)] float moundLight = 1.5f;
+
         [SerializeField] Color fogColor = new Color32(0x14, 0x0D, 0x09, 0xFF);
         [SerializeField] float fogStart = 3f;
         [SerializeField] float fogEnd = 25f;
@@ -262,8 +279,13 @@ namespace MinersIdle.Presentation
         Material _floor, _wall, _ceiling, _wood, _sprites, _screenMaterial;
         MeshFilter _corridorFilter;
         int _biome = -1;
+        Texture2D _floorStrip;
+        BiomeDefinition _floorStripBiome;
+        int _floorStripColumns;
         bool _corridorHasCeiling;
         float _corridorWidth;
+        float _corridorMound = -1f;
+        int _corridorMoundLook = -1;
 
         Transform _screen;
         int _screenWidth, _screenHeight;
@@ -337,6 +359,27 @@ namespace MinersIdle.Presentation
         /// <summary>A altura do esteio mostrado agora, em metros (para testes).</summary>
         public float SupportHeight => CurrentSupportOption is SupportOption option ? option.height : supportSize.y;
 
+        /// <summary>As opções do botão "Monte" do DBG (D-146): chão plano, arco (∩) e platô.</summary>
+        public const int MoundLooks = 3;
+
+        /// <summary>A opção do montinho (DBG; não fica salvo): 0 = chão plano, 1 = arco (∩), 2 = platô.</summary>
+        public int MoundLook
+        {
+            get => moundOption;
+            set
+            {
+                moundOption = Mathf.Clamp(value, 0, MoundLooks - 1);
+                EnsureCorridor();
+            }
+        }
+
+        /// <summary>A forma do montinho na opção de agora (no chão plano, a do arco, sem efeito).</summary>
+        public MoundForm MoundForm =>
+            new MoundForm(moundOption == 2 ? MoundShape.Plateau : MoundShape.Arch, plateauSide, plateauRoundness);
+
+        /// <summary>A altura do montinho nas beiras agora, em metros: 0 no chão plano ou se o bioma não tem montinho.</summary>
+        public float MoundHeight => Biome != null && Biome.EdgeMound && moundOption > 0 ? moundHeight : 0f;
+
         /// <summary>
         /// A beira do caminho da prévia (M1b E11): 0 = A (como era), 1 = B (sombra no canto), 2 = C (+ pedras variadas e
         /// cascalho), 3 = D (+ enfeites).
@@ -389,9 +432,18 @@ namespace MinersIdle.Presentation
         /// <summary>O bioma mostrado agora (null sem a lista de biomas).</summary>
         public BiomeDefinition Biome => _biome >= 0 ? biomes[_biome] : null;
 
-        /// <summary>O nome do bioma da caverna <paramref name="cave"/> (1 = a primeira), ou null sem bioma para ela.</summary>
-        public string BiomeName(int cave) =>
-            cave >= 1 && cave <= biomes.Length && biomes[cave - 1] != null ? biomes[cave - 1].DisplayName : null;
+        /// <summary>
+        /// O nome do bioma do nível <paramref name="cave"/> (1 = o primeiro), ou null sem bioma para ele. Um bioma por
+        /// caverna até o GDD v5; um a cada 10 níveis no v7 (<see cref="MiningRules.BiomeOf"/>, D-129).
+        /// </summary>
+        public string BiomeName(int cave)
+        {
+            int index = BiomeIndexOf(cave);
+            return index >= 0 && index < biomes.Length && biomes[index] != null ? biomes[index].DisplayName : null;
+        }
+
+        /// <summary>O índice do bioma do nível <paramref name="cave"/> pelas regras da partida (sem partida: um por caverna).</summary>
+        public int BiomeIndexOf(int cave) => Simulation != null ? Simulation.Rules.BiomeOf(cave) : cave - 1;
 
         /// <summary>Passa para o próximo bioma (DBG; volta à caverna 1 depois da 10; não fica salvo).</summary>
         public void NextBiome()
@@ -405,10 +457,52 @@ namespace MinersIdle.Presentation
             if (_floor == null || index < 0 || index >= biomes.Length || biomes[index] == null) return;
             _biome = index;
             var biome = biomes[index];
-            SetSurfaceTexture(_floor, biome.FloorTexture != null ? biome.FloorTexture : floorTexture, _art.Floor);
+            EnsureCorridor(); // o montinho é do bioma
+            ApplyFloor();
             _wall.SetColor(BaseColorId, biome.WallTint);
             _ceiling.SetColor(BaseColorId, biome.WallTint);
             ApplyFog(biome.FogColor);
+        }
+
+        /// <summary>
+        /// O chão do bioma mostrado: a faixa de tiles de parede a parede quando ele tem os 5 (D-145), senão a textura dele (ou
+        /// a do campo, ou a gerada por código).
+        /// </summary>
+        void ApplyFloor()
+        {
+            var biome = Biome;
+            if (biome != null && biome.HasFloorTiles && ApplyFloorStrip(biome)) return;
+            var texture = biome != null && biome.FloorTexture != null ? biome.FloorTexture : floorTexture;
+            SetSurfaceTexture(_floor, texture, _art.Floor);
+        }
+
+        /// <summary>
+        /// A faixa na largura do corredor de agora: tantos tiles quantos cabem com <see cref="texturePixelsPerMeter"/> (3 m e
+        /// tiles de 32 px = 6), esticada para a beira esquerda e a direita caírem certinho nas paredes. Refeita só quando o
+        /// bioma ou a largura muda.
+        /// </summary>
+        bool ApplyFloorStrip(BiomeDefinition biome)
+        {
+            var tiles = biome.FloorTiles;
+            float width = framing.corridorWidth;
+            int columns = Mathf.Max(4, Mathf.RoundToInt(width * texturePixelsPerMeter / tiles[0].width));
+            if (_floorStrip == null || _floorStripBiome != biome || _floorStripColumns != columns)
+            {
+                if (_floorStrip != null) Destroy(_floorStrip);
+                _floorStrip = DescentArt.FloorStrip(tiles, columns);
+                _floorStripBiome = biome;
+                _floorStripColumns = columns;
+            }
+            if (_floorStrip == null) return false;
+
+            // O u do chão é x / CorridorTileMeters (DescentMeshes.Corridor), de −w/2 a w/2: com escala tile/w e meio de
+            // deslocamento a faixa vai de 0 (parede esquerda) a 1 (direita). Ao longo, uma fileira a cada w/colunas metros
+            // (tiles quadrados).
+            float tile = DescentArt.CorridorTileMeters;
+            _floor.SetTexture(BaseMapId, _floorStrip);
+            _floor.SetTextureScale(BaseMapId, new Vector2(tile / width, tile * columns / width));
+            _floor.SetTextureOffset(BaseMapId, new Vector2(0.5f, 0f));
+            return true;
         }
 
         void ApplyFog(Color color)
@@ -563,6 +657,14 @@ namespace MinersIdle.Presentation
             ApplyFraming();
         }
 
+        /// <summary>Jogando, mexer no montinho pelo Inspector (forma, largura, luz) já refaz o corredor (D-146).</summary>
+        void OnValidate()
+        {
+            if (!Application.isPlaying || _corridorFilter == null || _floor == null) return;
+            _corridorMound = -1f;
+            EnsureCorridor();
+        }
+
         void OnDestroy()
         {
             if (sceneCamera != null) sceneCamera.targetTexture = null;
@@ -572,6 +674,7 @@ namespace MinersIdle.Presentation
                 Destroy(_target);
             }
             if (_screen != null) Destroy(_screen.gameObject);
+            if (_floorStrip != null) Destroy(_floorStrip);
 
             foreach (var material in new[] { _floor, _wall, _ceiling, _wood, _sprites, _screenMaterial })
                 if (material != null) Destroy(material);
@@ -621,16 +724,18 @@ namespace MinersIdle.Presentation
             _caveFade = -1f;
             _pendingBiome = -1;
             SetDarkness(0f);
-            if (simulation.State.Cave - 1 != _biome) ApplyBiome(simulation.State.Cave - 1);
+            int biome = simulation.Rules.BiomeOf(simulation.State.Cave);
+            if (biome != _biome) ApplyBiome(biome);
         }
 
         /// <summary>
-        /// M8: a caverna em que o anão está mostra o bioma dela (a caverna 1 = o bioma 1, D-102). Desde a E2 a troca é
-        /// escurecida (D-111): o bioma novo entra no meio de <see cref="CaveFadeSeconds"/>, no escuro.
+        /// M8: o nível em que o anão está mostra o bioma dele (D-102; no GDD v7 um bioma a cada 10 níveis, D-129). Desde a
+        /// E2 a troca é escurecida (D-111): o bioma novo entra no meio de <see cref="CaveFadeSeconds"/>, no escuro. Um nível
+        /// novo no mesmo bioma não escurece.
         /// </summary>
         void OnCaveChanged(int cave)
         {
-            int biome = cave - 1;
+            int biome = BiomeIndexOf(cave);
             if (biome == (_pendingBiome >= 0 ? _pendingBiome : _biome)) return; // os 100 cristais do debug: mesma caverna
             _pendingBiome = biome;
             if (_caveFade < 0f || _caveFade >= CaveFadeSeconds * 0.5f) _caveFade = 0f; // já escurecendo: segue
@@ -839,6 +944,7 @@ namespace MinersIdle.Presentation
             // O material repete a cada CorridorTileMeters; a textura cobre width / pixelsPorMetro metros.
             float scale = texture != null ? DescentArt.CorridorTileMeters * texturePixelsPerMeter / texture.width : 1f;
             material.SetTextureScale(BaseMapId, new Vector2(scale, scale));
+            material.SetTextureOffset(BaseMapId, Vector2.zero); // a faixa de tiles (D-145) desloca; as outras não
         }
 
         Material CreateMaterial(string name, Texture texture, Vector2 scrollAxis)
@@ -857,17 +963,41 @@ namespace MinersIdle.Presentation
             sceneCamera.transform.localRotation = Quaternion.Euler(framing.tilt, 0f, 0f);
             sceneCamera.fieldOfView = RenderFieldOfView();
 
+            EnsureCorridor();
+            ApplyEdgeShade();
+        }
+
+        /// <summary>
+        /// Refaz a malha do corredor só quando muda o teto (câmera acima dele), a largura ou o montinho das beiras (D-146), e
+        /// passa o montinho para a luz do shader do chão.
+        /// </summary>
+        void EnsureCorridor()
+        {
+            if (_corridorFilter == null) return;
             // O teto some quando a câmera sobe acima dele.
             bool ceiling = framing.height < WallHeight - 0.1f;
-            if (_corridorFilter != null && (_corridor == null || ceiling != _corridorHasCeiling || !Mathf.Approximately(_corridorWidth, framing.corridorWidth)))
+            float mound = MoundHeight;
+            var form = MoundForm;
+            bool widthChanged = !Mathf.Approximately(_corridorWidth, framing.corridorWidth);
+            if (_corridor == null || ceiling != _corridorHasCeiling || widthChanged || !Mathf.Approximately(_corridorMound, mound)
+                || _corridorMoundLook != moundOption)
             {
                 if (_corridor != null) Destroy(_corridor);
-                _corridor = DescentMeshes.Corridor(framing.corridorWidth, WallHeight, CorridorNear, CorridorFar, ceiling);
+                _corridor = DescentMeshes.Corridor(framing.corridorWidth, WallHeight, CorridorNear, CorridorFar, ceiling,
+                                                   moundWidth, mound, form);
                 _corridorFilter.sharedMesh = _corridor;
                 _corridorHasCeiling = ceiling;
                 _corridorWidth = framing.corridorWidth;
+                _corridorMound = mound;
+                _corridorMoundLook = moundOption;
+                if (widthChanged && _biome >= 0) ApplyFloor(); // a faixa de tiles acompanha a largura
             }
-            ApplyEdgeShade();
+            // x = meia largura, y = largura do montinho, z = altura, w = força da luz; z = 0 desliga a conta no shader.
+            _floor.SetVector(MoundId, new Vector4(framing.corridorWidth * 0.5f, Mathf.Min(moundWidth, framing.corridorWidth * 0.5f),
+                                                  mound, moundLight));
+            // x = forma (0 arco, 1 platô), y = lateral do platô, z = arredondado das quinas.
+            _floor.SetVector(MoundShapeId, new Vector4(form.shape == MoundShape.Plateau ? 1f : 0f,
+                                                       Mathf.Clamp(form.plateauSide, 0.01f, 0.5f), Mathf.Clamp01(form.plateauRoundness), 0f));
         }
 
         /// <summary>A sombra do canto (B em diante) nos materiais do chão e da parede; desligada, o shader pula a conta.</summary>
@@ -1354,13 +1484,14 @@ namespace MinersIdle.Presentation
         void LayoutEdgeRocks(double front)
         {
             int used = 0;
-            if (edgeLook >= 2 && edgeSheet != null)
+            bool rocks = Biome == null || Biome.EdgeRocks; // o bioma pode ficar sem pedras (D-145)
+            if (rocks && edgeLook >= 2 && edgeSheet != null)
             {
                 LayoutVariedEdge(front);
                 return;
             }
             for (int i = 0; i < PebbleSlots; i++) _pebbles[i].Visible = false;
-            if (edgeRockTexture != null)
+            if (rocks && edgeRockTexture != null)
             {
                 float halfWidth = framing.corridorWidth * 0.5f;
                 double first = Math.Ceiling((front - CorridorFar) / edgeRockSpacing);

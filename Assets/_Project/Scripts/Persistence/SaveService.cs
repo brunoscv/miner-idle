@@ -88,6 +88,15 @@ namespace MinersIdle.Persistence
                                          shardsEarned: data.shards);
             }
 
+            if (data.version == 2)
+            {
+                // As 10 cavernas viram os 10 primeiros níveis (D-129); o coração ficou no nível 100.
+                Debug.Log($"[Save] Save da versão 2: aberto no nível {data.cave} (a versão 3 vai até o nível 100).");
+                // O Restore só mantém o coração na última caverna: o da caverna 10 do v2 cai com 100 níveis.
+                return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
+                                         data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart);
+            }
+
             return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
                                      data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart);
         }
