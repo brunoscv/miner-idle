@@ -105,6 +105,30 @@ namespace MinersIdle.Game
                  "termina o golpe parado e só então corre. Nunca passa do intervalo. 0,72 = os 9 quadros de 80 ms da folha (D-75); 0 desliga.")]
         [SerializeField] double swingRecovery = 0.72;
 
+        [Header("Dia e melhorias permanentes (Marco 8b; custo em lascas vermelhas, D-158)")]
+        [Tooltip("Nível a partir do qual o Descansar aparece e as lascas vermelhas começam (D-138, D-152). GDD v7: 10. 0 desliga.")]
+        [SerializeField] int restLevel;
+        [Tooltip("Os níveis múltiplos disto dão o marco de lascas vermelhas (GDD v7: 10).")]
+        [SerializeField] int redShardMilestoneStep = 10;
+        [Tooltip("Lascas vermelhas do marco (GDD v7: 5, nos níveis 10, 20, 30 e 40).")]
+        [SerializeField] double redShardMilestone = 5;
+        [Tooltip("A partir deste nível o marco vale o grande (GDD v7: 50).")]
+        [SerializeField] int redShardBigMilestoneFrom = 50;
+        [Tooltip("Lascas vermelhas do marco grande (GDD v7: 10, nos níveis 50 a 100).")]
+        [SerializeField] double redShardBigMilestone = 10;
+        [Tooltip("Lascas vermelhas dos outros níveis a partir do primeiro (GDD v7: 1).")]
+        [SerializeField] double redShardPerLevel = 1;
+        [Tooltip("Memória. Efeito: cristais a menos na trava do Mapa por nível (GDD v7: 10).")]
+        [SerializeField] UpgradeLineValues memory = new UpgradeLineValues(10, 2, 0, 10, CostFormula.OffsetExponential);
+        [Tooltip("Sangue da Montanha. Efeito: fração a mais de dano por nível, no dano final (GDD v7: 0,1).")]
+        [SerializeField] UpgradeLineValues mountainBlood = new UpgradeLineValues(10, 2, 0, 0.1, CostFormula.OffsetExponential);
+        [Tooltip("Coração Ardente. Efeito: fração a mais de lascas por nível (GDD v7: 0,5; 20 níveis = o teto de +1000%).")]
+        [SerializeField] UpgradeLineValues burningHeart = new UpgradeLineValues(10, 2, 0, 0.5, CostFormula.OffsetExponential);
+        [Tooltip("Dedos Nervosos. Efeito: chance de crítico a mais por nível, no golpe e no toque (GDD v7: 0,05).")]
+        [SerializeField] UpgradeLineValues nervousFingers = new UpgradeLineValues(10, 2, 0, 0.05, CostFormula.OffsetExponential);
+        [Tooltip("Alma dos Anões. Efeito: níveis de Picareta com que a run começa, por nível (GDD v7: 1).")]
+        [SerializeField] UpgradeLineValues dwarfSoul = new UpgradeLineValues(10, 2, 0, 1, CostFormula.OffsetExponential);
+
         /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos só valem no CaveScaled.</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
 
@@ -126,6 +150,17 @@ namespace MinersIdle.Game
             tapReach, arrivalStrike, swingRecovery,
             pickaxeFormula, pickaxeFormula == PickaxeFormula.CaveScaled ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
             levelsPerBiome);
+
+        /// <summary>O descanso, as lascas vermelhas e as permanentes deste balanço (Marco 8b). Sem descanso no asset, nada disso.</summary>
+        public PermanentRules ToPermanents()
+        {
+            if (restLevel <= 0) return PermanentRules.None;
+            var table = new RedShardTable(restLevel, redShardMilestoneStep, redShardMilestone, redShardBigMilestoneFrom,
+                                          redShardBigMilestone, redShardPerLevel);
+            // Na ordem do PermanentId.
+            return new PermanentRules(restLevel, table, memory.ToDefinition(), mountainBlood.ToDefinition(),
+                                      burningHeart.ToDefinition(), nervousFingers.ToDefinition(), dwarfSoul.ToDefinition());
+        }
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance);
@@ -155,7 +190,8 @@ namespace MinersIdle.Game
     [Serializable]
     public sealed class UpgradeLineValues
     {
-        [Tooltip("Exponential: inicial × crescimento^nível. Linear: inicial + passo × nível (o passo é o crescimento).")]
+        [Tooltip("Exponential: inicial × crescimento^nível. Linear: inicial + passo × nível (o passo é o crescimento). " +
+                 "OffsetExponential: inicial + crescimento^nível (as permanentes do GDD v7).")]
         [SerializeField] CostFormula costFormula;
         [Tooltip("Custo da 1ª compra.")]
         [SerializeField] double baseCost;

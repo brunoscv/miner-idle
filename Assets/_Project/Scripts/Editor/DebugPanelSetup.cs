@@ -199,7 +199,15 @@ namespace MinersIdle.EditorTools
             }),
             // Os botões dos Cálculos (E3b-3) nascem no próprio menu (CalculationsSetup), não vêm da grade do DBG.
             (CalcMenuName, "Calc", "Cálculos", CalcMenuHeight, System.Array.Empty<string>()),
+            // Os do Dia (Marco 8b) também nascem no próprio menu (DayDebugSetup).
+            (DayMenuName, "Day", "Dia", DayMenuHeight, System.Array.Empty<string>()),
         };
+
+        internal const string DayMenuName = "DayMenu";
+
+        /// <summary>O menu Dia: o resumo do dia e das permanentes no alto (<see cref="DayTextHeight"/>) e 2 fileiras de botões.</summary>
+        internal const float DayMenuHeight = 80f;
+        internal const float DayTextHeight = 32f;
 
         internal const string CalcMenuName = "CalcMenu";
 
@@ -208,7 +216,7 @@ namespace MinersIdle.EditorTools
         internal const float CalcTextHeight = 24f;
 
         /// <summary>A ordem dos botões que ficam no DBG.</summary>
-        static readonly string[] MainButtons = { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc" };
+        static readonly string[] MainButtons = { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day" };
 
         /// <summary>Altura da faixa do nível e custo das melhorias, no alto da Loja.</summary>
         const float ShopUpgradesHeight = 34f;
@@ -239,7 +247,8 @@ namespace MinersIdle.EditorTools
                 if (menu == null)
                 {
                     menu = CreateMenu(panel, name, height,
-                                      name == "ShopMenu" ? ShopUpgradesHeight : name == CalcMenuName ? CalcTextHeight : 0f);
+                                      name == "ShopMenu" ? ShopUpgradesHeight : name == CalcMenuName ? CalcTextHeight
+                                      : name == DayMenuName ? DayTextHeight : 0f);
                     var open = CreateButton(grid, buttonName, label);
                     GrayboxSetup.SetReferences(debugPanel, (MenuField(name, "Button"), open),
                                                (MenuField(name, "Menu"), menu.GetComponent<DebugMenu>()));

@@ -34,6 +34,8 @@ namespace MinersIdle.Core
         readonly EconomyRules _economy;
         readonly StrikeRules _strike;
         readonly IRandom _critRandom;
+        readonly Permanents _permanents;
+        bool _rested;
 
         MinerStats _stats;
         double _spawnTimer;
@@ -55,8 +57,12 @@ namespace MinersIdle.Core
         /// </param>
         /// <param name="economy">Melhorias à venda. Sem ela, nenhuma linha vende e os atributos são os valores base (o jogo do M2).</param>
         /// <param name="strike">Crítico, toque e combo. Sem elas, não há crítico (o jogo do M2–M4).</param>
+        /// <param name="permanents">
+        /// O dia e as melhorias permanentes (Marco 8b), que passam de uma run para a outra. Sem elas, não há descanso nem
+        /// permanentes (o jogo até o GDD v5).
+        /// </param>
         public MiningSimulation(MiningRules rules, IRandom random, GameState state = null, EconomyRules economy = null,
-                                StrikeRules strike = null)
+                                StrikeRules strike = null, Permanents permanents = null)
         {
             _rules = rules ?? throw new ArgumentNullException(nameof(rules));
             _critRandom = random ?? throw new ArgumentNullException(nameof(random));
@@ -65,7 +71,8 @@ namespace MinersIdle.Core
             _state = state ?? new GameState();
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
-            _stats = MinerStats.Compute(_rules, _economy, _state);
+            _permanents = permanents ?? Permanents.None();
+            _stats = ComputeStats();
             ArrivalStrike = rules.ArrivalStrike;
             _miner = new Miner();
             _track = new CrystalTrack(rules);
@@ -107,10 +114,18 @@ namespace MinersIdle.Core
         /// caverna, sem passagem.
         /// </summary>
         public event Action HeartReached;
+        /// <summary>
+        /// O banco de lascas vermelhas ou os níveis das permanentes mudaram (Marco 8b): compra, atalhos do debug. O
+        /// descanso não avisa por aqui: depois dele a run é outra (<see cref="Rest"/>).
+        /// </summary>
+        public event Action PermanentsChanged;
 
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
         public StrikeRules Strike => _strike;
+
+        /// <summary>O dia e as melhorias permanentes (Marco 8b): os mesmos de uma run para a outra.</summary>
+        public Permanents Permanents => _permanents;
 
         /// <summary>Toques seguidos, cada um a menos de <see cref="StrikeRules.ComboWindow"/> do anterior.</summary>
         public int Combo => _combo;
@@ -241,10 +256,10 @@ namespace MinersIdle.Core
         /// </summary>
         public PurchaseResult Purchase(UpgradeId id)
         {
-            var result = Purchases.TryPurchase(_state, _economy, id, _rules);
+            var result = Purchases.TryPurchase(_state, _economy, id, _rules, _permanents);
             if (result != PurchaseResult.Purchased) return result;
 
-            _stats = MinerStats.Compute(_rules, _economy, _state);
+            _stats = ComputeStats();
             UpgradePurchased?.Invoke(id, _state.LevelOf(id));
             StatsChanged?.Invoke(_stats);
             ShardsChanged?.Invoke(_state.Shards);
@@ -323,13 +338,90 @@ namespace MinersIdle.Core
             return true;
         }
 
+        /// <summary>Os cristais que a trava do Mapa pede agora: os das regras, menos os da Memória (Marco 8b).</summary>
+        public long MapLock => Purchases.MapLock(_rules, _permanents);
+
         /// <summary>Atalho do debug: a trava do Letrado cumprida (os cristais da caverna, sem quebrar).</summary>
         public void FillCaveBreaks()
         {
-            if (_state.CaveBreaks >= _rules.LetradoBreaks) return;
-            _state.SetCaveBreaks(_rules.LetradoBreaks);
+            long goal = MapLock;
+            if (_state.CaveBreaks >= goal) return;
+            _state.SetCaveBreaks(goal);
             CaveChanged?.Invoke(_state.Cave);
         }
+
+        /// <summary>
+        /// Se o botão Descansar vale agora (Marco 8b, D-152): o balanço tem descanso e a run chegou ao nível mínimo (GDD v7:
+        /// 10). Depois de descansar, esta run acabou: não vale mais.
+        /// </summary>
+        public bool CanRest => !_rested && _permanents.Rules.IsRestEnabled && _state.Cave >= _permanents.Rules.RestLevel;
+
+        /// <summary>Esta run já terminou num descanso (<see cref="Rest"/>); quem a dirige começa outra.</summary>
+        public bool HasRested => _rested;
+
+        /// <summary>As lascas vermelhas que o jogador leva se descansar agora (D-138: a tabela até o nível atual).</summary>
+        public double PendingRedShards => _permanents.Pending(_state.Cave);
+
+        /// <summary>Quantas lascas vermelhas o próximo nível somaria (o modal mostra, D-153); 0 no último nível.</summary>
+        public double NextLevelRedShards =>
+            _permanents.Rules.IsRestEnabled && _state.Cave < _rules.CaveCount ? _permanents.Rules.RedShards.At(_state.Cave + 1) : 0;
+
+        /// <summary>
+        /// Descansar (Marco 8b, D-137): as lascas vermelhas pendentes vão para o banco, o dia avança e esta run acaba (a
+        /// simulação continua de pé, mas <see cref="CanRest"/> fica falso; a run nova sai de
+        /// <see cref="Core.Permanents.NewRun"/>). <paramref name="force"/> = o atalho do debug, em qualquer nível. <c>null</c>
+        /// se não dá para descansar.
+        /// </summary>
+        public RestSummary? Rest(bool force = false)
+        {
+            if (_rested || (!force && !CanRest)) return null;
+            _rested = true;
+            return _permanents.Rest(_state);
+        }
+
+        /// <summary>
+        /// Compra o próximo nível da melhoria permanente com lascas vermelhas (Marco 8b). O efeito vale na hora (D-155):
+        /// atributos recalculados e, para a Memória, a trava do Mapa (avisa por <see cref="CaveChanged"/>, como os atalhos).
+        /// </summary>
+        public PurchaseResult PurchasePermanent(PermanentId id)
+        {
+            var result = _permanents.TryPurchase(id);
+            if (result == PurchaseResult.Purchased) OnPermanentsChanged();
+            return result;
+        }
+
+        /// <summary>Atalho do debug: soma lascas vermelhas ao banco.</summary>
+        public void AddRedShards(double amount)
+        {
+            if (amount < 0 || double.IsNaN(amount)) throw new ArgumentOutOfRangeException(nameof(amount));
+            _permanents.State.AddRedShards(amount);
+            PermanentsChanged?.Invoke();
+        }
+
+        /// <summary>Atalho do debug: um nível de graça em cada permanente que ainda sobe. <c>false</c> se todas no limite.</summary>
+        public bool GrantPermanentLevels()
+        {
+            if (!_permanents.GrantLevels()) return false;
+            OnPermanentsChanged();
+            return true;
+        }
+
+        /// <summary>Atalho do debug: banco, níveis e dia das permanentes do zero; a run continua.</summary>
+        public void ResetPermanents()
+        {
+            _permanents.State.Clear();
+            OnPermanentsChanged();
+        }
+
+        void OnPermanentsChanged()
+        {
+            _stats = ComputeStats();
+            PermanentsChanged?.Invoke();
+            StatsChanged?.Invoke(_stats);
+            CaveChanged?.Invoke(_state.Cave); // a trava do Mapa pode ter mudado (Memória)
+        }
+
+        MinerStats ComputeStats() => MinerStats.Compute(_rules, _economy, _state, _permanents);
 
         /// <summary>
         /// Atalho do debug: a próxima caverna agora, sem parede, como se tivesse comprado o Letrado (de graça) e passado.
@@ -367,7 +459,7 @@ namespace MinersIdle.Core
         {
             _state.EnterCave(cave);
             _track.SetCrystalValues(_rules.CrystalHealthIn(cave), _rules.CrystalRewardIn(cave));
-            _stats = MinerStats.Compute(_rules, _economy, _state);
+            _stats = ComputeStats();
             StatsChanged?.Invoke(_stats);
             CaveChanged?.Invoke(cave);
         }
@@ -384,7 +476,7 @@ namespace MinersIdle.Core
         }
 
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
-        public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id);
+        public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id, _permanents);
 
         /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, alvo (o primeiro da fila), golpe.</summary>
         void ProcessDueEvents()

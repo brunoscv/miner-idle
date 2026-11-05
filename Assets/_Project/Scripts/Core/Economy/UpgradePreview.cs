@@ -62,7 +62,9 @@ namespace MinersIdle.Core
         /// <summary>Linha desligada no asset (limite 0), como as Botas no GDD v1.</summary>
         public bool IsEnabled => MaxLevel > 0;
 
-        public static UpgradePreview For(MiningRules rules, EconomyRules economy, GameState state, UpgradeId id)
+        /// <param name="permanents">As melhorias permanentes (Marco 8b): entram nos atributos e na trava do Mapa.</param>
+        public static UpgradePreview For(MiningRules rules, EconomyRules economy, GameState state, UpgradeId id,
+                                         Permanents permanents = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
 
@@ -70,7 +72,7 @@ namespace MinersIdle.Core
             int level = state.LevelOf(id);
             double? cost = Purchases.NextCost(state, economy, id);
 
-            var blocked = cost == null ? null : Purchases.Blocked(state, rules, id);
+            var blocked = cost == null ? null : Purchases.Blocked(state, rules, id, permanents);
             var buttonState = cost == null ? UpgradeButtonState.Maxed
                 : blocked == PurchaseResult.PassFirst ? UpgradeButtonState.PassFirst
                 : blocked == PurchaseResult.Locked ? UpgradeButtonState.Locked
@@ -80,13 +82,13 @@ namespace MinersIdle.Core
             if (id == UpgradeId.Letrado)
             {
                 // "Caverna 1 » 2": a caverna em que está e a que o Letrado abre.
-                long goal = rules.LetradoBreaks;
+                long goal = Purchases.MapLock(rules, permanents);
                 return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, state.Cave, state.Cave + 1,
                                           Math.Min(state.CaveBreaks, goal), goal);
             }
 
-            double current = ValueOf(id, MinerStats.Compute(rules, economy, state));
-            double next = cost == null ? current : ValueOf(id, MinerStats.Compute(rules, economy, state, raised: id));
+            double current = ValueOf(id, MinerStats.Compute(rules, economy, state, permanents));
+            double next = cost == null ? current : ValueOf(id, MinerStats.Compute(rules, economy, state, id, permanents));
 
             return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, current, next, 0, 0);
         }

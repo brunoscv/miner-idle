@@ -18,6 +18,9 @@ namespace MinersIdle.Game
     /// Cálculos (M8 E3b-3, D-143): o balanço sai de <see cref="Balances"/> (o primeiro é o do GDD) e a taxa e o incremento
     /// da Picareta podem ser trocados pelo DBG (<see cref="UseCalculation"/>). A escolha só é lida e gravada no aparelho
     /// pelo caminho do <c>GameBootstrap</c>, como o save, e nunca num build de release (lá vale sempre o GDD).
+    ///
+    /// Dia e melhorias permanentes (Marco 8b): o <see cref="PermanentState"/> fica aqui, de uma partida para a outra;
+    /// <see cref="Rest"/> encerra o dia e começa a run nova com ele. (Até a E2 do 8b, ele não vai para o save.)
     /// </summary>
     public sealed class MiningRunner : MonoBehaviour
     {
@@ -40,6 +43,7 @@ namespace MinersIdle.Game
         SaveService _save;
         CalculationStore _calculations;
         CalculationChoice _calculation;
+        PermanentState _permanent = new PermanentState();
         float _autosaveTimer;
 
         /// <summary>Multiplicador do tempo de jogo (o ×5/×20 do painel de debug).</summary>
@@ -91,6 +95,12 @@ namespace MinersIdle.Game
 
         /// <summary>Uma partida começou (no início da cena ou ao reiniciar). Quem desenha refaz tudo a partir dela.</summary>
         public event Action<MiningSimulation> SimulationStarted;
+
+        /// <summary>
+        /// O dia terminou num descanso (Marco 8b), com o resumo (D-154). Sai depois do <see cref="SimulationStarted"/> da
+        /// run nova: quem mostra o resumo já encontra a run de amanhã por trás.
+        /// </summary>
+        public event Action<RestSummary> Rested;
 
         void Awake()
         {
@@ -176,9 +186,32 @@ namespace MinersIdle.Game
 
         /// <summary>
         /// "Reiniciar run" do DBG (E3b-3): volta ao nível 1, com as lascas e as melhorias base zeradas, numa fila nova. O
-        /// save não é apagado: a run nova o substitui na próxima gravação. (Quando houver melhorias permanentes, elas ficam.)
+        /// save não é apagado: a run nova o substitui na próxima gravação. As melhorias permanentes ficam, e a Picareta já
+        /// começa com a Alma dos Anões, como depois de um descanso (mas o dia não avança nem entram lascas vermelhas).
         /// </summary>
-        public void RestartRun() => Begin(useFixedSeed ? (ulong)fixedSeed : NewSeed(), new GameState());
+        public void RestartRun() => Begin(RunSeed(), NewRun());
+
+        /// <summary>
+        /// Descansar (Marco 8b, D-137): leva as lascas vermelhas pendentes para o banco, avança o dia e começa a run nova
+        /// (nível 1, sem lascas nem melhorias base, a Picareta com a Alma dos Anões), numa fila nova. As permanentes ficam.
+        /// <paramref name="force"/> = o atalho do debug, em qualquer nível. Devolve o resumo do dia, ou <c>null</c> se não dá
+        /// para descansar.
+        /// </summary>
+        public RestSummary? Rest(bool force = false)
+        {
+            var summary = Simulation?.Rest(force);
+            if (summary == null) return null;
+
+            Begin(RunSeed(), NewRun());
+            SaveNow();
+            try { Rested?.Invoke(summary.Value); }
+            catch (Exception e) { Debug.LogException(e, this); }
+            return summary;
+        }
+
+        GameState NewRun() => Simulation != null ? Simulation.Permanents.NewRun(Economy()) : new GameState();
+
+        ulong RunSeed() => useFixedSeed ? (ulong)fixedSeed : NewSeed();
 
         void ApplyCalculation(CalculationChoice choice)
         {
@@ -191,11 +224,12 @@ namespace MinersIdle.Game
         MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth);
         EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep);
 
-        /// <summary>Apaga o save e começa do zero (o "Apagar save" do debug).</summary>
+        /// <summary>Apaga o save e começa do zero, as melhorias permanentes também (o "Apagar save" do debug).</summary>
         public void ResetProgress()
         {
             _save?.Delete();
-            Begin(useFixedSeed ? (ulong)fixedSeed : NewSeed(), new GameState());
+            _permanent = new PermanentState();
+            Begin(RunSeed(), new GameState());
         }
 
         /// <summary>Grava o progresso agora (sem save ligado, não faz nada). Um erro de disco vai para o log, não derruba o jogo.</summary>
@@ -225,7 +259,8 @@ namespace MinersIdle.Game
 
             Seed = seed;
             Simulation = new MiningSimulation(
-                CurrentRules(), new SeededRandom(CritSeed(seed)), state, Economy(), rules.ToStrike())
+                CurrentRules(), new SeededRandom(CritSeed(seed)), state, Economy(), rules.ToStrike(),
+                new Permanents(rules.ToPermanents(), _permanent))
             {
                 ForceCritical = _forceCritical,
             };

@@ -88,6 +88,9 @@ namespace MinersIdle.UI
         [Tooltip("DBG → Cálculos (M8 E3b-3, D-143): balanço, taxa e incremento da Picareta, Reiniciar run.")]
         [SerializeField] Button calcButton;
         [SerializeField] DebugMenu calcMenu;
+        [Tooltip("DBG → Dia (Marco 8b, D-159): lascas vermelhas, Descansar agora, permanentes.")]
+        [SerializeField] Button dayButton;
+        [SerializeField] DebugMenu dayMenu;
 
         readonly object[] _statsArgs = new object[16];
 
@@ -141,6 +144,7 @@ namespace MinersIdle.UI
             if (effectsButton != null) effectsButton.onClick.AddListener(ToggleEffects);
             if (caveButton != null) caveButton.onClick.AddListener(ToggleCave);
             if (calcButton != null) calcButton.onClick.AddListener(ToggleCalc);
+            if (dayButton != null) dayButton.onClick.AddListener(ToggleDay);
         }
 
         void OnDisable()
@@ -174,6 +178,7 @@ namespace MinersIdle.UI
             if (effectsButton != null) effectsButton.onClick.RemoveListener(ToggleEffects);
             if (caveButton != null) caveButton.onClick.RemoveListener(ToggleCave);
             if (calcButton != null) calcButton.onClick.RemoveListener(ToggleCalc);
+            if (dayButton != null) dayButton.onClick.RemoveListener(ToggleDay);
         }
 
         void Update()
@@ -211,6 +216,7 @@ namespace MinersIdle.UI
             if (effectsMenu != null) effectsMenu.Hide();
             if (caveMenu != null) caveMenu.Hide();
             if (calcMenu != null) calcMenu.Hide();
+            if (dayMenu != null) dayMenu.Hide();
         }
 
         static bool IsMenuOpen(DebugMenu menu) => menu != null && menu.IsOpen;
@@ -219,6 +225,7 @@ namespace MinersIdle.UI
         void ToggleEffects() => ToggleMenu(effectsMenu);
         void ToggleCave() => ToggleMenu(caveMenu);
         void ToggleCalc() => ToggleMenu(calcMenu);
+        void ToggleDay() => ToggleMenu(dayMenu);
 
         void SetSpeed1() => runner.TimeScale = 1f;
         void SetSpeed5() => runner.TimeScale = 5f;

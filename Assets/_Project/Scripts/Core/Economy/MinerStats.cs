@@ -37,19 +37,21 @@ namespace MinersIdle.Core
         /// taxa^(caverna − 1) (GDD v7, D-133; <see cref="MiningRules.PickaxeFormula"/>), × (Dupla.efeito se comprada) ×
         /// (Letrado.efeito da caverna 2 em diante, com o Letrado dela comprado: GDD v5, M8); crítico = Crítico.efeito × n;
         /// intervalo = max(mínimo, base − Velocidade.efeito × n); caminhada = base × (1 + Botas.efeito × n);
-        /// lascas = × (1 + Mineração.efeito × n).
+        /// lascas = × (1 + Mineração.efeito × n). Desde o Marco 8b, as permanentes (D-158): o dano final × Sangue da
+        /// Montanha, as lascas × Coração Ardente e o crítico + Dedos Nervosos (<paramref name="permanents"/>; sem elas, nada).
         /// </summary>
-        public static MinerStats Compute(MiningRules rules, EconomyRules economy, GameState state)
+        public static MinerStats Compute(MiningRules rules, EconomyRules economy, GameState state, Permanents permanents = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
-            return Compute(rules, economy, state, raised: null);
+            return Compute(rules, economy, state, raised: null, permanents);
         }
 
         /// <summary>
         /// Os atributos com os níveis de <paramref name="state"/>, mas com a linha <paramref name="raised"/> um nível acima:
         /// é o "depois da compra" da prévia da loja (<see cref="UpgradePreview"/>).
         /// </summary>
-        internal static MinerStats Compute(MiningRules rules, EconomyRules economy, GameState state, UpgradeId? raised)
+        internal static MinerStats Compute(MiningRules rules, EconomyRules economy, GameState state, UpgradeId? raised,
+                                           Permanents permanents = null)
         {
             if (rules == null) throw new ArgumentNullException(nameof(rules));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
@@ -64,14 +66,18 @@ namespace MinersIdle.Core
             // O Letrado n dobra o dano na caverna n+1, a que ele abriu (só se chega nela com ele comprado).
             if (state.Cave > 1 && Level(UpgradeId.Letrado) >= state.Cave - 1) damage *= economy.Get(UpgradeId.Letrado).Effect;
 
+            if (permanents != null) damage *= permanents.DamageMultiplier;
+
             double interval = Math.Max(
                 economy.MinHitInterval,
                 rules.HitInterval - economy.Get(UpgradeId.Speed).Effect * Level(UpgradeId.Speed));
 
             double walk = rules.WalkSpeed * (1 + economy.Get(UpgradeId.Boots).Effect * Level(UpgradeId.Boots));
             double reward = 1 + economy.Get(UpgradeId.Mining).Effect * Level(UpgradeId.Mining);
+            if (permanents != null) reward *= permanents.RewardMultiplier;
 
             double crit = economy.Get(UpgradeId.Critical).Effect * Level(UpgradeId.Critical);
+            if (permanents != null) crit += permanents.CritBonus;
 
             return new MinerStats(damage, interval, walk, reward, crit);
         }

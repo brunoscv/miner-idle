@@ -91,6 +91,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV5Caves();
             EnsureGddV7Balance();
             EnsureGddV7HundredLevels();
+            EnsureGddV7Permanents();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -489,6 +490,36 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v7: 100 níveis, bioma a cada 10 e o Mapa de graça até o nível 100 (D-128, D-129).");
+        }
+
+        /// <summary>
+        /// Marco 8b (D-138, D-152, D-158): no v7, o Descansar a partir do nível 10, as lascas vermelhas da tabela do §3.1
+        /// (5 nos níveis 10–40 múltiplos de 10, 10 nos 50–100, 1 nos outros) e as 5 permanentes do anão, todas
+        /// <c>10 + 2^(n−1)</c>: Memória (−10 cristais, 10 níveis), Sangue da Montanha (+10% de dano, 20), Coração Ardente
+        /// (+50% de lascas, 20), Dedos Nervosos (+5% de crítico, 10) e Alma dos Anões (+1 nível de Picareta, 10).
+        /// </summary>
+        static void EnsureGddV7Permanents()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            if (serialized.FindProperty("restLevel").intValue == 10) return;
+
+            serialized.FindProperty("restLevel").intValue = 10;
+            serialized.FindProperty("redShardMilestoneStep").intValue = 10;
+            serialized.FindProperty("redShardMilestone").doubleValue = 5;
+            serialized.FindProperty("redShardBigMilestoneFrom").intValue = 50;
+            serialized.FindProperty("redShardBigMilestone").doubleValue = 10;
+            serialized.FindProperty("redShardPerLevel").doubleValue = 1;
+            SetLine(serialized, "memory", 10, 2, 10, 10, CostFormula.OffsetExponential);
+            SetLine(serialized, "mountainBlood", 10, 2, 20, 0.1, CostFormula.OffsetExponential);
+            SetLine(serialized, "burningHeart", 10, 2, 20, 0.5, CostFormula.OffsetExponential);
+            SetLine(serialized, "nervousFingers", 10, 2, 10, 0.05, CostFormula.OffsetExponential);
+            SetLine(serialized, "dwarfSoul", 10, 2, 10, 1, CostFormula.OffsetExponential);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v7: Descansar a partir do nível 10, lascas vermelhas e as 5 permanentes do anão (Marco 8b, D-158).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

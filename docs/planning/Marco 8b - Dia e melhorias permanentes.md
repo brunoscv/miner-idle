@@ -1,6 +1,6 @@
 # Marco 8b — Dia e melhorias permanentes
 
-> Plano de 2026-11-05. **Decisões respondidas pelo Bruno no mesmo dia (D-151…D-159).** Base: GDD v7 ([`docs/gdd v7.pdf`](../gdd%20v7.pdf), D-132) e as decisões já tomadas: **D-137** (o botão de encerrar a run), **D-138** (lascas vermelhas), **D-143** (o padrão é o GDD; as alternativas de custo ficam no DBG → Cálculos). Revê a **D-112** (o jogo continuava na caverna 10, sem reset). Vem **depois do M8** (usa os 100 níveis) e **antes do M7** (as duas permanentes do estagiário e a aba dele na loja entram lá). **Só começa quando o M8 for aprovado**: falta a validação da E3b-3 e o teste no Moto G75.
+> Plano de 2026-11-05. **Decisões respondidas pelo Bruno no mesmo dia (D-151…D-159).** Base: GDD v7 ([`docs/gdd v7.pdf`](../gdd%20v7.pdf), D-132) e as decisões já tomadas: **D-137** (o botão de encerrar a run), **D-138** (lascas vermelhas), **D-143** (o padrão é o GDD; as alternativas de custo ficam no DBG → Cálculos). Revê a **D-112** (o jogo continuava na caverna 10, sem reset). Vem **depois do M8** (usa os 100 níveis) e **antes do M7** (as duas permanentes do estagiário e a aba dele na loja entram lá). O M8 foi **aprovado em 2026-11-05 (D-160)**; o teste no Moto G75 dele vai junto com o da E5 deste marco.
 >
 > Nome do arquivo: "8b" segue o precedente do M1b (um marco que nasceu entre dois números). Se preferir outro número, é só renomear.
 
@@ -216,4 +216,9 @@ Por volta de **25–30 h** no total, umas 1,5 semana a 20 h/semana.
 
 ## Estado
 
-- **2026-11-05:** plano escrito; as decisões 1–9 foram respondidas pelo Bruno no mesmo dia (D-151…D-159). O marco começa depois do M8 aprovado (validação da E3b-3 e teste no Moto G75).
+- **2026-11-05:** plano escrito; as decisões 1–9 foram respondidas pelo Bruno no mesmo dia (D-151…D-159). 
+- **2026-11-05:** M8 aprovado (D-160).
+
+| Etapa | Estado | Notas |
+|---|---|---|
+| E1 Núcleo e DBG → Dia | 🧪 implementada em 2026-11-05, aguardando validação do Bruno | Core: `PermanentId` (as 5 do anão), `RedShardTable` e `PermanentRules` (nível mínimo de descansar, tabela, linhas), `PermanentState` (banco, dia, níveis), `Permanents` (efeitos da D-158, compra, descanso, run nova com a Alma). Custo novo `CostFormula.OffsetExponential` (`inicial + crescimento^nível`). `MinerStats`, `Purchases` (trava `MapLock`) e `UpgradePreview` recebem as permanentes. `MiningSimulation`: `CanRest`, `PendingRedShards`, `NextLevelRedShards`, `Rest`, `PurchasePermanent`, `MapLock`, atalhos do debug e o evento `PermanentsChanged`. `MiningRunner`: o `PermanentState` fica de uma run para a outra; `Rest()` e o evento `Rested` (sai depois do `SimulationStarted` da run nova); Reiniciar run aplica a Alma; Apagar save zera as permanentes. Dados: `MiningRulesAsset` com o descanso e as 5 linhas (desligados por padrão; o setup grava os do GDD no `Balance_GDD_v7`). DBG → **Dia** (`DayDebugPanel`): +10/+100 vermelhas, Descansar agora, +1 nv permanentes, Zerar permanentes e o resumo no alto. **Ainda não vai para o save (E2):** fechar o jogo perde as permanentes. Testes: EditMode `PermanentTests` (+15), PlayMode `DayDebugPanelTests` (+3), `DebugPanelTests` mede o botão Dia. Em batch: setup ok, EditMode **250/250**, PlayMode **94/94** |

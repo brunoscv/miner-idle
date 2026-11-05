@@ -85,3 +85,39 @@ MonoBehaviour:
   tapReach: 3.9
   arrivalStrike: 2
   swingRecovery: 0.72
+  restLevel: 10
+  redShardMilestoneStep: 10
+  redShardMilestone: 5
+  redShardBigMilestoneFrom: 50
+  redShardBigMilestone: 10
+  redShardPerLevel: 1
+  memory:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 10
+    effect: 10
+  mountainBlood:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 20
+    effect: 0.1
+  burningHeart:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 20
+    effect: 0.5
+  nervousFingers:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 10
+    effect: 0.05
+  dwarfSoul:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 10
+    effect: 1

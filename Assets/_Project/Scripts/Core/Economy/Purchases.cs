@@ -42,24 +42,28 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// A trava do Letrado (M8, GDD v5, D-93): o nível <i>n</i> só se compra na caverna <i>n</i> (um por caverna) e depois
-        /// de <see cref="MiningRules.LetradoBreaks"/> cristais quebrados nela. <c>null</c> = liberado (as outras linhas
-        /// nunca travam).
+        /// de <see cref="MiningRules.LetradoBreaks"/> cristais quebrados nela (menos os da Memória, Marco 8b:
+        /// <see cref="MapLock"/>). <c>null</c> = liberado (as outras linhas nunca travam).
         /// </summary>
-        public static PurchaseResult? Blocked(GameState state, MiningRules rules, UpgradeId id)
+        public static PurchaseResult? Blocked(GameState state, MiningRules rules, UpgradeId id, Permanents permanents = null)
         {
             if (id != UpgradeId.Letrado) return null;
             if (state.LevelOf(id) >= state.Cave) return PurchaseResult.PassFirst;
-            if (state.CaveBreaks < rules.LetradoBreaks) return PurchaseResult.Locked;
+            if (state.CaveBreaks < MapLock(rules, permanents)) return PurchaseResult.Locked;
             return null;
         }
 
+        /// <summary>Os cristais que a trava do Mapa pede: os das regras, menos os da Memória (D-158).</summary>
+        public static long MapLock(MiningRules rules, Permanents permanents = null) =>
+            permanents != null ? permanents.MapLock(rules) : rules.LetradoBreaks;
+
         /// <param name="rules">Para a trava do Letrado (<see cref="Blocked"/>). Sem ela, nada trava.</param>
         public static PurchaseResult TryPurchase(GameState state, EconomyRules economy, UpgradeId id,
-                                                 MiningRules rules = null)
+                                                 MiningRules rules = null, Permanents permanents = null)
         {
             double? cost = NextCost(state, economy, id);
             if (cost == null) return PurchaseResult.MaxLevel;
-            var blocked = rules != null ? Blocked(state, rules, id) : null;
+            var blocked = rules != null ? Blocked(state, rules, id, permanents) : null;
             if (blocked != null) return blocked.Value;
             if (!CanAfford(state.Shards, cost.Value)) return PurchaseResult.NotEnoughShards;
 

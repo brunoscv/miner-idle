@@ -37,12 +37,18 @@ namespace MinersIdle.Core
         /// no GDD v7, "2 × Dano Base" (D-133), com inicial 2 e passo 2.
         /// </summary>
         Linear,
+        /// <summary>
+        /// <c>inicial + crescimento^nível</c>: as melhorias permanentes do GDD v7 (§4.2, D-158), <c>10 + 2^(n−1)</c> com
+        /// <i>n</i> a compra (11, 12, 14, 18…; 10 compras somam 1.123).
+        /// </summary>
+        OffsetExponential,
     }
 
     /// <summary>
     /// Uma linha de melhoria, somente leitura (D-35: formato do GDD, números no asset). O nível é o número de compras
     /// feitas e começa em 0 (D-38): a próxima compra custa <c>custo inicial × crescimento^nível</c>, ou
-    /// <c>inicial + passo × nível</c> na fórmula <see cref="CostFormula.Linear"/>.
+    /// <c>inicial + passo × nível</c> na fórmula <see cref="CostFormula.Linear"/>, ou <c>inicial + crescimento^nível</c> na
+    /// <see cref="CostFormula.OffsetExponential"/>.
     /// O significado de <see cref="Effect"/> depende da linha (ver <see cref="MinerStats"/>).
     /// </summary>
     public sealed class UpgradeDefinition
@@ -51,7 +57,7 @@ namespace MinersIdle.Core
                                  CostFormula costFormula = CostFormula.Exponential)
         {
             if (baseCost < 0 || double.IsNaN(baseCost)) throw new ArgumentOutOfRangeException(nameof(baseCost));
-            if (double.IsNaN(costGrowth) || costGrowth < 0 || (costGrowth == 0 && costFormula == CostFormula.Exponential))
+            if (double.IsNaN(costGrowth) || costGrowth < 0 || (costGrowth == 0 && costFormula != CostFormula.Linear))
                 throw new ArgumentOutOfRangeException(nameof(costGrowth));
             if (!Enum.IsDefined(typeof(CostFormula), costFormula)) throw new ArgumentOutOfRangeException(nameof(costFormula));
             if (maxLevel < 0) throw new ArgumentOutOfRangeException(nameof(maxLevel));
@@ -81,9 +87,12 @@ namespace MinersIdle.Core
         public double CostAt(int level)
         {
             if (level < 0) throw new ArgumentOutOfRangeException(nameof(level));
-            return CostFormula == CostFormula.Linear
-                ? BaseCost + CostGrowth * level
-                : BaseCost * Math.Pow(CostGrowth, level);
+            switch (CostFormula)
+            {
+                case CostFormula.Linear: return BaseCost + CostGrowth * level;
+                case CostFormula.OffsetExponential: return BaseCost + Math.Pow(CostGrowth, level);
+                default: return BaseCost * Math.Pow(CostGrowth, level);
+            }
         }
     }
 }
