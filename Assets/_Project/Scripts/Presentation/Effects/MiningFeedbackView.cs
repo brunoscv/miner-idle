@@ -17,6 +17,9 @@ namespace MinersIdle.Presentation
     ///
     /// M8 (E2): a parede da passagem apanha como um cristal; ao quebrar, estilhaços maiores de lado a lado do corredor e um
     /// tremor mais forte, sem a lasca voando (a parede não paga lascas, D-108).
+    ///
+    /// M7 (E2, D-171): o golpe do estagiário é mais leve que o do anão: poucas faíscas cinza, o cristal treme pouco, sem
+    /// tremor de tela; o dano sai no cristal, num número menor e cinza.
     /// </summary>
     public sealed class MiningFeedbackView : MiningViewBase
     {
@@ -24,6 +27,7 @@ namespace MinersIdle.Presentation
         static readonly Color TapSparkColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         static readonly Color CriticalColor = new Color32(0xFF, 0xE0, 0x3A, 0xFF);
         static readonly Color MilestoneColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        static readonly Color InternColor = new Color32(0xB8, 0xBC, 0xC2, 0xFF);
 
         const float ComboPulseSeconds = 0.15f;
 
@@ -73,6 +77,12 @@ namespace MinersIdle.Presentation
             set => _intensity = Mathf.Clamp(value, 0.25f, 3f);
         }
 
+        /// <summary>Quantos números de golpe do estagiário já subiram (para testes).</summary>
+        public int InternNumbersShown { get; private set; }
+
+        /// <summary>A cor do número dos golpes do estagiário (cinza, D-171).</summary>
+        public static Color InternNumberColor => InternColor;
+
         public bool IsComboShown => comboText.gameObject.activeSelf;
         public string ComboShown => comboText.text;
 
@@ -91,6 +101,7 @@ namespace MinersIdle.Presentation
         protected override void Subscribe(MiningSimulation simulation)
         {
             simulation.HitLanded += OnHit;
+            simulation.InternHitLanded += OnInternHit;
             simulation.CrystalBroken += OnBroken;
             simulation.ComboChanged += OnComboChanged;
             simulation.ComboMilestone += OnComboMilestone;
@@ -99,6 +110,7 @@ namespace MinersIdle.Presentation
         protected override void Unsubscribe(MiningSimulation simulation)
         {
             simulation.HitLanded -= OnHit;
+            simulation.InternHitLanded -= OnInternHit;
             simulation.CrystalBroken -= OnBroken;
             simulation.ComboChanged -= OnComboChanged;
             simulation.ComboMilestone -= OnComboMilestone;
@@ -144,6 +156,22 @@ namespace MinersIdle.Presentation
             var near = stage.MinerOnScreen + (Vector3)(Random.insideUnitCircle * 1.2f * sizeScale) + Vector3.up * (0.5f * sizeScale);
             floatingTexts.Show(texts.CriticalLabel, near, CriticalColor, 1.05f * sizeScale * 0.65f, 0.85f, 1.2f * sizeScale); // um pouco menor (pedido do Bruno)
             screenShake.Shake(criticalShake * calm * _intensity, criticalShakeSeconds);
+        }
+
+        /// <summary>
+        /// O golpe do estagiário (M7, E2, D-171): faíscas cinza e poucas, o cristal treme de leve e o dano sobe do cristal
+        /// num número menor e cinza. Sem tremor de tela: o anão continua sendo o golpe forte.
+        /// </summary>
+        void OnInternHit(MiningHit hit)
+        {
+            var at = stage.CrystalOnScreen(hit.Crystal);
+            float size = SparkBurst.DefaultSize * sizeScale;
+            stage.Shake(hit.Crystal, 0.04f * _intensity);
+            sparks.Emit(at, Count(4), InternColor, 3f * sizeScale, size * 0.7f);
+
+            var near = at + (Vector3)(Random.insideUnitCircle * 0.4f * sizeScale) + Vector3.up * (0.4f * sizeScale);
+            floatingTexts.Show(NumberFormatter.Format(hit.Damage), near, InternColor, 0.45f * sizeScale, 0.7f, 0.8f * sizeScale);
+            InternNumbersShown++;
         }
 
         void OnTapped(Vector2 screenPosition)

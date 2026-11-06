@@ -308,6 +308,8 @@ namespace MinersIdle.Presentation
 
         RenderTexture _target;
         bool _hitThisTarget;
+        // M7 (E2): o instante do último golpe do estagiário (InternHitLanded); a picaretada dele sai daqui.
+        double _lastInternHitAt = double.NegativeInfinity;
         bool _lastHitWasTap;
         bool _tapHitWhileStanding;
         double _lastSwingAt = double.NegativeInfinity;
@@ -684,6 +686,7 @@ namespace MinersIdle.Presentation
         protected override void Subscribe(MiningSimulation simulation)
         {
             simulation.HitLanded += OnHit;
+            simulation.InternHitLanded += OnInternHit;
             simulation.TargetChanged += OnTargetChanged;
             simulation.CrystalBroken += OnCrystalBroken;
             simulation.CaveChanged += OnCaveChanged;
@@ -692,6 +695,7 @@ namespace MinersIdle.Presentation
         protected override void Unsubscribe(MiningSimulation simulation)
         {
             simulation.HitLanded -= OnHit;
+            simulation.InternHitLanded -= OnInternHit;
             simulation.TargetChanged -= OnTargetChanged;
             simulation.CrystalBroken -= OnCrystalBroken;
             simulation.CaveChanged -= OnCaveChanged;
@@ -700,6 +704,7 @@ namespace MinersIdle.Presentation
         protected override void Rebuild(MiningSimulation simulation)
         {
             _hitThisTarget = false;
+            _lastInternHitAt = double.NegativeInfinity;
             _lastHitWasTap = false;
             _tapHitWhileStanding = false;
             _lastSwingAt = double.NegativeInfinity;
@@ -865,6 +870,15 @@ namespace MinersIdle.Presentation
             _hitThisTarget = false;
             _preparedTarget = null;
         }
+
+        /// <summary>
+        /// O estagiário bateu (M7): a picaretada dele começa do impacto, no relógio dele (só ilustra). Se o golpe dele quebra
+        /// o cristal, a volta da picareta vai até o fim, mesmo com o alvo já trocado.
+        /// </summary>
+        void OnInternHit(MiningHit hit) => _lastInternHitAt = Simulation.Elapsed;
+
+        /// <summary>Quando foi o último golpe do estagiário, no relógio da simulação (para testes).</summary>
+        public double LastInternHitAt => _lastInternHitAt;
 
         /// <summary>O cristal treme rápido ao levar um golpe (feedback do M5); só ilustra.</summary>
         public void Shake(Crystal crystal, float amplitude)
@@ -1131,7 +1145,7 @@ namespace MinersIdle.Presentation
                         Squashed(low ? lowDwarfSize : dwarfSize, simulation.Elapsed - _arrivedAt),
                         low ? lowDwarfFootGap : dwarfFootGap);
             PlaceShadow(_dwarfShadow, 0f, distance, DescentArt.ShadowSize.x);
-            LayoutIntern(sheets, running, runFrame, bounce, distance);
+            LayoutIntern(sheets, running && !holdingBreak, runFrame, bounce, distance);
 
             var crystals = simulation.Crystals;
             _drawnCrystals = Mathf.Min(crystals.Count, CrystalSlots);
@@ -1226,13 +1240,15 @@ namespace MinersIdle.Presentation
         }
 
         /// <summary>
-        /// O estagiário (D-76): as folhas grisalhas, ao lado e um pouco atrás do anão (D-57), no mesmo relógio, só com ele
-        /// contratado na simulação (M7). A corrida vem defasada; o golpe ainda acompanha o do anão (o golpe próprio dele na
-        /// tela é da E2 do M7).
+        /// O estagiário (D-76): as folhas grisalhas, ao lado e um pouco atrás do anão (D-57), só com ele contratado na
+        /// simulação (M7). Corre quando o anão corre, com a corrida defasada; parado no cristal (ou na parada da quebra e na
+        /// despedida do anão), a picaretada é a dele, pelo relógio dele (M7, E2): levanta antes do golpe dele, o impacto no
+        /// instante do dano e a volta depois.
         /// </summary>
         void LayoutIntern(bool sheets, bool running, int runFrame, float bounce, float distance)
         {
-            bool show = Simulation != null && Simulation.IsInternHired && sheets && internRunSheet != null && internMineSheet != null;
+            var simulation = Simulation;
+            bool show = simulation != null && simulation.IsInternHired && sheets && internRunSheet != null && internMineSheet != null;
             _intern.Visible = _internShadow.Visible = show;
             if (!show)
             {
@@ -1241,11 +1257,28 @@ namespace MinersIdle.Presentation
             }
 
             bool mining = !running || IsFinishing;
-            InternFrame = mining ? DwarfFrame : dwarfRunCycle[(runFrame + internRunLag) % dwarfRunCycle.Length];
+            InternFrame = mining ? InternMineFrame(simulation) : dwarfRunCycle[(runFrame + internRunLag) % dwarfRunCycle.Length];
             _intern.SetFrame(mining ? internMineSheet : internRunSheet, InternFrame, mining ? dwarfMineColumns : dwarfRunColumns);
             float z = distance + internOffset.y;
             PlaceOnFeet(_intern, new Vector3(internOffset.x, bounce, z), _dwarf.Transform.localRotation, dwarfSize, dwarfFootGap);
             PlaceShadow(_internShadow, internOffset.x, z, DescentArt.ShadowSize.x);
+        }
+
+        /// <summary>
+        /// O quadro do golpe do estagiário, como o <see cref="MineFrame"/> do anão, mas pelo relógio dele: levantar quando
+        /// falta pouco para o golpe dele (só se ele está batendo agora), a volta da picareta depois do último golpe dele (sem
+        /// o hit-stop, que é do anão) e, no resto, a pose parada.
+        /// </summary>
+        int InternMineFrame(MiningSimulation simulation)
+        {
+            double interval = simulation.InternStats.HitInterval;
+            double frame = MineFrameSeconds(interval);
+            // Antes do primeiro golpe, o instante é -∞ e a conta dá +∞: compara em double, antes de virar índice.
+            double strike = (simulation.Elapsed - _lastInternHitAt) / frame;
+            if (strike >= 0 && strike < dwarfMineStrike.Length) return dwarfMineStrike[(int)strike];
+            bool striking = simulation.Miner.State == MinerState.Mining && simulation.Miner.Target != null;
+            if (striking && WindUpFrame(interval - simulation.InternHitTimer, frame, out int windUp)) return windUp;
+            return dwarfMineRest;
         }
 
         /// <summary>
