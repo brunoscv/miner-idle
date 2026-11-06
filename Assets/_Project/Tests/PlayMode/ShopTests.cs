@@ -50,8 +50,9 @@ namespace MinersIdle.Tests
             Click("ShopButton");
             Assert.That(_shop.IsOpen, Is.True);
             Assert.That(_shop.Rows.Count, Is.EqualTo(8), "6 melhorias (Crítico desde o v7) + Estagiário + Letrado");
-            Assert.That(_shop.Rows.Count(r => r.IsLocked), Is.EqualTo(1), "só o Estagiário (o Letrado é de verdade desde o M8)");
-            Assert.That(_shop.Rows.Where(r => r.IsLocked).All(r => !r.CanBuy), Is.True, "linhas bloqueadas não compram (D-42)");
+            // O Letrado é de verdade desde o M8 e o Estagiário desde a E3 do M7 (D-174): nenhuma linha "Em breve".
+            Assert.That(_shop.Rows.Count(r => r.IsLocked), Is.EqualTo(0), "nenhuma linha bloqueada");
+            Assert.That(Row(UpgradeId.Intern).CanBuy, Is.False, "o Estagiário (500) sem lascas: apagado");
 
             var pickaxe = Row(UpgradeId.Pickaxe);
             Assert.That(pickaxe.CanBuy, Is.False, "sem lascas: apagado");

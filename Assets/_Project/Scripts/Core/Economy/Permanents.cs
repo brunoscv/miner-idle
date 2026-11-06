@@ -78,6 +78,13 @@ namespace MinersIdle.Core
         /// Se a linha ainda espera outra: a Promoção só se compra com o Treinar no limite (GDD v7 §4.2: "requer estagiário
         /// treinado nível 10").
         /// </summary>
+        /// <summary>
+        /// O nível que a linha de que esta depende precisa ter para ela abrir (a Promoção pede o Treinar no limite, D-169);
+        /// 0 numa linha que não espera outra.
+        /// </summary>
+        public int RequiredLevel(PermanentId id) =>
+            id == PermanentId.InternPromotion ? Rules.Get(PermanentId.InternTraining).MaxLevel : 0;
+
         public bool IsLocked(PermanentId id)
         {
             if (id != PermanentId.InternPromotion) return false;

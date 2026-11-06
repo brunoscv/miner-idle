@@ -8,8 +8,9 @@ namespace MinersIdle.Core
     public readonly struct PermanentPreview
     {
         PermanentPreview(PermanentId id, int level, int maxLevel, double? nextCost, UpgradeButtonState state,
-                         double currentValue, double nextValue)
+                         double currentValue, double nextValue, int requiredLevel)
         {
+            RequiredLevel = requiredLevel;
             Id = id;
             Level = level;
             MaxLevel = maxLevel;
@@ -38,6 +39,9 @@ namespace MinersIdle.Core
         /// <summary>O mesmo depois da próxima compra (igual a <see cref="CurrentValue"/> no limite).</summary>
         public double NextValue { get; }
 
+        /// <summary>Com <see cref="UpgradeButtonState.Locked"/>: o nível que a outra linha precisa ter (Treinar 10 para a Promoção).</summary>
+        public int RequiredLevel { get; }
+
         public bool IsMaxed => State == UpgradeButtonState.Maxed;
         /// <summary>Linha desligada no balanço ativo (limite 0, o GDD v5): some da aba.</summary>
         public bool IsEnabled => MaxLevel > 0;
@@ -53,7 +57,7 @@ namespace MinersIdle.Core
                 : UpgradeButtonState.NotEnoughShards;
             double current = line.Effect * level;
             double next = cost == null ? current : line.Effect * (level + 1);
-            return new PermanentPreview(id, level, line.MaxLevel, cost, state, current, next);
+            return new PermanentPreview(id, level, line.MaxLevel, cost, state, current, next, permanents.RequiredLevel(id));
         }
     }
 }

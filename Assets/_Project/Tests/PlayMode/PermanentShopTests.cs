@@ -35,7 +35,7 @@ namespace MinersIdle.Tests
             _runner = Object.FindAnyObjectByType<MiningRunner>();
             _shop = Object.FindAnyObjectByType<ShopView>();
             Assert.That(_shop, Is.Not.Null);
-            Assert.That(_shop.PermanentRows.Count, Is.EqualTo(5), "as 5 do anão (rode o setup do projeto)");
+            Assert.That(_shop.PermanentRows.Count, Is.EqualTo(7), "as 5 do anão e as 2 do estagiário, M7 (rode o setup do projeto)");
             if (!Simulation.Permanents.Rules.IsRestEnabled)
                 Assert.Ignore("O balanço ativo não tem permanentes (rode o setup do projeto: GDD v7).");
         }

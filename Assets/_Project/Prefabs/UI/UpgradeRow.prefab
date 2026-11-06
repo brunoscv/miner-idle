@@ -551,6 +551,8 @@ MonoBehaviour:
   frame: {fileID: 5791985861546681835}
   buyableLabelColor: {r: 0.9607843, g: 0.96862745, b: 0.972549, a: 1}
   unavailableLabelColor: {r: 0.74509805, g: 0.7058824, b: 0.6666667, a: 1}
+  doneFrame: {fileID: 21300000, guid: a9adf7ec20f744542be7d0c5e47d56dc, type: 3}
+  doneAlpha: 0.45
 --- !u!1 &5573855679470210774
 GameObject:
   m_ObjectHideFlags: 0

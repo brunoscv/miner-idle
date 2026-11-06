@@ -124,6 +124,7 @@ namespace MinersIdle.EditorTools
             changed |= UiSkinSetup.EnsureInScene();
             changed |= RestSetup.EnsureInScene(); // depois da pele: usa a barra de baixo e as fontes
             changed |= PermanentShopSetup.EnsureInScene(); // depois do resumo do dia: o PERMANENTES entra nele
+            changed |= InternShopSetup.EnsureInScene(); // depois das abas da loja (M7, E3)
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

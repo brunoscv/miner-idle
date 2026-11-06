@@ -30,6 +30,7 @@ MonoBehaviour:
     iconColor: {r: 0.6901961, g: 0.7176471, b: 0.7411765, a: 1}
     icon: {fileID: 21300000, guid: d6e0384dcb5723e4694bc80115caa918, type: 3}
     frame: {fileID: 21300000, guid: fb04680703a055442b0e7e674b0b125b, type: 3}
+    boughtLabel: 
   - locked: 0
     upgrade: 1
     title: Velocidade
@@ -38,6 +39,7 @@ MonoBehaviour:
     iconColor: {r: 0.30980393, g: 0.7647059, b: 0.96862745, a: 1}
     icon: {fileID: 21300000, guid: 6c0503e7d0cb10e429277ea89fa4e29b, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+    boughtLabel: 
   - locked: 0
     upgrade: 2
     title: "Minera\xE7\xE3o"
@@ -46,6 +48,7 @@ MonoBehaviour:
     iconColor: {r: 0.7607843, g: 0.23529412, b: 1, a: 1}
     icon: {fileID: 21300000, guid: 5ba7230256d10df459817cd45d3ebb99, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+    boughtLabel: 
   - locked: 0
     upgrade: 6
     title: "Cr\xEDtico"
@@ -54,6 +57,7 @@ MonoBehaviour:
     iconColor: {r: 0.84705883, g: 0.25882354, b: 0.20784314, a: 1}
     icon: {fileID: 21300000, guid: 50cf080a7cf7fb1479b0aca7996f35fe, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    boughtLabel: 
   - locked: 0
     upgrade: 3
     title: Picareta Dupla
@@ -62,6 +66,7 @@ MonoBehaviour:
     iconColor: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
     icon: {fileID: 21300000, guid: 233b659d6f4cae84ca55b0f1d590c4fa, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    boughtLabel: 
   - locked: 0
     upgrade: 4
     title: Botas
@@ -70,14 +75,16 @@ MonoBehaviour:
     iconColor: {r: 0.5529412, g: 0.43137255, b: 0.3882353, a: 1}
     icon: {fileID: 21300000, guid: c819af6df36966a478274cf421c71472, type: 3}
     frame: {fileID: 21300000, guid: e47ffb48b7ea79d4181e10e933e9c7c8, type: 3}
-  - locked: 1
-    upgrade: 0
+    boughtLabel: 
+  - locked: 0
+    upgrade: 7
     title: "Estagi\xE1rio"
     effectFormat: Um ajudante que minera junto
     style: 0
     iconColor: {r: 0.61960787, g: 0.61960787, b: 0.61960787, a: 1}
     icon: {fileID: 21300000, guid: 7d0c49568ce7df744b9d1fc7e04e6e96, type: 3}
-    frame: {fileID: 21300000, guid: a9adf7ec20f744542be7d0c5e47d56dc, type: 3}
+    frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+    boughtLabel: contratado
   - locked: 0
     upgrade: 5
     title: Mapa
@@ -86,6 +93,7 @@ MonoBehaviour:
     iconColor: {r: 0.61960787, g: 0.61960787, b: 0.61960787, a: 1}
     icon: {fileID: 21300000, guid: fe688fc9d091eda49b7a7c28a7db035e, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+    boughtLabel: 
   runTabLabel: MELHORIAS
   permanentsTabLabel: PERMANENTES
   permanentEntries:
@@ -96,6 +104,7 @@ MonoBehaviour:
     style: 0
     icon: {fileID: 21300000, guid: 237b1a7699d54f140999f67067e97c42, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+    lockedFormat: 
   - permanent: 1
     title: Sangue da Montanha
     effectFormat: "Dano {0} \xBB {1}"
@@ -103,6 +112,7 @@ MonoBehaviour:
     style: 3
     icon: {fileID: 21300000, guid: ae2c88312f58091489d4f08697b3b664, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    lockedFormat: 
   - permanent: 2
     title: "Cora\xE7\xE3o Ardente"
     effectFormat: "Lascas {0} \xBB {1}"
@@ -110,6 +120,7 @@ MonoBehaviour:
     style: 3
     icon: {fileID: 21300000, guid: dd2b93f7932092947929cb295e9c78b6, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    lockedFormat: 
   - permanent: 3
     title: Dedos Nervosos
     effectFormat: "Cr\xEDtico {0} \xBB {1}"
@@ -117,6 +128,7 @@ MonoBehaviour:
     style: 3
     icon: {fileID: 21300000, guid: 1e0fda90ff6b45e48afb7256637c7845, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+    lockedFormat: 
   - permanent: 4
     title: "Alma dos An\xF5es"
     effectFormat: "Picareta come\xE7a no {0} \xBB {1}"
@@ -124,3 +136,49 @@ MonoBehaviour:
     style: 0
     icon: {fileID: 21300000, guid: 2227945f3ef917848a2f088cea8c49b3, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+    lockedFormat: 
+  - permanent: 5
+    title: Treinar
+    effectFormat: "Dano dele {0} \xBB {1}"
+    maxedFormat: Dano dele {0}
+    style: 3
+    icon: {fileID: 21300000, guid: 7703db80fd87bfa40b80f32d0cd5059f, type: 3}
+    frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+    lockedFormat: 
+  - permanent: 6
+    title: "Promo\xE7\xE3o"
+    effectFormat: "Come\xE7a a run contratado"
+    maxedFormat: "Come\xE7a a run contratado"
+    style: 0
+    icon: {fileID: 21300000, guid: 89c60f64307760344824574e4b010136, type: 3}
+    frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    lockedFormat: Pede o Treinar no {0}
+  internTabLabel: "ESTAGI\xC1RIO"
+  internEntries:
+  - locked: 0
+    upgrade: 8
+    title: Picareta
+    effectFormat: "Dano {0} \xBB {1}"
+    style: 0
+    iconColor: {r: 0.6901961, g: 0.7176471, b: 0.7411765, a: 1}
+    icon: {fileID: 21300000, guid: d6e0384dcb5723e4694bc80115caa918, type: 3}
+    frame: {fileID: 21300000, guid: fb04680703a055442b0e7e674b0b125b, type: 3}
+    boughtLabel: 
+  - locked: 0
+    upgrade: 9
+    title: Velocidade
+    effectFormat: "Golpe a cada {0} \xBB {1}"
+    style: 1
+    iconColor: {r: 0.30980393, g: 0.7647059, b: 0.96862745, a: 1}
+    icon: {fileID: 21300000, guid: 6c0503e7d0cb10e429277ea89fa4e29b, type: 3}
+    frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+    boughtLabel: 
+  - locked: 0
+    upgrade: 10
+    title: "Minera\xE7\xE3o"
+    effectFormat: "Offline {0} \xBB {1}"
+    style: 2
+    iconColor: {r: 0.7607843, g: 0.23529412, b: 1, a: 1}
+    icon: {fileID: 21300000, guid: 5ba7230256d10df459817cd45d3ebb99, type: 3}
+    frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+    boughtLabel: 

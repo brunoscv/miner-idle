@@ -40,6 +40,8 @@ namespace MinersIdle.Game
             [SerializeField] Sprite icon;
             [Tooltip("Moldura do ícone, na cor de raridade da melhoria (M1b E3). Vazio = sem moldura.")]
             [SerializeField] Sprite frame;
+            [Tooltip("Compra única já feita: o texto do botão (vazio = o do catálogo). O Estagiário diz contratado (M7).")]
+            [SerializeField] string boughtLabel;
 
             public bool Locked => locked;
             public UpgradeId Upgrade => upgrade;
@@ -49,6 +51,7 @@ namespace MinersIdle.Game
             public Color IconColor => iconColor;
             public Sprite Icon => icon;
             public Sprite Frame => frame;
+            public string BoughtLabel => boughtLabel;
         }
 
         /// <summary>
@@ -68,6 +71,8 @@ namespace MinersIdle.Game
             [SerializeField] Sprite icon;
             [Tooltip("Moldura do ícone (cor de raridade). Vazio = sem moldura.")]
             [SerializeField] Sprite frame;
+            [Tooltip("Linha que espera outra (a Promoção, M7): {0} = o nível que a outra precisa ter.")]
+            [SerializeField] string lockedFormat;
 
             public PermanentId Permanent => permanent;
             public string Title => title;
@@ -76,6 +81,7 @@ namespace MinersIdle.Game
             public EffectStyle Style => style;
             public Sprite Icon => icon;
             public Sprite Frame => frame;
+            public string LockedFormat => lockedFormat;
         }
 
         [SerializeField] string shopTitle;
@@ -101,6 +107,11 @@ namespace MinersIdle.Game
         [Tooltip("As linhas da aba das permanentes, na ordem da tabela do GDD (as que chegam ao limite descem para o fim).")]
         [SerializeField] PermanentEntry[] permanentEntries = Array.Empty<PermanentEntry>();
 
+        [Header("Aba do estagiário (M7, E3, D-170, D-174)")]
+        [SerializeField] string internTabLabel;
+        [Tooltip("As melhorias dele, na ordem da aba (só aparecem com ele contratado).")]
+        [SerializeField] Entry[] internEntries = Array.Empty<Entry>();
+
         public string ShopTitle => shopTitle;
         public string BalanceFormat => balanceFormat;
         public string LevelFormat => levelFormat;
@@ -114,6 +125,8 @@ namespace MinersIdle.Game
         public string RunTabLabel => runTabLabel;
         public string PermanentsTabLabel => permanentsTabLabel;
         public System.Collections.Generic.IReadOnlyList<PermanentEntry> PermanentEntries => permanentEntries;
+        public string InternTabLabel => internTabLabel;
+        public System.Collections.Generic.IReadOnlyList<Entry> InternEntries => internEntries;
 
         /// <summary>Um valor de efeito no estilo da linha (o único formatador da loja, nas duas abas).</summary>
         public string FormatValue(EffectStyle style, double value)

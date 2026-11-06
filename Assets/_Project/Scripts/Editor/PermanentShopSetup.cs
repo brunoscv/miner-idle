@@ -127,7 +127,7 @@ namespace MinersIdle.EditorTools
         /// Ícone e moldura de cada linha (do mockup): Memória livro verde (raro), Sangue poção vermelha e Coração colar
         /// de coração (lendários), Dedos anéis e Alma elmo com chifres (épicos).
         /// </summary>
-        static (Sprite icon, Sprite frame) ArtFor(PermanentId id)
+        internal static (Sprite icon, Sprite frame) ArtFor(PermanentId id)
         {
             switch (id)
             {
@@ -136,6 +136,9 @@ namespace MinersIdle.EditorTools
                 case PermanentId.BurningHeart: return (Icon(257), Frame("slot_rarity_legendary"));
                 case PermanentId.NervousFingers: return (Icon(202), Frame("slot_rarity_epic"));
                 case PermanentId.DwarfSoul: return (Icon(166), Frame("slot_rarity_epic"));
+                // M7 (E3, D-174): Treinar a manopla (raro), Promoção o elmo dourado (lendário).
+                case PermanentId.InternTraining: return (Icon(212), Frame("slot_rarity_rare"));
+                case PermanentId.InternPromotion: return (Icon(155), Frame("slot_rarity_legendary"));
                 default: return (null, null);
             }
         }
@@ -334,7 +337,7 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>Uma aba: a madeira (o sprite muda com a aba aberta), o nome e um "!" como o do botão LOJA, no canto.</summary>
-        static (Button button, TMP_Text label, GameObject badge) Tab(Transform parent, string name, string text,
+        internal static (Button button, TMP_Text label, GameObject badge) Tab(Transform parent, string name, string text,
                                                                        TMP_FontAsset font, Transform shopBadge)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
@@ -416,7 +419,7 @@ namespace MinersIdle.EditorTools
         }
 
         static Sprite Wood(string name) => Load(UiSkinSetup.WoodFolder + "/" + name + ".png");
-        static Sprite Frame(string name) => Wood("slots/" + name);
+        internal static Sprite Frame(string name) => Wood("slots/" + name);
         static Sprite Icon(int number) => Load(UiSkinSetup.IconsFolder + "/Icon" + number + ".png");
         static Sprite Load(string path) => File.Exists(path) ? AssetDatabase.LoadAssetAtPath<Sprite>(path) : null;
     }

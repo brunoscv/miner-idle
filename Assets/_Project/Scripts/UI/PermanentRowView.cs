@@ -11,7 +11,7 @@ namespace MinersIdle.UI
     /// Uma linha da aba das permanentes (Marco 8b, E4, D-155), no prefab da linha da loja: ícone, nome, nível/limite,
     /// efeito "de » para" e o botão Comprar com o custo em lascas vermelhas (o cristal vermelho ao lado do número). No
     /// limite, a linha fica apagada, com "máx." e a moldura cinza; quem a põe no fim da lista é a <see cref="ShopView"/>.
-    /// Só mostra o que a <see cref="PermanentPreview"/> diz.
+    /// Só mostra o que a <see cref="PermanentPreview"/> diz. M7 (E3): a linha que espera outra (a Promoção) mostra o motivo.
     /// </summary>
     public sealed class PermanentRowView : MonoBehaviour
     {
@@ -90,6 +90,14 @@ namespace MinersIdle.UI
             {
                 effect.text = string.Format(_entry.MaxedFormat, Format(preview.CurrentValue));
                 buyLabel.text = _catalog.MaxedLabel;
+                return;
+            }
+
+            // Espera outra linha (a Promoção antes do Treinar no limite, M7): o motivo no lugar do efeito, o preço apagado.
+            if (preview.State == UpgradeButtonState.Locked && !string.IsNullOrEmpty(_entry.LockedFormat))
+            {
+                effect.text = string.Format(_entry.LockedFormat, preview.RequiredLevel);
+                buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
                 return;
             }
 

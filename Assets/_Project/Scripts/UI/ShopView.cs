@@ -17,11 +17,14 @@ namespace MinersIdle.UI
     /// Marco 8b, E4 (D-155): duas abas, as melhorias da run e as permanentes (compradas com lascas vermelhas). Na aba das
     /// permanentes, o banco no lugar das lascas e as linhas na ordem da tabela, com as que chegaram ao limite no fim. O
     /// "!" da LOJA acende com qualquer compra possível nas duas abas; o de uma aba, quando ela não é a aberta. Sem
-    /// permanentes no balanço (o GDD v5), a aba some. A 3ª aba (Estagiário, M7) entra ao lado das duas.
+    /// permanentes no balanço (o GDD v5), a aba some.
+    ///
+    /// M7, E3 (D-170, D-174): a 3ª aba, ESTAGIÁRIO, à direita das outras e só com ele contratado: as melhorias dele, com o
+    /// saldo de lascas no alto. Na aba da run, a compra única já feita (o Estagiário contratado) desce para o fim.
     /// </summary>
     public sealed class ShopView : MiningViewBase
     {
-        public enum Tab { Run, Permanents }
+        public enum Tab { Run, Permanents, Intern }
 
         [SerializeField] ShopCatalog catalog;
         [SerializeField] UpgradeRowView rowPrefab;
@@ -56,7 +59,14 @@ namespace MinersIdle.UI
         [SerializeField] GameObject redBalance;
         [SerializeField] TMP_Text redBalanceValue;
 
+        [Header("Aba do estagiário (M7, E3, D-170)")]
+        [SerializeField] Button internTabButton;
+        [SerializeField] TMP_Text internTabLabel;
+        [SerializeField] GameObject internTabBadge;
+        [SerializeField] Transform internRowsParent;
+
         readonly List<UpgradeRowView> _rows = new List<UpgradeRowView>();
+        readonly List<UpgradeRowView> _internRows = new List<UpgradeRowView>();
         readonly List<PermanentRowView> _permanentRows = new List<PermanentRowView>();
 
         public bool IsOpen => screen.activeSelf;
@@ -64,11 +74,15 @@ namespace MinersIdle.UI
         public IReadOnlyList<UpgradeRowView> Rows => _rows;
         /// <summary>As linhas das permanentes na ordem da tabela (a ordem na tela é a dos irmãos no pai).</summary>
         public IReadOnlyList<PermanentRowView> PermanentRows => _permanentRows;
+        public IReadOnlyList<UpgradeRowView> InternRows => _internRows;
         public Tab ActiveTab { get; private set; }
         public bool IsRunTabBadgeShown => runTabBadge.activeSelf;
         public bool IsPermanentsTabBadgeShown => permanentsTabBadge.activeSelf;
         public bool IsPermanentsTabShown => permanentsTabButton.gameObject.activeSelf;
         public bool IsRunListShown => rowsParent.gameObject.activeInHierarchy;
+        public bool IsInternTabShown => internTabButton.gameObject.activeSelf;
+        public bool IsInternTabBadgeShown => internTabBadge.activeSelf;
+        public bool IsInternListShown => internRowsParent.gameObject.activeInHierarchy;
         public string RedBalanceText => redBalanceValue.text;
 
         void Awake()
@@ -86,8 +100,15 @@ namespace MinersIdle.UI
                 row.Bind(catalog, entry, BuyPermanent);
                 _permanentRows.Add(row);
             }
+            foreach (var entry in catalog.InternEntries)
+            {
+                var row = Instantiate(rowPrefab, internRowsParent);
+                row.Bind(catalog, entry, Buy);
+                _internRows.Add(row);
+            }
             runTabLabel.text = catalog.RunTabLabel;
             permanentsTabLabel.text = catalog.PermanentsTabLabel;
+            internTabLabel.text = catalog.InternTabLabel;
             ShowTab(Tab.Run);
             screen.SetActive(false);
         }
@@ -99,6 +120,7 @@ namespace MinersIdle.UI
             backButton.onClick.AddListener(Close);
             runTabButton.onClick.AddListener(SelectRunTab);
             permanentsTabButton.onClick.AddListener(SelectPermanentsTab);
+            internTabButton.onClick.AddListener(SelectInternTab);
         }
 
         protected override void OnDisable()
@@ -108,6 +130,7 @@ namespace MinersIdle.UI
             backButton.onClick.RemoveListener(Close);
             runTabButton.onClick.RemoveListener(SelectRunTab);
             permanentsTabButton.onClick.RemoveListener(SelectPermanentsTab);
+            internTabButton.onClick.RemoveListener(SelectInternTab);
         }
 
         protected override void Subscribe(MiningSimulation simulation)
@@ -116,6 +139,7 @@ namespace MinersIdle.UI
             simulation.StatsChanged += OnStatsChanged;
             simulation.CaveChanged += OnCaveChanged;
             simulation.PermanentsChanged += Refresh;
+            simulation.InternChanged += OnInternChanged;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -124,6 +148,7 @@ namespace MinersIdle.UI
             simulation.StatsChanged -= OnStatsChanged;
             simulation.CaveChanged -= OnCaveChanged;
             simulation.PermanentsChanged -= Refresh;
+            simulation.InternChanged -= OnInternChanged;
         }
 
         protected override void Rebuild(MiningSimulation simulation) => Refresh();
@@ -152,17 +177,20 @@ namespace MinersIdle.UI
 
         void SelectRunTab() => SelectTab(Tab.Run);
         void SelectPermanentsTab() => SelectTab(Tab.Permanents);
+        void SelectInternTab() => SelectTab(Tab.Intern);
 
         void ShowTab(Tab tab)
         {
             ActiveTab = tab;
             bool permanents = tab == Tab.Permanents;
-            SetActive(rowsParent.gameObject, !permanents);
+            SetActive(rowsParent.gameObject, tab == Tab.Run);
             SetActive(permanentRowsParent.gameObject, permanents);
+            SetActive(internRowsParent.gameObject, tab == Tab.Intern);
             SetActive(balance.gameObject, !permanents);
             SetActive(redBalance, permanents);
-            PaintTab(runTabButton, runTabLabel, !permanents);
+            PaintTab(runTabButton, runTabLabel, tab == Tab.Run);
             PaintTab(permanentsTabButton, permanentsTabLabel, permanents);
+            PaintTab(internTabButton, internTabLabel, tab == Tab.Intern);
         }
 
         void PaintTab(Button tab, TMP_Text label, bool active)
@@ -179,6 +207,7 @@ namespace MinersIdle.UI
         void OnShardsChanged(double shards) => Refresh();
         void OnStatsChanged(MinerStats stats) => Refresh();
         void OnCaveChanged(int cave) => Refresh();
+        void OnInternChanged(InternStats stats) => Refresh();
 
         void Refresh()
         {
@@ -187,9 +216,10 @@ namespace MinersIdle.UI
 
             // Só as linhas que a loja mostra: uma linha sem lugar na loja (as do estagiário antes da aba dele, M7) não
             // acende o "!" de algo que o jogador não acha.
-            bool anyRun = false;
-            foreach (var row in _rows)
-                anyRun |= !row.IsLocked && simulation.Preview(row.Upgrade).State == UpgradeButtonState.Purchasable;
+            bool anyRun = AnyPurchasable(simulation, _rows);
+            // A aba dele só existe com ele contratado (D-170); antes, as compras dele nem aparecem (Purchases.Blocked).
+            bool internShown = simulation.IsInternHired && _internRows.Count > 0;
+            bool anyIntern = internShown && AnyPurchasable(simulation, _internRows);
             bool anyPermanent = false, hasPermanents = false;
             foreach (var row in _permanentRows)
             {
@@ -197,21 +227,27 @@ namespace MinersIdle.UI
                 hasPermanents |= preview.IsEnabled;
                 anyPermanent |= preview.State == UpgradeButtonState.Purchasable;
             }
-            badge.SetActive(anyRun || anyPermanent);
+            badge.SetActive(anyRun || anyPermanent || anyIntern);
 
             // Sem permanentes no balanço (GDD v5), a aba some e a loja fica na da run.
             SetActive(permanentsTabButton.gameObject, hasPermanents);
             if (!hasPermanents && ActiveTab == Tab.Permanents) ShowTab(Tab.Run);
+            // Demitido (o atalho do debug) ou num descanso sem a Promoção: a aba some e a loja volta para a da run.
+            SetActive(internTabButton.gameObject, internShown);
+            if (!internShown && ActiveTab == Tab.Intern) ShowTab(Tab.Run);
             SetActive(runTabBadge, anyRun && ActiveTab != Tab.Run);
             SetActive(permanentsTabBadge, anyPermanent && ActiveTab != Tab.Permanents);
+            SetActive(internTabBadge, anyIntern && ActiveTab != Tab.Intern);
 
             if (!IsOpen) return;
 
-            if (ActiveTab == Tab.Run)
+            if (ActiveTab != Tab.Permanents)
             {
                 balance.text = string.Format(catalog.BalanceFormat, NumberFormatter.FormatShards(simulation.State.Shards));
-                foreach (var row in _rows)
+                var rows = ActiveTab == Tab.Run ? _rows : _internRows;
+                foreach (var row in rows)
                     if (!row.IsLocked) row.Refresh(simulation.Preview(row.Upgrade));
+                if (ActiveTab == Tab.Run) SortRunRows();
                 return;
             }
 
@@ -220,19 +256,36 @@ namespace MinersIdle.UI
             SortPermanentRows();
         }
 
+        static bool AnyPurchasable(MiningSimulation simulation, List<UpgradeRowView> rows)
+        {
+            foreach (var row in rows)
+                if (!row.IsLocked && simulation.Preview(row.Upgrade).State == UpgradeButtonState.Purchasable) return true;
+            return false;
+        }
+
+        /// <summary>Na ordem do catálogo; a compra única já feita (o Estagiário contratado) no fim (D-174).</summary>
+        void SortRunRows()
+        {
+            int index = 0;
+            foreach (var row in _rows)
+                if (!row.IsDone) Place(row.transform, ref index);
+            foreach (var row in _rows)
+                if (row.IsDone) Place(row.transform, ref index);
+        }
+
         /// <summary>As que ainda sobem primeiro, na ordem da tabela; as que chegaram ao limite no fim (D-155).</summary>
         void SortPermanentRows()
         {
             int index = 0;
             foreach (var row in _permanentRows)
-                if (!row.IsMaxed) Place(row, ref index);
+                if (!row.IsMaxed) Place(row.transform, ref index);
             foreach (var row in _permanentRows)
-                if (row.IsMaxed) Place(row, ref index);
+                if (row.IsMaxed) Place(row.transform, ref index);
         }
 
-        static void Place(PermanentRowView row, ref int index)
+        static void Place(Transform row, ref int index)
         {
-            if (row.transform.GetSiblingIndex() != index) row.transform.SetSiblingIndex(index);
+            if (row.GetSiblingIndex() != index) row.SetSiblingIndex(index);
             index++;
         }
 

@@ -28,6 +28,11 @@ namespace MinersIdle.UI
         [Tooltip("Cor do preço quando dá para comprar e quando não dá.")]
         [SerializeField] Color buyableLabelColor = new Color32(0x15, 0x19, 0x1C, 0xFF);
         [SerializeField] Color unavailableLabelColor = new Color32(0x15, 0x19, 0x1C, 0xFF);
+        [Header("Compra única feita (M7, E3, D-174)")]
+        [Tooltip("A moldura da linha já comprada (o Estagiário contratado), que desce para o fim da lista. Vazio = a do catálogo.")]
+        [SerializeField] Sprite doneFrame;
+        [Range(0f, 1f)]
+        [SerializeField] float doneAlpha = 0.45f;
 
         ShopCatalog _catalog;
         ShopCatalog.Entry _entry;
@@ -36,6 +41,8 @@ namespace MinersIdle.UI
         public UpgradeId Upgrade => _entry.Upgrade;
         public bool IsLocked => _entry.Locked;
         public bool CanBuy => buyButton.interactable;
+        /// <summary>Compra única já feita (o Estagiário contratado): a loja a põe no fim da lista (D-174).</summary>
+        public bool IsDone { get; private set; }
         public string LevelText => level.text;
         public string EffectText => effect.text;
         public string ButtonText => buyLabel.text;
@@ -86,8 +93,10 @@ namespace MinersIdle.UI
             if (gameObject.activeSelf != preview.IsEnabled) gameObject.SetActive(preview.IsEnabled);
             if (!preview.IsEnabled) return;
 
-            level.text = string.Format(_catalog.LevelFormat, preview.Level, preview.MaxLevel);
+            // Compra única (o Estagiário, D-174): sem o "nv 0/1", que não diz nada; feita, apagada e com a moldura cinza.
+            level.text = preview.IsSinglePurchase ? "" : string.Format(_catalog.LevelFormat, preview.Level, preview.MaxLevel);
             SetBuyable(preview.State == UpgradeButtonState.Purchasable);
+            SetDone(preview.IsSinglePurchase && preview.Level > 0);
 
             // Letrado (M8, D-109): sem os cristais da caverna, o progresso no lugar do efeito e o preço apagado.
             if (preview.State == UpgradeButtonState.Locked)
@@ -107,12 +116,24 @@ namespace MinersIdle.UI
             if (preview.State == UpgradeButtonState.Maxed)
             {
                 effect.text = string.Format(_entry.EffectFormat, Format(preview.CurrentValue), Format(preview.CurrentValue));
-                buyLabel.text = preview.IsSinglePurchase && preview.Level > 0 ? _catalog.BoughtLabel : _catalog.MaxedLabel;
+                buyLabel.text = !IsDone ? _catalog.MaxedLabel
+                    : string.IsNullOrEmpty(_entry.BoughtLabel) ? _catalog.BoughtLabel : _entry.BoughtLabel;
                 return;
             }
 
             effect.text = string.Format(_entry.EffectFormat, Format(preview.CurrentValue), Format(preview.NextValue));
             buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
+        }
+
+        void SetDone(bool done)
+        {
+            if (done == IsDone) return;
+            IsDone = done;
+            group.alpha = done ? doneAlpha : 1f;
+            if (frame == null) return;
+            var wanted = done && doneFrame != null ? doneFrame : _entry.Frame;
+            frame.sprite = wanted;
+            frame.enabled = wanted != null;
         }
 
         void SetBuyable(bool buyable)
