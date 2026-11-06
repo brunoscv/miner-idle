@@ -86,3 +86,41 @@ MonoBehaviour:
     iconColor: {r: 0.61960787, g: 0.61960787, b: 0.61960787, a: 1}
     icon: {fileID: 21300000, guid: fe688fc9d091eda49b7a7c28a7db035e, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+  runTabLabel: MELHORIAS
+  permanentsTabLabel: PERMANENTES
+  permanentEntries:
+  - permanent: 0
+    title: "Mem\xF3ria"
+    effectFormat: "Mapa \u2212{0} \xBB \u2212{1} cristais"
+    maxedFormat: "Mapa \u2212{0} cristais"
+    style: 0
+    icon: {fileID: 21300000, guid: 237b1a7699d54f140999f67067e97c42, type: 3}
+    frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+  - permanent: 1
+    title: Sangue da Montanha
+    effectFormat: "Dano {0} \xBB {1}"
+    maxedFormat: Dano {0}
+    style: 3
+    icon: {fileID: 21300000, guid: ae2c88312f58091489d4f08697b3b664, type: 3}
+    frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+  - permanent: 2
+    title: "Cora\xE7\xE3o Ardente"
+    effectFormat: "Lascas {0} \xBB {1}"
+    maxedFormat: Lascas {0}
+    style: 3
+    icon: {fileID: 21300000, guid: dd2b93f7932092947929cb295e9c78b6, type: 3}
+    frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+  - permanent: 3
+    title: Dedos Nervosos
+    effectFormat: "Cr\xEDtico {0} \xBB {1}"
+    maxedFormat: "Cr\xEDtico {0}"
+    style: 3
+    icon: {fileID: 21300000, guid: 1e0fda90ff6b45e48afb7256637c7845, type: 3}
+    frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+  - permanent: 4
+    title: "Alma dos An\xF5es"
+    effectFormat: "Picareta come\xE7a no {0} \xBB {1}"
+    maxedFormat: "Picareta come\xE7a no {0}"
+    style: 0
+    icon: {fileID: 21300000, guid: 2227945f3ef917848a2f088cea8c49b3, type: 3}
+    frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}

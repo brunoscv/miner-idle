@@ -8,8 +8,8 @@ namespace MinersIdle.UI
 {
     /// <summary>
     /// O resumo do dia (Marco 8b, E3, D-154), depois de descansar pelo modal: o dia que terminou, o nível, o tempo, as
-    /// lascas vermelhas ganhas e o banco. A run nova já começou por trás (fila e semente novas); COMEÇAR só fecha. O botão
-    /// das melhorias permanentes chega com a aba delas na loja (E4). O atalho Descansar agora do DBG não passa por aqui.
+    /// lascas vermelhas ganhas e o banco. A run nova já começou por trás (fila e semente novas); COMEÇAR só fecha e
+    /// PERMANENTES (E4) fecha e abre a loja na aba das permanentes. O atalho Descansar agora do DBG não passa por aqui.
     /// Os números vêm do <see cref="RestSummary"/> do descanso, não da simulação, que já é a da run nova. Textos em dados.
     /// </summary>
     public sealed class DaySummaryScreen : MonoBehaviour
@@ -28,6 +28,9 @@ namespace MinersIdle.UI
         [SerializeField] TMP_Text bankValue;
         [SerializeField] Button startButton;
         [SerializeField] TMP_Text startLabel;
+        [SerializeField] ShopView shop;
+        [SerializeField] Button permanentsButton;
+        [SerializeField] TMP_Text permanentsLabel;
 
         public bool IsOpen => screen.activeSelf;
         public string TitleText => title.text;
@@ -42,12 +45,21 @@ namespace MinersIdle.UI
             gainedLabel.text = texts.SummaryGainedLabel;
             bankLabel.text = texts.SummaryBankLabel;
             startLabel.text = texts.SummaryStart;
+            permanentsLabel.text = texts.SummaryPermanents;
             screen.SetActive(false);
         }
 
-        void OnEnable() => startButton.onClick.AddListener(Close);
+        void OnEnable()
+        {
+            startButton.onClick.AddListener(Close);
+            permanentsButton.onClick.AddListener(OpenPermanents);
+        }
 
-        void OnDisable() => startButton.onClick.RemoveListener(Close);
+        void OnDisable()
+        {
+            startButton.onClick.RemoveListener(Close);
+            permanentsButton.onClick.RemoveListener(OpenPermanents);
+        }
 
         public void Open(RestSummary summary)
         {
@@ -60,5 +72,11 @@ namespace MinersIdle.UI
         }
 
         public void Close() => screen.SetActive(false);
+
+        void OpenPermanents()
+        {
+            Close();
+            shop.OpenPermanents();
+        }
     }
 }

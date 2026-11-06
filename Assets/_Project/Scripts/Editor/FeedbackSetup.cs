@@ -35,6 +35,7 @@ namespace MinersIdle.EditorTools
                 EnsureCaveBannerText();
                 EnsureHeartTexts();
                 EnsureRestTexts();
+                EnsurePermanentsText();
                 return;
             }
 
@@ -50,6 +51,7 @@ namespace MinersIdle.EditorTools
             AssetDatabase.CreateAsset(texts, TextsPath);
             Debug.Log($"[Setup] Textos do feedback criados em {TextsPath}.");
             EnsureRestTexts();
+            EnsurePermanentsText();
         }
 
         const string CaveBannerFormat = "Nível {0} · {1}";
@@ -117,6 +119,20 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(texts);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Textos do descanso e do resumo do dia nos textos do feedback (Marco 8b, E3).");
+        }
+
+        /// <summary>Marco 8b (E4): o botão PERMANENTES do resumo do dia (D-154), nos textos que já existem.</summary>
+        static void EnsurePermanentsText()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null || !string.IsNullOrEmpty(texts.SummaryPermanents)) return;
+
+            var so = new SerializedObject(texts);
+            so.FindProperty("summaryPermanents").stringValue = "PERMANENTES";
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Texto do PERMANENTES do resumo do dia (Marco 8b, E4).");
         }
 
         static void SetHeartTexts(SerializedObject so)

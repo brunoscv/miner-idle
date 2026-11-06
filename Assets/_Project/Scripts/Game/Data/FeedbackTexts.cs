@@ -50,6 +50,8 @@ namespace MinersIdle.Game
         [SerializeField] string summaryGainedFormat;
         [SerializeField] string summaryBankLabel;
         [SerializeField] string summaryStart;
+        [Tooltip("O botão que abre a loja na aba das permanentes (E4, D-154).")]
+        [SerializeField] string summaryPermanents;
 
         public string CriticalLabel => criticalLabel;
         public string ComboFormat => comboFormat;
@@ -78,5 +80,6 @@ namespace MinersIdle.Game
         public string SummaryGainedFormat => summaryGainedFormat;
         public string SummaryBankLabel => summaryBankLabel;
         public string SummaryStart => summaryStart;
+        public string SummaryPermanents => summaryPermanents;
     }
 }

@@ -478,6 +478,9 @@ namespace MinersIdle.Core
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id, _permanents);
 
+        /// <summary>O que a aba das permanentes mostra da linha (Marco 8b, E4).</summary>
+        public PermanentPreview PreviewPermanent(PermanentId id) => PermanentPreview.For(_permanents, id);
+
         /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, alvo (o primeiro da fila), golpe.</summary>
         void ProcessDueEvents()
         {

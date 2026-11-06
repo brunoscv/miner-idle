@@ -245,6 +245,42 @@ namespace MinersIdle.Tests
             Assert.That(permanent.LevelOf(PermanentId.Memory), Is.EqualTo(0));
         }
 
+        // ── A prévia da aba das permanentes (E4) ────────────────────────────────────────────────────────────────
+
+        [Test]
+        public void PermanentPreview_ShowsLevelCostEffect_AndTheButtonState()
+        {
+            var sim = Sim(WithLevel(PermanentId.MountainBlood, 5, redShards: 41));
+
+            var blood = sim.PreviewPermanent(PermanentId.MountainBlood);
+            Assert.That(blood.Level, Is.EqualTo(5));
+            Assert.That(blood.MaxLevel, Is.EqualTo(20));
+            Assert.That(blood.NextCost, Is.EqualTo(10 + 32), "a 6ª compra: 10 + 2^5");
+            Assert.That(blood.State, Is.EqualTo(UpgradeButtonState.NotEnoughShards), "41 não paga 42");
+            Assert.That(blood.CurrentValue, Is.EqualTo(0.5).Within(1e-9), "+50%");
+            Assert.That(blood.NextValue, Is.EqualTo(0.6).Within(1e-9), "+60%");
+
+            var memory = sim.PreviewPermanent(PermanentId.Memory);
+            Assert.That(memory.State, Is.EqualTo(UpgradeButtonState.Purchasable), "41 paga 11");
+            Assert.That(memory.CurrentValue, Is.EqualTo(0));
+            Assert.That(memory.NextValue, Is.EqualTo(10), "−10 cristais na trava");
+        }
+
+        [Test]
+        public void PermanentPreview_AtTheLimit_IsMaxed_WithoutCost()
+        {
+            var sim = Sim(WithLevel(PermanentId.Memory, 10, redShards: 1e6));
+
+            var memory = sim.PreviewPermanent(PermanentId.Memory);
+            Assert.That(memory.IsMaxed, Is.True);
+            Assert.That(memory.NextCost, Is.Null);
+            Assert.That(memory.CurrentValue, Is.EqualTo(100));
+            Assert.That(memory.NextValue, Is.EqualTo(100));
+
+            var none = new MiningSimulation(Rules(), new SeededRandom(7), null, V7());
+            Assert.That(none.PreviewPermanent(PermanentId.Memory).IsEnabled, Is.False, "sem permanentes, a linha some");
+        }
+
         [Test]
         public void Restore_FixesWhatIsOutOfPlace()
         {

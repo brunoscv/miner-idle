@@ -121,19 +121,6 @@ namespace MinersIdle.UI
             buyLabel.color = buyable ? buyableLabelColor : unavailableLabelColor;
         }
 
-        string Format(double value)
-        {
-            switch (_entry.Style)
-            {
-                case ShopCatalog.EffectStyle.Seconds:
-                    return NumberFormatter.FormatSeconds(value);
-                case ShopCatalog.EffectStyle.BonusPercent:
-                    return string.Format(_catalog.BonusPercentFormat, NumberFormatter.Format((value - 1) * 100));
-                case ShopCatalog.EffectStyle.ChancePercent:
-                    return string.Format(_catalog.BonusPercentFormat, NumberFormatter.Format(value * 100));
-                default:
-                    return NumberFormatter.Format(value);
-            }
-        }
+        string Format(double value) => _catalog.FormatValue(_entry.Style, value);
     }
 }

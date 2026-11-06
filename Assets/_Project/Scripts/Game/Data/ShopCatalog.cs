@@ -20,7 +20,7 @@ namespace MinersIdle.Game
             Seconds,
             /// <summary>Multiplicador mostrado como bônus em %: 1,08 → "+8%" (Mineração).</summary>
             BonusPercent,
-            /// <summary>Fração mostrada como chance em %: 0,05 → "+5%" (Crítico, D-136).</summary>
+            /// <summary>Fração mostrada em %: 0,05 → "+5%" (a chance do Crítico, D-136; os bônus das permanentes, D-158).</summary>
             ChancePercent,
         }
 
@@ -51,6 +51,33 @@ namespace MinersIdle.Game
             public Sprite Frame => frame;
         }
 
+        /// <summary>
+        /// Uma linha da aba das permanentes (Marco 8b, E4, D-155). O valor do efeito é o que a linha soma no nível
+        /// (<see cref="PermanentPreview.CurrentValue"/>): cristais a menos na trava, a fração do bônus, níveis de Picareta.
+        /// </summary>
+        [Serializable]
+        public sealed class PermanentEntry
+        {
+            [SerializeField] PermanentId permanent;
+            [SerializeField] string title;
+            [Tooltip("{0} = valor agora, {1} = depois da compra.")]
+            [SerializeField] string effectFormat;
+            [Tooltip("No limite: {0} = o valor final.")]
+            [SerializeField] string maxedFormat;
+            [SerializeField] EffectStyle style;
+            [SerializeField] Sprite icon;
+            [Tooltip("Moldura do ícone (cor de raridade). Vazio = sem moldura.")]
+            [SerializeField] Sprite frame;
+
+            public PermanentId Permanent => permanent;
+            public string Title => title;
+            public string EffectFormat => effectFormat;
+            public string MaxedFormat => maxedFormat;
+            public EffectStyle Style => style;
+            public Sprite Icon => icon;
+            public Sprite Frame => frame;
+        }
+
         [SerializeField] string shopTitle;
         [Tooltip("{0} = saldo de lascas.")]
         [SerializeField] string balanceFormat;
@@ -68,6 +95,12 @@ namespace MinersIdle.Game
         [SerializeField] string passFirstLabel;
         [SerializeField] Entry[] entries = Array.Empty<Entry>();
 
+        [Header("Abas (Marco 8b, E4, D-155)")]
+        [SerializeField] string runTabLabel;
+        [SerializeField] string permanentsTabLabel;
+        [Tooltip("As linhas da aba das permanentes, na ordem da tabela do GDD (as que chegam ao limite descem para o fim).")]
+        [SerializeField] PermanentEntry[] permanentEntries = Array.Empty<PermanentEntry>();
+
         public string ShopTitle => shopTitle;
         public string BalanceFormat => balanceFormat;
         public string LevelFormat => levelFormat;
@@ -78,5 +111,24 @@ namespace MinersIdle.Game
         public string ProgressFormat => progressFormat;
         public string PassFirstLabel => passFirstLabel;
         public System.Collections.Generic.IReadOnlyList<Entry> Entries => entries;
+        public string RunTabLabel => runTabLabel;
+        public string PermanentsTabLabel => permanentsTabLabel;
+        public System.Collections.Generic.IReadOnlyList<PermanentEntry> PermanentEntries => permanentEntries;
+
+        /// <summary>Um valor de efeito no estilo da linha (o único formatador da loja, nas duas abas).</summary>
+        public string FormatValue(EffectStyle style, double value)
+        {
+            switch (style)
+            {
+                case EffectStyle.Seconds:
+                    return NumberFormatter.FormatSeconds(value);
+                case EffectStyle.BonusPercent:
+                    return string.Format(bonusPercentFormat, NumberFormatter.Format((value - 1) * 100));
+                case EffectStyle.ChancePercent:
+                    return string.Format(bonusPercentFormat, NumberFormatter.Format(value * 100));
+                default:
+                    return NumberFormatter.Format(value);
+            }
+        }
     }
 }
