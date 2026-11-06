@@ -63,8 +63,6 @@ namespace MinersIdle.UI
         [SerializeField] Button resolution;
         [SerializeField] Button resetFraming;
         [SerializeField] Button close;
-        [Tooltip("Liga e desliga o estagiário ao lado do anão (M1b E7; o de verdade é do M7).")]
-        [SerializeField] Button intern;
         [Tooltip("Troca o anão pelas folhas com menos pixels, para comparar (não fica salvo).")]
         [SerializeField] Button lowDwarf;
         [Tooltip("Passa pelas 10 cavernas (M1b E8, D-102); o botão mostra o nome da caverna (não fica salvo).")]
@@ -177,7 +175,6 @@ namespace MinersIdle.UI
             resolution.onClick.AddListener(NextResolution);
             resetFraming.onClick.AddListener(ResetFraming);
             close.onClick.AddListener(Toggle);
-            if (intern != null) intern.onClick.AddListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.AddListener(ToggleLowDwarf);
             if (biome != null) biome.onClick.AddListener(NextBiome);
             if (edge != null) edge.onClick.AddListener(NextEdge);
@@ -197,7 +194,6 @@ namespace MinersIdle.UI
             resolution.onClick.RemoveListener(NextResolution);
             resetFraming.onClick.RemoveListener(ResetFraming);
             close.onClick.RemoveListener(Toggle);
-            if (intern != null) intern.onClick.RemoveListener(ToggleIntern);
             if (lowDwarf != null) lowDwarf.onClick.RemoveListener(ToggleLowDwarf);
             if (biome != null) biome.onClick.RemoveListener(NextBiome);
             if (edge != null) edge.onClick.RemoveListener(NextEdge);
@@ -217,8 +213,6 @@ namespace MinersIdle.UI
         }
 
         /// <summary>Abre ou fecha (o botão "Câmera" do DBG e o "Fechar" daqui).</summary>
-        void ToggleIntern() => stage.ShowIntern = !stage.ShowIntern;
-
         void ToggleLowDwarf() => stage.UseLowDwarf = !stage.UseLowDwarf;
 
         void NextBiome()

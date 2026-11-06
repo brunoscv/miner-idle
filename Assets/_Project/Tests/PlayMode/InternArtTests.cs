@@ -11,7 +11,8 @@ namespace MinersIdle.Tests
 {
     /// <summary>
     /// M1b (E7, D-76): as variações de cor do anão ficam guardadas no jogo; o estagiário é o anão grisalho, ao lado e um
-    /// pouco atrás do anão, e só aparece pelo DBG até o M7.
+    /// pouco atrás do anão. Desde o M7 (E1) ele aparece quando é contratado na simulação, e o botão "Estagiário" do DBG →
+    /// Câmera (que só ligava o desenho) saiu.
     /// </summary>
     public class InternArtTests
     {
@@ -26,7 +27,7 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
-        public IEnumerator Intern_ShowsOnlyWhenTurnedOn_BesideAndBehindTheDwarf()
+        public IEnumerator Intern_ShowsOnlyWhenHired_BesideAndBehindTheDwarf()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 "Assets/_Project/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
@@ -35,12 +36,17 @@ namespace MinersIdle.Tests
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
             if (stage.DwarfFrame < 0) Assert.Ignore("Sem as folhas do anão na cena (rode o setup).");
-            Assert.That(stage.InternFrame, Is.EqualTo(-1), "começa escondido");
+            var simulation = Object.FindAnyObjectByType<MinersIdle.Game.MiningRunner>().Simulation;
+            if (!simulation.Economy.HasIntern) Assert.Ignore("O balanço ativo não tem estagiário (rode o setup: GDD v7).");
+            simulation.FireIntern(); // o save de outro teste pode ter um contratado
+            yield return null;
+            yield return null;
+            Assert.That(stage.InternFrame, Is.EqualTo(-1), "sem contratar, escondido");
 
-            stage.ShowIntern = true;
+            simulation.HireIntern();
             yield return null;
             yield return null;
-            Assert.That(stage.InternFrame, Is.GreaterThanOrEqualTo(0), "aparece pelo DBG");
+            Assert.That(stage.InternFrame, Is.GreaterThanOrEqualTo(0), "contratado, aparece");
 
             var intern = stage.transform.Find("Intern");
             var dwarf = stage.transform.Find("Dwarf");
@@ -48,33 +54,27 @@ namespace MinersIdle.Tests
             Assert.That(intern.localPosition.x, Is.GreaterThan(dwarf.localPosition.x), "ao lado");
             Assert.That(intern.localPosition.z, Is.GreaterThan(dwarf.localPosition.z), "um pouco atrás");
 
-            stage.ShowIntern = false;
+            simulation.FireIntern();
             yield return null;
             yield return null;
-            Assert.That(intern.GetComponent<MeshRenderer>().enabled, Is.False, "some de novo");
+            Assert.That(intern.GetComponent<MeshRenderer>().enabled, Is.False, "demitido, some de novo");
         }
 
-        /// <summary>O botão "Estagiário" do DBG → Câmera fica dentro do painel (com 3 colunas ia para fora dele).</summary>
+        /// <summary>
+        /// Até o M7 o botão "Estagiário" do DBG → Câmera ligava o desenho (e a regra era cabê-lo no painel). Agora quem decide
+        /// é a contratação: o botão saiu, e os atalhos estão no DBG → Estagiário.
+        /// </summary>
         [UnityTest]
-        public IEnumerator InternButton_SitsInsideTheCameraPanel()
+        public IEnumerator CameraPanel_HasNoInternButton_TheDbgInternMenuDoes()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 "Assets/_Project/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
 
             var panel = Object.FindAnyObjectByType<MinersIdle.UI.DescentCameraPanel>(FindObjectsInactive.Include);
-            var content = (RectTransform)panel.transform.Find("Content");
-            var button = (RectTransform)content.Find("Buttons/Intern");
-            if (button == null) Assert.Ignore("Sem o estagiário na cena (rode o setup).");
-            content.gameObject.SetActive(true);
-            Canvas.ForceUpdateCanvases();
-            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)button.parent);
-
-            var corners = new Vector3[4];
-            content.GetWorldCorners(corners);
-            var area = new Rect(corners[0], corners[2] - corners[0]);
-            button.GetWorldCorners(corners);
-            Assert.That(area.Contains(corners[0]) && area.Contains(corners[2]), Is.True, "o botão cabe no painel");
+            Assert.That(panel.transform.Find("Content/Buttons/Intern"), Is.Null, "o botão da câmera saiu");
+            var debug = Object.FindAnyObjectByType<MinersIdle.UI.DebugPanel>(FindObjectsInactive.Include);
+            Assert.That(debug.transform.Find("InternMenu/Content/Buttons/Hire"), Is.Not.Null, "Contratar no DBG → Estagiário");
         }
     }
 }

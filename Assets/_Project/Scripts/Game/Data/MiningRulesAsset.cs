@@ -78,8 +78,20 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues letrado = new UpgradeLineValues(100, 10, 0, 2);
         [Tooltip("Chance de Crítico (GDD v7, D-136). Efeito: chance a mais por nível, no golpe e no toque. Limite 0 desliga.")]
         [SerializeField] UpgradeLineValues critical = new UpgradeLineValues(50, 2, 0, 0.05);
-        [Tooltip("Intervalo mínimo entre golpes, em segundos.")]
+        [Tooltip("Intervalo mínimo entre golpes, em segundos (o do anão e o do estagiário, D-165).")]
         [SerializeField] double minHitInterval = 0.5;
+
+        [Header("Estagiário (M7, GDD v7 §4.1, §5.4; limite 0 desliga: sem estagiário, D-172)")]
+        [Tooltip("Contratar o estagiário: compra única (GDD v7: 500). Sem compras dele, bate o Dano Base do anão no intervalo base (D-164).")]
+        [SerializeField] UpgradeLineValues intern = new UpgradeLineValues(500, 1, 0, 1);
+        [Tooltip("Picareta do estagiário. Efeito: o dano dele na 1ª compra (GDD v7: 5); cada compra seguinte multiplica pelo crescimento do dano.")]
+        [SerializeField] UpgradeLineValues internPickaxe = new UpgradeLineValues(50, 4, 0, 5);
+        [Tooltip("O \"2\" de 5 × 2^(n−1): quanto o dano da Picareta do estagiário multiplica a cada compra depois da 1ª.")]
+        [SerializeField] double internPickaxeDamageGrowth = 2;
+        [Tooltip("Velocidade do estagiário. Efeito: segundos a menos no intervalo dele por nível, a partir do intervalo base (GDD v7: 0,1).")]
+        [SerializeField] UpgradeLineValues internSpeed = new UpgradeLineValues(50, 5, 0, 0.1);
+        [Tooltip("Mineração do estagiário. Efeito: fração a mais das lascas offline por nível (GDD v7: 1 = +100%; só no offline, D-166).")]
+        [SerializeField] UpgradeLineValues internMining = new UpgradeLineValues(50, 1.2, 0, 1);
 
         [Header("Golpe e toque (valores do GDD: 5%, ×2, 10%, 1 s)")]
         [Tooltip("Chance base de crítico do golpe automático (0–1). GDD v7: 0 (D-136).")]
@@ -128,6 +140,10 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues nervousFingers = new UpgradeLineValues(10, 2, 0, 0.05, CostFormula.OffsetExponential);
         [Tooltip("Alma dos Anões. Efeito: níveis de Picareta com que a run começa, por nível (GDD v7: 1).")]
         [SerializeField] UpgradeLineValues dwarfSoul = new UpgradeLineValues(10, 2, 0, 1, CostFormula.OffsetExponential);
+        [Tooltip("Treinar Estagiário (M7). Efeito: fração a mais de dano do estagiário por nível (GDD v7: 0,1).")]
+        [SerializeField] UpgradeLineValues internTraining = new UpgradeLineValues(10, 2, 0, 0.1, CostFormula.OffsetExponential);
+        [Tooltip("Promoção do Estagiário (M7): compra única; a run já começa com ele. Só com o Treinar no limite (GDD v7: 50).")]
+        [SerializeField] UpgradeLineValues internPromotion = new UpgradeLineValues(50, 1, 0, 1);
 
         /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos só valem no CaveScaled.</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
@@ -159,7 +175,8 @@ namespace MinersIdle.Game
                                           redShardBigMilestone, redShardPerLevel);
             // Na ordem do PermanentId.
             return new PermanentRules(restLevel, table, memory.ToDefinition(), mountainBlood.ToDefinition(),
-                                      burningHeart.ToDefinition(), nervousFingers.ToDefinition(), dwarfSoul.ToDefinition());
+                                      burningHeart.ToDefinition(), nervousFingers.ToDefinition(), dwarfSoul.ToDefinition(),
+                                      internTraining.ToDefinition(), internPromotion.ToDefinition());
         }
 
         public StrikeRules ToStrike() =>
@@ -172,7 +189,8 @@ namespace MinersIdle.Game
         public EconomyRules ToEconomy(double? pickaxeStep = null) => new EconomyRules(
             PickaxeLine(pickaxeStep), speed.ToDefinition(), mining.ToDefinition(),
             doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, letrado.ToDefinition(),
-            critical.ToDefinition());
+            critical.ToDefinition(), intern.ToDefinition(), internPickaxe.ToDefinition(), internSpeed.ToDefinition(),
+            internMining.ToDefinition(), internPickaxeDamageGrowth);
 
         UpgradeDefinition PickaxeLine(double? step)
         {

@@ -46,7 +46,7 @@ namespace MinersIdle.Core
         /// O Letrado acompanha a caverna (M8, E3): o nível <i>n</i> leva à caverna <i>n+1</i>, então na caverna <i>c</i>
         /// ele está em <i>c−1</i> (ainda não comprado) ou <i>c</i> (comprado, a parede ainda por quebrar; uma parede de pé
         /// não é salva, e o botão de passar volta). Um nível fora disso vai para o mais perto. O coração da montanha só vale
-        /// na última caverna, com o último Letrado.
+        /// na última caverna, com o último Letrado. A árvore do estagiário fica no zero sem ele contratado (M7).
         /// </summary>
         public static GameState Restore(double shards, long hits, long breaks,
                                         Func<UpgradeId, int> levelOf, EconomyRules economy,
@@ -69,6 +69,11 @@ namespace MinersIdle.Core
             foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
                 state._levels[(int)id] = Math.Min(Math.Max(0, levelOf(id)), economy.Get(id).MaxLevel);
 
+            // A árvore do estagiário só existe com ele contratado (M7, §5.4).
+            if (state._levels[(int)UpgradeId.Intern] == 0)
+                foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
+                    if (EconomyRules.IsInternTree(id)) state._levels[(int)id] = 0;
+
             int letrado = (int)UpgradeId.Letrado;
             int letradoMax = economy.Get(UpgradeId.Letrado).MaxLevel;
             state._levels[letrado] = Math.Max(Math.Min(state._levels[letrado], state.Cave), Math.Min(state.Cave - 1, letradoMax));
@@ -86,6 +91,9 @@ namespace MinersIdle.Core
         internal void SpendShards(double amount) => Shards = Math.Max(0, Shards - amount);
 
         internal void RaiseLevel(UpgradeId id) => _levels[(int)id]++;
+
+        /// <summary>Atalho do debug (M7): a linha volta ao zero (Demitir o estagiário).</summary>
+        internal void ResetLevel(UpgradeId id) => _levels[(int)id] = 0;
 
         internal void RegisterBreak(double reward)
         {

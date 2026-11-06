@@ -150,6 +150,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **GDD v5 (D-85):** a E5 (relatório de economia) compara também com o `Balance_GDD_v5` (D-87, aprovada; vida e lascas da D-92) e aplica o toque de 33% junto com ele (D-86, aprovada).
 
 ### M7 — Estagiário
+- **Plano escrito (2026-11-05, D-163):** [Marco 7 — Estagiário](Marco%207%20-%20Estagiario.md), pelo GDD v7, com 4 etapas (núcleo, save e DBG → Estagiário; na tela; aba do Estagiário na LOJA, com mockup; alternativas no DBG → Cálculos, sessão de 30 min e Moto G75) e as perguntas respondidas pelo Bruno no mesmo dia (**D-164…D-173**, todas as recomendações; a E5 do 8b vai junto com a E4 do M7). Começa antes de fechar o Marco 8b (a E5 dele fica para depois) e **antes do marco "Bônus temporários"**. **Esforço:** ~19–24 h. O texto abaixo é o escopo original (histórico), com as notas por versão do GDD.
 - **Objetivo:** segundo minerador sem estados quebrados. **Jogador:** contrata, vê o estagiário atacar o cristal à frente.
 - **Tarefas:** T-M6-01…T-M6-07. **Dependências:** M5 (arte do principal), **spec do M2**.
 - **Entregáveis:** `MinerAgent` + `CrystalLot` com estados, `InternController`, barra de vida do estagiário, silhueta/capacete distinto, regras REQ-INT-01…06.

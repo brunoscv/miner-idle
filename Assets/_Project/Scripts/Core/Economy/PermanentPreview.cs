@@ -24,13 +24,15 @@ namespace MinersIdle.Core
         public int MaxLevel { get; }
         /// <summary>Custo da próxima compra, em lascas vermelhas; <c>null</c> no limite.</summary>
         public double? NextCost { get; }
-        /// <summary><see cref="UpgradeButtonState.Purchasable"/>, <see cref="UpgradeButtonState.NotEnoughShards"/> ou
-        /// <see cref="UpgradeButtonState.Maxed"/>.</summary>
+        /// <summary><see cref="UpgradeButtonState.Purchasable"/>, <see cref="UpgradeButtonState.NotEnoughShards"/>,
+        /// <see cref="UpgradeButtonState.Maxed"/> ou <see cref="UpgradeButtonState.Locked"/> (a Promoção antes do Treinar no
+        /// limite, M7).</summary>
         public UpgradeButtonState State { get; }
 
         /// <summary>
         /// O que a linha soma agora, efeito × nível (D-158): cristais a menos na trava do Mapa (Memória), a fração do
-        /// bônus (Sangue 0,1 = +10%, Coração 0,5 = +50%, Dedos 0,05 = +5%) ou os níveis de Picareta da run nova (Alma).
+        /// bônus (Sangue 0,1 = +10%, Coração 0,5 = +50%, Dedos 0,05 = +5%, Treinar 0,1 = +10%), os níveis de Picareta da
+        /// run nova (Alma) ou 1 com a Promoção comprada.
         /// </summary>
         public double CurrentValue { get; }
         /// <summary>O mesmo depois da próxima compra (igual a <see cref="CurrentValue"/> no limite).</summary>
@@ -46,6 +48,7 @@ namespace MinersIdle.Core
             int level = permanents.EffectiveLevel(id);
             double? cost = permanents.NextCost(id);
             var state = cost == null ? UpgradeButtonState.Maxed
+                : permanents.IsLocked(id) ? UpgradeButtonState.Locked
                 : Purchases.CanAfford(permanents.State.RedShards, cost.Value) ? UpgradeButtonState.Purchasable
                 : UpgradeButtonState.NotEnoughShards;
             double current = line.Effect * level;

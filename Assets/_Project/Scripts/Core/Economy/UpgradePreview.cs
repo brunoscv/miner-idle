@@ -47,6 +47,7 @@ namespace MinersIdle.Core
         /// <summary>
         /// O atributo que a linha melhora, agora: dano (Picareta e Dupla), intervalo em segundos (Velocidade), multiplicador
         /// de lascas (Mineração, 1,08 = +8%), caminhada (Botas) ou a chance de crítico que a linha soma (Crítico, 0,05 = +5%).
+        /// Nas do estagiário (M7): 1 contratado / 0 não, o dano, o intervalo ou as lascas offline dele (<see cref="InternStats"/>).
         /// </summary>
         public double CurrentValue { get; }
         /// <summary>O mesmo atributo depois da próxima compra (igual a <see cref="CurrentValue"/> no limite).</summary>
@@ -87,6 +88,13 @@ namespace MinersIdle.Core
                                           Math.Min(state.CaveBreaks, goal), goal);
             }
 
+            if (id == UpgradeId.Intern || EconomyRules.IsInternTree(id))
+            {
+                double now = InternValueOf(id, InternStats.Compute(rules, economy, state, permanents));
+                double then = cost == null ? now : InternValueOf(id, InternStats.Compute(rules, economy, state, id, permanents));
+                return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, now, then, 0, 0);
+            }
+
             double current = ValueOf(id, MinerStats.Compute(rules, economy, state, permanents));
             double next = cost == null ? current : ValueOf(id, MinerStats.Compute(rules, economy, state, id, permanents));
 
@@ -110,6 +118,19 @@ namespace MinersIdle.Core
                     return stats.CritBonus;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(id), id, null);
+            }
+        }
+
+        /// <summary>Do estagiário (M7): 1 contratado / 0 não (Estagiário), dano, intervalo ou multiplicador das lascas offline.</summary>
+        static double InternValueOf(UpgradeId id, InternStats stats)
+        {
+            switch (id)
+            {
+                case UpgradeId.Intern: return stats.IsHired ? 1 : 0;
+                case UpgradeId.InternPickaxe: return stats.Damage;
+                case UpgradeId.InternSpeed: return stats.HitInterval;
+                case UpgradeId.InternMining: return stats.OfflineRewardMultiplier;
+                default: throw new ArgumentOutOfRangeException(nameof(id), id, null);
             }
         }
     }

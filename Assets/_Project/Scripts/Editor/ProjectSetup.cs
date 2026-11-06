@@ -92,6 +92,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV7Balance();
             EnsureGddV7HundredLevels();
             EnsureGddV7Permanents();
+            EnsureGddV7Intern();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -520,6 +521,32 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v7: Descansar a partir do nível 10, lascas vermelhas e as 5 permanentes do anão (Marco 8b, D-158).");
+        }
+
+        /// <summary>
+        /// M7 (GDD v7 §4.1, §4.2, §5.4; D-164, D-165): no v7, o Estagiário (500, compra única), a árvore dele — Picareta
+        /// <c>50 × 4^(n−1)</c> com dano <c>5 × 2^(n−1)</c> (20 níveis), Velocidade <c>50 × 5^(n−1)</c>, −0,1 s a partir de
+        /// 2,0 s até o piso de 0,1 s (19 compras), Mineração <c>50 × 1,2^(n−1)</c>, +100% das lascas offline (10) — e as
+        /// permanentes dele: Treinar <c>10 + 2^(n−1)</c>, +10% de dano (10), e Promoção (50, compra única).
+        /// </summary>
+        static void EnsureGddV7Intern()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            if (serialized.FindProperty("intern.maxLevel").intValue == 1) return;
+
+            SetLine(serialized, "intern", 500, 1, 1, 1);
+            SetLine(serialized, "internPickaxe", 50, 4, 20, 5);
+            serialized.FindProperty("internPickaxeDamageGrowth").doubleValue = 2;
+            SetLine(serialized, "internSpeed", 50, 5, 19, 0.1);
+            SetLine(serialized, "internMining", 50, 1.2, 10, 1);
+            SetLine(serialized, "internTraining", 10, 2, 10, 0.1, CostFormula.OffsetExponential);
+            SetLine(serialized, "internPromotion", 50, 1, 1, 1);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v7: o Estagiário (500), a árvore dele e o Treinar e a Promoção (M7, D-164, D-165).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

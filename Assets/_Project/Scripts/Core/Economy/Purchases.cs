@@ -6,7 +6,10 @@ namespace MinersIdle.Core
         NotEnoughShards,
         /// <summary>Limite de compras atingido (ou linha desligada).</summary>
         MaxLevel,
-        /// <summary>Letrado (M8, D-93): faltam cristais quebrados na caverna atual.</summary>
+        /// <summary>
+        /// Letrado (M8, D-93): faltam cristais quebrados na caverna atual. Também uma linha do estagiário antes de contratá-lo
+        /// (M7) e a Promoção antes do Treinar no limite.
+        /// </summary>
         Locked,
         /// <summary>Letrado (M8): o desta caverna já foi comprado; falta passar de caverna.</summary>
         PassFirst,
@@ -43,10 +46,12 @@ namespace MinersIdle.Core
         /// <summary>
         /// A trava do Letrado (M8, GDD v5, D-93): o nível <i>n</i> só se compra na caverna <i>n</i> (um por caverna) e depois
         /// de <see cref="MiningRules.LetradoBreaks"/> cristais quebrados nela (menos os da Memória, Marco 8b:
-        /// <see cref="MapLock"/>). <c>null</c> = liberado (as outras linhas nunca travam).
+        /// <see cref="MapLock"/>). As da árvore do estagiário (M7, §5.4) só depois de contratá-lo. <c>null</c> = liberado
+        /// (as outras linhas nunca travam).
         /// </summary>
         public static PurchaseResult? Blocked(GameState state, MiningRules rules, UpgradeId id, Permanents permanents = null)
         {
+            if (EconomyRules.IsInternTree(id)) return state.LevelOf(UpgradeId.Intern) > 0 ? (PurchaseResult?)null : PurchaseResult.Locked;
             if (id != UpgradeId.Letrado) return null;
             if (state.LevelOf(id) >= state.Cave) return PurchaseResult.PassFirst;
             if (state.CaveBreaks < MapLock(rules, permanents)) return PurchaseResult.Locked;
@@ -63,7 +68,7 @@ namespace MinersIdle.Core
         {
             double? cost = NextCost(state, economy, id);
             if (cost == null) return PurchaseResult.MaxLevel;
-            var blocked = rules != null ? Blocked(state, rules, id, permanents) : null;
+            var blocked = rules != null || EconomyRules.IsInternTree(id) ? Blocked(state, rules, id, permanents) : null;
             if (blocked != null) return blocked.Value;
             if (!CanAfford(state.Shards, cost.Value)) return PurchaseResult.NotEnoughShards;
 

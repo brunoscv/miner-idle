@@ -9,7 +9,8 @@ namespace MinersIdle.Core
     /// intervalo no fim da fila, até o máximo (D-54, D-60). Desde o M3, dano, intervalo, corrida e lascas vêm dos
     /// atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram. Desde o M5: o toque do
     /// jogador (<see cref="Tap"/>), o crítico e o combo (<see cref="StrikeRules"/>). Desde o M8: as cavernas e a parede da
-    /// passagem (<see cref="PassCave"/>). (Até o M5, o anão andava num mapa aberto; esse código está na tag
+    /// passagem (<see cref="PassCave"/>). Desde o M7: o estagiário, que bate no mesmo cristal do anão com o relógio dele e
+    /// avança junto (<see cref="InternHitLanded"/>). (Até o M5, o anão andava num mapa aberto; esse código está na tag
     /// <c>v0.5-campo-aberto</c>.)
     ///
     /// O tempo é do código (Arquitetura Técnica, D-T2): <see cref="Tick"/> avança de evento em evento (chegada, golpe,
@@ -38,6 +39,10 @@ namespace MinersIdle.Core
         bool _rested;
 
         MinerStats _stats;
+        InternStats _internStats;
+        // O relógio do golpe do estagiário (M7, D-168): conta enquanto o anão bate; correndo, só enche no modo A1.
+        double _internTimer;
+        long _internHits;
         double _spawnTimer;
         int _combo;
         double _lastTapTime;
@@ -73,6 +78,7 @@ namespace MinersIdle.Core
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
             _permanents = permanents ?? Permanents.None();
             _stats = ComputeStats();
+            _internStats = ComputeInternStats();
             ArrivalStrike = rules.ArrivalStrike;
             _miner = new Miner();
             _track = new CrystalTrack(rules);
@@ -100,6 +106,13 @@ namespace MinersIdle.Core
         public event Action<UpgradeId, int> UpgradePurchased;
         /// <summary>Os atributos do anão mudaram (DANO e VELOCIDADE do HUD).</summary>
         public event Action<MinerStats> StatsChanged;
+        /// <summary>
+        /// Golpe do estagiário (M7) no alvo do anão: nunca crítico (D-167). Sai à parte do <see cref="HitLanded"/>, que
+        /// continua só do anão e do toque: quem desenha o anão não confunde os dois.
+        /// </summary>
+        public event Action<MiningHit> InternHitLanded;
+        /// <summary>O estagiário foi contratado, demitido ou mudou de atributos (compra, Treinar, atalhos do debug).</summary>
+        public event Action<InternStats> InternChanged;
         /// <summary>O combo mudou (0 = zerou depois da janela sem toque).</summary>
         public event Action<int> ComboChanged;
         /// <summary>O combo chegou a um múltiplo de 10 (o "pop" especial).</summary>
@@ -170,6 +183,18 @@ namespace MinersIdle.Core
 
         /// <summary>Atributos atuais do anão: valores base + melhorias.</summary>
         public MinerStats Stats => _stats;
+
+        /// <summary>Atributos atuais do estagiário (M7): contratado ou não, dano, intervalo, lascas offline.</summary>
+        public InternStats InternStats => _internStats;
+
+        /// <summary>Se o estagiário está contratado nesta run.</summary>
+        public bool IsInternHired => _internStats.IsHired;
+
+        /// <summary>Segundos acumulados no relógio do golpe do estagiário (para a apresentação e os testes).</summary>
+        public double InternHitTimer => _internTimer;
+
+        /// <summary>Golpes do estagiário nesta partida (DBG → Estagiário; não vai para o save).</summary>
+        public long InternHits => _internHits;
         public GameState State => _state;
         public Miner Miner => _miner;
 
@@ -263,6 +288,7 @@ namespace MinersIdle.Core
             UpgradePurchased?.Invoke(id, _state.LevelOf(id));
             StatsChanged?.Invoke(_stats);
             ShardsChanged?.Invoke(_state.Shards);
+            if (id == UpgradeId.Intern || EconomyRules.IsInternTree(id)) OnInternChanged();
             return result;
         }
 
@@ -419,9 +445,86 @@ namespace MinersIdle.Core
             PermanentsChanged?.Invoke();
             StatsChanged?.Invoke(_stats);
             CaveChanged?.Invoke(_state.Cave); // a trava do Mapa pode ter mudado (Memória)
+            OnInternChanged(); // o Treinar muda o dano dele
         }
 
         MinerStats ComputeStats() => MinerStats.Compute(_rules, _economy, _state, _permanents);
+
+        InternStats ComputeInternStats() => InternStats.Compute(_rules, _economy, _state, _permanents);
+
+        /// <summary>
+        /// Recalcula o estagiário e avisa. Contratado agora, ele nasce no cristal atual do anão (§5.1): se o anão já está
+        /// batendo, o relógio dele começa como numa chegada (D-168).
+        /// </summary>
+        void OnInternChanged()
+        {
+            bool wasHired = _internStats.IsHired;
+            _internStats = ComputeInternStats();
+            if (_internStats.IsHired && !wasHired)
+            {
+                _internTimer = 0;
+                if (_miner.State == MinerState.Mining) InternArrives();
+            }
+            InternChanged?.Invoke(_internStats);
+        }
+
+        // ── Atalhos do debug do estagiário (M7, DBG → Estagiário) ───────────────────────────────────────────────
+
+        /// <summary>Atalho do debug: contrata o estagiário de graça. <c>false</c> se já está contratado ou o balanço não o tem.</summary>
+        public bool HireIntern()
+        {
+            if (!_economy.HasIntern || _internStats.IsHired) return false;
+            _state.RaiseLevel(UpgradeId.Intern);
+            OnInternChanged();
+            return true;
+        }
+
+        /// <summary>Atalho do debug: demite o estagiário; a árvore dele volta ao zero. <c>false</c> se não estava contratado.</summary>
+        public bool FireIntern()
+        {
+            if (_state.LevelOf(UpgradeId.Intern) == 0) return false;
+            foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
+                if (id == UpgradeId.Intern || EconomyRules.IsInternTree(id)) _state.ResetLevel(id);
+            _internTimer = 0;
+            OnInternChanged();
+            return true;
+        }
+
+        /// <summary>
+        /// Atalho do debug: um nível de graça em cada linha da árvore do estagiário que ainda sobe; contrata antes, se
+        /// preciso. <c>false</c> se nada mudou.
+        /// </summary>
+        public bool GrantInternLevels()
+        {
+            bool any = HireIntern();
+            if (!_internStats.IsHired) return any;
+            foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
+            {
+                if (!EconomyRules.IsInternTree(id) || _economy.Get(id).IsMaxed(_state.LevelOf(id))) continue;
+                _state.RaiseLevel(id);
+                any = true;
+            }
+            if (any) OnInternChanged();
+            return any;
+        }
+
+        /// <summary>Atalho do debug: +1 nível de graça na permanente (respeita o limite e a trava da Promoção).</summary>
+        public bool GrantPermanentLevel(PermanentId id)
+        {
+            if (!_permanents.GrantLevel(id)) return false;
+            OnPermanentsChanged();
+            return true;
+        }
+
+        /// <summary>Atalho do debug: o Treinar até o limite e a Promoção, de graça. <c>false</c> se nada mudou.</summary>
+        public bool PromoteIntern()
+        {
+            bool any = false;
+            while (_permanents.GrantLevel(PermanentId.InternTraining)) any = true;
+            any |= _permanents.GrantLevel(PermanentId.InternPromotion);
+            if (any) OnPermanentsChanged();
+            return any;
+        }
 
         /// <summary>
         /// Atalho do debug: a próxima caverna agora, sem parede, como se tivesse comprado o Letrado (de graça) e passado.
@@ -533,6 +636,15 @@ namespace MinersIdle.Core
                     Hit();
                     changed = true;
                 }
+
+                // O estagiário depois do anão (no mesmo instante, o anão primeiro): se o golpe do anão quebrou o cristal, o
+                // anão já está correndo e o estagiário não bate no que caiu; o golpe dele fica para o próximo cristal.
+                if (InternCanHit && _internTimer >= _internStats.HitInterval - Epsilon)
+                {
+                    _internTimer = Math.Max(0, _internTimer - _internStats.HitInterval);
+                    InternHit();
+                    changed = true;
+                }
             } while (changed);
         }
 
@@ -558,6 +670,7 @@ namespace MinersIdle.Core
                     next = Math.Min(next, Math.Max(0, _recoveryLeft));
                     break;
             }
+            if (InternCanHit) next = Math.Min(next, Math.Max(0, _internStats.HitInterval - _internTimer));
 
             return next;
         }
@@ -571,6 +684,8 @@ namespace MinersIdle.Core
 
             // Fila cheia ou parede de pé: o relógio de nascimento espera no limite e nasce assim que der.
             _spawnTimer = SpawnWaits ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;
+
+            if (_internStats.IsHired) AdvanceInternTimer(step);
 
             switch (_miner.State)
             {
@@ -610,6 +725,39 @@ namespace MinersIdle.Core
                     _miner.HitTimer = 0;
                     break;
             }
+            if (_internStats.IsHired) InternArrives();
+        }
+
+        /// <summary>O estagiário bate só com o anão batendo, no alvo dele (§5.2).</summary>
+        bool InternCanHit => _internStats.IsHired && _miner.State == MinerState.Mining && _miner.Target != null;
+
+        /// <summary>O estagiário chegou ao alcance junto com o anão: o relógio dele segue o mesmo modo (D-168, D-124).</summary>
+        void InternArrives()
+        {
+            switch (ArrivalStrike)
+            {
+                case ArrivalStrike.Charge:
+                    _internTimer = Math.Min(_internTimer, _internStats.HitInterval);
+                    break;
+                case ArrivalStrike.Immediate:
+                    _internTimer = _internStats.HitInterval;
+                    break;
+                default:
+                    _internTimer = 0;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// O relógio do estagiário: com o anão batendo, conta; correndo (ou terminando o golpe, D-126), só enche no modo A1,
+        /// até um intervalo, como o do anão.
+        /// </summary>
+        void AdvanceInternTimer(double step)
+        {
+            if (_miner.State == MinerState.Mining && _miner.Target != null)
+                _internTimer += step;
+            else if (ArrivalStrike == ArrivalStrike.Charge)
+                _internTimer = Math.Min(_internTimer + step, _internStats.HitInterval);
         }
 
         /// <summary>O relógio de nascimento espera: fila cheia ou parede de pé.</summary>
@@ -655,7 +803,11 @@ namespace MinersIdle.Core
             else
             {
                 _miner.State = MinerState.Running;
-                if (ArrivalStrike != ArrivalStrike.Charge) _miner.HitTimer = 0;
+                if (ArrivalStrike != ArrivalStrike.Charge)
+                {
+                    _miner.HitTimer = 0;
+                    _internTimer = 0;
+                }
             }
             TargetChanged?.Invoke(target);
         }
@@ -671,6 +823,20 @@ namespace MinersIdle.Core
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(new MiningHit(target, damage, isTap: false, isCritical: critical));
 
+            if (broke) Break(target);
+        }
+
+        /// <summary>
+        /// Golpe do estagiário no alvo do anão (M7): o dano dele, sem crítico (D-167). Se quebrar, é uma quebra como as
+        /// outras (D-95): paga uma vez, com a Mineração do anão (D-166), e conta na trava do Mapa; os dois correm juntos.
+        /// </summary>
+        void InternHit()
+        {
+            var target = _miner.Target;
+            double damage = _internStats.Damage;
+            _internHits++;
+            bool broke = target.ApplyDamage(damage);
+            InternHitLanded?.Invoke(new MiningHit(target, damage, isTap: false, isCritical: false));
             if (broke) Break(target);
         }
 

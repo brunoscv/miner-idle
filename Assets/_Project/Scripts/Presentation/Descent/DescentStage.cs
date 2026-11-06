@@ -423,9 +423,6 @@ namespace MinersIdle.Presentation
 
         public float MetersPerUnit => metersPerUnit;
 
-        /// <summary>Mostra o estagiário ao lado do anão (DBG; o estagiário de verdade é do M7).</summary>
-        public bool ShowIntern { get; set; }
-
         /// <summary>Troca o anão pelas folhas com menos pixels (DBG, para comparar; não fica salvo).</summary>
         public bool UseLowDwarf { get; set; }
 
@@ -1229,12 +1226,13 @@ namespace MinersIdle.Presentation
         }
 
         /// <summary>
-        /// O estagiário (D-76): as folhas grisalhas, ao lado e um pouco atrás do anão (D-57), no mesmo relógio. A corrida
-        /// vem defasada; o golpe acompanha o do anão (o golpe próprio dele é do M7).
+        /// O estagiário (D-76): as folhas grisalhas, ao lado e um pouco atrás do anão (D-57), no mesmo relógio, só com ele
+        /// contratado na simulação (M7). A corrida vem defasada; o golpe ainda acompanha o do anão (o golpe próprio dele na
+        /// tela é da E2 do M7).
         /// </summary>
         void LayoutIntern(bool sheets, bool running, int runFrame, float bounce, float distance)
         {
-            bool show = ShowIntern && sheets && internRunSheet != null && internMineSheet != null;
+            bool show = Simulation != null && Simulation.IsInternHired && sheets && internRunSheet != null && internMineSheet != null;
             _intern.Visible = _internShadow.Visible = show;
             if (!show)
             {

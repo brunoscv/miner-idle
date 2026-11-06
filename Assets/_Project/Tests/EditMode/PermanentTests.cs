@@ -234,8 +234,11 @@ namespace MinersIdle.Tests
             sim.AddRedShards(100);
             Assert.That(permanent.RedShards, Is.EqualTo(100));
             Assert.That(sim.GrantPermanentLevels(), Is.True);
-            foreach (PermanentId id in Enum.GetValues(typeof(PermanentId)))
+            // As 5 do anão sobem; as do estagiário (M7) estão desligadas nestas regras e ficam no zero.
+            foreach (var id in new[] { PermanentId.Memory, PermanentId.MountainBlood, PermanentId.BurningHeart,
+                                       PermanentId.NervousFingers, PermanentId.DwarfSoul })
                 Assert.That(permanent.LevelOf(id), Is.EqualTo(1), id.ToString());
+            Assert.That(permanent.LevelOf(PermanentId.InternTraining), Is.EqualTo(0), "linha desligada");
             Assert.That(sim.Stats.Damage, Is.EqualTo(2 * 1.1).Within(1e-9), "o Sangue vale na hora");
 
             sim.Rest(force: true);

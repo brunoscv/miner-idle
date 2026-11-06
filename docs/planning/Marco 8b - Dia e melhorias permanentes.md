@@ -41,7 +41,7 @@ Ao tocar em Descansar, abre o **modal** (D-153). Encerrar **zera tudo da run**: 
 | **Dedos Nervosos** | `10 + 2^(n−1)` | +5% de chance de crítico, no golpe e no toque | 10 | 1.123 |
 | **Alma dos Anões** | `10 + 2^(n−1)` | a run começa com a Picareta no nível *n*, como se comprada | 10 | 1.123 |
 
-Primeiras compras: 11, 12, 14, 18, 26, 42, 74, 138, 266, 522. As duas do estagiário (**Treinar** e **Promoção do Estagiário**) ficam para o M7, na aba dele.
+Primeiras compras: 11, 12, 14, 18, 26, 42, 74, 138, 266, 522. As duas do estagiário (**Treinar** e **Promoção do Estagiário**) ficam para o M7 (pela D-170, na aba das permanentes, depois das 5 do anão).
 
 **Alternativas no DBG → Cálculos (D-143):**
 - **Sangue e Coração:** `10 + 1,5^(n−1)` (total 6.849) ou a linear `10 + 2 × (n−1)` (total 580, a preferência do Bruno).
@@ -138,6 +138,8 @@ Primeiras compras: 11, 12, 14, 18, 26, 42, 74, 138, 266, 522. As duas do estagi�
   - Uma linha que chega ao limite desce para o fim da lista, desabilitada.
 
 ### E5 — Alternativas no DBG → Cálculos e o celular
+
+> **2026-11-05 (D-163, D-173):** esta etapa passa a ser feita junto com a **E4 do [M7](Marco%207%20-%20Estagiario.md)** (o mesmo menu Cálculos e o mesmo teste no Moto G75). O Marco 8b e o M7 são aprovados juntos no fim.
 
 - **Seletores das permanentes no menu Cálculos** (D-143, D-159):
   - Sangue e Coração: GDD · `1,5^` · linear.

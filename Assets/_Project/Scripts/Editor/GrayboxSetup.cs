@@ -118,6 +118,7 @@ namespace MinersIdle.EditorTools
             changed |= DebugPanelSetup.Ensure();
             changed |= CalculationsSetup.EnsureInScene();
             changed |= DayDebugSetup.EnsureInScene();
+            changed |= InternDebugSetup.EnsureInScene();
             changed |= ShopSetup.EnsureInScene();
             changed |= HeartScreenSetup.EnsureInScene();
             changed |= UiSkinSetup.EnsureInScene();

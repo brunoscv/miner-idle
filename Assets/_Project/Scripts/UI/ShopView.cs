@@ -56,9 +56,6 @@ namespace MinersIdle.UI
         [SerializeField] GameObject redBalance;
         [SerializeField] TMP_Text redBalanceValue;
 
-        static readonly UpgradeId[] Lines = (UpgradeId[])System.Enum.GetValues(typeof(UpgradeId));
-        static readonly PermanentId[] PermanentLines = (PermanentId[])System.Enum.GetValues(typeof(PermanentId));
-
         readonly List<UpgradeRowView> _rows = new List<UpgradeRowView>();
         readonly List<PermanentRowView> _permanentRows = new List<PermanentRowView>();
 
@@ -188,13 +185,15 @@ namespace MinersIdle.UI
             var simulation = Simulation;
             if (simulation == null) return;
 
+            // Só as linhas que a loja mostra: uma linha sem lugar na loja (as do estagiário antes da aba dele, M7) não
+            // acende o "!" de algo que o jogador não acha.
             bool anyRun = false;
-            foreach (var id in Lines)
-                anyRun |= simulation.Preview(id).State == UpgradeButtonState.Purchasable;
+            foreach (var row in _rows)
+                anyRun |= !row.IsLocked && simulation.Preview(row.Upgrade).State == UpgradeButtonState.Purchasable;
             bool anyPermanent = false, hasPermanents = false;
-            foreach (var id in PermanentLines)
+            foreach (var row in _permanentRows)
             {
-                var preview = simulation.PreviewPermanent(id);
+                var preview = simulation.PreviewPermanent(row.Permanent);
                 hasPermanents |= preview.IsEnabled;
                 anyPermanent |= preview.State == UpgradeButtonState.Purchasable;
             }

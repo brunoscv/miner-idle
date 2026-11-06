@@ -76,6 +76,31 @@ MonoBehaviour:
     maxLevel: 10
     effect: 0.05
   minHitInterval: 0.1
+  intern:
+    costFormula: 0
+    baseCost: 500
+    costGrowth: 1
+    maxLevel: 1
+    effect: 1
+  internPickaxe:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 4
+    maxLevel: 20
+    effect: 5
+  internPickaxeDamageGrowth: 2
+  internSpeed:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 5
+    maxLevel: 19
+    effect: 0.1
+  internMining:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 1.2
+    maxLevel: 10
+    effect: 1
   critChance: 0
   tapCritChance: 0.05
   critMultiplier: 2
@@ -120,4 +145,16 @@ MonoBehaviour:
     baseCost: 10
     costGrowth: 2
     maxLevel: 10
+    effect: 1
+  internTraining:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 10
+    effect: 0.1
+  internPromotion:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 1
+    maxLevel: 1
     effect: 1

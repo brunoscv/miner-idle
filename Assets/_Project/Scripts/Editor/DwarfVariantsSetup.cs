@@ -65,12 +65,12 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>
-        /// Na cena Game (já aberta): o estagiário com as folhas grisalhas e o botão "Estagiário" no painel de câmera do DBG.
+        /// Na cena Game (já aberta): o estagiário com as folhas grisalhas (o botão "Estagiário" do painel de câmera saiu no M7).
         /// Devolve se mudou a cena.
         /// </summary>
         /// <summary>
-        /// Botões do painel de câmera do DBG: Resolução, Padrão F1, Fechar, Estagiário e Anão 64px na 1ª linha; Chão (E9)
-        /// na 2ª. Seis numa linha não cabem: em 39 px o nome "Resolução" (41 px) vaza.
+        /// Botões do painel de câmera do DBG: Resolução, Padrão F1, Fechar e Anão 64px na 1ª linha (o Estagiário saiu no
+        /// M7); Chão (E9) na 2ª. Seis numa linha não cabem: em 39 px o nome "Resolução" (41 px) vaza.
         /// </summary>
         internal const int CameraButtonColumns = 5;
         internal static readonly Vector2 CameraButtonCell = new Vector2(48f, 16f);
@@ -101,12 +101,14 @@ namespace MinersIdle.EditorTools
                 }
             }
 
+            // M7: o estagiário aparece quando é contratado; o botão "Estagiário" da câmera (que só ligava o desenho) sai.
             var panel = Object.FindAnyObjectByType<MinersIdle.UI.DescentCameraPanel>(FindObjectsInactive.Include);
             var buttons = panel != null ? panel.transform.Find("Content/Buttons") : null;
-            if (buttons != null && buttons.Find("Intern") == null)
+            var oldIntern = buttons != null ? buttons.Find("Intern") : null;
+            if (oldIntern != null)
             {
-                var button = DebugPanelSetup.CreateButton(buttons, "Intern", "Estagiário");
-                GrayboxSetup.SetReferences(panel, ("intern", button));
+                Object.DestroyImmediate(oldIntern.gameObject);
+                Debug.Log("[Setup] DBG → Câmera: botão \"Estagiário\" removido (M7: ele aparece quando é contratado).");
                 changed = true;
             }
             var grid = buttons != null ? buttons.GetComponent<UnityEngine.UI.GridLayoutGroup>() : null;
@@ -129,7 +131,7 @@ namespace MinersIdle.EditorTools
                 changed = true;
             }
 
-            if (changed) Debug.Log("[Setup] Estagiário grisalho na descida, ligado pelo DBG → Câmera → Estagiário (M1b E7).");
+            if (changed) Debug.Log("[Setup] Estagiário grisalho na descida, visível quando contratado (M1b E7, M7).");
             return changed;
         }
 

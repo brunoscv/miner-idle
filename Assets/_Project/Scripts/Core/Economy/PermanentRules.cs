@@ -4,7 +4,8 @@ namespace MinersIdle.Core
 {
     /// <summary>
     /// As melhorias permanentes do anão (Marco 8b, GDD v7 §4.2, D-158): compradas com lascas vermelhas, valem em todas as
-    /// runs. A ordem é a da tabela do GDD (e a da aba da loja, D-155). As do estagiário (Treinar, Promoção) entram no M7.
+    /// runs. A ordem é a da tabela do GDD (e a da aba da loja, D-155). As duas do estagiário (Treinar e Promoção) entraram
+    /// no M7, depois das do anão (D-170).
     /// </summary>
     public enum PermanentId
     {
@@ -18,6 +19,13 @@ namespace MinersIdle.Core
         NervousFingers,
         /// <summary>Alma dos Anões: a run começa com a Picareta em efeito × nível níveis, como se comprada (GDD v7: 1).</summary>
         DwarfSoul,
+        /// <summary>Treinar Estagiário (M7): o dano do estagiário multiplica por (1 + efeito × nível) (GDD v7: 0,1 = +10%).</summary>
+        InternTraining,
+        /// <summary>
+        /// Promoção do Estagiário (M7): compra única; a run já começa com o estagiário contratado, a árvore dele no zero
+        /// (D-169). Só se compra com o Treinar no limite (GDD v7: nível 10).
+        /// </summary>
+        InternPromotion,
     }
 
     /// <summary>

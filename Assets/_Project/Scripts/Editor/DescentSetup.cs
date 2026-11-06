@@ -266,7 +266,6 @@ namespace MinersIdle.EditorTools
                 ("resolution", DebugPanelSetup.CreateButton(grid.transform, "Resolution", "Resolução")),
                 ("resetFraming", DebugPanelSetup.CreateButton(grid.transform, "ResetFraming", "Padrão F1")),
                 ("close", DebugPanelSetup.CreateButton(grid.transform, "Close", "Fechar")),
-                ("intern", DebugPanelSetup.CreateButton(grid.transform, "Intern", "Estagiário")),
                 ("lowDwarf", DebugPanelSetup.CreateButton(grid.transform, DwarfArtSetup.LowDwarfButton, DwarfArtSetup.LowDwarfLabel)));
 
             var serialized = new SerializedObject(panel);

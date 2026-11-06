@@ -68,6 +68,23 @@ namespace MinersIdle.Core
         /// <summary>Alma dos Anões: os níveis de Picareta com que a run começa.</summary>
         public int StartingPickaxe => (int)Math.Round(Effect(PermanentId.DwarfSoul));
 
+        /// <summary>Treinar Estagiário: multiplica o dano do estagiário (M7; GDD v7: +10% por nível).</summary>
+        public double InternDamageMultiplier => 1 + Effect(PermanentId.InternTraining);
+
+        /// <summary>Promoção do Estagiário: a run nova já começa com ele contratado (M7, D-169).</summary>
+        public bool StartsWithIntern => EffectiveLevel(PermanentId.InternPromotion) > 0;
+
+        /// <summary>
+        /// Se a linha ainda espera outra: a Promoção só se compra com o Treinar no limite (GDD v7 §4.2: "requer estagiário
+        /// treinado nível 10").
+        /// </summary>
+        public bool IsLocked(PermanentId id)
+        {
+            if (id != PermanentId.InternPromotion) return false;
+            var training = Rules.Get(PermanentId.InternTraining);
+            return !training.IsEnabled || EffectiveLevel(PermanentId.InternTraining) < training.MaxLevel;
+        }
+
         /// <summary>O que a próxima compra custa em lascas vermelhas, ou <c>null</c> no limite (ou com a linha desligada).</summary>
         public double? NextCost(PermanentId id)
         {
@@ -81,6 +98,7 @@ namespace MinersIdle.Core
         {
             double? cost = NextCost(id);
             if (cost == null) return PurchaseResult.MaxLevel;
+            if (IsLocked(id)) return PurchaseResult.Locked;
             if (!Purchases.CanAfford(State.RedShards, cost.Value)) return PurchaseResult.NotEnoughShards;
 
             State.SpendRedShards(cost.Value);
@@ -88,17 +106,24 @@ namespace MinersIdle.Core
             return PurchaseResult.Purchased;
         }
 
-        /// <summary>Atalho do debug: um nível de graça em cada linha que ainda sobe.</summary>
+        /// <summary>
+        /// Atalho do debug: um nível de graça em cada linha que ainda sobe. A Promoção só sobe com o Treinar já no limite
+        /// (a ordem do enum põe o Treinar antes: no passo em que ele chega ao limite, ela já vem junto).
+        /// </summary>
         internal bool GrantLevels()
         {
             bool any = false;
             foreach (PermanentId id in Enum.GetValues(typeof(PermanentId)))
-            {
-                if (Rules.Get(id).IsMaxed(State.LevelOf(id))) continue;
-                State.RaiseLevel(id);
-                any = true;
-            }
+                any |= GrantLevel(id);
             return any;
+        }
+
+        /// <summary>Atalho do debug: um nível de graça na linha, se ela ainda sobe e não espera outra (<see cref="IsLocked"/>).</summary>
+        internal bool GrantLevel(PermanentId id)
+        {
+            if (Rules.Get(id).IsMaxed(State.LevelOf(id)) || IsLocked(id)) return false;
+            State.RaiseLevel(id);
+            return true;
         }
 
         /// <summary>As lascas vermelhas que uma run no nível <paramref name="level"/> leva se descansar agora (D-138).</summary>
@@ -117,14 +142,15 @@ namespace MinersIdle.Core
         /// <summary>
         /// A run nova (D-137): nível 1, sem lascas, as melhorias base no zero, a não ser a Picareta, que começa com a Alma
         /// dos Anões (no máximo o limite da linha), como se comprada: a próxima compra custa o que custaria depois delas.
+        /// Com a Promoção (M7, D-169), o estagiário já vem contratado, com a árvore dele no zero.
         /// </summary>
         public GameState NewRun(EconomyRules economy)
         {
             if (economy == null) throw new ArgumentNullException(nameof(economy));
             int pickaxe = StartingPickaxe;
-            return pickaxe <= 0
-                ? new GameState()
-                : GameState.Restore(0, 0, 0, id => id == UpgradeId.Pickaxe ? pickaxe : 0, economy);
+            int intern = StartsWithIntern && economy.HasIntern ? 1 : 0;
+            if (pickaxe <= 0 && intern == 0) return new GameState();
+            return GameState.Restore(0, 0, 0, id => id == UpgradeId.Pickaxe ? pickaxe : id == UpgradeId.Intern ? intern : 0, economy);
         }
     }
 }

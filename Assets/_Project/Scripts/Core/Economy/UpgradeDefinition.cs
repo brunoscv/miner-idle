@@ -25,6 +25,20 @@ namespace MinersIdle.Core
         /// crítico do golpe automático e do toque.
         /// </summary>
         Critical,
+        /// <summary>
+        /// Estagiário (M7, GDD v7 §4.1, §5.1): compra única que contrata o segundo minerador. As linhas dele
+        /// (<see cref="InternPickaxe"/>, <see cref="InternSpeed"/>, <see cref="InternMining"/>) só se compram depois dela.
+        /// </summary>
+        Intern,
+        /// <summary>
+        /// Picareta do estagiário (§5.4): a compra <i>n</i> leva o dano dele a efeito × crescimento^(n−1) (GDD v7: 5 × 2^(n−1));
+        /// sem compras, ele bate o Dano Base do anão (D-164).
+        /// </summary>
+        InternPickaxe,
+        /// <summary>Velocidade do estagiário (§5.4): segundos a menos no intervalo dele por nível (GDD v7: 0,1; piso da D-165).</summary>
+        InternSpeed,
+        /// <summary>Mineração do estagiário (§5.4): fração a mais de lascas por nível, só no offline (D-166; GDD v7: 1 = +100%).</summary>
+        InternMining,
     }
 
     /// <summary>Como o custo cresce a cada compra (E3b do M8, D-143). O nível é o número de compras feitas (D-38).</summary>

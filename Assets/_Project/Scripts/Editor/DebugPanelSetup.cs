@@ -202,9 +202,12 @@ namespace MinersIdle.EditorTools
 
         // ── Menus (D-147) ────────────────────────────────────────────────────────────────────────────────────────────
 
-        /// <summary>Altura do DBG só com o tempo, as estatísticas e os botões dos menus.</summary>
-        const float MenuContentHeight = 150f;
-        const float MenuButtonsBand = 0.42f; // 3 fileiras de botões abaixo disto; estatísticas acima
+        /// <summary>
+        /// Altura do DBG só com o tempo, as estatísticas e os botões dos menus: 4 fileiras desde o M7 (o 10º botão,
+        /// Estagiário); antes, 150 px e 0,42 com 3.
+        /// </summary>
+        const float MenuContentHeight = 170f;
+        const float MenuButtonsBand = 0.47f; // 4 fileiras de botões (80 px) abaixo disto; estatísticas acima
 
         /// <summary>Um menu: nome do objeto, nome e rótulo do botão no DBG, altura e os botões que moram nele, na ordem.</summary>
         static readonly (string name, string button, string label, float height, string[] buttons)[] Menus =
@@ -223,7 +226,11 @@ namespace MinersIdle.EditorTools
             (CalcMenuName, "Calc", "Cálculos", CalcMenuHeight, System.Array.Empty<string>()),
             // Os do Dia (Marco 8b) também nascem no próprio menu (DayDebugSetup).
             (DayMenuName, "Day", "Dia", DayMenuHeight, System.Array.Empty<string>()),
+            // E os do Estagiário (M7, InternDebugSetup), com o mesmo tamanho do Dia.
+            (InternMenuName, "Intern", "Estagiário", DayMenuHeight, System.Array.Empty<string>()),
         };
+
+        internal const string InternMenuName = "InternMenu";
 
         internal const string DayMenuName = "DayMenu";
 
@@ -238,7 +245,8 @@ namespace MinersIdle.EditorTools
         internal const float CalcTextHeight = 24f;
 
         /// <summary>A ordem dos botões que ficam no DBG.</summary>
-        static readonly string[] MainButtons = { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day" };
+        static readonly string[] MainButtons =
+            { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern" };
 
         /// <summary>Altura da faixa do nível e custo das melhorias, no alto da Loja.</summary>
         const float ShopUpgradesHeight = 34f;
@@ -270,7 +278,7 @@ namespace MinersIdle.EditorTools
                 {
                     menu = CreateMenu(panel, name, height,
                                       name == "ShopMenu" ? ShopUpgradesHeight : name == CalcMenuName ? CalcTextHeight
-                                      : name == DayMenuName ? DayTextHeight : 0f);
+                                      : name == DayMenuName || name == InternMenuName ? DayTextHeight : 0f);
                     var open = CreateButton(grid, buttonName, label);
                     GrayboxSetup.SetReferences(debugPanel, (MenuField(name, "Button"), open),
                                                (MenuField(name, "Menu"), menu.GetComponent<DebugMenu>()));
