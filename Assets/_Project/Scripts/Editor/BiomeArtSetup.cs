@@ -237,8 +237,11 @@ namespace MinersIdle.EditorTools
 
         const string MoundButton = "Mound";
 
-        /// <summary>Na ordem do <c>DescentStage.MoundLook</c>: chão plano, arco (∩), platô; cabem nos 48 px do botão.</summary>
-        static readonly string[] MoundLabels = { "Plano", "Arco", "Platô" };
+        /// <summary>
+        /// Na ordem do <c>DescentStage.MoundLook</c>: chão plano, arco (∩), platô. Com "Monte" no nome: só "Arco" não dizia
+        /// de que era o botão.
+        /// </summary>
+        static readonly string[] MoundLabels = { "Sem monte", "Monte arco", "Monte platô" };
 
         /// <summary>O jogo abre no arco (o moundLook padrão do DescentStage).</summary>
         const int DefaultMound = 1;

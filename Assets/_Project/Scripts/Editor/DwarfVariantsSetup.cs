@@ -132,7 +132,38 @@ namespace MinersIdle.EditorTools
             }
 
             if (changed) Debug.Log("[Setup] Estagiário grisalho na descida, visível quando contratado (M1b E7, M7).");
+            changed |= FitCameraButtonLabels(buttons);
             return changed;
+        }
+
+        /// <summary>
+        /// Maior tamanho do rótulo dos botões do painel de câmera (8,25, o da pele) e o menor a que ele encolhe para caber.
+        /// Sem isso, "Anão 64px" e os nomes de bioma ("Entrada da mina", "Profundidade térmica") vazavam por cima dos
+        /// botões vizinhos.
+        /// </summary>
+        const float CameraLabelMax = 33f / 4f;
+        const float CameraLabelMin = 4f;
+
+        /// <summary>Os rótulos dos botões do DBG → Câmera encolhem até caber nos 48 px (TMP auto size), numa linha só.</summary>
+        static bool FitCameraButtonLabels(Transform buttons)
+        {
+            if (buttons == null) return false;
+            int fixedCount = 0;
+            foreach (var text in buttons.GetComponentsInChildren<TMPro.TMP_Text>(true))
+            {
+                if (text.enableAutoSizing && Mathf.Approximately(text.fontSizeMax, CameraLabelMax) &&
+                    Mathf.Approximately(text.fontSizeMin, CameraLabelMin)) continue;
+                text.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+                text.enableAutoSizing = true;
+                text.fontSizeMax = CameraLabelMax;
+                text.fontSizeMin = CameraLabelMin;
+                text.margin = new Vector4(2f, 0f, 2f, 0f);
+                EditorUtility.SetDirty(text);
+                fixedCount++;
+            }
+            if (fixedCount > 0)
+                Debug.Log($"[Setup] DBG → Câmera: {fixedCount} rótulo(s) de botão encolhem para caber no botão.");
+            return fixedCount > 0;
         }
 
         /// <summary>Barba vermelha → a cor da variação; capacete dourado → aço. O resto do desenho não muda.</summary>
