@@ -102,7 +102,7 @@ namespace MinersIdle.UI
             if (preview.State == UpgradeButtonState.Locked)
             {
                 effect.text = string.Format(_catalog.ProgressFormat, preview.Progress, preview.ProgressGoal);
-                buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
+                buyLabel.text = CostLabel(preview.NextCost.Value);
                 return;
             }
 
@@ -122,8 +122,12 @@ namespace MinersIdle.UI
             }
 
             effect.text = string.Format(_entry.EffectFormat, Format(preview.CurrentValue), Format(preview.NextValue));
-            buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
+            buyLabel.text = CostLabel(preview.NextCost.Value);
         }
+
+        /// <summary>O preço no botão; uma compra de graça (o Mapa do GDD v7, D-175) mostra o texto do catálogo no lugar do 0.</summary>
+        string CostLabel(double cost) =>
+            cost <= 0 && !string.IsNullOrEmpty(_catalog.FreeLabel) ? _catalog.FreeLabel : NumberFormatter.FormatShards(cost);
 
         void SetDone(bool done)
         {

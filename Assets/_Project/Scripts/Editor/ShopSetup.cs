@@ -49,6 +49,7 @@ namespace MinersIdle.EditorTools
             {
                 EnsureLetrado();
                 EnsureCritical();
+                EnsureFreeLabel();
                 return;
             }
 
@@ -64,6 +65,7 @@ namespace MinersIdle.EditorTools
             so.FindProperty("bonusPercentFormat").stringValue = "+{0}%";
             so.FindProperty("progressFormat").stringValue = ProgressFormat;
             so.FindProperty("passFirstLabel").stringValue = PassFirstLabel;
+            so.FindProperty("freeLabel").stringValue = FreeLabel;
 
             var entries = so.FindProperty("entries");
             entries.arraySize = 0;
@@ -87,6 +89,21 @@ namespace MinersIdle.EditorTools
         const string MapTitle = "Mapa";
         const string ProgressFormat = "Quebre {1} cristais: {0}/{1}";
         const string PassFirstLabel = "DESCER";
+        /// <summary>D-175: o Mapa do GDD v7 custa 0; o botão diz isto no lugar do preço.</summary>
+        const string FreeLabel = "COMPRAR";
+
+        /// <summary>D-175: o catálogo de antes ganha o texto da compra de graça (só se estiver vazio).</summary>
+        static void EnsureFreeLabel()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
+            var so = new SerializedObject(catalog);
+            var label = so.FindProperty("freeLabel");
+            if (!string.IsNullOrEmpty(label.stringValue)) return;
+            label.stringValue = FreeLabel;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Loja: compra de graça mostra \"" + FreeLabel + "\" no lugar do 0 (D-175).");
+        }
 
         /// <summary>
         /// M8 (D-109): no catálogo de antes, o Letrado era uma linha "Em breve"; vira a linha de verdade, com o progresso

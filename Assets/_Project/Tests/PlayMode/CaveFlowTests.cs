@@ -57,6 +57,8 @@ namespace MinersIdle.Tests
             panel.transform.Find("ShopMenu/Content/Buttons/FillCaveBreaks").GetComponent<Button>().onClick.Invoke();
             simulation.AddShards(1000);
             Assert.That(letrado.CanBuy, Is.True, "com os 100 cristais, o preço acende");
+            if (simulation.Preview(UpgradeId.Letrado).NextCost == 0)
+                Assert.That(letrado.ButtonText, Is.EqualTo("COMPRAR"), "o Mapa de graça (GDD v7) não mostra 0 (D-175)");
 
             letrado.GetComponentInChildren<Button>().onClick.Invoke();
             Assert.That(simulation.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(1));

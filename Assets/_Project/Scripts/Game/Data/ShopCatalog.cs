@@ -99,6 +99,8 @@ namespace MinersIdle.Game
         [SerializeField] string progressFormat;
         [Tooltip("Letrado desta caverna já comprado: falta passar de caverna.")]
         [SerializeField] string passFirstLabel;
+        [Tooltip("Botão de uma compra que custa 0 (o Mapa, GDD v7, D-175): no lugar do preço \"0\". Vazio = mostra o 0.")]
+        [SerializeField] string freeLabel;
         [SerializeField] Entry[] entries = Array.Empty<Entry>();
 
         [Header("Abas (Marco 8b, E4, D-155)")]
@@ -121,6 +123,7 @@ namespace MinersIdle.Game
         public string BonusPercentFormat => bonusPercentFormat;
         public string ProgressFormat => progressFormat;
         public string PassFirstLabel => passFirstLabel;
+        public string FreeLabel => freeLabel;
         public System.Collections.Generic.IReadOnlyList<Entry> Entries => entries;
         public string RunTabLabel => runTabLabel;
         public string PermanentsTabLabel => permanentsTabLabel;

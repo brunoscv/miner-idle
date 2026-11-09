@@ -21,6 +21,7 @@ MonoBehaviour:
   bonusPercentFormat: +{0}%
   progressFormat: 'Quebre {1} cristais: {0}/{1}'
   passFirstLabel: DESCER
+  freeLabel: COMPRAR
   entries:
   - locked: 0
     upgrade: 0
