@@ -68,7 +68,16 @@ namespace MinersIdle.Tests
                 button.GetWorldCorners(corners);
                 Assert.That(area.Contains(corners[0]) && area.Contains(corners[2]), Is.True, $"{button.name} cabe no painel");
                 var label = button.GetComponentInChildren<TMP_Text>();
-                Assert.That(label.preferredWidth, Is.LessThanOrEqualTo(button.rect.width), $"o nome de {button.name} cabe");
+                if (label.enableAutoSizing)
+                {
+                    // Desde 2026-11-08 (120eb3b) os rótulos encolhem até caber (TMP auto size): mede o texto como ele é
+                    // desenhado, não o tamanho que ele pediria na fonte máxima.
+                    label.ForceMeshUpdate();
+                    Assert.That(label.isTextOverflowing, Is.False, $"o nome de {button.name} cabe");
+                    Assert.That(label.textBounds.size.x, Is.LessThanOrEqualTo(button.rect.width), $"o nome de {button.name} cabe");
+                }
+                else
+                    Assert.That(label.preferredWidth, Is.LessThanOrEqualTo(button.rect.width), $"o nome de {button.name} cabe");
             }
         }
     }
