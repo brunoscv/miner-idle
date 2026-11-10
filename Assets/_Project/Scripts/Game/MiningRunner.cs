@@ -367,6 +367,9 @@ namespace MinersIdle.Game
                 new Permanents(rules.ToPermanents(), _permanent))
             {
                 ForceCritical = _forceCritical,
+                // M9b E3 (D-217): o acúmulo do DBG → Cálculos sobrevive a cada simulação nova (compra de Picareta trocada,
+                // Reiniciar run, descanso, reabrir).
+                ComboStacking = _calculation.ComboStacking,
             };
             if (_arrivalStrike.HasValue) Simulation.ArrivalStrike = _arrivalStrike.Value;
             Simulation.UpgradePurchased += OnUpgradePurchased;

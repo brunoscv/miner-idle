@@ -12,7 +12,8 @@ namespace MinersIdle.UI
     /// incremento da Picareta pela caverna (D-133; passos de 0,01 e de 1; tocar no valor volta ao do GDD), Reiniciar run e
     /// Padrão GDD; e o botão "Picareta" que mora no menu Caverna (D-201: pela compra, a do GDD v7, ou pela caverna, a
     /// leitura da D-133). Embaixo do DBG, um aviso fixo diz o cálculo em uso: "Cálculo: GDD v7" quando tudo está no padrão; em
-    /// âmbar, com a lista do que saiu do GDD. Fica no menu Cálculos, filho do painel de debug: no release some junto (lá
+    /// âmbar, com a lista do que saiu do GDD. M9b E3 (D-217): o botão "Acúmulo" troca a soma dos marcos do combo (GDD,
+    /// D-183) por só o do maior marco, e entra no aviso. Fica no menu Cálculos, filho do painel de debug: no release some junto (lá
     /// vale sempre o GDD). Só manda comandos ao <see cref="MiningRunner"/>; quem guarda a escolha no aparelho é ele.
     /// Os textos (rótulos e modelos) ficam na cena.
     /// </summary>
@@ -75,6 +76,16 @@ namespace MinersIdle.UI
         [SerializeField] string pickaxeByCaveLabel;
         [Tooltip("Somado ao aviso com a Picareta pela caverna.")]
         [SerializeField] string pickaxeByCaveChangedFormat;
+        [Header("Acúmulo dos marcos do combo (M9b E3, D-217)")]
+        [Tooltip("O botão \"Acúmulo\": a soma dos marcos (GDD) ⇄ só o do maior marco.")]
+        [SerializeField] Button comboStacking;
+        [Tooltip("Rótulo do botão com a soma (a do GDD).")]
+        [SerializeField] string stackingCumulativeLabel;
+        [Tooltip("Rótulo do botão com só o maior marco.")]
+        [SerializeField] string stackingHighestLabel;
+        [Tooltip("Somado ao aviso com só o maior marco.")]
+        [SerializeField] string stackingChangedFormat;
+
         [SerializeField] Color defaultColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         [Tooltip("O aviso quando algo saiu do GDD (D-143: âmbar).")]
         [SerializeField] Color changedColor = new Color32(0xFF, 0xB3, 0x2E, 0xFF);
@@ -83,7 +94,7 @@ namespace MinersIdle.UI
         const float DisabledLabelAlpha = 0.35f;
 
         readonly StringBuilder _warning = new StringBuilder();
-        TMP_Text _balanceLabel, _growthLabel, _stepLabel, _byCaveLabel;
+        TMP_Text _balanceLabel, _growthLabel, _stepLabel, _byCaveLabel, _stackingLabel;
         TMP_Text[] _tuningLabels;
         float _refresh;
 
@@ -93,6 +104,7 @@ namespace MinersIdle.UI
             if (growthValue != null) _growthLabel = growthValue.GetComponentInChildren<TMP_Text>();
             if (stepValue != null) _stepLabel = stepValue.GetComponentInChildren<TMP_Text>();
             if (pickaxeByCave != null) _byCaveLabel = pickaxeByCave.GetComponentInChildren<TMP_Text>();
+            if (comboStacking != null) _stackingLabel = comboStacking.GetComponentInChildren<TMP_Text>();
             _tuningLabels = new[]
             {
                 growthMinus.GetComponentInChildren<TMP_Text>(), _growthLabel, growthPlus.GetComponentInChildren<TMP_Text>(),
@@ -112,6 +124,7 @@ namespace MinersIdle.UI
             stepValue.onClick.AddListener(DefaultStep);
             stepPlus.onClick.AddListener(RaiseStep);
             if (pickaxeByCave != null) pickaxeByCave.onClick.AddListener(TogglePickaxeByCave);
+            if (comboStacking != null) comboStacking.onClick.AddListener(ToggleComboStacking);
             runner.SimulationStarted += OnSimulationStarted;
             Refresh();
         }
@@ -128,6 +141,7 @@ namespace MinersIdle.UI
             stepValue.onClick.RemoveListener(DefaultStep);
             stepPlus.onClick.RemoveListener(RaiseStep);
             if (pickaxeByCave != null) pickaxeByCave.onClick.RemoveListener(TogglePickaxeByCave);
+            if (comboStacking != null) comboStacking.onClick.RemoveListener(ToggleComboStacking);
             runner.SimulationStarted -= OnSimulationStarted;
         }
 
@@ -180,6 +194,16 @@ namespace MinersIdle.UI
             runner.UseCalculation(runner.Calculation.WithPickaxeByCave(!runner.Calculation.PickaxeByCave));
         }
 
+        /// <summary>
+        /// O botão "Acúmulo" (D-217): a soma dos marcos do combo (GDD) ⇄ só o do maior marco, mantendo o progresso e os
+        /// bônus que já valem. Vale a partir do próximo combo.
+        /// </summary>
+        public void ToggleComboStacking()
+        {
+            var next = runner.Calculation.ComboStacking == ComboStacking.Cumulative ? ComboStacking.HighestOnly : ComboStacking.Cumulative;
+            runner.UseCalculation(runner.Calculation.WithComboStacking(next));
+        }
+
         void SetGrowth(double growth)
         {
             if (!Tunable) return;
@@ -221,6 +245,9 @@ namespace MinersIdle.UI
                 _byCaveLabel.alpha = switchable ? 1f : DisabledLabelAlpha;
             }
 
+            bool highestOnly = choice.ComboStacking == ComboStacking.HighestOnly;
+            if (_stackingLabel != null) _stackingLabel.text = highestOnly ? stackingHighestLabel : stackingCumulativeLabel;
+
             RefreshPickaxe();
 
             if (warning == null) return;
@@ -229,6 +256,7 @@ namespace MinersIdle.UI
             if (tunable && choice.PickaxeCaveGrowth.HasValue) _warning.AppendFormat(growthChangedFormat, NumberFormatter.Format(Growth));
             if (tunable && choice.PickaxeStep.HasValue) _warning.AppendFormat(stepChangedFormat, NumberFormatter.Format(Step));
             if (byCave) _warning.Append(pickaxeByCaveChangedFormat);
+            if (highestOnly) _warning.Append(stackingChangedFormat);
             warning.text = _warning.ToString();
             warning.color = choice.IsDefault ? defaultColor : changedColor;
         }

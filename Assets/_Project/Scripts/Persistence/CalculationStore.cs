@@ -18,6 +18,11 @@ namespace MinersIdle.Persistence
         public double pickaxeStep;
         /// <summary>A Picareta pela caverna do DBG → Caverna (D-201). Arquivo antigo, sem o campo: <c>false</c>, a do GDD.</summary>
         public bool pickaxeByCave;
+        /// <summary>
+        /// O combo dá só o bônus do maior marco (M9b E3, D-217), no lugar da soma do GDD (D-183). Arquivo antigo, sem o
+        /// campo: <c>false</c>, a soma.
+        /// </summary>
+        public bool comboHighestOnly;
     }
 
     /// <summary>

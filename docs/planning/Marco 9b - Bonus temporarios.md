@@ -117,7 +117,22 @@ A sessão de 2 h do M9 (`LongSessionTests`) ganha rajadas de toque, raros e AD; 
 
 - **E1:** antes, com a cena `Game` aberta, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (cria o menu DBG → Bônus e põe os quatro marcos no `Balance_GDD_v7`). Depois, cena `Bootstrap`, Play. DBG → Bônus → **Combo ×30**: o alto do menu lista +10% (5 s) e +15% (10 s), e o DANO do DBG sobe 25%; aos 5 s fica só o +15%, aos 10 s nada. **Combo ×50**: todo golpe sai crítico por 20 s. Tocar até ×35 e parar: o mesmo que o atalho ×30. Sair do Play no meio de um bônus de 30 s e voltar 10 s depois pela `Bootstrap`: sobram uns 20 s. DBG → Cálculos (na E3) troca para "maior marco": o ×35 dá só o +15%.
 - **E2:** de novo `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` com a cena `Game` aberta (cria o `BuffCatalog` e a coluna). Depois, a mesma cena, sem o DBG: tocar até ×35, parar, ver os dois ícones na coluna da esquerda esvaziando, o "+25% DANO" subindo do contador e o DANO do HUD em âmbar; tocar num ícone mostra o nome e o tempo. Tocar até ×100: "FRENESI!" e um tremor leve.
-- **E3:** no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)`, e o roteiro da E3.
+- **E3:** no Editor, antes, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` com a cena `Game` aberta (cria o botão "Acúmulo"). Cena `Bootstrap`, Play. DBG → Cálculos: o botão **Acúmulo: soma** (a do GDD). Tocar nele: vira **Acúmulo: maior**, e o aviso no pé da tela fica âmbar com "· combo só o maior marco". Tocar até ×35 e parar: **um** ícone só (o +15%). **Reiniciar run** mantém a escolha; **Padrão GDD** volta à soma. Depois, no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)` (ou `bash tools/build/run-android.sh` no Terminal, com o Editor fechado), e o roteiro abaixo.
+
+### Roteiro do Moto G75 (E3)
+
+Anote ✅/❌ em cada passo; um ❌ volta para mim com o que apareceu na tela.
+
+1. **O ganho ao parar:** tocar em rajada até ×12 e parar. Aparece o "+10% DANO" subindo do contador, um ícone na coluna da esquerda e o DANO do HUD em âmbar. Dá para perceber sem procurar?
+2. **Rajada longa (o risco do plano):** tocar sem parar até ×55 e parar. Entram três ícones de uma vez (+10%, +15%, crítico) e o "+25% DANO · CRÍTICO". Durante a rajada nada muda; o bônus "chega" ao parar, ou parece que veio tarde demais?
+3. **A coluna e o toque:** tocar nos ícones da coluna: o detalhe abre ao lado por 2 s e o combo não sobe. Tocar no cristal com a coluna cheia: nada cobre o cristal nem rouba o toque.
+4. **Leitura:** os segundos ao lado do ícone se leem bem no aparelho? Ficam nítidos ou borrados (hoje 5 pt; 6 pt é o tamanho nítido da fonte de números)?
+5. **O fim:** nos últimos 5 s o número fica âmbar e o ícone pisca; ao acabar, o ícone sai e o DANO volta ao branco.
+6. **FRENESI!:** tocar até ×100 (ou DBG → Bônus → Combo ×100): "FRENESI!" grande, tremor leve, quatro ícones. Com o tremor desligado nos AJUSTES, sem tremor.
+7. **Minimizar no meio do combo (P5):** tocar até ×35, sem parar apertar o botão Início do Android, voltar em 3 s: o combo zerou e a coluna tem os ícones com ~2 s a menos. Repetir e voltar depois de 1 min: nada na coluna.
+8. **Fechar com bônus:** ganhar o crítico (×50), fechar pelo multitarefa e abrir em 5 s: o crítico ainda está lá, com ~15 s.
+9. **Acúmulo pelo DBG:** DBG → Cálculos → **Acúmulo: maior**. Rajada até ×55: só o crítico. Qual das duas versões parece melhor no dedo? (A resposta vira decisão; o GDD é a soma.)
+10. **Descanso:** com um bônus ativo, descansar (DBG → Dia, ou o botão a partir do nível 10): a run nova começa sem ícones.
 
 ## Critério de pronto (do combo, E1–E3)
 
@@ -161,7 +176,7 @@ Total: **~29–39 h**; o combo sozinho (E1–E3), **~14–19 h**.
 | Plano | ✅ aprovado em 2026-11-10 (P1…P8 → D-210…D-217) | — |
 | E1 Núcleo dos bônus e o combo | 🔧 implementada em 2026-11-10 | Núcleo (`Bonuses.cs`, simulação, `StrikeRules`), marcos no `Balance_GDD_v7` pelo setup, save v6, pausa/fechar encerram o combo, DBG → Bônus. Testes `ComboBonusTests` (EditMode) e `ComboBonusFlowTests` (PlayMode) **só compilados**: rodam no fim, com a suíte toda. Ajustados para o comportamento novo: a versão do save nos `SaveServiceTests` (5 → 6) e o aquecimento do `AllocationTests` (limpa o +10% do x10). |
 | E2 Coluna de buffs e feedback | 🔧 implementada em 2026-11-10 | Mockup aprovado (`tools/ci/out/m9b-e2-mockup.png`). `Data/BuffCatalog` (ícones Anvil 2/18/332, nomes, textos do ganho), `BuffColumn`/`BuffSlot` (anel `buff_ring`, piscar nos últimos 5 s, detalhe por 2 s), texto do ganho e "FRENESI!" com tremor no `MiningFeedbackView`, som de marco no `SoundBoard`, DANO âmbar no `HudView`. Setup: `BuffColumnSetup`. `BuffColumnTests` (PlayMode) **só compilados**. |
-| E3 Seletor do acúmulo e o celular | ⏳ | — |
+| E3 Seletor do acúmulo e o celular | 🔧 implementada em 2026-11-10 (EditMode 398/398, PlayMode 142/142); roteiro do Moto G75 aguardando o Bruno | `CalculationChoice.ComboStacking` (gravado no `calculations.json` como `comboHighestOnly`; arquivo antigo = soma), aplicado pelo `MiningRunner` a cada simulação nova (troca de cálculo, Reiniciar run, descanso, reabrir). DBG → Cálculos ganhou o botão "Acúmulo: soma ⇄ maior" (`CalculationsSetup`), que entra no aviso "Cálculo:". Testes novos: `CalculationTests.Store_KeepsTheComboStacking_AndAnOldFileSums` e `CalculationsPanelTests.ComboStacking_SwitchesToTheHighestMilestone_AndSurvivesANewRun`. |
 | E4 Cristal raro | ⏳ | — |
 | E5 Boost do AD | ⏳ | — |
 | E6 Sessão longa e celular | ⏳ | — |

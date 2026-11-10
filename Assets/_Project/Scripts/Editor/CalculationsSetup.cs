@@ -47,6 +47,7 @@ namespace MinersIdle.EditorTools
             if (existing != null)
             {
                 changed |= EnsureWarningBack(debugPanel, existing);
+                changed |= EnsureComboStacking(menu, existing);
                 return EnsurePickaxeByCave(debugPanel, existing) || changed;
             }
 
@@ -95,7 +96,42 @@ namespace MinersIdle.EditorTools
             Debug.Log("[Setup] Painel de debug: menu \"Cálculos\" com o seletor GDD v7/v5, a taxa e o incremento da Picareta, " +
                       "Reiniciar run e o aviso do cálculo na tela (M8 E3b-3, D-143).");
             EnsurePickaxeByCave(debugPanel, panel);
+            EnsureComboStacking(menu, panel);
             return true;
+        }
+
+        const string ComboStackingName = "ComboStacking";
+        const string StackingCumulativeLabel = "Acúmulo: soma";
+        const string StackingHighestLabel = "Acúmulo: maior";
+
+        /// <summary>
+        /// M9b E3 (D-217): o botão "Acúmulo" na grade do menu Cálculos (antes do Fechar), ligado ao
+        /// <see cref="CalculationsPanel"/>: a soma dos marcos do combo (GDD, D-183) ⇄ só o do maior marco.
+        /// </summary>
+        static bool EnsureComboStacking(Transform menu, CalculationsPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+
+            var button = grid.Find(ComboStackingName);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(grid, ComboStackingName, StackingCumulativeLabel).transform;
+                var close = grid.Find("Close");
+                if (close != null) button.SetSiblingIndex(close.GetSiblingIndex());
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            changed |= SetIfDifferent(so.FindProperty("comboStacking"), button.GetComponent<Button>());
+            changed |= SetIfEmpty(so.FindProperty("stackingCumulativeLabel"), StackingCumulativeLabel);
+            changed |= SetIfEmpty(so.FindProperty("stackingHighestLabel"), StackingHighestLabel);
+            changed |= SetIfEmpty(so.FindProperty("stackingChangedFormat"), " · combo só o maior marco");
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            if (changed) Debug.Log("[Setup] Painel de debug: botão \"Acúmulo\" (soma ⇄ maior marco) no menu Cálculos (M9b E3, D-217).");
+            return changed;
         }
 
         const string PickaxeByCaveName = "PickaxeByCave";

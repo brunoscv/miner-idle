@@ -98,6 +98,25 @@ namespace MinersIdle.Tests
             Assert.That(default(CalculationChoice).WithPickaxeStep(2).WithPickaxeStep(null).IsDefault, Is.True);
             Assert.That(default(CalculationChoice).WithPickaxeByCave(true).IsDefault, Is.False, "Picareta pela caverna (D-201)");
             Assert.That(default(CalculationChoice).WithPickaxeByCave(true).WithPickaxeByCave(false).IsDefault, Is.True);
+            Assert.That(default(CalculationChoice).WithComboStacking(ComboStacking.HighestOnly).IsDefault, Is.False,
+                        "só o maior marco (D-217)");
+            Assert.That(default(CalculationChoice).ComboStacking, Is.EqualTo(ComboStacking.Cumulative), "o GDD soma (D-183)");
+        }
+
+        [Test]
+        public void Store_KeepsTheComboStacking_AndAnOldFileSums()
+        {
+            var store = new CalculationStore(new FileSaveStore(_dir, CalculationStore.FileName));
+            var choice = default(CalculationChoice).WithPickaxeStep(2).WithComboStacking(ComboStacking.HighestOnly);
+            store.Save(choice.ToData());
+            var back = CalculationChoice.FromData(store.Load());
+            Assert.That(back, Is.EqualTo(choice));
+            Assert.That(back.WithBalance(1).ComboStacking, Is.EqualTo(ComboStacking.HighestOnly), "trocar outra coisa não volta o acúmulo");
+
+            Directory.CreateDirectory(_dir);
+            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"pickaxeByCave\": true }");
+            Assert.That(CalculationChoice.FromData(store.Load()).ComboStacking, Is.EqualTo(ComboStacking.Cumulative),
+                        "arquivo de antes do M9b: a soma do GDD");
         }
 
         [Test]
