@@ -285,10 +285,10 @@ namespace MinersIdle.EditorTools
 
         /// <summary>
         /// Os textos de valor (D-104): o número dos painéis do HUD ("Value"), o saldo da loja ("Balance") e o preço no botão
-        /// Comprar da linha da loja ("Buy/Label").
+        /// Comprar da linha da loja ("Buy/Label") e os segundos ao lado do ícone de buff ("Seconds", M9b).
         /// </summary>
         static bool IsNumberText(Transform node) =>
-            node.name == "Value" || node.name == "Balance" ||
+            node.name == "Value" || node.name == "Balance" || node.name == "Seconds" ||
             (node.name == "Label" && node.parent != null && node.parent.name == "Buy");
 
         internal static float SnapFontSize(float size) =>

@@ -9,6 +9,7 @@ namespace MinersIdle.UI
     /// HUD superior (S02): LASCAS, DANO, CAVERNA e VELOCIDADE. Os rótulos ficam na cena (dados); aqui só os valores, todos
     /// pelo <see cref="NumberFormatter"/>. DANO e VELOCIDADE são os atributos atuais (com melhorias, M3). Atualiza por
     /// evento, nunca por quadro. M5: LASCAS pulsa quando a lasca voadora chega; o HUD treme nos marcos do combo.
+    /// M9b (E2, D-216): o DANO já vem com os bônus de dano e fica âmbar enquanto houver algum.
     /// </summary>
     public sealed class HudView : MiningViewBase
     {
@@ -18,12 +19,15 @@ namespace MinersIdle.UI
         [SerializeField] TMP_Text speedValue;
         [Tooltip("A lasca que voa do cristal até LASCAS (M5).")]
         [SerializeField] ShardFlight shardFlight;
+        [Tooltip("A cor do DANO enquanto um bônus de dano vale (M9b, D-216).")]
+        [SerializeField] Color boostedDamageColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
 
         const float PulseSeconds = 0.2f;
         const float ShakeSeconds = 0.2f;
 
         RectTransform _rect;
         Vector2 _basePosition;
+        Color _damageColor;
         float _pulse;
         float _shake;
 
@@ -37,11 +41,14 @@ namespace MinersIdle.UI
         public string SpeedText => speedValue.text;
         /// <summary>O texto de CAVERNA na tela (para testes).</summary>
         public string CaveText => caveValue.text;
+        /// <summary>O DANO está âmbar (um bônus de dano vale agora; para testes).</summary>
+        public bool IsDamageBoosted => damageValue.color == boostedDamageColor;
 
         void Awake()
         {
             _rect = (RectTransform)transform;
             _basePosition = _rect.anchoredPosition;
+            _damageColor = damageValue.color;
         }
 
         protected override void OnEnable()
@@ -104,6 +111,7 @@ namespace MinersIdle.UI
         void OnStatsChanged(MinerStats stats)
         {
             damageValue.text = NumberFormatter.Format(stats.Damage);
+            damageValue.color = Simulation != null && Simulation.Bonuses.DamagePercent > 0 ? boostedDamageColor : _damageColor;
             speedValue.text = NumberFormatter.FormatSeconds(stats.HitInterval);
         }
     }

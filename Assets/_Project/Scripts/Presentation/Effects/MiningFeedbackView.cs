@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MinersIdle.Core;
 using MinersIdle.Game;
 using TMPro;
@@ -20,6 +21,9 @@ namespace MinersIdle.Presentation
     ///
     /// M7 (E2, D-171): o golpe do estagiário é mais leve que o do anão: poucas faíscas cinza, o cristal treme pouco, sem
     /// tremor de tela; o dano sai no cristal, num número menor e cinza.
+    ///
+    /// M9b (E2, D-215): ao zerar o combo com bônus, o ganho sobe de onde estava o "xN" ("+25% DANO", "CRÍTICO GARANTIDO");
+    /// no marco com texto grande no catálogo (o ×100), "FRENESI!" maior, com tremor leve. Sem vibração.
     /// </summary>
     public sealed class MiningFeedbackView : MiningViewBase
     {
@@ -28,6 +32,7 @@ namespace MinersIdle.Presentation
         static readonly Color CriticalColor = new Color32(0xFF, 0xE0, 0x3A, 0xFF);
         static readonly Color MilestoneColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         static readonly Color InternColor = new Color32(0xB8, 0xBC, 0xC2, 0xFF);
+        static readonly Color HeadlineColor = new Color32(0xE8, 0x4A, 0x2A, 0xFF);
 
         const float ComboPulseSeconds = 0.15f;
 
@@ -42,6 +47,8 @@ namespace MinersIdle.Presentation
         [SerializeField] ShardFlight shardFlight;
         [Tooltip("O \"xN\" que fica sobre o anão enquanto o combo dura.")]
         [SerializeField] TextMeshPro comboText;
+        [Tooltip("Os textos do ganho e o texto grande de cada marco (M9b).")]
+        [SerializeField] BuffCatalog buffs;
 
         [Header("Força na vista de frente (M6, E4)")]
         [Tooltip("Faíscas, textos e lasca em relação à vista de cima do mapa (o cristal e o anão ficaram ~4× maiores).")]
@@ -60,6 +67,9 @@ namespace MinersIdle.Presentation
         [SerializeField] float wallBreakShakeSeconds = 0.45f;
         [SerializeField] float milestoneShake = 0.25f;
         [SerializeField] float milestoneShakeSeconds = 0.2f;
+        [Tooltip("No texto grande do ganho (o \"FRENESI!\" do ×100, D-215).")]
+        [SerializeField] float headlineShake = 0.35f;
+        [SerializeField] float headlineShakeSeconds = 0.35f;
         [Tooltip("Com muitos toques por segundo, os tremores caem até esta fração (1 = nunca diminuem).")]
         [SerializeField, Range(0f, 1f)] float minCalm = 0.6f;
 
@@ -86,6 +96,10 @@ namespace MinersIdle.Presentation
         public bool IsComboShown => comboText.gameObject.activeSelf;
         public string ComboShown => comboText.text;
 
+        /// <summary>O último texto do ganho e o último texto grande (M9b; para testes). <c>null</c> = nenhum.</summary>
+        public string LastGainText { get; private set; }
+        public string LastHeadline { get; private set; }
+
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -105,6 +119,7 @@ namespace MinersIdle.Presentation
             simulation.CrystalBroken += OnBroken;
             simulation.ComboChanged += OnComboChanged;
             simulation.ComboMilestone += OnComboMilestone;
+            simulation.ComboBonusesGranted += OnBonusesGranted;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -114,6 +129,7 @@ namespace MinersIdle.Presentation
             simulation.CrystalBroken -= OnBroken;
             simulation.ComboChanged -= OnComboChanged;
             simulation.ComboMilestone -= OnComboMilestone;
+            simulation.ComboBonusesGranted -= OnBonusesGranted;
         }
 
         protected override void Rebuild(MiningSimulation simulation) => OnComboChanged(simulation.Combo);
@@ -231,6 +247,42 @@ namespace MinersIdle.Presentation
             floatingTexts.ShowNumber(texts.MilestoneFormat, combo, stage.MinerOnScreen + Vector3.up * (1.6f * sizeScale),
                                      MilestoneColor, 1.6f * sizeScale * 0.65f, 0.9f, 1.5f * sizeScale);
             screenShake.Shake(milestoneShake * _intensity, milestoneShakeSeconds);
+        }
+
+        /// <summary>
+        /// O ganho ao zerar o combo (D-215): a soma do dano que entrou e/ou o crítico garantido, subindo de onde estava o
+        /// "xN"; com o texto grande de um marco (o "FRENESI!"), ele sobe acima, maior, com tremor leve (obedece aos AJUSTES).
+        /// </summary>
+        void OnBonusesGranted(int combo, IReadOnlyList<ComboBonusRule> granted)
+        {
+            if (buffs == null) return;
+            double damage = 0;
+            bool critical = false;
+            string headline = null;
+            for (int i = 0; i < granted.Count; i++)
+            {
+                var rule = granted[i];
+                if (rule.Kind == BonusKind.DamagePercent) damage += rule.Value;
+                else if (rule.Kind == BonusKind.GuaranteedCritical) critical = true;
+                var entry = buffs.Find(BonusSource.Combo, rule.Combo);
+                if (entry != null && !string.IsNullOrEmpty(entry.Headline)) headline = entry.Headline;
+            }
+
+            string gain = damage > 0 && critical ? string.Format(buffs.GainBothFormat, NumberFormatter.FormatPercent(damage))
+                        : damage > 0 ? string.Format(buffs.GainDamageFormat, NumberFormatter.FormatPercent(damage))
+                        : critical ? buffs.GainCritical
+                        : null;
+            var at = stage.MinerOnScreen + Vector3.up * (0.8f * sizeScale);
+            if (gain != null)
+                floatingTexts.Show(gain, at, MilestoneColor, 0.9f * sizeScale * 0.65f, 1.2f, 1.2f * sizeScale);
+            if (headline != null)
+            {
+                floatingTexts.Show(headline, at + Vector3.up * (0.9f * sizeScale), HeadlineColor, 1.8f * sizeScale * 0.65f, 1.3f,
+                                   1.4f * sizeScale);
+                screenShake.Shake(headlineShake * _intensity, headlineShakeSeconds);
+            }
+            LastGainText = gain;
+            LastHeadline = headline;
         }
 
         /// <summary>1 com toques calmos; cai até <see cref="minCalm"/> quando há muitos toques no último segundo.</summary>

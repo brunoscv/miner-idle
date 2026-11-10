@@ -129,6 +129,7 @@ namespace MinersIdle.EditorTools
             changed |= InternShopSetup.EnsureInScene(); // depois das abas da loja (M7, E3)
             changed |= OfflineReturnSetup.EnsureInScene(); // por cima de tudo (M9, E2)
             changed |= SettingsSetup.EnsureInScene(); // abaixo do "Bem-vindo de volta" (M9, E4)
+            changed |= BuffColumnSetup.EnsureInScene(); // logo depois do HUD, atrás das janelas (M9b, E2)
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

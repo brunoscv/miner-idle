@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MinersIdle.Core;
 using UnityEngine;
 
@@ -79,6 +80,7 @@ namespace MinersIdle.Presentation
             simulation.CrystalBroken += OnBroken;
             simulation.UpgradePurchased += OnPurchased;
             simulation.ComboMilestone += OnComboMilestone;
+            simulation.ComboBonusesGranted += OnBonusesGranted;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -87,6 +89,7 @@ namespace MinersIdle.Presentation
             simulation.CrystalBroken -= OnBroken;
             simulation.UpgradePurchased -= OnPurchased;
             simulation.ComboMilestone -= OnComboMilestone;
+            simulation.ComboBonusesGranted -= OnBonusesGranted;
         }
 
         protected override void Rebuild(MiningSimulation simulation) { }
@@ -100,6 +103,8 @@ namespace MinersIdle.Presentation
         void OnBroken(Crystal crystal) => Play(Sfx.Break);
         void OnPurchased(UpgradeId id, int level) => Play(Sfx.Purchase);
         void OnComboMilestone(int combo) => Play(Sfx.Milestone);
+        /// <summary>O ganho do combo (M9b, D-215) usa o som de marco que já existe.</summary>
+        void OnBonusesGranted(int combo, IReadOnlyList<ComboBonusRule> granted) => Play(Sfx.Milestone);
 
         public void Play(Sfx sfx, float pitch = 1f)
         {

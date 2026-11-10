@@ -49,9 +49,9 @@ namespace MinersIdle.Tests
             Assert.That(numbersFont.HasCharacters("0123456789.,s-" + Portuguese, out missing), Is.True, $"faltam: {missing}");
         }
 
-        /// <summary>A mesma regra do setup (UiSkinSetup.IsNumberText): "Value" do HUD, "Balance" da loja e "Buy/Label".</summary>
+        /// <summary>A mesma regra do setup (UiSkinSetup.IsNumberText): "Value" do HUD, "Balance" da loja, "Buy/Label" e os segundos dos buffs (M9b).</summary>
         static bool IsNumberText(Transform node) =>
-            node.name == "Value" || node.name == "Balance" ||
+            node.name == "Value" || node.name == "Balance" || node.name == "Seconds" ||
             (node.name == "Label" && node.parent != null && node.parent.name == "Buy");
 
         static bool IsDevTool(Transform node)

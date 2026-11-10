@@ -116,7 +116,7 @@ A sessão de 2 h do M9 (`LongSessionTests`) ganha rajadas de toque, raros e AD; 
 ## Como testar (Bruno) — ao fim de cada etapa
 
 - **E1:** antes, com a cena `Game` aberta, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (cria o menu DBG → Bônus e põe os quatro marcos no `Balance_GDD_v7`). Depois, cena `Bootstrap`, Play. DBG → Bônus → **Combo ×30**: o alto do menu lista +10% (5 s) e +15% (10 s), e o DANO do DBG sobe 25%; aos 5 s fica só o +15%, aos 10 s nada. **Combo ×50**: todo golpe sai crítico por 20 s. Tocar até ×35 e parar: o mesmo que o atalho ×30. Sair do Play no meio de um bônus de 30 s e voltar 10 s depois pela `Bootstrap`: sobram uns 20 s. DBG → Cálculos (na E3) troca para "maior marco": o ×35 dá só o +15%.
-- **E2:** a mesma cena, sem o DBG: tocar até ×35, parar, ver os dois ícones na coluna da esquerda esvaziando, o "+25% DANO" subindo do contador e o DANO do HUD em âmbar; tocar num ícone mostra o nome e o tempo. Tocar até ×100: "FRENESI!" e um tremor leve.
+- **E2:** de novo `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` com a cena `Game` aberta (cria o `BuffCatalog` e a coluna). Depois, a mesma cena, sem o DBG: tocar até ×35, parar, ver os dois ícones na coluna da esquerda esvaziando, o "+25% DANO" subindo do contador e o DANO do HUD em âmbar; tocar num ícone mostra o nome e o tempo. Tocar até ×100: "FRENESI!" e um tremor leve.
 - **E3:** no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)`, e o roteiro da E3.
 
 ## Critério de pronto (do combo, E1–E3)
@@ -160,7 +160,7 @@ Total: **~29–39 h**; o combo sozinho (E1–E3), **~14–19 h**.
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-10 (P1…P8 → D-210…D-217) | — |
 | E1 Núcleo dos bônus e o combo | 🔧 implementada em 2026-11-10 | Núcleo (`Bonuses.cs`, simulação, `StrikeRules`), marcos no `Balance_GDD_v7` pelo setup, save v6, pausa/fechar encerram o combo, DBG → Bônus. Testes `ComboBonusTests` (EditMode) e `ComboBonusFlowTests` (PlayMode) **só compilados**: rodam no fim, com a suíte toda. Ajustados para o comportamento novo: a versão do save nos `SaveServiceTests` (5 → 6) e o aquecimento do `AllocationTests` (limpa o +10% do x10). |
-| E2 Coluna de buffs e feedback | ⏳ | — |
+| E2 Coluna de buffs e feedback | 🔧 implementada em 2026-11-10 | Mockup aprovado (`tools/ci/out/m9b-e2-mockup.png`). `Data/BuffCatalog` (ícones Anvil 2/18/332, nomes, textos do ganho), `BuffColumn`/`BuffSlot` (anel `buff_ring`, piscar nos últimos 5 s, detalhe por 2 s), texto do ganho e "FRENESI!" com tremor no `MiningFeedbackView`, som de marco no `SoundBoard`, DANO âmbar no `HudView`. Setup: `BuffColumnSetup`. `BuffColumnTests` (PlayMode) **só compilados**. |
 | E3 Seletor do acúmulo e o celular | ⏳ | — |
 | E4 Cristal raro | ⏳ | — |
 | E5 Boost do AD | ⏳ | — |

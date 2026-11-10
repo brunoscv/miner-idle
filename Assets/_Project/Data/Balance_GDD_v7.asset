@@ -27,6 +27,7 @@ MonoBehaviour:
   letradoBreaks: 100
   wallHealthFactor: 2
   levelsPerBiome: 10
+  offlineMaxHours: 6
   damage: 1
   hitInterval: 2
   walkSpeed: 4
@@ -110,6 +111,23 @@ MonoBehaviour:
   tapReach: 3.9
   arrivalStrike: 2
   swingRecovery: 0.72
+  comboBonuses:
+  - combo: 10
+    kind: 0
+    value: 0.1
+    seconds: 5
+  - combo: 30
+    kind: 0
+    value: 0.15
+    seconds: 10
+  - combo: 50
+    kind: 1
+    value: 0
+    seconds: 20
+  - combo: 100
+    kind: 0
+    value: 0.5
+    seconds: 30
   restLevel: 10
   redShardMilestoneStep: 10
   redShardMilestone: 5
