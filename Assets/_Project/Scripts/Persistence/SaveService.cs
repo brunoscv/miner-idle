@@ -12,6 +12,11 @@ namespace MinersIdle.Persistence
         Loaded,
         /// <summary>O save era ilegível ou de versão desconhecida: foi separado e começou um jogo novo.</summary>
         Recovered,
+        /// <summary>
+        /// O save estava estragado ou faltando e o backup estava bom (M9, E3): abriu o backup, o progresso de uma gravação
+        /// antes. O estragado foi separado (<c>.bad</c>).
+        /// </summary>
+        LoadedBackup,
     }
 
     /// <summary>
@@ -20,6 +25,8 @@ namespace MinersIdle.Persistence
     /// descida (caverna, quebras nela, tempo de jogo, lascas ganhas, coração da montanha); a versão 1 abre migrada, na
     /// caverna 1 com 0 quebras. Marco 8b (E2): a versão 4 guarda também a parte permanente (banco de lascas vermelhas,
     /// dia e níveis das permanentes); até a 3, ela abre zerada. Um arquivo só: Apagar save apaga as duas partes.
+    /// M9 (E3): com o save principal estragado, faltando ou de versão futura, abre o backup (o save de uma gravação antes,
+    /// <see cref="ISaveStore.ReadBackup"/>); só com os dois ruins começa um jogo novo.
     /// </summary>
     public sealed class SaveService
     {
@@ -57,48 +64,97 @@ namespace MinersIdle.Persistence
             if (permanentRules == null) throw new ArgumentNullException(nameof(permanentRules));
             permanent = new PermanentState();
             LoadedSavedAtUtc = null;
-            string text;
-            try
+
+            // O principal; estragado ou faltando, o backup (M9, E3); os dois ruins, jogo novo.
+            string text = ReadSafely(_store.Read, "o save", out bool readFailed);
+            if (TryParse(text, out var data, out string why))
             {
-                text = _store.Read();
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[Save] Não deu para ler o save ({e.Message}); começando um jogo novo.");
-                status = SaveLoadStatus.Recovered;
-                return new GameState();
+                status = SaveLoadStatus.Loaded;
+                return Restore(data, economy, permanentRules, caveCount, out permanent);
             }
 
-            if (string.IsNullOrWhiteSpace(text))
+            bool hadSave = readFailed || !string.IsNullOrWhiteSpace(text);
+            if (hadSave && !readFailed)
+            {
+                Debug.LogWarning($"[Save] Save {why}: guardado à parte.");
+                _store.SetAsideBad();
+            }
+
+            string backup = ReadSafely(_store.ReadBackup, "o backup", out bool backupFailed);
+            if (TryParse(backup, out data, out string backupWhy))
+            {
+                Debug.LogWarning("[Save] Abrindo o backup (o save de uma gravação antes).");
+                status = SaveLoadStatus.LoadedBackup;
+                return Restore(data, economy, permanentRules, caveCount, out permanent);
+            }
+
+            bool hadBackup = backupFailed || !string.IsNullOrWhiteSpace(backup);
+            if (!hadSave && !hadBackup)
             {
                 status = SaveLoadStatus.NewGame;
                 return new GameState();
             }
 
-            SaveData data = null;
+            Debug.LogWarning(hadBackup
+                ? $"[Save] O backup também não abre ({backupWhy}); começando um jogo novo."
+                : "[Save] Sem backup; começando um jogo novo.");
+            status = SaveLoadStatus.Recovered;
+            return new GameState();
+        }
+
+        /// <summary>Lê um dos arquivos; um erro de leitura vira aviso no log e <c>null</c>.</summary>
+        static string ReadSafely(Func<string> read, string what, out bool failed)
+        {
+            failed = false;
+            try
+            {
+                return read();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Save] Não deu para ler {what} ({e.Message}).");
+                failed = true;
+                return null;
+            }
+        }
+
+        /// <summary>O texto vira um save que esta versão abre; senão, <paramref name="why"/> diz o motivo.</summary>
+        static bool TryParse(string text, out SaveData data, out string why)
+        {
+            data = null;
+            why = "vazio";
+            if (string.IsNullOrWhiteSpace(text)) return false;
             try
             {
                 data = JsonUtility.FromJson<SaveData>(text);
             }
             catch (Exception)
             {
-                // tratado abaixo como save ruim
+                data = null;
             }
 
-            if (data == null || data.version < SaveData.OldestVersion || data.version > SaveData.CurrentVersion)
+            if (data == null)
             {
-                string why = data == null ? "ilegível" : $"de versão desconhecida ({data.version})";
-                Debug.LogWarning($"[Save] Save {why}: guardado à parte e começando um jogo novo.");
-                _store.SetAsideBad();
-                status = SaveLoadStatus.Recovered;
-                return new GameState();
+                why = "ilegível";
+                return false;
             }
+            if (data.version < SaveData.OldestVersion || data.version > SaveData.CurrentVersion)
+            {
+                why = $"de versão desconhecida ({data.version})";
+                data = null;
+                return false;
+            }
+            return true;
+        }
 
+        /// <summary>O estado da run e a parte permanente a partir de um save que abre.</summary>
+        GameState Restore(SaveData data, EconomyRules economy, PermanentRules permanentRules, int caveCount,
+                          out PermanentState permanent)
+        {
             var levels = new Dictionary<string, int>();
             foreach (var saved in data.levels ?? new List<SavedLevel>())
                 if (saved != null && saved.upgrade != null) levels[saved.upgrade] = saved.level;
 
-            status = SaveLoadStatus.Loaded;
             permanent = RestorePermanent(data, permanentRules);
             if (data.version >= 5 && data.savedAtUtcTicks > DateTime.MinValue.Ticks && data.savedAtUtcTicks <= DateTime.MaxValue.Ticks)
                 LoadedSavedAtUtc = new DateTime(data.savedAtUtcTicks, DateTimeKind.Utc);

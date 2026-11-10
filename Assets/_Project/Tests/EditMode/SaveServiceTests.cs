@@ -89,13 +89,17 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Saving_ReplacesTheFileWhole_AndLeavesNoTemporary()
+        public void Saving_ReplacesTheFileWhole_KeepsTheOneBefore_AndLeavesNoTemporary()
         {
             _save.Save(PlayedState());
+            Assert.That(Directory.GetFiles(_dir), Is.EquivalentTo(new[] { _store.FilePath }), "o primeiro save não tem backup");
+
             _save.Save(new GameState());
 
             Assert.That(_save.Load(Prototype(), out _).Shards, Is.EqualTo(0), "vale o último save");
-            Assert.That(Directory.GetFiles(_dir), Is.EquivalentTo(new[] { _store.FilePath }), "sem .tmp sobrando");
+            Assert.That(Directory.GetFiles(_dir), Is.EquivalentTo(new[] { _store.FilePath, _store.BackupPath }),
+                        "o anterior virou backup (M9, E3); sem .tmp sobrando");
+            Assert.That(File.ReadAllText(_store.BackupPath), Does.Contain("\"Pickaxe\""), "o backup é o save de antes");
         }
 
         [Test]
@@ -491,6 +495,99 @@ namespace MinersIdle.Tests
             Assert.That(state.PendingOffline.HasShards, Is.False);
             Assert.That(state.PendingOffline.Crystals, Is.EqualTo(0));
             Assert.That(state.PendingOffline.SecondsAway, Is.EqualTo(0));
+        }
+
+        // ── Backup (M9, E3) ───────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>Dois saves: o principal é o do jogo novo, o backup é o do progresso (Picareta 2).</summary>
+        void SaveProgressThenAnother()
+        {
+            _save.Save(PlayedState());
+            _save.Save(GameState.Restore(5, 0, 0, _ => 0, Prototype()));
+        }
+
+        [Test]
+        public void CorruptedSave_WithAGoodBackup_OpensTheBackup()
+        {
+            SaveProgressThenAnother();
+            File.WriteAllText(_store.FilePath, "isto não é json {{{");
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(@"ilegível"));
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(@"backup"));
+
+            var state = _save.Load(Prototype(), out var status);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.LoadedBackup));
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(2), "o progresso de uma gravação antes");
+            Assert.That(File.ReadAllText(_store.BadPath), Is.EqualTo("isto não é json {{{"), "o estragado fica para análise");
+        }
+
+        [Test]
+        public void AppKilledInTheMiddleOfTheSwap_OpensTheBackup()
+        {
+            // Entre os dois passos da troca: o principal já virou backup, o novo ainda está no .tmp (cortado).
+            SaveProgressThenAnother();
+            File.Delete(_store.FilePath);
+            File.WriteAllText(_store.FilePath + ".tmp", "{ \"version\": 5, \"shards\": 9");
+
+            var state = _save.Load(Prototype(), out var status);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.LoadedBackup), "sem principal, mas com backup: não é jogo novo");
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(2));
+            Assert.That(File.Exists(_store.FilePath + ".tmp"), Is.False, "o .tmp cortado é descartado");
+        }
+
+        [Test]
+        public void BothCorrupted_StartANewGame()
+        {
+            SaveProgressThenAnother();
+            File.WriteAllText(_store.FilePath, "{{{");
+            File.WriteAllText(_store.BackupPath, "}}}");
+
+            var state = _save.Load(Prototype(), out var status);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Recovered));
+            Assert.That(state.Shards, Is.EqualTo(0));
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(0));
+            Assert.That(File.Exists(_store.BadPath), Is.True);
+        }
+
+        [Test]
+        public void FutureVersion_GoesAside_AndTheBackupOpens()
+        {
+            SaveProgressThenAnother();
+            File.WriteAllText(_store.FilePath, "{ \"version\": 99, \"shards\": 500 }");
+
+            var state = _save.Load(Prototype(), out var status);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.LoadedBackup), "um APK mais novo gravou: abre o backup, sem travar");
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(2));
+            Assert.That(File.Exists(_store.BadPath), Is.True);
+        }
+
+        [Test]
+        public void AfterOpeningTheBackup_TheNextSaveIsTheMainOneAgain()
+        {
+            SaveProgressThenAnother();
+            File.WriteAllText(_store.FilePath, "{{{");
+            var state = _save.Load(Prototype(), out _);
+
+            _save.Save(state);
+
+            var again = new SaveService(_store).Load(Prototype(), out var status);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(again.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Delete_RemovesTheBackupToo()
+        {
+            SaveProgressThenAnother();
+
+            _save.Delete();
+
+            Assert.That(File.Exists(_store.BackupPath), Is.False);
+            _save.Load(Prototype(), out var status);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.NewGame), "Apagar save não deixa o backup voltar");
         }
     }
 }

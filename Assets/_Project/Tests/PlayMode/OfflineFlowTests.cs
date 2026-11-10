@@ -206,5 +206,56 @@ namespace MinersIdle.Tests
             Assert.That(_modal.IsOpen, Is.False);
             Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(before + report.Shards).Within(1e-6), "não paga duas vezes");
         }
+
+        /// <summary>
+        /// M9, E3: minimizar e voltar várias vezes (o Android pausa o app) não duplica lascas nem compras. Cada volta conta
+        /// só o tempo desde a última gravação; o que ela trouxe entra uma vez, e o save reaberto tem o mesmo progresso.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator MinimizingAndComingBack_ManyTimes_DuplicatesNothing()
+        {
+            yield return Load();
+            var now = new DateTime(2026, 11, 10, 12, 0, 0, DateTimeKind.Utc);
+            _runner.UseClock(() => now);
+            var store = new FileSaveStore(_dir);
+            _runner.UseSave(new SaveService(store));
+            var simulation = _runner.Simulation;
+            Assert.That(simulation.HireIntern(), Is.True);
+            simulation.AddShards(1000);
+            Assert.That(simulation.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
+            int pickaxe = simulation.State.LevelOf(UpgradeId.Pickaxe);
+
+            _runner.SendMessage("OnApplicationPause", true);   // minimiza: grava
+            now = now.AddMinutes(10);
+            _runner.SendMessage("OnApplicationPause", false);  // volta 10 min depois
+            double brought = simulation.PendingOffline.Shards;
+            Assert.That(brought, Is.GreaterThan(0));
+
+            for (int i = 0; i < 3; i++)
+            {
+                _runner.SendMessage("OnApplicationPause", true);
+                _runner.SendMessage("OnApplicationPause", false); // no mesmo instante: nada novo
+            }
+            Assert.That(simulation.PendingOffline.Shards, Is.EqualTo(brought).Within(1e-6), "a volta não dobra");
+
+            double before = simulation.State.Shards;
+            Collect();
+            double after = simulation.State.Shards;
+            Assert.That(after, Is.EqualTo(before + brought).Within(1e-6));
+
+            for (int i = 0; i < 3; i++)
+            {
+                _runner.SendMessage("OnApplicationPause", true);
+                _runner.SendMessage("OnApplicationPause", false);
+            }
+            Assert.That(simulation.State.Shards, Is.EqualTo(after).Within(1e-6), "nada entra de novo");
+            Assert.That(simulation.State.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(pickaxe), "a compra não dobra");
+            Assert.That(_modal.IsOpen, Is.False);
+
+            _runner.UseSave(new SaveService(store)); // fecha e abre: o save tem o mesmo progresso
+            Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(after).Within(1e-6));
+            Assert.That(_runner.Simulation.State.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(pickaxe));
+            Assert.That(_modal.IsOpen, Is.False);
+        }
     }
 }
