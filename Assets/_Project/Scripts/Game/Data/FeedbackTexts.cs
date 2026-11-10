@@ -53,6 +53,22 @@ namespace MinersIdle.Game
         [Tooltip("O botão que abre a loja na aba das permanentes (E4, D-154).")]
         [SerializeField] string summaryPermanents;
 
+        [Header("Bem-vindo de volta (M9, E2, D-197)")]
+        [SerializeField] string offlineTitle;
+        [SerializeField] string offlineAwayLabel;
+        [SerializeField] string offlineCountedLabel;
+        [Tooltip("{0} = o tempo que contou (o teto, 6 h).")]
+        [SerializeField] string offlineCountedFormat;
+        [SerializeField] string offlineCrystalsLabel;
+        [SerializeField] string offlineBroughtLabel;
+        [Tooltip("{0} = as lascas que ele trouxe.")]
+        [SerializeField] string offlineShardsFormat;
+        [Tooltip("{0} = o nível em que ele minerou.")]
+        [TextArea, SerializeField] string offlineNoteFormat;
+        [Tooltip("{0} = o teto (6 h).")]
+        [TextArea, SerializeField] string offlineCappedNoteFormat;
+        [SerializeField] string offlineCollect;
+
         public string CriticalLabel => criticalLabel;
         public string ComboFormat => comboFormat;
         public string MilestoneFormat => milestoneFormat;
@@ -81,5 +97,16 @@ namespace MinersIdle.Game
         public string SummaryBankLabel => summaryBankLabel;
         public string SummaryStart => summaryStart;
         public string SummaryPermanents => summaryPermanents;
+
+        public string OfflineTitle => offlineTitle;
+        public string OfflineAwayLabel => offlineAwayLabel;
+        public string OfflineCountedLabel => offlineCountedLabel;
+        public string OfflineCountedFormat => offlineCountedFormat;
+        public string OfflineCrystalsLabel => offlineCrystalsLabel;
+        public string OfflineBroughtLabel => offlineBroughtLabel;
+        public string OfflineShardsFormat => offlineShardsFormat;
+        public string OfflineNoteFormat => offlineNoteFormat;
+        public string OfflineCappedNoteFormat => offlineCappedNoteFormat;
+        public string OfflineCollect => offlineCollect;
     }
 }

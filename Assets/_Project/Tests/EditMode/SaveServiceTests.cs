@@ -449,5 +449,48 @@ namespace MinersIdle.Tests
             Assert.That(status, Is.EqualTo(SaveLoadStatus.NewGame));
             Assert.That(_save.LoadedSavedAtUtc, Is.Null);
         }
+
+        // ── Save v5: a volta esperando o COLETAR (M9, E2, D-197) ────────────────────────────────────────────────
+
+        [Test]
+        public void Version5_KeepsTheReturnWaitingForCollect()
+        {
+            var pending = new OfflineReturn(9 * 3600 + 12 * 60, 6 * 3600, 2541, 69115.2, 15);
+            var state = GameState.Restore(10, 0, 0, _ => 0, Prototype(), 20, 15, pendingOffline: pending);
+            _save.Save(state, PlayedPermanent(), new DateTime(2026, 11, 10, 18, 0, 0, DateTimeKind.Utc));
+
+            var loaded = new SaveService(_store).Load(Prototype(), V7Permanents(), out _, out var status, 20);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(loaded.Shards, Is.EqualTo(10), "as lascas da volta ainda não entraram");
+            Assert.That(loaded.PendingOffline.Shards, Is.EqualTo(69115.2).Within(1e-9));
+            Assert.That(loaded.PendingOffline.SecondsAway, Is.EqualTo(9 * 3600 + 12 * 60));
+            Assert.That(loaded.PendingOffline.SecondsCounted, Is.EqualTo(6 * 3600));
+            Assert.That(loaded.PendingOffline.Crystals, Is.EqualTo(2541));
+            Assert.That(loaded.PendingOffline.Level, Is.EqualTo(15));
+            Assert.That(loaded.PendingOffline.Capped, Is.True);
+        }
+
+        [Test]
+        public void Version5_FromTheFirstStage_OpensWithNothingToCollect()
+        {
+            WriteSave("{ \"version\": 5, \"shards\": 77.0, \"cave\": 5, \"savedAtUtcTicks\": 638000000000000000 }");
+
+            var state = _save.Load(Prototype(), V7Permanents(), out _, out var status, 10);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(state.Shards, Is.EqualTo(77));
+            Assert.That(state.PendingOffline.HasShards, Is.False, "um save da E1 não tem volta pendente");
+        }
+
+        [Test]
+        public void BadPendingNumbers_AreCleanedUp()
+        {
+            WriteSave("{ \"version\": 5, \"shards\": 1.0, \"pendingOffline\": " +
+                      "{ \"secondsAway\": -5.0, \"secondsCounted\": -1.0, \"crystals\": -3, \"shards\": -10.0, \"level\": -2 } }");
+
+            var state = _save.Load(Prototype(), V7Permanents(), out _, out _, 10);
+            Assert.That(state.PendingOffline.HasShards, Is.False);
+            Assert.That(state.PendingOffline.Crystals, Is.EqualTo(0));
+            Assert.That(state.PendingOffline.SecondsAway, Is.EqualTo(0));
+        }
     }
 }

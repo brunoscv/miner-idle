@@ -133,6 +133,9 @@ namespace MinersIdle.Core
         /// </summary>
         public event Action PermanentsChanged;
 
+        /// <summary>A volta do offline esperando o COLETAR mudou: chegou uma, somou outra ou foi coletada (M9, E2).</summary>
+        public event Action<OfflineReturn> OfflineReturnChanged;
+
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
         public StrikeRules Strike => _strike;
@@ -278,16 +281,40 @@ namespace MinersIdle.Core
         /// O offline (M9, E1): o estagiário minerou sozinho por <paramref name="secondsAway"/> (até o teto das regras) no
         /// nível de agora (<see cref="OfflineMining"/>). As lascas entram no saldo e nas ganhas do dia; o nível, a trava do
         /// Mapa e a fila de cristais não mudam (D-189). Sem estagiário, ou com o relógio voltado, nada entra.
+        ///
+        /// E2 (D-195, D-197): com <paramref name="noticeSeconds"/> &gt; 0 e o tempo que contou a partir dele, as lascas não
+        /// entram agora: esperam o COLETAR do modal "Bem-vindo de volta" (<see cref="PendingOffline"/>,
+        /// <see cref="CollectOffline"/>). Abaixo dele, entram direto, sem aviso.
         /// </summary>
-        public OfflineReport ApplyOffline(double secondsAway)
+        public OfflineReport ApplyOffline(double secondsAway, double noticeSeconds = 0)
         {
             var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway);
-            if (report.Shards > 0)
+            if (report.Shards <= 0) return report;
+            if (noticeSeconds > 0 && report.SecondsCounted >= noticeSeconds)
             {
-                _state.AddOfflineShards(report.Shards);
-                ShardsChanged?.Invoke(_state.Shards);
+                _state.AddPendingOffline(report);
+                OfflineReturnChanged?.Invoke(_state.PendingOffline);
+                return report;
             }
+            _state.AddOfflineShards(report.Shards);
+            ShardsChanged?.Invoke(_state.Shards);
             return report;
+        }
+
+        /// <summary>A volta esperando o COLETAR (M9, E2); vazia quando não há.</summary>
+        public OfflineReturn PendingOffline => _state.PendingOffline;
+
+        /// <summary>
+        /// COLETAR (D-197): as lascas da volta entram no saldo e nas ganhas do dia, uma vez só. Devolve quanto entrou (0 sem
+        /// volta pendente).
+        /// </summary>
+        public double CollectOffline()
+        {
+            if (!_state.PendingOffline.HasShards) return 0;
+            double shards = _state.CollectPendingOffline();
+            OfflineReturnChanged?.Invoke(_state.PendingOffline);
+            ShardsChanged?.Invoke(_state.Shards);
+            return shards;
         }
 
         /// <summary>

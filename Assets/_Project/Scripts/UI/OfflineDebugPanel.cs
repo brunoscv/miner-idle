@@ -8,7 +8,8 @@ using UnityEngine.UI;
 namespace MinersIdle.UI
 {
     /// <summary>
-    /// DBG → Offline (M9, E1): simula o jogo fechado sem fechar (1 min, 10 min, 1 h, 6 h e 8 h; o de 8 h mostra o corte
+    /// DBG → Offline (M9, E1): simula o jogo fechado sem fechar (30 s, 1 min, 10 min, 1 h, 6 h e 8 h; o de 30 s fica abaixo
+    /// do aviso de 60 s e paga direto, sem o "Bem-vindo de volta" da E2; o de 8 h mostra o corte
     /// no teto de 6 h), "Voltar o relógio 1 h" (a volta com o relógio do aparelho atrasado, D-196) e, no alto, a conta do
     /// último offline: o tempo fora e o que contou, os cristais, os golpes e o tempo por cristal e as lascas. Fica no
     /// painel de debug: no release some junto. Só manda comandos ao <see cref="MiningRunner"/>. Os textos ficam na cena.
@@ -16,14 +17,14 @@ namespace MinersIdle.UI
     public sealed class OfflineDebugPanel : MonoBehaviour
     {
         /// <summary>Os tempos dos botões de simular, em segundos, na ordem de <see cref="simulate"/>.</summary>
-        public static readonly double[] SimulatedSeconds = { 60, 10 * 60, 3600, 6 * 3600, 8 * 3600 };
+        public static readonly double[] SimulatedSeconds = { 30, 60, 10 * 60, 3600, 6 * 3600, 8 * 3600 };
 
         /// <summary>Quanto o "Voltar o relógio" volta.</summary>
         public static readonly TimeSpan ClockBack = TimeSpan.FromHours(1);
 
         [SerializeField] MiningRunner runner;
 
-        [Tooltip("Simular 1 min, 10 min, 1 h, 6 h e 8 h fora, na ordem de SimulatedSeconds.")]
+        [Tooltip("Simular 30 s, 1 min, 10 min, 1 h, 6 h e 8 h fora, na ordem de SimulatedSeconds.")]
         [SerializeField] Button[] simulate = Array.Empty<Button>();
         [SerializeField] Button clockBack;
 

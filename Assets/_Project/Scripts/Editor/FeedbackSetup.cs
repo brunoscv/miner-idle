@@ -36,6 +36,7 @@ namespace MinersIdle.EditorTools
                 EnsureHeartTexts();
                 EnsureRestTexts();
                 EnsurePermanentsText();
+                EnsureOfflineTexts();
                 return;
             }
 
@@ -52,6 +53,7 @@ namespace MinersIdle.EditorTools
             Debug.Log($"[Setup] Textos do feedback criados em {TextsPath}.");
             EnsureRestTexts();
             EnsurePermanentsText();
+            EnsureOfflineTexts();
         }
 
         const string CaveBannerFormat = "Nível {0} · {1}";
@@ -133,6 +135,29 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(texts);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Texto do PERMANENTES do resumo do dia (Marco 8b, E4).");
+        }
+
+        /// <summary>M9 (E2): os textos do "Bem-vindo de volta" (D-197), nos textos que já existem.</summary>
+        static void EnsureOfflineTexts()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null || !string.IsNullOrEmpty(texts.OfflineTitle)) return;
+
+            var so = new SerializedObject(texts);
+            so.FindProperty("offlineTitle").stringValue = "BEM-VINDO DE VOLTA";
+            so.FindProperty("offlineAwayLabel").stringValue = "Tempo fora";
+            so.FindProperty("offlineCountedLabel").stringValue = "Contou";
+            so.FindProperty("offlineCountedFormat").stringValue = "{0} (máx.)";
+            so.FindProperty("offlineCrystalsLabel").stringValue = "Cristais quebrados";
+            so.FindProperty("offlineBroughtLabel").stringValue = "O estagiário trouxe";
+            so.FindProperty("offlineShardsFormat").stringValue = "+{0}";
+            so.FindProperty("offlineNoteFormat").stringValue = "Ele minerou no nível {0} enquanto você esteve fora.";
+            so.FindProperty("offlineCappedNoteFormat").stringValue = "Ele minera no máximo {0} com o jogo fechado.";
+            so.FindProperty("offlineCollect").stringValue = "COLETAR";
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Textos do Bem-vindo de volta nos textos do feedback (M9, E2).");
         }
 
         static void SetHeartTexts(SerializedObject so)

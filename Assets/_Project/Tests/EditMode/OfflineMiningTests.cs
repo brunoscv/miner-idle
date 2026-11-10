@@ -275,5 +275,90 @@ namespace MinersIdle.Tests
             Assert.That(sim.State.Shards, Is.EqualTo(0));
             Assert.That(changed, Is.False);
         }
+
+        // ── A volta esperando o COLETAR (M9, E2, D-195, D-197) ───────────────────────────────────────────────
+
+        [Test]
+        public void FromTheNotice_TheShardsWaitForCollect_AndPayOnce()
+        {
+            var sim = new MiningSimulation(Rules(), new SeededRandom(1), At(15, (UpgradeId.Intern, 1)), V7(),
+                                           permanents: NoPermanents());
+            int returns = 0, shardEvents = 0;
+            sim.OfflineReturnChanged += _ => returns++;
+            sim.ShardsChanged += _ => shardEvents++;
+
+            var report = sim.ApplyOffline(2 * Hour + 14 * 60, noticeSeconds: 60);
+
+            // Nível 15, recém-contratado (dano 5, 2,0 s): 5 golpes, 8,5 s por cristal (o exemplo do plano do M9).
+            Assert.That(report.Crystals, Is.EqualTo(945));
+            Assert.That(sim.State.Shards, Is.EqualTo(0), "ainda não entrou: espera o COLETAR");
+            Assert.That(sim.State.ShardsEarned, Is.EqualTo(0));
+            Assert.That(sim.PendingOffline.HasShards, Is.True);
+            Assert.That(sim.PendingOffline.Shards, Is.EqualTo(report.Shards).Within(1e-9));
+            Assert.That(sim.PendingOffline.Crystals, Is.EqualTo(945));
+            Assert.That(sim.PendingOffline.Level, Is.EqualTo(15));
+            Assert.That(sim.PendingOffline.Capped, Is.False);
+            Assert.That(returns, Is.EqualTo(1));
+            Assert.That(shardEvents, Is.EqualTo(0));
+
+            Assert.That(sim.CollectOffline(), Is.EqualTo(report.Shards).Within(1e-9));
+            Assert.That(sim.State.Shards, Is.EqualTo(report.Shards).Within(1e-9));
+            Assert.That(sim.State.ShardsEarned, Is.EqualTo(report.Shards).Within(1e-9), "conta nas lascas do dia (D-197)");
+            Assert.That(sim.PendingOffline.HasShards, Is.False);
+            Assert.That(returns, Is.EqualTo(2), "o modal fica sabendo que acabou");
+            Assert.That(shardEvents, Is.EqualTo(1), "o HUD sobe no COLETAR");
+
+            Assert.That(sim.CollectOffline(), Is.EqualTo(0), "o segundo COLETAR não paga");
+            Assert.That(sim.State.Shards, Is.EqualTo(report.Shards).Within(1e-9));
+        }
+
+        [Test]
+        public void BelowTheNotice_TheShardsGoInDirectly()
+        {
+            var sim = new MiningSimulation(Rules(), new SeededRandom(1), At(15, (UpgradeId.Intern, 1)), V7(),
+                                           permanents: NoPermanents());
+            bool returned = false;
+            sim.OfflineReturnChanged += _ => returned = true;
+
+            var report = sim.ApplyOffline(59, noticeSeconds: 60);
+
+            Assert.That(report.Crystals, Is.EqualTo(6), "59 s a 8,5 s por cristal");
+            Assert.That(sim.State.Shards, Is.EqualTo(report.Shards).Within(1e-9), "menos de 60 s: direto, sem modal (D-195)");
+            Assert.That(sim.PendingOffline.HasShards, Is.False);
+            Assert.That(returned, Is.False);
+        }
+
+        [Test]
+        public void ReturnsWithoutCollecting_AddUp_AndKeepTheCap()
+        {
+            var sim = new MiningSimulation(Rules(), new SeededRandom(1), At(15, (UpgradeId.Intern, 1)), V7(),
+                                           permanents: NoPermanents());
+
+            var first = sim.ApplyOffline(9 * Hour + 12 * 60, noticeSeconds: 60);
+            Assert.That(sim.PendingOffline.Capped, Is.True, "9 h 12 min fora, contou 6 h");
+            Assert.That(sim.PendingOffline.SecondsCounted, Is.EqualTo(6 * Hour));
+
+            var second = sim.ApplyOffline(10 * 60, noticeSeconds: 60);
+            Assert.That(sim.PendingOffline.Shards, Is.EqualTo(first.Shards + second.Shards).Within(1e-9));
+            Assert.That(sim.PendingOffline.Crystals, Is.EqualTo(first.Crystals + second.Crystals));
+            Assert.That(sim.PendingOffline.SecondsAway, Is.EqualTo(9 * Hour + 22 * 60).Within(1e-9));
+            Assert.That(sim.State.Shards, Is.EqualTo(0));
+
+            sim.CollectOffline();
+            Assert.That(sim.State.Shards, Is.EqualTo(first.Shards + second.Shards).Within(1e-9), "as duas, uma vez cada");
+        }
+
+        [Test]
+        public void ClockBack_OrNoIntern_LeaveNothingToCollect()
+        {
+            var hired = new MiningSimulation(Rules(), new SeededRandom(1), At(15, (UpgradeId.Intern, 1)), V7(),
+                                             permanents: NoPermanents());
+            hired.ApplyOffline(-Hour, noticeSeconds: 60);
+            Assert.That(hired.PendingOffline.HasShards, Is.False, "relógio voltado (D-196)");
+
+            var alone = new MiningSimulation(Rules(), new SeededRandom(1), At(15), V7(), permanents: NoPermanents());
+            alone.ApplyOffline(Hour, noticeSeconds: 60);
+            Assert.That(alone.PendingOffline.HasShards, Is.False, "sem estagiário (D-139)");
+        }
     }
 }

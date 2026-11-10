@@ -105,10 +105,17 @@ namespace MinersIdle.Core
         /// Tempo de jogo (M8, E3): "45 s", "12 min 05 s", "3 h 07 min"; a partir de uma hora, sem os segundos. Arredonda
         /// para baixo, como as lascas.
         /// </summary>
-        public static string FormatDuration(double seconds)
+        public static string FormatDuration(double seconds) => FormatDuration(seconds, trimWholeHours: false);
+
+        /// <summary>
+        /// Como <see cref="FormatDuration(double)"/>; com <paramref name="trimWholeHours"/>, hora cheia sai sem os minutos
+        /// ("6 h", o teto do offline no "Bem-vindo de volta", M9 E2).
+        /// </summary>
+        public static string FormatDuration(double seconds, bool trimWholeHours)
         {
             long total = double.IsNaN(seconds) || seconds < 0 ? 0 : (long)Math.Min(Math.Floor(seconds), long.MaxValue);
             long hours = total / 3600, minutes = total / 60 % 60, rest = total % 60;
+            if (hours > 0 && trimWholeHours && minutes == 0) return hours.ToString("#,0", PtBr) + " h";
             if (hours > 0) return hours.ToString("#,0", PtBr) + " h " + minutes.ToString("00") + " min";
             if (minutes > 0) return minutes + " min " + rest.ToString("00") + " s";
             return rest + " s";

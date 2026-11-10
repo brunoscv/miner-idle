@@ -18,6 +18,7 @@ namespace MinersIdle.EditorTools
         /// <summary>Os botões de simular, na ordem de <see cref="OfflineDebugPanel.SimulatedSeconds"/>.</summary>
         static readonly (string name, string label)[] SimulateButtons =
         {
+            ("Away30S", "Fora 30 s"),
             ("Away1Min", "Fora 1 min"),
             ("Away10Min", "Fora 10 min"),
             ("Away1H", "Fora 1 h"),
@@ -38,16 +39,12 @@ namespace MinersIdle.EditorTools
         {
             var debugPanel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.OfflineMenuName) : null;
-            if (menu == null || menu.GetComponent<OfflineDebugPanel>() != null) return false;
+            if (menu == null) return false;
+            var existingPanel = menu.GetComponent<OfflineDebugPanel>();
+            if (existingPanel != null) return EnsureSimulateButtons(menu, existingPanel);
 
             var grid = menu.Find("Content/Buttons");
-            var simulate = new Button[SimulateButtons.Length];
-            for (int i = 0; i < SimulateButtons.Length; i++)
-            {
-                var (name, label) = SimulateButtons[i];
-                var existing = grid.Find(name);
-                simulate[i] = existing != null ? existing.GetComponent<Button>() : DebugPanelSetup.CreateButton(grid, name, label);
-            }
+            var simulate = SimulateButtonsIn(grid, out _);
             var clockBackButton = grid.Find(ClockBackName);
             var clockBack = clockBackButton != null
                 ? clockBackButton.GetComponent<Button>()
@@ -81,8 +78,49 @@ namespace MinersIdle.EditorTools
             so.FindProperty("clockBackLabel").stringValue = " (relógio voltou: nada)";
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            Debug.Log("[Setup] Painel de debug: menu \"Offline\" com simular 1 min…8 h fora e voltar o relógio (M9, E1).");
+            Debug.Log("[Setup] Painel de debug: menu \"Offline\" com simular 30 s…8 h fora e voltar o relógio (M9, E1, E2).");
             return true;
+        }
+
+        /// <summary>
+        /// Um menu de antes (E1, sem o "Fora 30 s" da E2): cria os botões que faltam, na ordem, e refaz a lista do painel.
+        /// </summary>
+        static bool EnsureSimulateButtons(Transform menu, OfflineDebugPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            var simulate = SimulateButtonsIn(grid, out bool created);
+            var so = new SerializedObject(panel);
+            var buttons = so.FindProperty("simulate");
+            bool same = buttons.arraySize == simulate.Length;
+            for (int i = 0; same && i < simulate.Length; i++)
+                same = buttons.GetArrayElementAtIndex(i).objectReferenceValue == simulate[i];
+            if (same && !created) return false;
+
+            buttons.arraySize = simulate.Length;
+            for (int i = 0; i < simulate.Length; i++) buttons.GetArrayElementAtIndex(i).objectReferenceValue = simulate[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] DBG → Offline: botões de simular em dia (\"Fora 30 s\" da E2 do M9).");
+            return true;
+        }
+
+        /// <summary>Os botões de simular na grade, na ordem de <see cref="SimulateButtons"/>; cria os que faltam.</summary>
+        static Button[] SimulateButtonsIn(Transform grid, out bool created)
+        {
+            created = false;
+            var simulate = new Button[SimulateButtons.Length];
+            for (int i = 0; i < SimulateButtons.Length; i++)
+            {
+                var (name, label) = SimulateButtons[i];
+                var existing = grid.Find(name);
+                if (existing == null)
+                {
+                    existing = DebugPanelSetup.CreateButton(grid, name, label).transform;
+                    created = true;
+                }
+                existing.SetSiblingIndex(i);
+                simulate[i] = existing.GetComponent<Button>();
+            }
+            return simulate;
         }
     }
 }

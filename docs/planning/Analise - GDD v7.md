@@ -148,7 +148,7 @@ No nível da fórmula das permanentes vale o **nível da melhoria** (a compra *n
 | G27 | Estagiário: o "nível" do dano `5 × 2^(n−1)` é o da melhoria (o do anão é o da caverna, D-133)? Antes de comprar a Picareta dele, ele bate com quanto ("atributos base do minerador")? A Velocidade dele também para em 0,1 s (o GDD diz 0 s, como dizia a do anão)? | §4.1, §5.4 |
 | G28 | Nome e ícone do botão de encerrar a run: Descansar, Dormir, Ir para casa? | §1.3 (D-137) |
 
-Continuam abertas, sem mudança: G11 (detalhe do acúmulo do combo), G12 e G13 (cristal raro), G14 (parede, provisória pela D-108) e a conta do offline (G15, no M9).
+Continuam abertas, sem mudança: G11 (detalhe do acúmulo do combo), G12 e G13 (cristal raro), G14 (parede, provisória pela D-108) e a conta do offline (G15, no M9). *(2026-11-10: todas respondidas: G11 → D-183, G12 → D-190, G13 → D-184, G14 → D-108 confirmada, G15 → D-189; a G17 ficou resolvida pelo custo `20 × 5^(n−1)` do v6/v7.)*
 
 ## Proposta para os marcos (para decidir: D-128…D-131, revistas pelo v7)
 

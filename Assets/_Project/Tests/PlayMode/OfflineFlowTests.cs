@@ -17,9 +17,10 @@ using Object = UnityEngine.Object;
 namespace MinersIdle.Tests
 {
     /// <summary>
-    /// M9, E1: o offline na cena Game (GDD v7). O DBG → Offline simula o jogo fechado sem fechar e volta o relógio; ao
-    /// abrir pelo caminho do save (save v5, com a hora), o tempo desde a última gravação vira lascas do estagiário, uma
-    /// vez só. Aberta direto, a cena não grava nada.
+    /// M9, E1 e E2: o offline na cena Game (GDD v7). O DBG → Offline simula o jogo fechado sem fechar e volta o relógio; ao
+    /// abrir pelo caminho do save (save v5, com a hora), o tempo desde a última gravação vira lascas do estagiário. Com 60 s
+    /// ou mais, elas esperam o COLETAR do "Bem-vindo de volta" (D-195, D-197) e entram uma vez só, mesmo fechando e abrindo
+    /// no meio do modal. Aberta direto, a cena não grava nada.
     /// </summary>
     public class OfflineFlowTests
     {
@@ -27,6 +28,7 @@ namespace MinersIdle.Tests
 
         DebugPanel _panel;
         MiningRunner _runner;
+        OfflineReturnScreen _modal;
         string _dir;
 
         MiningSimulation Simulation => _runner.Simulation;
@@ -46,6 +48,8 @@ namespace MinersIdle.Tests
             yield return null;
             _panel = Object.FindAnyObjectByType<DebugPanel>();
             _runner = Object.FindAnyObjectByType<MiningRunner>();
+            _modal = Object.FindAnyObjectByType<OfflineReturnScreen>();
+            Assert.That(_modal, Is.Not.Null, "modal Bem-vindo de volta (rode o setup do projeto)");
             Assert.That(_panel.transform.Find("OfflineMenu")?.GetComponent<OfflineDebugPanel>(), Is.Not.Null,
                         "menu Offline (rode o setup do projeto)");
             if (!Simulation.Economy.HasIntern) Assert.Ignore("O balanço ativo não tem estagiário (rode o setup: GDD v7).");
@@ -56,6 +60,13 @@ namespace MinersIdle.Tests
             var target = _panel.transform.Find("OfflineMenu/Content/Buttons/" + name);
             Assert.That(target, Is.Not.Null, "botão não encontrado: " + name);
             target.GetComponent<Button>().onClick.Invoke();
+        }
+
+        /// <summary>O COLETAR do modal, como o dedo do jogador.</summary>
+        void Collect()
+        {
+            Assert.That(_modal.IsOpen, Is.True, "o modal está aberto");
+            _modal.transform.Find("Screen/Panel/Buttons/Collect").GetComponent<Button>().onClick.Invoke();
         }
 
         string Summary => _panel.transform.Find("OfflineMenu/Content/Summary").GetComponent<TMP_Text>().text;
@@ -72,10 +83,11 @@ namespace MinersIdle.Tests
             Click("Away1H");
             Assert.That(Simulation.State.Shards, Is.EqualTo(0), "sem estagiário, nada (D-139)");
             Assert.That(Summary, Does.Contain("sem estagiário"));
+            Assert.That(_modal.IsOpen, Is.False, "sem estagiário, sem modal");
         }
 
         [UnityTest]
-        public IEnumerator WithTheIntern_OneHourAway_PaysTheShards_AndShowsTheSum()
+        public IEnumerator WithTheIntern_OneHourAway_ShowsTheModal_AndPaysOnCollect()
         {
             yield return Load();
             Assert.That(Simulation.HireIntern(), Is.True);
@@ -90,8 +102,21 @@ namespace MinersIdle.Tests
             // Nível 1: vida 1, dano 1 → 1 golpe; 0,5 s de corrida por cristal (A2) → 7.200 cristais de 1,2 lasca.
             Assert.That(report.HitsPerCrystal, Is.EqualTo(1));
             Assert.That(report.Crystals, Is.EqualTo(7200));
-            Assert.That(Simulation.State.Shards, Is.EqualTo(report.Shards).Within(1e-6));
             Assert.That(report.Shards, Is.EqualTo(7200 * 1.2).Within(1e-6));
+
+            // O "Bem-vindo de volta" (D-197): as lascas esperam o COLETAR.
+            Assert.That(_modal.IsOpen, Is.True);
+            Assert.That(Simulation.State.Shards, Is.EqualTo(0), "ainda não entrou");
+            Assert.That(_modal.AwayText, Is.EqualTo("1 h 00 min"));
+            Assert.That(_modal.ShowsCounted, Is.False, "não passou do teto");
+            Assert.That(_modal.CrystalsText, Is.EqualTo(NumberFormatter.Format(7200)));
+            Assert.That(_modal.ShardsText, Is.EqualTo("+" + NumberFormatter.FormatShards(7200 * 1.2)));
+            Assert.That(_modal.NoteText, Is.EqualTo("Ele minerou no nível 1 enquanto você esteve fora."));
+
+            Collect();
+            Assert.That(_modal.IsOpen, Is.False);
+            Assert.That(Simulation.State.Shards, Is.EqualTo(report.Shards).Within(1e-6), "entrou no COLETAR");
+            Assert.That(Simulation.State.ShardsEarned, Is.EqualTo(report.Shards).Within(1e-6), "nas lascas do dia");
             Assert.That(Simulation.State.CaveBreaks, Is.EqualTo(caveBreaks), "não conta na trava do Mapa (D-189)");
             Assert.That(Simulation.State.Cave, Is.EqualTo(cave), "não passa de nível");
             Assert.That(Summary, Does.Contain(NumberFormatter.Format(7200) + " cristais"));
@@ -108,16 +133,44 @@ namespace MinersIdle.Tests
             Assert.That(_runner.LastOffline.Value.Capped, Is.True);
             Assert.That(Summary, Does.Contain("(teto)"));
 
-            double shards = Simulation.State.Shards;
+            // O modal mostra o corte: "Contou 6 h (máx.)".
+            Assert.That(_modal.IsOpen, Is.True);
+            Assert.That(_modal.AwayText, Is.EqualTo("8 h 00 min"));
+            Assert.That(_modal.ShowsCounted, Is.True);
+            Assert.That(_modal.CountedText, Is.EqualTo("6 h (máx.)"));
+            Assert.That(_modal.NoteText, Is.EqualTo("Ele minera no máximo 6 h com o jogo fechado."));
+
+            double pending = Simulation.PendingOffline.Shards;
             Click("ClockBack");
             Assert.That(_runner.LastOffline.Value.ClockWentBack, Is.True);
-            Assert.That(Simulation.State.Shards, Is.EqualTo(shards), "relógio voltado: nada, sem erro (D-196)");
+            Assert.That(Simulation.PendingOffline.Shards, Is.EqualTo(pending), "relógio voltado: nada, sem erro (D-196)");
+            Assert.That(Simulation.State.Shards, Is.EqualTo(0));
             Assert.That(Summary, Does.Contain("relógio voltou"));
+
+            Collect();
+            Assert.That(Simulation.State.Shards, Is.EqualTo(pending).Within(1e-6));
+        }
+
+        /// <summary>D-195: menos de 60 s fora, as lascas entram direto, sem o modal.</summary>
+        [UnityTest]
+        public IEnumerator ThirtySecondsAway_PaysDirectly_WithoutTheModal()
+        {
+            yield return Load();
+            Simulation.HireIntern();
+
+            Click("Away30S");
+
+            var report = _runner.LastOffline.Value;
+            Assert.That(report.Crystals, Is.EqualTo(60), "nível 1: 30 s a 0,5 s por cristal");
+            Assert.That(_modal.IsOpen, Is.False);
+            Assert.That(Simulation.State.Shards, Is.EqualTo(report.Shards).Within(1e-6));
+            Assert.That(Simulation.PendingOffline.HasShards, Is.False);
         }
 
         /// <summary>
-        /// O caminho do jogo: grava com a hora, "fecha", e abre 10 min depois pelo save; o estagiário trouxe as lascas uma
-        /// vez só (abrir de novo logo em seguida não paga outra vez).
+        /// O caminho do jogo: grava com a hora, "fecha", e abre 10 min depois pelo save; o modal mostra o que o estagiário
+        /// trouxe. Fechar e abrir de novo com o modal na tela não paga outra vez nem perde a volta (ela está no save); o
+        /// COLETAR paga uma vez, e abrir depois dele não traz o modal de volta.
         /// </summary>
         [UnityTest]
         public IEnumerator ReopeningThroughTheSave_PaysTheTimeAway_Once()
@@ -136,12 +189,22 @@ namespace MinersIdle.Tests
             var report = _runner.LastOffline.Value;
             Assert.That(report.SecondsAway, Is.EqualTo(600).Within(1e-6));
             Assert.That(report.Crystals, Is.EqualTo(1200), "10 min a 0,5 s por cristal");
+            Assert.That(_modal.IsOpen, Is.True);
+            Assert.That(_modal.AwayText, Is.EqualTo("10 min 00 s"));
+            Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(before).Within(1e-6), "espera o COLETAR");
+
+            _runner.UseSave(new SaveService(store)); // fecha e abre com o modal na tela, no mesmo instante
+            Assert.That(_runner.LastOffline.Value.SecondsAway, Is.EqualTo(0).Within(1e-6));
+            Assert.That(_modal.IsOpen, Is.True, "a volta pendente veio do save");
+            Assert.That(_runner.Simulation.PendingOffline.Shards, Is.EqualTo(report.Shards).Within(1e-6), "nem dobra nem some");
+            Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(before).Within(1e-6));
+
+            Collect();
             Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(before + report.Shards).Within(1e-6));
 
-            double afterFirst = _runner.Simulation.State.Shards;
-            _runner.UseSave(new SaveService(store)); // abre de novo no mesmo instante: já gravou com a hora nova
-            Assert.That(_runner.LastOffline.Value.SecondsAway, Is.EqualTo(0).Within(1e-6));
-            Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(afterFirst).Within(1e-6), "não paga duas vezes");
+            _runner.UseSave(new SaveService(store)); // abre de novo depois do COLETAR: já gravou sem a volta
+            Assert.That(_modal.IsOpen, Is.False);
+            Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(before + report.Shards).Within(1e-6), "não paga duas vezes");
         }
     }
 }

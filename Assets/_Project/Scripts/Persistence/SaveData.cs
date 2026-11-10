@@ -42,6 +42,20 @@ namespace MinersIdle.Persistence
 
         // Versão 5 (M9, E1): a hora em que foi gravado, para o offline. Em ticks UTC; 0 = sem hora (um save até a 4).
         public long savedAtUtcTicks;
+
+        // Versão 5 (M9, E2): a volta do offline que ainda espera o COLETAR (D-197). Um save sem ela abre sem volta.
+        public SavedOffline pendingOffline = new SavedOffline();
+    }
+
+    /// <summary>A volta do offline esperando o COLETAR (M9, E2): fechar no meio do modal não paga duas vezes.</summary>
+    [Serializable]
+    public sealed class SavedOffline
+    {
+        public double secondsAway;
+        public double secondsCounted;
+        public long crystals;
+        public double shards;
+        public int level;
     }
 
     /// <summary>A parte permanente do save (Marco 8b): banco de lascas vermelhas, dia e níveis das permanentes, pelo nome.</summary>

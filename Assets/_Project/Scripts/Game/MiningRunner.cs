@@ -41,6 +41,10 @@ namespace MinersIdle.Game
         [SerializeField] bool useFixedSeed;
         [SerializeField] int fixedSeed = 1;
 
+        [Tooltip("Offline (M9, E2, D-195): a partir de quantos segundos contados a volta espera o COLETAR do modal " +
+                 "\"Bem-vindo de volta\"; abaixo disso as lascas entram direto, sem aviso. 0 = sempre direto.")]
+        [SerializeField] double offlineNoticeSeconds = 60;
+
         SaveService _save;
         CalculationStore _calculations;
         CalculationChoice _calculation;
@@ -60,8 +64,14 @@ namespace MinersIdle.Game
         /// <summary>O último offline (M9): ao abrir, ao voltar do minimizado ou simulado no DBG. <c>null</c> antes do primeiro.</summary>
         public OfflineReport? LastOffline { get; private set; }
 
-        /// <summary>Um offline foi contado (e as lascas dele já entraram).</summary>
+        /// <summary>
+        /// Um offline foi contado. Com menos de <see cref="OfflineNoticeSeconds"/> as lascas já entraram; a partir dele,
+        /// esperam o COLETAR (<see cref="MiningSimulation.PendingOffline"/>, E2).
+        /// </summary>
         public event Action<OfflineReport> OfflineApplied;
+
+        /// <summary>A partir de quantos segundos contados a volta mostra o modal (D-195: 60).</summary>
+        public double OfflineNoticeSeconds => offlineNoticeSeconds;
 
         /// <summary>Multiplicador do tempo de jogo (o ×5/×20 do painel de debug).</summary>
         public float TimeScale { get; set; } = 1f;
@@ -204,7 +214,7 @@ namespace MinersIdle.Game
         OfflineReport ApplyAway(double seconds)
         {
             if (Simulation == null) return default;
-            var report = Simulation.ApplyOffline(seconds);
+            var report = Simulation.ApplyOffline(seconds, offlineNoticeSeconds);
             LastOffline = report;
             _awaySinceUtc = UtcNow;
             if (report.Shards > 0 || report.ClockWentBack)
@@ -215,6 +225,18 @@ namespace MinersIdle.Game
             try { OfflineApplied?.Invoke(report); }
             catch (Exception e) { Debug.LogException(e, this); }
             return report;
+        }
+
+        /// <summary>
+        /// COLETAR do "Bem-vindo de volta" (M9, E2, D-197): as lascas da volta entram e o jogo grava na hora, para que
+        /// fechar logo depois não as traga de novo. Devolve quanto entrou.
+        /// </summary>
+        public double CollectOffline()
+        {
+            if (Simulation == null) return 0;
+            double shards = Simulation.CollectOffline();
+            if (shards > 0) SaveNow();
+            return shards;
         }
 
         /// <summary>Refaz o mapa com a semente dada, <b>mantendo o progresso</b> (o "Reiniciar" do debug, M4).</summary>

@@ -106,5 +106,16 @@ namespace MinersIdle.Tests
         {
             Assert.That(NumberFormatter.FormatDuration(seconds), Is.EqualTo(expected));
         }
+
+        /// <summary>M9 (E2): o teto do offline no "Bem-vindo de volta" sai "6 h", sem os minutos zerados.</summary>
+        [TestCase(6 * 3600, "6 h")]
+        [TestCase(6 * 3600 + 59, "6 h")]
+        [TestCase(2 * 3600 + 14 * 60, "2 h 14 min")]
+        [TestCase(725, "12 min 05 s")]
+        [TestCase(30, "30 s")]
+        public void Duration_CanTrimWholeHours(double seconds, string expected)
+        {
+            Assert.That(NumberFormatter.FormatDuration(seconds, trimWholeHours: true), Is.EqualTo(expected));
+        }
     }
 }

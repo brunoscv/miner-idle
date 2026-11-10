@@ -120,8 +120,8 @@ O segundo caso mostra um limite da conta: com um golpe por cristal, quem manda �
 
 ## Como testar (Bruno) — ao fim de cada etapa
 
-- **E1:** cena `Bootstrap`, Play. DBG → Estagiário → Contratar. DBG → Offline → Simular 1 h fora: as lascas sobem, e a linha da conta mostra os cristais e as lascas. Sem contratar: Simular 1 h não dá nada. Simular 8 h: conta só 6 h.
-- **E2:** a mesma cena. Contratar, DBG → Offline → Simular 10 min fora: aparece o "Bem-vindo de volta" com 10 min e as lascas; COLETAR: o HUD sobe. Simular 30 s: sem modal.
+- **E1:** cena `Bootstrap`, Play. DBG → Estagiário → Contratar. DBG → Offline → Simular 1 h fora: as lascas sobem, e a linha da conta mostra os cristais e as lascas. Sem contratar: Simular 1 h não dá nada. Simular 8 h: conta só 6 h. *(Desde a E2, com 60 s ou mais fora as lascas entram no COLETAR do "Bem-vindo de volta".)*
+- **E2:** a mesma cena. Contratar, DBG → Offline → **Fora 10 min**: aparece o "Bem-vindo de volta" com "10 min 00 s", os cristais e as lascas; o HUD não muda. **COLETAR**: o HUD sobe e o modal fecha. **Fora 8 h**: "Tempo fora 8 h 00 min" e a linha "Contou 6 h (máx.)". **Fora 30 s**: sem modal, as lascas entram direto. Para o "não paga duas vezes": com o modal na tela, sair do Play e entrar de novo (pela cena `Bootstrap`): o modal volta com as mesmas lascas; depois do COLETAR, não volta mais.
 - **E3:** sem passos na tela; os testes automáticos cobrem (`bash tools/ci/run-tests.sh`). Para ver: estragar o `save.json` à mão e abrir (abre o backup).
 - **E4:** tocar em AJUSTES: a tela abre. Desligar o tremor, sair do Play e entrar de novo: continua desligado. Apagar save: pede confirmação e volta ao nível 1.
 - **E5:** no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)`, e o roteiro da E5.
@@ -168,7 +168,7 @@ Total: **~24–31 h** (o Roadmap estimava 40–55 h com o AD, que saiu daqui).
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-10: P1…P8 com as recomendações (D-193…D-200), P9 (D-192), offline sem som nem vibração (D-191). E1 ainda não começou (a pedido do Bruno) | — |
 | E1 Núcleo do offline, save v5 e DBG → Offline | 🔧 feita em 2026-11-10, aguardando a validação do Bruno. EditMode 306/306, PlayMode 125/125 | `OfflineMining` no núcleo (conta fechada, em trechos; o modo do 1º golpe é o das regras), teto de 6 h no balanço (`offlineMaxHours`), `MiningSimulation.ApplyOffline` (lascas no saldo e nas ganhas do dia, sem quebra nem trava do Mapa), save v5 com `savedAtUtcTicks`, `MiningRunner` com relógio injetável: offline ao abrir pelo save e ao voltar do minimizado, gravando na hora com a hora nova; DBG → Offline (Fora 1 min…8 h, Relógio −1 h, a conta do último). Na E1 as lascas entram direto; o modal é a E2 |
-| E2 Modal "Bem-vindo de volta" | ⏳ | — |
+| E2 Modal "Bem-vindo de volta" | ✅ validada pelo Bruno em 2026-11-10 (mockup aprovado no mesmo dia). EditMode 362/362, PlayMode 127/127 | `OfflineReturn` no núcleo: com 60 s ou mais contados (D-195) as lascas ficam pendentes no estado da run e no save v5 (`pendingOffline`) até o COLETAR (D-197); voltas sem coletar somam; `MiningRunner.CollectOffline` grava na hora. `OfflineReturnScreen` (UI) e `OfflineReturnSetup` (Editor), painel que se ajusta ao conteúdo; textos em `FeedbackTexts`. DBG → Offline ganhou "Fora 30 s". `NumberFormatter.FormatDuration(…, trimWholeHours)` para o "6 h". |
 | E3 Save que aguenta tudo | ⏳ | — |
 | E4 AJUSTES | ⏳ | — |
 | E5 Sessão longa e celular | ⏳ | — |

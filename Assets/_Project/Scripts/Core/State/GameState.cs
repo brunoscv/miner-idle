@@ -34,6 +34,9 @@ namespace MinersIdle.Core
         /// <summary>A última parede caiu: o anão chegou ao coração da montanha (M8, D-112). O jogo segue na última caverna.</summary>
         public bool ReachedHeart { get; private set; }
 
+        /// <summary>A volta do offline esperando o COLETAR (M9, E2, D-197); vazia quando não há.</summary>
+        public OfflineReturn PendingOffline { get; private set; }
+
         /// <summary>Nível da melhoria = compras feitas (D-38).</summary>
         public int LevelOf(UpgradeId id) => _levels[(int)id];
 
@@ -51,7 +54,8 @@ namespace MinersIdle.Core
         public static GameState Restore(double shards, long hits, long breaks,
                                         Func<UpgradeId, int> levelOf, EconomyRules economy,
                                         int caveCount = 1, int cave = 1, long caveBreaks = 0, double playSeconds = 0,
-                                        double shardsEarned = 0, bool reachedHeart = false)
+                                        double shardsEarned = 0, bool reachedHeart = false,
+                                        OfflineReturn pendingOffline = default)
         {
             if (levelOf == null) throw new ArgumentNullException(nameof(levelOf));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
@@ -65,6 +69,7 @@ namespace MinersIdle.Core
                 CaveBreaks = Math.Max(0, caveBreaks),
                 PlaySeconds = NonNegative(playSeconds),
                 ShardsEarned = NonNegative(shardsEarned),
+                PendingOffline = pendingOffline,
             };
             foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
                 state._levels[(int)id] = Math.Min(Math.Max(0, levelOf(id)), economy.Get(id).MaxLevel);
@@ -113,6 +118,18 @@ namespace MinersIdle.Core
         {
             Shards += amount;
             ShardsEarned += amount;
+        }
+
+        /// <summary>Uma volta com 60 s ou mais fora (D-195): as lascas esperam o COLETAR (D-197).</summary>
+        internal void AddPendingOffline(OfflineReport report) => PendingOffline = PendingOffline.Add(report, Cave);
+
+        /// <summary>COLETAR: as lascas da volta entram como as do offline direto; devolve quanto entrou.</summary>
+        internal double CollectPendingOffline()
+        {
+            double shards = PendingOffline.Shards;
+            PendingOffline = default;
+            if (shards > 0) AddOfflineShards(shards);
+            return shards;
         }
 
         internal void ReachHeart() => ReachedHeart = true;

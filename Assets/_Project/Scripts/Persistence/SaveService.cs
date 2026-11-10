@@ -120,8 +120,13 @@ namespace MinersIdle.Persistence
                                          data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart);
             }
 
+            var pending = data.version >= 5 && data.pendingOffline != null
+                ? new OfflineReturn(data.pendingOffline.secondsAway, data.pendingOffline.secondsCounted,
+                                    data.pendingOffline.crystals, data.pendingOffline.shards, data.pendingOffline.level)
+                : default;
             return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
-                                     data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart);
+                                     data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart,
+                                     pending);
         }
 
         /// <summary>
@@ -153,6 +158,12 @@ namespace MinersIdle.Persistence
                 shards = state.Shards, hits = state.Hits, breaks = state.Breaks,
                 cave = state.Cave, caveBreaks = state.CaveBreaks, playSeconds = state.PlaySeconds,
                 shardsEarned = state.ShardsEarned, reachedHeart = state.ReachedHeart,
+                pendingOffline = new SavedOffline
+                {
+                    secondsAway = state.PendingOffline.SecondsAway, secondsCounted = state.PendingOffline.SecondsCounted,
+                    crystals = state.PendingOffline.Crystals, shards = state.PendingOffline.Shards,
+                    level = state.PendingOffline.Level,
+                },
             };
             foreach (var id in Lines)
                 data.levels.Add(new SavedLevel { upgrade = id.ToString(), level = state.LevelOf(id) });

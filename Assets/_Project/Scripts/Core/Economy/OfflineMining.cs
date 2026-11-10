@@ -44,6 +44,44 @@ namespace MinersIdle.Core
         public bool Capped => SecondsAway > SecondsCounted && !ClockWentBack;
     }
 
+    /// <summary>
+    /// A volta que espera o COLETAR (M9, E2, D-197): o que o estagiário trouxe e ainda não entrou no saldo. Fica no estado
+    /// da run e no save, para fechar e abrir o app no meio do modal não pagar duas vezes; voltas seguidas sem coletar somam.
+    /// </summary>
+    public readonly struct OfflineReturn
+    {
+        public OfflineReturn(double secondsAway, double secondsCounted, long crystals, double shards, int level)
+        {
+            SecondsAway = Math.Max(0, Clean(secondsAway));
+            SecondsCounted = Math.Max(0, Clean(secondsCounted));
+            Crystals = Math.Max(0, crystals);
+            Shards = Math.Max(0, Clean(shards));
+            Level = Math.Max(0, level);
+        }
+
+        /// <summary>O tempo fora pelo relógio.</summary>
+        public double SecondsAway { get; }
+        /// <summary>O tempo que contou (até o teto de cada volta).</summary>
+        public double SecondsCounted { get; }
+        public long Crystals { get; }
+        /// <summary>As lascas que entram no COLETAR.</summary>
+        public double Shards { get; }
+        /// <summary>O nível em que ele minerou (o da última volta).</summary>
+        public int Level { get; }
+
+        /// <summary>Há lascas esperando o COLETAR.</summary>
+        public bool HasShards => Shards > 0;
+        /// <summary>Ficou fora mais que o teto: o modal mostra o que contou ("máx. 6 h").</summary>
+        public bool Capped => SecondsAway > SecondsCounted + 1e-6;
+
+        /// <summary>Esta volta mais <paramref name="report"/> (mais uma volta sem coletar), no <paramref name="level"/>.</summary>
+        public OfflineReturn Add(OfflineReport report, int level) =>
+            new OfflineReturn(SecondsAway + Math.Max(0, report.SecondsAway), SecondsCounted + report.SecondsCounted,
+                              Crystals + report.Crystals, Shards + report.Shards, level);
+
+        static double Clean(double value) => double.IsNaN(value) || double.IsInfinity(value) ? 0 : value;
+    }
+
     /// <summary>Um trecho do offline com os mesmos atributos do começo ao fim (<see cref="OfflineMining.Stretch"/>).</summary>
     public readonly struct OfflineStretch
     {

@@ -38,3 +38,13 @@ MonoBehaviour:
   summaryBankLabel: No banco
   summaryStart: "COME\xC7AR"
   summaryPermanents: PERMANENTES
+  offlineTitle: BEM-VINDO DE VOLTA
+  offlineAwayLabel: Tempo fora
+  offlineCountedLabel: Contou
+  offlineCountedFormat: "{0} (m\xE1x.)"
+  offlineCrystalsLabel: Cristais quebrados
+  offlineBroughtLabel: "O estagi\xE1rio trouxe"
+  offlineShardsFormat: "+{0}"
+  offlineNoteFormat: "Ele minerou no n\xEDvel {0} enquanto voc\xEA esteve fora."
+  offlineCappedNoteFormat: "Ele minera no m\xE1ximo {0} com o jogo fechado."
+  offlineCollect: COLETAR
