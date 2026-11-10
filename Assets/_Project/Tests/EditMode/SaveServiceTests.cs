@@ -201,7 +201,7 @@ namespace MinersIdle.Tests
             Assert.That(loaded.PlaySeconds, Is.EqualTo(25).Within(1e-9));
             Assert.That(loaded.ShardsEarned, Is.EqualTo(state.ShardsEarned).And.GreaterThan(0));
             Assert.That(loaded.ReachedHeart, Is.False);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*4"), "save v4 (Marco 8b, E2)");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*5"), "save v5 (M9, E1)");
         }
 
         [Test]
@@ -224,7 +224,7 @@ namespace MinersIdle.Tests
             Assert.That(sim.CanPassCave, Is.True, "o botão de passar volta");
 
             _save.Save(state);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*4"), "regravado na versão nova");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*5"), "regravado na versão nova");
         }
 
         /// <summary>
@@ -255,7 +255,7 @@ namespace MinersIdle.Tests
             Assert.That(end.ReachedHeart, Is.False, "o coração passou para o nível 100");
 
             _save.Save(end);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*4"));
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*5"));
         }
 
         [Test]
@@ -409,6 +409,45 @@ namespace MinersIdle.Tests
             Assert.That(status, Is.EqualTo(SaveLoadStatus.NewGame));
             Assert.That(permanent.RedShards, Is.EqualTo(0), "as duas partes saem juntas");
             Assert.That(permanent.Day, Is.EqualTo(1));
+        }
+
+        // ── Save v5: a hora da gravação (M9, E1) ─────────────────────────────────────────────────────────────
+
+        [Test]
+        public void Version5_KeepsTheSaveTime_InUtc()
+        {
+            var at = new DateTime(2026, 11, 10, 18, 30, 15, DateTimeKind.Utc);
+            _save.Save(PlayedState(), PlayedPermanent(), at);
+
+            var fresh = new SaveService(_store);
+            fresh.Load(Prototype(), V7Permanents(), out _, out var status, 10);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(fresh.LoadedSavedAtUtc, Is.EqualTo(at));
+            Assert.That(fresh.LoadedSavedAtUtc.Value.Kind, Is.EqualTo(DateTimeKind.Utc));
+        }
+
+        [Test]
+        public void Version4_OpensWithoutTime_SoNoOfflineOnTheFirstOpening()
+        {
+            WriteSave("{ \"version\": 4, \"shards\": 77.0, \"cave\": 5, \"savedAtUtcTicks\": 638000000000000000 }");
+
+            var state = _save.Load(Prototype(), V7Permanents(), out _, out var status, 10);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(state.Shards, Is.EqualTo(77), "a run abre inteira");
+            Assert.That(_save.LoadedSavedAtUtc, Is.Null, "até a v4 não há hora: nenhum offline");
+        }
+
+        [Test]
+        public void SaveWithoutTime_AndNoSave_HaveNoTime()
+        {
+            _save.Save(PlayedState());
+            _save.Load(Prototype(), V7Permanents(), out _, out _, 10);
+            Assert.That(_save.LoadedSavedAtUtc, Is.Null, "gravado sem hora");
+
+            _save.Delete();
+            _save.Load(Prototype(), V7Permanents(), out _, out var status, 10);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.NewGame));
+            Assert.That(_save.LoadedSavedAtUtc, Is.Null);
         }
     }
 }

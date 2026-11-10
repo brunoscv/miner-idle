@@ -46,6 +46,8 @@ namespace MinersIdle.Game
         [SerializeField] double wallHealthFactor = 2;
         [Tooltip("Níveis seguidos no mesmo bioma: 1 = um bioma por caverna (v5); 10 = um a cada 10 níveis (v7, D-129).")]
         [SerializeField] int levelsPerBiome = 1;
+        [Tooltip("Offline (M9): até quantas horas fora contam para o estagiário; o resto se perde (GDD v7 §1.1, D-189: 6).")]
+        [SerializeField] double offlineMaxHours = 6;
 
         [Header("Anão")]
         [Tooltip("Dano base por golpe, sem melhorias.")]
@@ -178,7 +180,7 @@ namespace MinersIdle.Game
             tapReach, arrivalStrike, swingRecovery,
             pickaxeByCave && PickaxeSwitchable ? PickaxeFormula.CaveScaled : pickaxeFormula,
             PickaxeTunable ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
-            levelsPerBiome);
+            levelsPerBiome, offlineMaxHours * 3600);
 
         /// <summary>O descanso, as lascas vermelhas e as permanentes deste balanço (Marco 8b). Sem descanso no asset, nada disso.</summary>
         public PermanentRules ToPermanents()

@@ -275,6 +275,22 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
+        /// O offline (M9, E1): o estagiário minerou sozinho por <paramref name="secondsAway"/> (até o teto das regras) no
+        /// nível de agora (<see cref="OfflineMining"/>). As lascas entram no saldo e nas ganhas do dia; o nível, a trava do
+        /// Mapa e a fila de cristais não mudam (D-189). Sem estagiário, ou com o relógio voltado, nada entra.
+        /// </summary>
+        public OfflineReport ApplyOffline(double secondsAway)
+        {
+            var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway);
+            if (report.Shards > 0)
+            {
+                _state.AddOfflineShards(report.Shards);
+                ShardsChanged?.Invoke(_state.Shards);
+            }
+            return report;
+        }
+
+        /// <summary>
         /// Compra a próxima melhoria da linha (REQ-ECO-08). Se der certo, os atributos novos valem a partir de agora:
         /// golpe com intervalo menor sai no próximo <see cref="Tick"/> se o tempo acumulado já passou dele; caminhada mais
         /// rápida vale do ponto onde o anão está. Sem compra, nada muda e nenhum evento sai.

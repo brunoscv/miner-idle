@@ -34,6 +34,12 @@ namespace MinersIdle.Persistence
         }
 
         /// <summary>
+        /// A hora (UTC) em que o save carregado foi gravado (save v5, M9): de onde o offline conta. <c>null</c> sem save,
+        /// com um save ruim ou até a versão 4 (sem hora: nenhum offline na primeira abertura).
+        /// </summary>
+        public DateTime? LoadedSavedAtUtc { get; private set; }
+
+        /// <summary>
         /// Carrega o progresso, com os níveis cortados nos limites de <paramref name="economy"/> e a caverna nas
         /// <paramref name="caveCount"/> do balanço ativo.
         /// </summary>
@@ -50,6 +56,7 @@ namespace MinersIdle.Persistence
         {
             if (permanentRules == null) throw new ArgumentNullException(nameof(permanentRules));
             permanent = new PermanentState();
+            LoadedSavedAtUtc = null;
             string text;
             try
             {
@@ -93,6 +100,8 @@ namespace MinersIdle.Persistence
 
             status = SaveLoadStatus.Loaded;
             permanent = RestorePermanent(data, permanentRules);
+            if (data.version >= 5 && data.savedAtUtcTicks > DateTime.MinValue.Ticks && data.savedAtUtcTicks <= DateTime.MaxValue.Ticks)
+                LoadedSavedAtUtc = new DateTime(data.savedAtUtcTicks, DateTimeKind.Utc);
             Func<UpgradeId, int> levelOf = id => levels.TryGetValue(id.ToString(), out int level) ? level : 0; // linha desconhecida: ignorada
             if (data.version == 1)
             {
@@ -133,12 +142,14 @@ namespace MinersIdle.Persistence
         /// <param name="permanent">
         /// A parte permanente (Marco 8b). Sem ela, grava zerada: quem joga sempre passa a dele (o <c>MiningRunner</c>).
         /// </param>
-        public void Save(GameState state, PermanentState permanent = null)
+        /// <param name="savedAtUtc">A hora da gravação (save v5, M9), do relógio do jogo; sem ela, o save vai sem hora.</param>
+        public void Save(GameState state, PermanentState permanent = null, DateTime? savedAtUtc = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
 
             var data = new SaveData
             {
+                savedAtUtcTicks = savedAtUtc?.ToUniversalTime().Ticks ?? 0,
                 shards = state.Shards, hits = state.Hits, breaks = state.Breaks,
                 cave = state.Cave, caveBreaks = state.CaveBreaks, playSeconds = state.PlaySeconds,
                 shardsEarned = state.ShardsEarned, reachedHeart = state.ReachedHeart,

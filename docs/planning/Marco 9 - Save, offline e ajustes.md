@@ -1,6 +1,6 @@
 # Marco 9 — Save completo, offline e ajustes
 
-> Plano de 2026-11-10, **aguardando as respostas do Bruno (P1…P9)**. Base: GDD v7 ([`docs/gdd v7.pdf`](../gdd%20v7.pdf), §1.1, §1.2, §2.2, §5.1; D-132) e as decisões já tomadas: **D-99** (modal "Bem-vindo de volta" com o tempo e as lascas), **D-139** e **D-189** (offline só do estagiário, com tudo o que é dele, até 6 h, sem passar de nível e sem contar na trava do Mapa), **D-166** (a Mineração do estagiário rende no offline), **D-167** (ele não tem crítico), **D-181** (bônus ativos contam o tempo com o app fechado), **D-182** (o M9 vem antes dos Bônus temporários), **D-44** (save com escrita atômica) e **D-67** (AD e AJUSTES "Em breve" até aqui).
+> Plano de 2026-11-10, **aprovado no mesmo dia** (P1…P8 → D-193…D-200; P9 → D-192). Base: GDD v7 ([`docs/gdd v7.pdf`](../gdd%20v7.pdf), §1.1, §1.2, §2.2, §5.1; D-132) e as decisões já tomadas: **D-99** (modal "Bem-vindo de volta" com o tempo e as lascas), **D-139** e **D-189** (offline só do estagiário, com tudo o que é dele, até 6 h, sem passar de nível e sem contar na trava do Mapa), **D-166** (a Mineração do estagiário rende no offline), **D-167** (ele não tem crítico), **D-181** (bônus ativos contam o tempo com o app fechado), **D-182** (o M9 vem antes dos Bônus temporários), **D-44** (save com escrita atômica) e **D-67** (AD e AJUSTES "Em breve" até aqui).
 >
 > O boost do AD **saiu deste marco** (D-89): vai para os Bônus temporários, junto com o combo e o cristal raro. O botão AD continua "Em breve".
 
@@ -167,7 +167,7 @@ Total: **~24–31 h** (o Roadmap estimava 40–55 h com o AD, que saiu daqui).
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-10: P1…P8 com as recomendações (D-193…D-200), P9 (D-192), offline sem som nem vibração (D-191). E1 ainda não começou (a pedido do Bruno) | — |
-| E1 Núcleo do offline, save v5 e DBG → Offline | ⏳ | — |
+| E1 Núcleo do offline, save v5 e DBG → Offline | 🔧 feita em 2026-11-10, aguardando a validação do Bruno. EditMode 306/306, PlayMode 125/125 | `OfflineMining` no núcleo (conta fechada, em trechos; o modo do 1º golpe é o das regras), teto de 6 h no balanço (`offlineMaxHours`), `MiningSimulation.ApplyOffline` (lascas no saldo e nas ganhas do dia, sem quebra nem trava do Mapa), save v5 com `savedAtUtcTicks`, `MiningRunner` com relógio injetável: offline ao abrir pelo save e ao voltar do minimizado, gravando na hora com a hora nova; DBG → Offline (Fora 1 min…8 h, Relógio −1 h, a conta do último). Na E1 as lascas entram direto; o modal é a E2 |
 | E2 Modal "Bem-vindo de volta" | ⏳ | — |
 | E3 Save que aguenta tudo | ⏳ | — |
 | E4 AJUSTES | ⏳ | — |

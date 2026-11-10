@@ -40,7 +40,7 @@ namespace MinersIdle.Core
             ArrivalStrike arrivalStrike = ArrivalStrike.Wait,
             double swingRecovery = 0,
             PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply, double pickaxeCaveGrowth = 1.2,
-            int levelsPerBiome = 1)
+            int levelsPerBiome = 1, double offlineMaxSeconds = 6 * 3600)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -64,6 +64,7 @@ namespace MinersIdle.Core
             if (swingRecovery < 0 || double.IsNaN(swingRecovery)) throw new ArgumentOutOfRangeException(nameof(swingRecovery));
             if (!Enum.IsDefined(typeof(PickaxeFormula), pickaxeFormula)) throw new ArgumentOutOfRangeException(nameof(pickaxeFormula));
             if (levelsPerBiome < 1) throw new ArgumentOutOfRangeException(nameof(levelsPerBiome));
+            if (offlineMaxSeconds < 0 || double.IsNaN(offlineMaxSeconds)) throw new ArgumentOutOfRangeException(nameof(offlineMaxSeconds));
             if (pickaxeCaveGrowth <= 0 || double.IsNaN(pickaxeCaveGrowth)) throw new ArgumentOutOfRangeException(nameof(pickaxeCaveGrowth));
 
             InitialCrystals = initialCrystals;
@@ -90,6 +91,7 @@ namespace MinersIdle.Core
             PickaxeFormula = pickaxeFormula;
             PickaxeCaveGrowth = pickaxeCaveGrowth;
             LevelsPerBiome = levelsPerBiome;
+            OfflineMaxSeconds = offlineMaxSeconds;
         }
 
         /// <summary>Cristais na fila no início (já na tela).</summary>
@@ -161,6 +163,9 @@ namespace MinersIdle.Core
         /// v7 (100 níveis, um bioma a cada 10, D-129).
         /// </summary>
         public int LevelsPerBiome { get; }
+
+        /// <summary>Teto do tempo offline que conta (M9, GDD v7 §1.1, D-189: 6 h); o que passar disso se perde.</summary>
+        public double OfflineMaxSeconds { get; }
 
         /// <summary>O bioma do nível <paramref name="level"/>, a partir de 0: (nível − 1) ÷ <see cref="LevelsPerBiome"/>.</summary>
         public int BiomeOf(int level) => (Math.Max(1, level) - 1) / LevelsPerBiome;

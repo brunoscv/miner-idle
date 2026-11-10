@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace MinersIdle.Persistence
 {
     /// <summary>
-    /// O arquivo de save, versão 4 (Marco 4, D-43; a descida desde o M8; os 100 níveis do GDD v7 desde a E3b-2; o dia e
+    /// O arquivo de save, versão 5 (a hora da gravação desde a E1 do M9, para o offline; Marco 4, D-43; a descida desde o M8; os 100 níveis do GDD v7 desde a E3b-2; o dia e
     /// as melhorias permanentes desde a E2 do Marco 8b): duas partes, a <b>run</b> (os campos soltos, como até a versão 3)
     /// e a <b>permanente</b> (<see cref="permanent"/>), que fica de um dia para o outro. Campos públicos porque o
     /// <c>JsonUtility</c> do Unity serializa assim. Os níveis vão pelo nome da linha (<c>"Pickaxe"</c>…), não pela
@@ -19,7 +19,7 @@ namespace MinersIdle.Persistence
     [Serializable]
     public sealed class SaveData
     {
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
 
         /// <summary>A versão mais antiga que ainda abre (migrada ao carregar).</summary>
         public const int OldestVersion = 1;
@@ -39,6 +39,9 @@ namespace MinersIdle.Persistence
 
         // Versão 4 (Marco 8b, E2): o que fica de um dia para o outro.
         public SavedPermanent permanent = new SavedPermanent();
+
+        // Versão 5 (M9, E1): a hora em que foi gravado, para o offline. Em ticks UTC; 0 = sem hora (um save até a 4).
+        public long savedAtUtcTicks;
     }
 
     /// <summary>A parte permanente do save (Marco 8b): banco de lascas vermelhas, dia e níveis das permanentes, pelo nome.</summary>

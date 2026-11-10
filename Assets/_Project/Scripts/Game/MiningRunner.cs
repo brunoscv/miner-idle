@@ -47,6 +47,22 @@ namespace MinersIdle.Game
         PermanentState _permanent = new PermanentState();
         float _autosaveTimer;
 
+        Func<DateTime> _clock = () => DateTime.UtcNow;
+        TimeSpan _clockShift;
+        DateTime? _awaySinceUtc;
+
+        /// <summary>
+        /// A hora de agora para o jogo (UTC): o relógio do aparelho, ou o dos testes (<see cref="UseClock"/>), mais o
+        /// deslocamento do DBG → Offline ("Voltar o relógio 1 h"). O núcleo nunca lê a hora: recebe os segundos.
+        /// </summary>
+        public DateTime UtcNow => _clock() + _clockShift;
+
+        /// <summary>O último offline (M9): ao abrir, ao voltar do minimizado ou simulado no DBG. <c>null</c> antes do primeiro.</summary>
+        public OfflineReport? LastOffline { get; private set; }
+
+        /// <summary>Um offline foi contado (e as lascas dele já entraram).</summary>
+        public event Action<OfflineReport> OfflineApplied;
+
         /// <summary>Multiplicador do tempo de jogo (o ×5/×20 do painel de debug).</summary>
         public float TimeScale { get; set; } = 1f;
 
@@ -122,7 +138,14 @@ namespace MinersIdle.Game
 
         void OnApplicationPause(bool paused)
         {
-            if (paused) SaveNow();
+            if (paused)
+            {
+                SaveNow();
+                return;
+            }
+            // Voltou do minimizado (D-195): o tempo fora é offline, como fechar e abrir. Sem save (cena aberta direto,
+            // testes), nada: o offline conta a partir de uma gravação.
+            if (_save != null && _awaySinceUtc.HasValue) ReturnFromAway(_awaySinceUtc.Value);
         }
 
         void OnApplicationQuit() => SaveNow();
@@ -151,6 +174,47 @@ namespace MinersIdle.Game
             Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas, caverna {state.Cave}; dia {permanent.Day}, " +
                       $"{NumberFormatter.Format(permanent.RedShards)} lascas vermelhas.");
             Begin(Seed, state);
+            // O offline desde a última gravação (save v5); um save até a v4 não tem hora: nada na primeira abertura.
+            if (save.LoadedSavedAtUtc.HasValue) ReturnFromAway(save.LoadedSavedAtUtc.Value);
+        }
+
+        /// <summary>Troca o relógio do jogo (testes). O deslocamento do DBG continua valendo por cima dele.</summary>
+        public void UseClock(Func<DateTime> utcNow) => _clock = utcNow ?? throw new ArgumentNullException(nameof(utcNow));
+
+        /// <summary>
+        /// A volta (M9, E1): conta o offline de <paramref name="sinceUtc"/> até agora, credita as lascas do estagiário e grava
+        /// na hora, com a hora nova. Relógio voltado: nada entra, sem erro, e a hora nova passa a valer (D-196).
+        /// </summary>
+        public OfflineReport ReturnFromAway(DateTime sinceUtc) => ApplyAway((UtcNow - sinceUtc).TotalSeconds);
+
+        /// <summary>DBG → Offline: como se o jogo tivesse ficado <paramref name="seconds"/> fechado, sem fechar.</summary>
+        public OfflineReport SimulateAway(double seconds) => ApplyAway(seconds);
+
+        /// <summary>
+        /// DBG → Offline, "Voltar o relógio": o relógio do jogo volta <paramref name="by"/> e o jogo faz a volta a partir da
+        /// última gravação, como ao abrir com o relógio do aparelho atrasado (D-196).
+        /// </summary>
+        public OfflineReport TurnClockBack(TimeSpan by)
+        {
+            DateTime since = _awaySinceUtc ?? UtcNow;
+            _clockShift -= by;
+            return ReturnFromAway(since);
+        }
+
+        OfflineReport ApplyAway(double seconds)
+        {
+            if (Simulation == null) return default;
+            var report = Simulation.ApplyOffline(seconds);
+            LastOffline = report;
+            _awaySinceUtc = UtcNow;
+            if (report.Shards > 0 || report.ClockWentBack)
+                Debug.Log($"[Offline] {NumberFormatter.Format(report.SecondsAway)} s fora, {NumberFormatter.Format(report.SecondsCounted)} s " +
+                          $"contados: {report.Crystals} cristais, {NumberFormatter.FormatShards(report.Shards)} lascas" +
+                          (report.ClockWentBack ? " (relógio voltou)" : report.Capped ? " (teto)" : "") + ".");
+            SaveNow();
+            try { OfflineApplied?.Invoke(report); }
+            catch (Exception e) { Debug.LogException(e, this); }
+            return report;
         }
 
         /// <summary>Refaz o mapa com a semente dada, <b>mantendo o progresso</b> (o "Reiniciar" do debug, M4).</summary>
@@ -241,7 +305,9 @@ namespace MinersIdle.Game
             if (_save == null || Simulation == null) return;
             try
             {
-                _save.Save(Simulation.State, _permanent);
+                DateTime now = UtcNow;
+                _save.Save(Simulation.State, _permanent, now);
+                _awaySinceUtc = now;
             }
             catch (Exception e)
             {

@@ -105,6 +105,16 @@ namespace MinersIdle.Core
 
         internal void AddPlayTime(double seconds) => PlaySeconds += seconds;
 
+        /// <summary>
+        /// As lascas do offline (M9): entram no saldo e nas lascas ganhas do dia (D-197), mas não são quebras do jogador:
+        /// não contam na trava do Mapa nem nas quebras (D-189).
+        /// </summary>
+        internal void AddOfflineShards(double amount)
+        {
+            Shards += amount;
+            ShardsEarned += amount;
+        }
+
         internal void ReachHeart() => ReachedHeart = true;
 
         /// <summary>Entra na caverna: a contagem da trava do Letrado recomeça.</summary>

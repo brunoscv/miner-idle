@@ -228,9 +228,16 @@ namespace MinersIdle.EditorTools
             (DayMenuName, "Day", "Dia", DayMenuHeight, System.Array.Empty<string>()),
             // E os do Estagiário (M7, InternDebugSetup), com o mesmo tamanho do Dia.
             (InternMenuName, "Intern", "Estagiário", DayMenuHeight, System.Array.Empty<string>()),
+            // E os do Offline (M9 E1, OfflineDebugSetup): 3 fileiras de botões e a conta do último offline no alto.
+            (OfflineMenuName, "Offline", "Offline", OfflineMenuHeight, System.Array.Empty<string>()),
         };
 
         internal const string InternMenuName = "InternMenu";
+
+        internal const string OfflineMenuName = "OfflineMenu";
+
+        /// <summary>O menu Offline (M9): a conta do último offline no alto (<see cref="DayTextHeight"/>) e 3 fileiras de botões.</summary>
+        internal const float OfflineMenuHeight = 100f;
 
         internal const string DayMenuName = "DayMenu";
 
@@ -246,7 +253,7 @@ namespace MinersIdle.EditorTools
 
         /// <summary>A ordem dos botões que ficam no DBG.</summary>
         static readonly string[] MainButtons =
-            { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern" };
+            { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern", "Offline" };
 
         /// <summary>Altura da faixa do nível e custo das melhorias, no alto da Loja.</summary>
         const float ShopUpgradesHeight = 34f;
@@ -278,7 +285,7 @@ namespace MinersIdle.EditorTools
                 {
                     menu = CreateMenu(panel, name, height,
                                       name == "ShopMenu" ? ShopUpgradesHeight : name == CalcMenuName ? CalcTextHeight
-                                      : name == DayMenuName || name == InternMenuName ? DayTextHeight : 0f);
+                                      : name == DayMenuName || name == InternMenuName || name == OfflineMenuName ? DayTextHeight : 0f);
                     var open = CreateButton(grid, buttonName, label);
                     GrayboxSetup.SetReferences(debugPanel, (MenuField(name, "Button"), open),
                                                (MenuField(name, "Menu"), menu.GetComponent<DebugMenu>()));

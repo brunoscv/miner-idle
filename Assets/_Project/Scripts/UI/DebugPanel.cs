@@ -94,6 +94,9 @@ namespace MinersIdle.UI
         [Tooltip("DBG → Estagiário (M7): contratar, demitir, níveis dele, Treinar e Promoção.")]
         [SerializeField] Button internButton;
         [SerializeField] DebugMenu internMenu;
+        [Tooltip("DBG → Offline (M9, E1): simular o jogo fechado e voltar o relógio.")]
+        [SerializeField] Button offlineButton;
+        [SerializeField] DebugMenu offlineMenu;
 
         readonly object[] _statsArgs = new object[16];
 
@@ -149,6 +152,7 @@ namespace MinersIdle.UI
             if (calcButton != null) calcButton.onClick.AddListener(ToggleCalc);
             if (dayButton != null) dayButton.onClick.AddListener(ToggleDay);
             if (internButton != null) internButton.onClick.AddListener(ToggleIntern);
+            if (offlineButton != null) offlineButton.onClick.AddListener(ToggleOffline);
         }
 
         void OnDisable()
@@ -184,6 +188,7 @@ namespace MinersIdle.UI
             if (calcButton != null) calcButton.onClick.RemoveListener(ToggleCalc);
             if (dayButton != null) dayButton.onClick.RemoveListener(ToggleDay);
             if (internButton != null) internButton.onClick.RemoveListener(ToggleIntern);
+            if (offlineButton != null) offlineButton.onClick.RemoveListener(ToggleOffline);
         }
 
         void Update()
@@ -223,6 +228,7 @@ namespace MinersIdle.UI
             if (calcMenu != null) calcMenu.Hide();
             if (dayMenu != null) dayMenu.Hide();
             if (internMenu != null) internMenu.Hide();
+            if (offlineMenu != null) offlineMenu.Hide();
         }
 
         static bool IsMenuOpen(DebugMenu menu) => menu != null && menu.IsOpen;
@@ -233,6 +239,7 @@ namespace MinersIdle.UI
         void ToggleCalc() => ToggleMenu(calcMenu);
         void ToggleDay() => ToggleMenu(dayMenu);
         void ToggleIntern() => ToggleMenu(internMenu);
+        void ToggleOffline() => ToggleMenu(offlineMenu);
 
         void SetSpeed1() => runner.TimeScale = 1f;
         void SetSpeed5() => runner.TimeScale = 5f;
