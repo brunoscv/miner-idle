@@ -21,6 +21,8 @@
 
 > **Atualização de 2026-11-04 — GDD v7 (D-132…D-142):** o v7 passa a ser a referência, e o Bruno respondeu no mesmo dia ao que faltava: Picareta do anão pela caverna (D-133), lascas = vida × 1,2 (D-134), Velocidade até 0,1 s (D-135), Picareta Dupla fora e linha Chance de Crítico (D-136), **botão de descansar** ao lado do PASSAR DE CAVERNA e reset da run (D-137), lascas vermelhas por nível alcançado (D-138), offline só do estagiário (D-139), boost de 60 s = cristal raro (D-140) e **coluna de buffs** à esquerda (D-141). Cada marco abaixo tem uma nota "GDD v7". As propostas D-128…D-131 continuam pendentes, agora pelos números do v7; o marco "Dia e melhorias permanentes" já pode ser planejado. Diferenças completas: [Análise - GDD v7](Analise%20-%20GDD%20v7.md).
 
+> **Atualização de 2026-11-10 — D-177…D-190:** **o M9 (save completo, offline e ajustes) vem antes dos Bônus temporários** (D-182). Offline só do estagiário, com tudo o que é dele, até 6 h, sem passar de nível (D-189). Bônus: acúmulo do combo em duas versões no DBG (D-183), raro de 15% com ritmo alternativo no DBG (D-184, D-185), AD na velocidade e sem acúmulo (D-187, D-188), as 4 cartas do raro (D-190). Nenhuma pergunta do GDD em aberto para os dois marcos.
+
 ## 1. Como este roadmap se relaciona com o do RM
 
 | RM (semanas) | Aqui | Mudança e motivo |
@@ -171,7 +173,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **GDD v6 (D-127):** o Letrado vira **Mapa**: custo **zero** (só a trava dos 100 cristais, que a Memória permanente reduz), **sem o ×2 de dano**, **100 níveis** (o 100 leva ao coração da montanha); as cavernas viram **níveis 1–100**, com o bioma trocando a cada 10; vida `1 × 1,25^(nível−1)` e lascas = vida × 0,5. Proposta (D-128…D-130, pendentes): etapa **E3b** antes da E4, com o `Balance_GDD_v6`, o Mapa, os 100 níveis e o save v3; a E4 mede até onde uma run chega sem as permanentes. Perguntas: G18–G20. Detalhe no [plano do M8](Marco%208%20-%20Letrado,%20parede%20e%2010%20cavernas.md), seção "GDD v6".
 - **GDD v7 (D-132…D-136, D-142):** a E3b passa a usar um `Balance_GDD_v7` (D-130 revista): Picareta pela caverna, `Dano Base + taxa^(nível−1)` com taxa 1,2 configurável, +1 de Dano Base por compra, custo 2 × Dano Base, até 50 (D-133); lascas = vida × 1,2 (D-134); Velocidade `50 × 2^(n−1)` até 0,1 s (D-135); **Picareta Dupla fora** e nova linha **Chance de Crítico** (`50 × 2^(n−1)`, +5%, 10 compras), com crítico base 0% no automático e 5% no toque (D-136). G18–G20 respondidas.
 
-### M9 — AD simulado, persistência completa, offline e ajustes
+### M9 — AD simulado, persistência completa, offline e ajustes — plano: [Marco 9](Marco%209%20-%20Save,%20offline%20e%20ajustes.md) (o AD saiu para os Bônus temporários, D-89)
 - **Objetivo:** fechar os sistemas. **Jogador:** assiste (simulado) para ganhar boost; fecha e volta sem perder nada.
 - **Tarefas:** T-M8-01…T-M8-10. **Dependências:** M7.
 - **Entregáveis:** modal de AD (5 s, ×2,5, 30 s, recarga), selo do boost, `SaveService` completo (JSON versionado, escrita atômica, backup, migração), pausa/retomada, **offline (se D-04)**, Configurações (volume, tremor, vibração, apagar save com confirmação), créditos mínimos.

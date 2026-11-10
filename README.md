@@ -19,6 +19,7 @@ Projeto do Bruno. Regras de trabalho: [CLAUDE.md](CLAUDE.md). Documentação: [d
 | **M8 Letrado, parede e 10 cavernas** (antes do M7, D-88) | ✅ aprovado em 2026-11-05 (D-160): 100 níveis do GDD v7 com o Mapa, a parede e o coração da montanha; DBG → Cálculos; relatório de economia adiado (D-149) — [plano do M8](docs/planning/Marco%208%20-%20Letrado,%20parede%20e%2010%20cavernas.md) |
 | **M8b Dia e melhorias permanentes** (GDD v7) | 🔨 plano aprovado em 2026-11-05 (D-151…D-159); E1–E4 implementadas, aguardando validação; a E5 vai junto com a E4 do M7 (D-173) — [plano do M8b](docs/planning/Marco%208b%20-%20Dia%20e%20melhorias%20permanentes.md) |
 | **M7 Estagiário** (GDD v7) | 🔨 plano aprovado em 2026-11-05 (D-163…D-173); E1 (núcleo, save e DBG → Estagiário), E2 (na tela) e E3 (aba na LOJA, D-174) implementadas, aguardando validação; próxima: E4 (Cálculos, sessão de 30 min e Moto G75, junto com a E5 do 8b) — [plano do M7](docs/planning/Marco%207%20-%20Estagiario.md) |
+| **M9 Save completo, offline e ajustes** (GDD v7, antes dos Bônus temporários, D-182) | 📝 plano escrito em 2026-11-10, aguardando as respostas P1…P9 — [plano do M9](docs/planning/Marco%209%20-%20Save,%20offline%20e%20ajustes.md) |
 
 Roadmap completo: [docs/planning/Roadmap.md](docs/planning/Roadmap.md).
 

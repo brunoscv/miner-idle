@@ -233,6 +233,28 @@
 | **D-176** | **Chão em faixa nos biomas 2 e 3 (2026-11-09, pedido do Bruno):** o mesmo efeito da D-145 (5 tiles `a`…`e` de parede a parede, sem as pedras da beira e com o montinho de areia) passa do `ground_01` (níveis 1–10) também para o **`ground_02` nos níveis 11–20** e o **`ground_03` nos níveis 21–30**, os chãos escolhidos pelo outro dev. Tiles em `Art/Tile/Ground` (32 px, importados como os do `ground_01`), fontes SVG em `ArtSource/tiles/ground`. Parede, névoa e cristal desses biomas não mudam; do nível 31 em diante segue o chão gerado. Só visual. | Arte dos biomas |
 | **D-128…D-131 aprovadas** | O Bruno mandou fechar e começar (2026-11-04): a etapa **E3b do M8** pelos números do v7 (D-128 Mapa, D-129 100 níveis, D-130 `Balance_GDD_v7`) e o marco **"Dia e melhorias permanentes"** depois do M8 e antes do M7 (D-131). | M8, Roadmap |
 
+
+### 1.11 Respostas do Bruno em 2026-11-10 (Bônus temporários e M9)
+
+> Respostas às G12, G13, G15, G29…G34 e às D-177…D-182 (§2.4), completadas no mesmo dia. Nenhum detalhe ficou a confirmar. Cada decisão entra no marco indicado: **nenhum código muda agora**.
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-177** | **Bônus e o estagiário:** o boost do AD **não vale** para ele, nem o do combo (coerente com a D-167); no cristal raro, cada opção diz se vale. | Bônus temporários |
+| **D-178** | **O crítico garantido do ×50 e os +% de dano valem para o golpe automático e para o toque.** | Bônus temporários |
+| **D-179** | **Como os bônus somam:** os +% de dano do combo somam entre si (10 + 15 + 50 = +75%) e o total multiplica o resto do dano (× Sangue da Montanha). | Bônus temporários |
+| **D-180** | **O ×2,5 do AD vale depois do piso de 0,1 s:** com a Velocidade no máximo, o golpe pode chegar a 0,04 s durante o boost. | Bônus temporários |
+| **D-181** | **Bônus com o app fechado:** todo bônus ativo (AD, combo, raro) **continua contando o tempo** com o app fechado, até acabar; acabou, não se renova. Ex.: assistiu um AD (30 s de boost) e fechou o app: ao reabrir 10 s depois, sobram 20 s; ao reabrir 1 min depois, o boost já acabou. No offline, o que ainda está ativo vale para o estagiário até acabar, se aquele bônus vale para ele (as cartas do raro, D-190; o AD e o combo não, D-177); acabou, fica só o que é dele. *(Completado em 2026-11-10.)* | Bônus temporários |
+| **D-182** | **Ordem: o M9 vem antes dos Bônus temporários.** | Roadmap |
+| **D-183** | **Acúmulo do combo (G11) em duas versões, no DBG:** como nas fórmulas (D-143), um seletor no DBG com as variações. **Padrão = o GDD** ("bônus temporário acumulativo"): quem para no ×50 ganha os bônus do ×10, do ×30 e do ×50 juntos. **Alternativa** (a nossa leitura): ganha só o do maior marco alcançado. Serve para mostrar ao Apellon a diferença. Os detalhes que o GDD não dá (dois bônus iguais seguidos) seguem a mesma lógica: no padrão somam, na alternativa renovam. | Bônus temporários |
+| **D-184** | **Cristal raro (G13):** os 15% são a chance de **cada cristal que nasce** ser raro; a janela de escolha **não pausa** a mineração (como a loja). | Bônus temporários |
+| **D-185** | **Ritmo do raro (G29):** o padrão fica o do documento (**15% por cristal**). No DBG, um botão de ritmo com a alternativa: **2% por cristal e nenhum raro novo enquanto houver janela aberta ou bônus do raro ativo**. | Bônus temporários |
+| **D-186** | **Raro: tempo de escolha e jogador ausente (G30):** a janela das 2 cartas dá **30 s** para o jogador escolher; sem escolha, o jogo **sorteia uma das 2**, aplica e deixa a janela aberta mostrando o que saiu, com o botão **FECHAR**. **Bônus é para quem está jogando:** no offline, o raro que o estagiário quebrar **não dá bônus** (nem janela). *(Completado em 2026-11-10.)* | Bônus temporários |
+| **D-187** | **O ×2,5 do AD é na velocidade (G31):** o intervalo do golpe ÷ 2,5, por 30 s. | Bônus temporários |
+| **D-188** | **AD sem acúmulo (G32):** o botão AD só volta a ficar disponível **depois que o boost dele acaba**; a espera nunca é menor que a duração do boost. Quem quiser pode assistir de novo assim que ele volta, para manter o boost sempre ligado (com os números do GDD, 30 s de boost e o botão de volta ao fim deles). | Bônus temporários |
+| **D-189** | **Offline (G15, G33, G34):** quem minera offline é **só o estagiário**, com **tudo o que é dele**: dano (Picareta dele e Treinar), velocidade, a Mineração dele e qualquer efeito dele (o crítico não entra: ele não tem, D-167). A "eficiência reduzida" do §1.2 é **só isso**, sem corte a mais. Até **6 h**. Ele **não passa de nível** e as quebras do offline **não contam na trava dos 100 cristais do Mapa**: só dá dano e pega as lascas. A trava só conta cristais quebrados com o jogo aberto, e passar de caverna é só do anão, com o jogador online. Raro quebrado no offline não dá bônus (D-186). *(Completado em 2026-11-10.)* | M9 |
+| **D-190** | **As cartas do cristal raro (G12, a sugestão aprovada):** 4 cartas para começar: **dano ×2**, **golpe 2× mais rápido** (intervalo ÷ 2), **lascas ×2** e **crítico +25%**. Cada carta dura **60 s** (D-97). As 2 cartas da janela são **sempre diferentes**; uma carta igual a outra ainda ativa **só renova o tempo**; cartas diferentes valem juntas. Tempo de escolha: 30 s (D-186). **As cartas valem também para o estagiário, enquanto estiverem ativas** (revê o "cada opção diz" da D-177); com o app fechado, a carta que sobrou continua valendo para ele no offline até o tempo dela acabar (D-181). Depois, só o que é dele. *(Completado em 2026-11-10.)* | Bônus temporários |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.
@@ -301,11 +323,11 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | ~~G8~~ | ~~Mineração offline~~ → **D-99** (resta a G15) | — | — |
 | ~~G9~~ | ~~"Sete linhas"~~ → **D-100** (resta a G16) | — | — |
 | ~~G10~~ | ~~Dupla do estagiário no boneco~~ → **D-101** | — | — |
-| G11 | **Acúmulo do combo (D-96):** quem chega a ×50 ganha só o bônus do ×50, ou também os do ×10 e ×30? Dois bônus iguais seguidos somam o efeito, somam o tempo ou só renovam? **GDD v6:** escreve "bônus temporário acumulativo" (confirma a D-96), mas não responde o resto | Só o maior marco alcançado; bônus de combos diferentes somam o efeito, cada um com o seu tempo | Bônus temporários |
-| G12 | **Melhorias temporárias do raro (D-97):** quais podem sair na janela de 2 opções e quanto cada uma dá? | Começar com 4 ou 5 (ex.: +dano, +velocidade, +lascas, +crítico) | Bônus temporários |
-| G13 | **Base dos 15% (D-97):** é a chance de cada cristal que nasce ser raro? A janela de escolha pausa a mineração? | 15% por cristal que nasce; janela sem pausar (como a loja, D-42). **Risco:** 15% ≈ 1 em cada 7 cristais; com quebras de poucos segundos, a janela pode abrir demais. Testar no celular | Bônus temporários |
+| ~~G11~~ | ~~Acúmulo do combo~~ → **D-183** (duas versões no DBG; padrão = o GDD, acumulativo) | — | — |
+| ~~G12~~ | ~~Cartas do cristal raro~~ → **D-190** (dano ×2, golpe 2× mais rápido, lascas ×2, crítico +25%) | — | — |
+| ~~G13~~ | ~~Base dos 15%~~ → **D-184** (por cristal que nasce; janela sem pausar) | — | — |
 | G14 | **Parede (D-98):** o toque bate nela? Ela dá lascas ao quebrar? Conta nos 100 cristais da caverna? | Toque bate; não dá lascas nem conta nos 100 (é passagem, não cristal) | M8 |
-| G15 | **Conta do offline (D-99):** como o nível do estagiário entra no offline (os mesmos 10% × nível, multiplicados pelas melhorias offline)? O teto de 4 h do v5 continua? **GDD v6:** o teto passa a **6 h** e o dano do estagiário vem das melhorias dele, online e offline (ver G24). **GDD v7 + D-139:** só valem o dano, os bônus e as melhorias do estagiário, até 6 h; falta a conta exata | — | M9 |
+| ~~G15~~ | ~~Conta do offline~~ → **D-189** (tudo do estagiário, só ele, até 6 h) | — | — |
 | ~~G16~~ | ~~Linha Crítico e nome do Letrado~~ → **D-136** (Chance de Crítico do GDD v7) e **Mapa** (D-128, D-142) | — | — |
 | G17 | **Mineração do v5 barata demais?** Custa `50 × 1,2^(n−1)` e dá +100% por nível: no relatório da E5 do M6, em 30 min o jogador compra os 10 níveis e passa a ganhar ×11 por cristal, enquanto Picareta e Velocidade ficam no nível 3. É intencional, ou o crescimento do custo deveria ser maior (como os ×4 e ×5 das outras linhas)? **GDD v6 responde:** custo `20 × 5^(n−1)` (entra no `Balance_GDD_v6`, D-130) | Confirmar com o Apellon antes do M8; medir de novo com as cavernas | M8 |
 | ~~D-128~~ | ~~Letrado → Mapa~~ → **aprovada em 2026-11-04** (§1.10), na E3b do M8 | — | — |
@@ -323,6 +345,18 @@ Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendaçã
 | ~~G26~~ | ~~Permanentes de 20 níveis caras demais~~ → **D-143** (o GDD fica como padrão; `10 + 1,5^` e a linear no DBG) | — | — |
 | ~~G27~~ | ~~Estagiário: nível do dano, dano sem compras, piso da Velocidade~~ → **D-164**, **D-165** | — | — |
 | ~~G28~~ | ~~Nome do botão de encerrar a run~~ → **D-151:** "Descansar" | — | — |
+| ~~G29~~ | ~~Ritmo do cristal raro~~ → **D-185** (15% padrão; alternativa no DBG) | — | — |
+| ~~G30~~ | ~~Raro com o jogador ausente~~ → **D-186** (30 s para escolher, senão sorteio; sem bônus no offline) | — | — |
+| ~~G31~~ | ~~×2,5 do AD em quê~~ → **D-187** (velocidade) | — | — |
+| ~~G32~~ | ~~AD em sequência~~ → **D-188** (o botão volta só depois do boost) | — | — |
+| ~~G33~~ | ~~Eficiência reduzida do offline~~ → **D-189** (só o estagiário, sem corte a mais) | — | — |
+| ~~G34~~ | ~~Quebras do offline~~ → **D-189** (não passa de nível nem conta na trava do Mapa) | — | — |
+| ~~D-177~~ | ~~Bônus valem para o estagiário?~~ → **aprovada em 2026-11-10** (§1.11) | — | — |
+| ~~D-178~~ | ~~Golpe e toque~~ → **aprovada em 2026-11-10** (§1.11) | — | — |
+| ~~D-179~~ | ~~Como os bônus somam~~ → **aprovada em 2026-11-10** (§1.11) | — | — |
+| ~~D-180~~ | ~~AD e o piso de 0,1 s~~ → **aprovada em 2026-11-10** (§1.11) | — | — |
+| ~~D-181~~ | ~~Bônus ao fechar o app~~ → **aprovada em 2026-11-10** (§1.11) | — | — |
+| ~~D-182~~ | ~~Ordem: Bônus temporários × M9~~ → **aprovada em 2026-11-10** (§1.11) | — | — |
 
 ### 2.5 Para depois do MVP
 Prestígio ("Nova Descida") · música · iOS · idiomas adicionais · missões.
