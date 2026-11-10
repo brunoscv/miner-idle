@@ -86,11 +86,11 @@ namespace MinersIdle.Game
         [SerializeField] double minHitInterval = 0.5;
 
         [Header("Estagiário (M7, GDD v7 §4.1, §5.4; limite 0 desliga: sem estagiário, D-172)")]
-        [Tooltip("Contratar o estagiário: compra única (GDD v7: 500). Sem compras dele, bate o Dano Base do anão no intervalo base (D-164).")]
+        [Tooltip("Contratar o estagiário: compra única (GDD v7: 500). Sem compras dele, bate o efeito da Picareta dele no intervalo base (D-205).")]
         [SerializeField] UpgradeLineValues intern = new UpgradeLineValues(500, 1, 0, 1);
-        [Tooltip("Picareta do estagiário. Efeito: o dano dele na 1ª compra (GDD v7: 5); cada compra seguinte multiplica pelo crescimento do dano.")]
+        [Tooltip("Picareta do estagiário. Efeito: o dano dele no nível 1, já contratado e sem compra (GDD v7: 5, D-205); cada compra multiplica pelo crescimento do dano.")]
         [SerializeField] UpgradeLineValues internPickaxe = new UpgradeLineValues(50, 4, 0, 5);
-        [Tooltip("O \"2\" de 5 × 2^(n−1): quanto o dano da Picareta do estagiário multiplica a cada compra depois da 1ª.")]
+        [Tooltip("O \"2\" de 5 × 2^(nível−1): quanto o dano da Picareta do estagiário multiplica a cada compra.")]
         [SerializeField] double internPickaxeDamageGrowth = 2;
         [Tooltip("Velocidade do estagiário. Efeito: segundos a menos no intervalo dele por nível, a partir do intervalo base (GDD v7: 0,1).")]
         [SerializeField] UpgradeLineValues internSpeed = new UpgradeLineValues(50, 5, 0, 0.1);
@@ -161,7 +161,7 @@ namespace MinersIdle.Game
         /// <summary>A taxa da Picareta deste balanço (GDD v7: 1,2).</summary>
         public double PickaxeCaveGrowth => pickaxeCaveGrowth;
 
-        /// <summary>O incremento da Picareta deste balanço: Dano Base a mais por compra na do GDD v7 (1).</summary>
+        /// <summary>O incremento da Picareta deste balanço: Dano Base a mais por compra (GDD v7: 0, D-202; era 1 na D-133).</summary>
         public double PickaxeStep => pickaxe.Effect;
 
         /// <param name="pickaxeCaveGrowth">A taxa trocada no DBG → Cálculos (E3b-3); <c>null</c> = a do asset.</param>
@@ -198,18 +198,31 @@ namespace MinersIdle.Game
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance);
 
         /// <param name="pickaxeStep">
-        /// O incremento trocado no DBG → Cálculos (E3b-3); <c>null</c> = o do asset. Não vale no Multiply (v5). O custo segue
-        /// "2 × Dano Base" (D-133): o passo do custo cresce na mesma proporção do incremento.
+        /// O incremento trocado no DBG → Cálculos (E3b-3); <c>null</c> = o do asset. Não vale no Multiply (v5). Na fórmula
+        /// Linear (a "2 × Dano Base" da D-133), o passo do custo cresce na mesma proporção do incremento; na DamageScaled
+        /// (D-202), o custo é o multiplicador × o dano da Picareta, então já acompanha o incremento.
         /// </param>
-        public EconomyRules ToEconomy(double? pickaxeStep = null) => new EconomyRules(
-            PickaxeLine(pickaxeStep), speed.ToDefinition(), mining.ToDefinition(),
+        /// <param name="pickaxeCaveGrowth">
+        /// A taxa trocada no DBG → Cálculos; <c>null</c> = a do asset. Só entra no custo da DamageScaled (D-202).
+        /// </param>
+        public EconomyRules ToEconomy(double? pickaxeStep = null, double? pickaxeCaveGrowth = null) => new EconomyRules(
+            PickaxeLine(pickaxeStep, pickaxeCaveGrowth), speed.ToDefinition(), mining.ToDefinition(),
             doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, letrado.ToDefinition(),
             critical.ToDefinition(), intern.ToDefinition(), internPickaxe.ToDefinition(), internSpeed.ToDefinition(),
             internMining.ToDefinition(), internPickaxeDamageGrowth);
 
-        UpgradeDefinition PickaxeLine(double? step)
+        UpgradeDefinition PickaxeLine(double? step, double? growth)
         {
             var line = pickaxe.ToDefinition();
+            if (line.CostFormula == CostFormula.DamageScaled)
+            {
+                // O custo é o multiplicador × o dano da Picareta pela compra (D-202): o Dano Base, o incremento e a taxa
+                // são os do dano, nunca uma cópia no asset. O crescimento salvo na linha não vale.
+                bool tuned = PickaxeTunable;
+                return new UpgradeDefinition(line.BaseCost,
+                    tuned ? growth ?? pickaxeCaveGrowth : pickaxeCaveGrowth, line.MaxLevel,
+                    tuned ? step ?? line.Effect : line.Effect, CostFormula.DamageScaled, damage);
+            }
             if (!step.HasValue || !PickaxeTunable || step.Value == line.Effect) return line;
 
             double costGrowth = line.CostFormula == CostFormula.Linear && line.Effect != 0
@@ -224,7 +237,8 @@ namespace MinersIdle.Game
     public sealed class UpgradeLineValues
     {
         [Tooltip("Exponential: inicial × crescimento^nível. Linear: inicial + passo × nível (o passo é o crescimento). " +
-                 "OffsetExponential: inicial + crescimento^nível (as permanentes do GDD v7).")]
+                 "OffsetExponential: inicial + crescimento^nível (as permanentes do GDD v7). DamageScaled (só a Picareta, D-202): " +
+                 "inicial × o dano da Picareta (Dano Base + efeito × nível + taxa^nível); o crescimento salvo não vale.")]
         [SerializeField] CostFormula costFormula;
         [Tooltip("Custo da 1ª compra.")]
         [SerializeField] double baseCost;

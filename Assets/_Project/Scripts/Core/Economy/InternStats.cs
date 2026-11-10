@@ -24,14 +24,14 @@ namespace MinersIdle.Core
         /// <summary>Segundos entre os golpes dele.</summary>
         public double HitInterval { get; }
         /// <summary>
-        /// Multiplica as lascas que ele minera no offline (a Mineração dele, D-166). No jogo aberto o cristal paga sempre com
-        /// a Mineração do anão (D-95): este número só vale no M9.
+        /// 1 + a Mineração dele: multiplica as lascas que ele minera no offline (D-189). No jogo aberto, a mesma Mineração
+        /// entra somada na dos cristais do anão (<see cref="MinerStats.RewardMultiplier"/>, D-209).
         /// </summary>
         public double OfflineRewardMultiplier { get; }
 
         /// <summary>
-        /// Fórmulas (GDD v7 §5.4, D-164, D-165): sem a Picareta dele, o dano é o Dano Base das regras (o do anão sem o
-        /// crescimento pela caverna); com <i>n</i> compras, Picareta.efeito × crescimento^(n−1) (5 × 2^(n−1)); × Treinar. O
+        /// Fórmulas (GDD v7 §5.4, D-205, D-165): dano = Picareta.efeito × crescimento^(nível − 1) (5 × 2^(nível − 1)), com o
+        /// nível da Picareta dele = 1 + compras, como a do anão (D-202): contratado e sem compras, 5; × Treinar. O
         /// intervalo parte do das regras (2,0 s) e perde Velocidade.efeito por compra, até o mínimo da economia (0,1 s).
         /// Lascas offline × (1 + Mineração.efeito × nível).
         /// </summary>
@@ -53,9 +53,8 @@ namespace MinersIdle.Core
             bool hired = economy.HasIntern && Level(UpgradeId.Intern) > 0;
 
             int pickaxe = Level(UpgradeId.InternPickaxe);
-            double damage = pickaxe <= 0
-                ? rules.Damage
-                : economy.Get(UpgradeId.InternPickaxe).Effect * Math.Pow(economy.InternPickaxeGrowth, pickaxe - 1);
+            // Nível 1 é o valor-base (§5.4): sem compra ele já bate o efeito da linha (D-205).
+            double damage = economy.Get(UpgradeId.InternPickaxe).Effect * Math.Pow(economy.InternPickaxeGrowth, pickaxe);
             if (permanents != null) damage *= permanents.InternDamageMultiplier;
 
             double interval = Math.Max(

@@ -37,7 +37,7 @@ namespace MinersIdle.Tests
             letrado: new UpgradeDefinition(0, 1, 100, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05),
             intern: intern ? new UpgradeDefinition(500, 1, 1, 1) : null,
-            internPickaxe: intern ? new UpgradeDefinition(50, 4, 20, 5) : null,
+            internPickaxe: intern ? new UpgradeDefinition(50, 4, 19, 5) : null,
             internSpeed: intern ? new UpgradeDefinition(50, 5, 19, 0.1) : null,
             internMining: intern ? new UpgradeDefinition(50, 1.2, 10, 1) : null,
             internPickaxeGrowth: 2);
@@ -98,7 +98,7 @@ namespace MinersIdle.Tests
             double before = sim.State.Shards;
             Assert.That(sim.Purchase(UpgradeId.InternPickaxe), Is.EqualTo(PurchaseResult.Purchased));
             Assert.That(sim.State.Shards, Is.EqualTo(before - 50), "a 1ª Picareta dele custa 50");
-            Assert.That(sim.InternStats.Damage, Is.EqualTo(5), "e leva o dano a 5 na hora");
+            Assert.That(sim.InternStats.Damage, Is.EqualTo(10), "e leva o dano de 5 a 10 na hora (nível 2, D-205)");
         }
 
         [Test]
@@ -108,14 +108,15 @@ namespace MinersIdle.Tests
             Assert.That(economy.CostAt(0), Is.EqualTo(50));
             Assert.That(economy.CostAt(1), Is.EqualTo(200));
             Assert.That(economy.CostAt(2), Is.EqualTo(800));
-            Assert.That(economy.MaxLevel, Is.EqualTo(20));
+            Assert.That(economy.MaxLevel, Is.EqualTo(19), "19 compras = nível 20 (D-207)");
 
-            Assert.That(Stats(With((UpgradeId.Intern, 1))).Damage, Is.EqualTo(1), "D-164: sem compras, o Dano Base do anão");
+            Assert.That(Stats(With((UpgradeId.Intern, 1))).Damage, Is.EqualTo(5), "D-205: nível 1 é o valor-base, 5 sem compra");
             Assert.That(Stats(With((UpgradeId.Intern, 1))).HitInterval, Is.EqualTo(2), "e o intervalo base");
-            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 1))).Damage, Is.EqualTo(5));
-            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 2))).Damage, Is.EqualTo(10));
-            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 3))).Damage, Is.EqualTo(20));
-            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 20))).Damage, Is.EqualTo(5 * Math.Pow(2, 19)));
+            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 1))).Damage, Is.EqualTo(10), "nível 2");
+            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 2))).Damage, Is.EqualTo(20), "nível 3");
+            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 3))).Damage, Is.EqualTo(40), "nível 4");
+            Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternPickaxe, 19))).Damage, Is.EqualTo(5 * Math.Pow(2, 19)),
+                        "19 compras: nível 20, o limite (D-207)");
         }
 
         [Test]
@@ -124,7 +125,7 @@ namespace MinersIdle.Tests
             var sim = Sim(Rules(caves: 100));
             sim.HireIntern();
             sim.SkipToCave(30);
-            Assert.That(sim.InternStats.Damage, Is.EqualTo(1), "§5.3: o dano dele vem só das melhorias dele");
+            Assert.That(sim.InternStats.Damage, Is.EqualTo(5), "§5.3: o dano dele vem só das melhorias dele");
         }
 
         [Test]
@@ -141,7 +142,7 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Mining_CostsFiftyTimesOnePointTwo_AndOnlyCountsOffline()
+        public void Mining_CostsFiftyTimesOnePointTwo_AndCountsOnlineToo()
         {
             var line = V7().Get(UpgradeId.InternMining);
             Assert.That(line.CostAt(0), Is.EqualTo(50));
@@ -150,13 +151,50 @@ namespace MinersIdle.Tests
             Assert.That(line.MaxLevel, Is.EqualTo(10), "+1000%");
             Assert.That(Stats(With((UpgradeId.Intern, 1), (UpgradeId.InternMining, 10))).OfflineRewardMultiplier, Is.EqualTo(11));
 
-            // D-166: no jogo aberto, o cristal paga com a Mineração do anão, nem quando o estagiário dá o último golpe.
+            // D-209: no jogo aberto, a Mineração dele entra somada na do cristal (revê a D-166).
             var sim = Sim(Rules(health: 4), With((UpgradeId.Intern, 1), (UpgradeId.InternMining, 10),
                                                     (UpgradeId.InternPickaxe, 1)));
             sim.SpawnCrystalAt(1);
-            sim.Tick(2.001); // os dois batem no 2,0 s: o anão tira 1, o estagiário 5 e quebra
+            sim.Tick(2.001); // os dois batem no 2,0 s: o anão tira 1, o estagiário 10 e quebra
             Assert.That(sim.State.Breaks, Is.EqualTo(1));
-            Assert.That(sim.State.Shards, Is.EqualTo(3), "a recompensa do cristal × a Mineração do anão (1), não a dele (11)");
+            Assert.That(sim.State.Shards, Is.EqualTo(3 * 11).Within(1e-9), "3 lascas × (1 + a Mineração dele, +1000%)");
+        }
+
+        /// <summary>
+        /// D-209: com o jogo aberto, a Mineração do estagiário soma com a do anão e com o Coração Ardente, em todo cristal,
+        /// não importa quem dá o último golpe. Cristal de 1 lasca, Mineração do anão 1 e dele 1: 1 + 1 + 1 = 3.
+        /// </summary>
+        [TestCase(1, 0, 1, 3.0)]
+        [TestCase(1, 1, 1, 3.5)]
+        [TestCase(10, 20, 10, 31.0)]
+        [TestCase(0, 0, 3, 4.0)]
+        public void InternMining_AddsToTheShards_Online(int dwarfMining, int heart, int internMining, double multiplier)
+        {
+            var permanent = PermanentState.Restore(0, 1, id => id == PermanentId.BurningHeart ? heart : 0, V7Permanents());
+            var sim = Sim(Rules(health: 1e9), With((UpgradeId.Intern, 1), (UpgradeId.Mining, dwarfMining),
+                                                   (UpgradeId.InternMining, internMining)), permanent);
+            Assert.That(sim.Stats.RewardMultiplier, Is.EqualTo(multiplier).Within(1e-9));
+        }
+
+        [Test]
+        public void InternMining_BreakByTheDwarf_AlsoPaysIt()
+        {
+            // O anão (dano 1) quebra sozinho um cristal de vida 1 antes do 1º golpe dele: a Mineração dele vale igual.
+            var sim = Sim(Rules(health: 1), With((UpgradeId.Intern, 1), (UpgradeId.Mining, 1), (UpgradeId.InternMining, 1)));
+            int internHits = 0;
+            sim.InternHitLanded += _ => internHits++;
+            sim.SpawnCrystalAt(1);
+            sim.Tick(2.001);
+            Assert.That(sim.State.Breaks, Is.GreaterThanOrEqualTo(1));
+            Assert.That(sim.State.Shards, Is.EqualTo(3 * 3 * sim.State.Breaks).Within(1e-9), "3 lascas × (1 + 1 + 1)");
+        }
+
+        [Test]
+        public void InternMining_WithoutTheIntern_DoesNotCount()
+        {
+            var sim = Sim(state: With((UpgradeId.Mining, 1)));
+            Assert.That(sim.IsInternHired, Is.False);
+            Assert.That(sim.Stats.RewardMultiplier, Is.EqualTo(2), "só a Mineração do anão");
         }
 
         [Test]
@@ -201,7 +239,7 @@ namespace MinersIdle.Tests
                 Assert.That(hit.critical, Is.False, "D-167: sem crítico");
             }
             Assert.That(sim.InternHits, Is.EqualTo(3));
-            Assert.That(crystal.Health, Is.EqualTo(1000 - 3 - 3).Within(1e-9), "3 golpes do anão (2, 4, 6) e 3 dele");
+            Assert.That(crystal.Health, Is.EqualTo(1000 - 3 - 3 * 5).Within(1e-9), "3 golpes do anão (2, 4, 6) e 3 dele, de 5 (D-205)");
         }
 
         [Test]
@@ -331,7 +369,7 @@ namespace MinersIdle.Tests
 
             sim.Tick(2.0001);
 
-            Assert.That(damages, Is.EqualTo(new[] { 5 * 1.3 }).Within(1e-9), "5 × Treinar 3; sem crítico e sem o Sangue");
+            Assert.That(damages, Is.EqualTo(new[] { 10 * 1.3 }).Within(1e-9), "nível 2 (10) × Treinar 3; sem crítico e sem o Sangue");
         }
 
         [Test]
@@ -373,7 +411,7 @@ namespace MinersIdle.Tests
                                                 permanents: next.Permanents);
             Assert.That(promoted.IsInternHired, Is.True, "com a Promoção, a run já começa com ele");
             Assert.That(promoted.State.LevelOf(UpgradeId.InternPickaxe), Is.EqualTo(0), "D-169: a árvore dele no zero");
-            Assert.That(promoted.InternStats.Damage, Is.EqualTo(1 * 2).Within(1e-9), "o Treinar 10 continua valendo (×2)");
+            Assert.That(promoted.InternStats.Damage, Is.EqualTo(5 * 2).Within(1e-9), "nível 1 (5) e o Treinar 10 continua valendo (×2)");
         }
 
         [Test]
@@ -402,11 +440,11 @@ namespace MinersIdle.Tests
             Assert.That(sim.State.LevelOf(UpgradeId.InternPickaxe), Is.EqualTo(1));
             Assert.That(sim.State.LevelOf(UpgradeId.InternSpeed), Is.EqualTo(1));
             Assert.That(sim.State.LevelOf(UpgradeId.InternMining), Is.EqualTo(1));
-            Assert.That(sim.InternStats.Damage, Is.EqualTo(5));
+            Assert.That(sim.InternStats.Damage, Is.EqualTo(10), "Picareta dele no nível 2");
             Assert.That(sim.InternStats.HitInterval, Is.EqualTo(1.9).Within(1e-9));
 
             Assert.That(sim.GrantPermanentLevel(PermanentId.InternTraining), Is.True);
-            Assert.That(sim.InternStats.Damage, Is.EqualTo(5.5).Within(1e-9), "Treinar +1 vale na hora");
+            Assert.That(sim.InternStats.Damage, Is.EqualTo(11).Within(1e-9), "Treinar +1 vale na hora");
             Assert.That(sim.GrantPermanentLevel(PermanentId.InternPromotion), Is.False, "a Promoção espera o Treinar 10");
             Assert.That(sim.PromoteIntern(), Is.True);
             Assert.That(sim.Permanents.State.LevelOf(PermanentId.InternTraining), Is.EqualTo(10));
@@ -476,6 +514,39 @@ namespace MinersIdle.Tests
 
         // ── O Balance_GDD_v7 ───────────────────────────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// D-205, pelo <c>Balance_GDD_v7</c> que o jogo usa: dano = 5 × 2^(nível − 1) com nível = 1 + compras, e o custo da
+        /// próxima compra = 50 × 4^(nível − 1). Os números estão escritos à mão, e o golpe dele no cristal é medido.
+        /// </summary>
+        [TestCase(0, 5.0, 50.0)]
+        [TestCase(1, 10.0, 200.0)]
+        [TestCase(4, 80.0, 12800.0)]
+        [TestCase(9, 2560.0, 13107200.0)]
+        [TestCase(18, 1310720.0, 3435973836800.0)]
+        [TestCase(19, 2621440.0, -1.0)]
+        public void BalanceGddV7Asset_InternPickaxe_ReachesTheGddValues(int purchases, double damage, double nextCost)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7Path);
+            Assert.That(asset, Is.Not.Null, "o setup cria o Balance_GDD_v7");
+            var economy = asset.ToEconomy();
+            var rules = asset.ToRules();
+            var state = GameState.Restore(0, 0, 0,
+                id => id == UpgradeId.Intern ? 1 : id == UpgradeId.InternPickaxe ? purchases : 0,
+                economy, rules.CaveCount, cave: 100); // vida de bilhões: ninguém quebra o cristal
+            var sim = new MiningSimulation(rules, new SeededRandom(7), state, economy, asset.ToStrike());
+
+            Assert.That(sim.InternStats.Damage, Is.EqualTo(damage), "nível " + (purchases + 1));
+            double? cost = sim.Preview(UpgradeId.InternPickaxe).NextCost;
+            if (nextCost < 0) Assert.That(cost, Is.Null, "19 compras = nível 20: no limite (D-207)");
+            else Assert.That(cost, Is.EqualTo(nextCost), "a próxima compra");
+
+            var hits = new List<double>();
+            sim.InternHitLanded += hit => hits.Add(hit.Damage);
+            for (int i = 0; i < 300 && hits.Count == 0; i++) sim.Tick(0.1);
+            Assert.That(hits, Is.Not.Empty, "ele bateu");
+            Assert.That(hits[0], Is.EqualTo(damage), "o golpe dele no cristal");
+        }
+
         [Test]
         public void BalanceGddV7Asset_HasTheInternOfTheGdd_AndV5DoesNot()
         {
@@ -488,7 +559,7 @@ namespace MinersIdle.Tests
             Assert.That(economy.Get(UpgradeId.Intern).CostAt(0), Is.EqualTo(500));
             Assert.That(economy.Get(UpgradeId.Intern).MaxLevel, Is.EqualTo(1));
             Assert.That(economy.Get(UpgradeId.InternPickaxe).CostAt(2), Is.EqualTo(800));
-            Assert.That(economy.Get(UpgradeId.InternPickaxe).MaxLevel, Is.EqualTo(20));
+            Assert.That(economy.Get(UpgradeId.InternPickaxe).MaxLevel, Is.EqualTo(19), "nível 20 (D-207)");
             Assert.That(economy.Get(UpgradeId.InternSpeed).CostAt(2), Is.EqualTo(1250));
             Assert.That(economy.Get(UpgradeId.InternSpeed).MaxLevel, Is.EqualTo(19));
             Assert.That(economy.Get(UpgradeId.InternMining).CostAt(1), Is.EqualTo(60).Within(1e-9));
@@ -496,7 +567,7 @@ namespace MinersIdle.Tests
 
             var hired = GameState.Restore(0, 0, 0, id => id == UpgradeId.Intern ? 1 : id == UpgradeId.InternPickaxe ? 3 : 0, economy);
             var stats = InternStats.Compute(rules, economy, hired);
-            Assert.That(stats.Damage, Is.EqualTo(20), "5 × 2^2");
+            Assert.That(stats.Damage, Is.EqualTo(40), "3 compras = nível 4: 5 × 2^3 (D-205)");
             Assert.That(stats.HitInterval, Is.EqualTo(2), "parte de 2,0 s");
 
             var permanents = asset.ToPermanents();

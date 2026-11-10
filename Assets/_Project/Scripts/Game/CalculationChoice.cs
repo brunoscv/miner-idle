@@ -25,7 +25,7 @@ namespace MinersIdle.Game
         /// <summary>A taxa da Picareta (<c>taxa^n</c>), ou <c>null</c> para a do balanço (GDD v7: 1,2).</summary>
         public double? PickaxeCaveGrowth { get; }
 
-        /// <summary>O incremento da Picareta (Dano Base a mais por compra), ou <c>null</c> para o do balanço (GDD v7: 1).</summary>
+        /// <summary>O incremento da Picareta (Dano Base a mais por compra), ou <c>null</c> para o do balanço (GDD v7: 0, D-202).</summary>
         public double? PickaxeStep { get; }
 
         /// <summary>A Picareta pela caverna (D-133) no lugar da pela compra (GDD v7, D-201): o botão do DBG → Caverna.</summary>

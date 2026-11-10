@@ -244,9 +244,10 @@ namespace MinersIdle.UI
             double? next = simulation.Preview(UpgradeId.Pickaxe).NextCost;
             pickaxe.text = string.Format(pickaxeFormat,
                 NumberFormatter.Format(simulation.Stats.Damage),
-                next.HasValue ? NumberFormatter.FormatShards(next.Value) : maxedLabel,
-                NumberFormatter.FormatShards(total),
-                simulation.State.LevelOf(UpgradeId.Pickaxe));
+                next.HasValue ? NumberFormatter.FormatCost(next.Value) : maxedLabel,
+                NumberFormatter.FormatCost(total),
+                // D-207: na Picareta do GDD v7 o nível começa em 1 (sem compra); no v5 (Multiply), conta as compras.
+                simulation.State.LevelOf(UpgradeId.Pickaxe) + (simulation.Rules.PickaxeFormula == PickaxeFormula.Multiply ? 0 : 1));
         }
     }
 }

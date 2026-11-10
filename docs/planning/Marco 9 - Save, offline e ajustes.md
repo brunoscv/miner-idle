@@ -45,8 +45,8 @@ Uma conta fechada, sem simular golpe a golpe: 6 h custam o mesmo que 1 min, e o 
 
 | Estagiário | Golpes por cristal | Tempo por cristal | Lascas por hora | Em 6 h |
 |---|---|---|---|---|
-| recém-contratado (dano 1, 2,0 s) | 23 | 44,5 s | ~2,2 mil | ~13 mil |
-| Picareta 5 (dano 80), Velocidade 10 (1,0 s), Mineração 3 (×4) | 1 | 0,5 s | ~785 mil | ~4,7 mi |
+| recém-contratado (dano 5, 2,0 s; D-205) | 5 | 8,5 s | ~11,5 mil | ~69 mil |
+| Picareta 5 (dano 160, D-205), Velocidade 10 (1,0 s), Mineração 3 (×4) | 1 | 0,5 s | ~785 mil | ~4,7 mi |
 
 O segundo caso mostra um limite da conta: com um golpe por cristal, quem manda é a corrida de 0,5 s, a mesma do anão online. Ver os Riscos.
 

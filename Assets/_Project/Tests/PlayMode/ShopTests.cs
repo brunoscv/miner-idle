@@ -56,7 +56,9 @@ namespace MinersIdle.Tests
 
             var pickaxe = Row(UpgradeId.Pickaxe);
             Assert.That(pickaxe.CanBuy, Is.False, "sem lascas: apagado");
-            Assert.That(pickaxe.ButtonText, Is.EqualTo(NumberFormatter.FormatShards(simulation.Preview(UpgradeId.Pickaxe).NextCost.Value)));
+            Assert.That(pickaxe.LevelText, Is.EqualTo("nv 1/50"), "nível 1 = sem compra (D-207)");
+            Assert.That(pickaxe.ButtonText, Is.EqualTo(NumberFormatter.FormatCost(simulation.Preview(UpgradeId.Pickaxe).NextCost.Value)));
+            Assert.That(pickaxe.ButtonText, Is.EqualTo("4,2"), "2,1 × golpe 2, com a fração (D-202, D-203)");
 
             simulation.AddShards(1000);
             Assert.That(_shop.IsBadgeShown, Is.True, "com lascas, selo \"!\"");
@@ -67,7 +69,8 @@ namespace MinersIdle.Tests
             pickaxe.GetComponentInChildren<Button>().onClick.Invoke(); // um toque
             Assert.That(simulation.State.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(1), "um toque = uma compra");
             Assert.That(simulation.State.Shards, Is.EqualTo(shards - cost).Within(1e-9));
-            Assert.That(pickaxe.LevelText, Does.Contain("1/"));
+            Assert.That(pickaxe.LevelText, Is.EqualTo("nv 2/50"), "1 compra: nível 2 de 50 (D-207)");
+            Assert.That(pickaxe.ButtonText, Is.EqualTo("4,62"), "2,1 × (1 + 1,2^1)");
 
             Click("Screen/Panel/Back");
             Assert.That(_shop.IsOpen, Is.False);

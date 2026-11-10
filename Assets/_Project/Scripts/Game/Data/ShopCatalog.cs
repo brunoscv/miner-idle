@@ -42,6 +42,9 @@ namespace MinersIdle.Game
             [SerializeField] Sprite frame;
             [Tooltip("Compra única já feita: o texto do botão (vazio = o do catálogo). O Estagiário diz contratado (M7).")]
             [SerializeField] string boughtLabel;
+            [Tooltip("O nível da linha começa em 1 (GDD v7, convenção do Apellon: nível 1 = sem compra): a loja mostra " +
+                     "1 + compras de 1 + limite (\"nv 1/50\"). As Picaretas do anão e do estagiário (D-207).")]
+            [SerializeField] bool levelFromOne;
 
             public bool Locked => locked;
             public UpgradeId Upgrade => upgrade;
@@ -52,6 +55,8 @@ namespace MinersIdle.Game
             public Sprite Icon => icon;
             public Sprite Frame => frame;
             public string BoughtLabel => boughtLabel;
+            /// <summary>O nível mostrado começa em 1: 1 + compras de 1 + limite (D-207).</summary>
+            public bool LevelFromOne => levelFromOne;
         }
 
         /// <summary>

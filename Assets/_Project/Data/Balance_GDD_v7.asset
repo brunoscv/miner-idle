@@ -34,11 +34,11 @@ MonoBehaviour:
   pickaxeFormula: 2
   pickaxeCaveGrowth: 1.2
   pickaxe:
-    costFormula: 1
-    baseCost: 2
-    costGrowth: 2
+    costFormula: 3
+    baseCost: 2.1
+    costGrowth: 1.2
     maxLevel: 49
-    effect: 1
+    effect: 0
   speed:
     costFormula: 0
     baseCost: 50
@@ -86,7 +86,7 @@ MonoBehaviour:
     costFormula: 0
     baseCost: 50
     costGrowth: 4
-    maxLevel: 20
+    maxLevel: 19
     effect: 5
   internPickaxeDamageGrowth: 2
   internSpeed:

@@ -42,10 +42,10 @@ namespace MinersIdle.Tests
         {
             var v7 = Load(GddV7Path);
             Assert.That(v7.ToRules().PickaxeCaveGrowth, Is.EqualTo(1.2), "taxa do GDD v7 (D-133)");
-            Assert.That(v7.PickaxeStep, Is.EqualTo(1), "incremento do GDD v7");
+            Assert.That(v7.PickaxeStep, Is.EqualTo(0), "incremento do GDD v7: o Dano Base não sobe (D-202)");
             var pickaxe = v7.ToEconomy().Get(UpgradeId.Pickaxe);
-            Assert.That(pickaxe.CostAt(0), Is.EqualTo(2));
-            Assert.That(pickaxe.CostAt(1), Is.EqualTo(4), "2 × Dano Base 2");
+            Assert.That(pickaxe.CostAt(0), Is.EqualTo(4.2).Within(1e-9), "2,1 × (1 + 1,2^0)");
+            Assert.That(pickaxe.CostAt(1), Is.EqualTo(4.62).Within(1e-9), "2,1 × (1 + 1,2^1)");
         }
 
         [Test]
@@ -59,13 +59,21 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Step_ChangesTheBaseDamagePerBuy_AndTheCostFollowsTwiceTheBaseDamage()
+        public void Growth_AlsoChangesThePickaxeCost()
+        {
+            var v7 = Load(GddV7Path);
+            var pickaxe = v7.ToEconomy(pickaxeCaveGrowth: 1.25).Get(UpgradeId.Pickaxe);
+            Assert.That(pickaxe.CostAt(2), Is.EqualTo(2.1 * (1 + 1.25 * 1.25)).Within(1e-9), "2,1 × o dano com a taxa nova (D-202)");
+        }
+
+        [Test]
+        public void Step_ChangesTheBaseDamagePerBuy_AndTheCostFollowsTheDamage()
         {
             var v7 = Load(GddV7Path);
             var pickaxe = v7.ToEconomy(pickaxeStep: 3).Get(UpgradeId.Pickaxe);
             Assert.That(pickaxe.Effect, Is.EqualTo(3));
-            Assert.That(pickaxe.CostAt(0), Is.EqualTo(2), "Dano Base 1 → custo 2");
-            Assert.That(pickaxe.CostAt(1), Is.EqualTo(8), "Dano Base 1 + 3 = 4 → custo 8");
+            Assert.That(pickaxe.CostAt(0), Is.EqualTo(4.2).Within(1e-9), "Dano Base 1 + 1,2^0 = 2 → custo 4,20");
+            Assert.That(pickaxe.CostAt(1), Is.EqualTo(2.1 * (1 + 3 + 1.2)).Within(1e-9), "Dano Base 4 + 1,2^1 → 2,1 × 5,2");
             Assert.That(pickaxe.MaxLevel, Is.EqualTo(v7.ToEconomy().Get(UpgradeId.Pickaxe).MaxLevel));
         }
 

@@ -44,18 +44,31 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// Lascas (D-68): sempre inteiro, arredondado para baixo ("999"), para a tela nunca mostrar mais lascas do que se
-        /// tem. A partir de mil, a abreviação também trunca: 1.239 lascas = "1,23K", 999.999 = "999,99K". A fração
-        /// continua no estado.
+        /// Lascas (D-206, revê a D-68): até duas casas decimais, cortadas para baixo ("4,57" para 4,579), para a tela nunca
+        /// mostrar mais lascas do que se tem; inteiros sem vírgula ("12"). A partir de mil, a abreviação também trunca:
+        /// 1.239 lascas = "1,23K", 999.999 = "999,99K".
         /// </summary>
         public static string FormatShards(double shards)
         {
             if (double.IsNaN(shards) || double.IsInfinity(shards)) return shards.ToString(PtBr);
 
-            double whole = Math.Floor(shards);
-            if (whole < 0) return Format(whole);
-            if (whole < AbbreviationThreshold) return whole.ToString("#,0", PtBr);
-            return Abbreviate(whole, truncate: true);
+            // Em centésimos inteiros: o Round tira o ruído do double (0,29 × 100 = 28,999…) antes de cortar.
+            double cents = Math.Floor(Math.Round(shards * 100, 6));
+            double truncated = cents / 100;
+            if (truncated < 0) return Format(truncated);
+            if (truncated < AbbreviationThreshold) return truncated.ToString("#,0.##", PtBr);
+            return Abbreviate(Math.Floor(shards), truncate: true);
+        }
+
+        /// <summary>
+        /// Custo de uma compra em lascas (D-203): abaixo de mil, com até duas casas decimais como o <see cref="Format"/>
+        /// ("4,2", "12,94"; os inteiros seguem sem vírgula), porque desde a D-202 a Picareta cobra a fração. A partir de mil,
+        /// igual às lascas (<see cref="FormatShards"/>, D-144).
+        /// </summary>
+        public static string FormatCost(double cost)
+        {
+            if (double.IsNaN(cost) || double.IsInfinity(cost)) return cost.ToString(PtBr);
+            return Math.Abs(cost) < AbbreviationThreshold ? Format(cost) : FormatShards(cost);
         }
 
         /// <summary>

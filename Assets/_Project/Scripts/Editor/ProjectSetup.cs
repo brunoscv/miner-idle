@@ -433,7 +433,7 @@ namespace MinersIdle.EditorTools
         /// <summary>
         /// Cria o <c>Balance_GDD_v7</c> (E3b do M8, D-130) a partir do v5 (a fila, o toque, o golpe e as cavernas iguais),
         /// com os números do GDD v7 e das decisões de 2026-11-04: vida <c>1 × 1,25^(c−1)</c> e lascas = vida × 1,2 (D-134);
-        /// Picareta pela caverna, Dano Base 1 + 1 por compra, taxa 1,2, custo 2 × Dano Base, até o nível 50 (D-133);
+        /// Picareta pela compra com Dano Base fixo em 1 e taxa 1,2, custo 2,1 × o dano da Picareta, até o nível 50 (D-202);
         /// Velocidade <c>50 × 2^(n−1)</c> de 2,0 s até 0,1 s (D-135); Mineração <c>20 × 5^(n−1)</c>; Chance de Crítico
         /// <c>50 × 2^(n−1)</c>, +5%, 10 níveis, com base de 0% no golpe e 5% no toque (D-136); a Dupla desligada (D-136).
         /// Até a E3b-2, as 10 cavernas e o Letrado continuam, já com custo zero e sem ×2 de dano (o Mapa da D-128).
@@ -457,7 +457,8 @@ namespace MinersIdle.EditorTools
             serialized.FindProperty("hitInterval").doubleValue = 2;
             serialized.FindProperty("pickaxeFormula").enumValueIndex = (int)PickaxeFormula.LevelScaled; // D-201
             serialized.FindProperty("pickaxeCaveGrowth").doubleValue = 1.2;
-            SetLine(serialized, "pickaxe", 2, 2, 49, 1, CostFormula.Linear);
+            // D-202: custo = 2,1 × o dano da Picareta (o crescimento da linha não vale: o custo usa a taxa e o Dano Base acima).
+            SetLine(serialized, "pickaxe", 2.1, 1.2, 49, 0, CostFormula.DamageScaled);
             SetLine(serialized, "speed", 50, 2, 19, 0.1);
             SetLine(serialized, "mining", 20, 5, 10, 1);
             SetLine(serialized, "doublePickaxe", 5000, 1, 0, 2);
@@ -524,8 +525,8 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>
-        /// M7 (GDD v7 §4.1, §4.2, §5.4; D-164, D-165): no v7, o Estagiário (500, compra única), a árvore dele — Picareta
-        /// <c>50 × 4^(n−1)</c> com dano <c>5 × 2^(n−1)</c> (20 níveis), Velocidade <c>50 × 5^(n−1)</c>, −0,1 s a partir de
+        /// M7 (GDD v7 §4.1, §4.2, §5.4; D-165, D-205, D-207): no v7, o Estagiário (500, compra única), a árvore dele — Picareta
+        /// <c>50 × 4^(n−1)</c> com dano <c>5 × 2^(n−1)</c>, nível 1 sem compra, até o nível 20 (19 compras), Velocidade <c>50 × 5^(n−1)</c>, −0,1 s a partir de
         /// 2,0 s até o piso de 0,1 s (19 compras), Mineração <c>50 × 1,2^(n−1)</c>, +100% das lascas offline (10) — e as
         /// permanentes dele: Treinar <c>10 + 2^(n−1)</c>, +10% de dano (10), e Promoção (50, compra única).
         /// </summary>
@@ -537,7 +538,7 @@ namespace MinersIdle.EditorTools
             if (serialized.FindProperty("intern.maxLevel").intValue == 1) return;
 
             SetLine(serialized, "intern", 500, 1, 1, 1);
-            SetLine(serialized, "internPickaxe", 50, 4, 20, 5);
+            SetLine(serialized, "internPickaxe", 50, 4, 19, 5); // 19 compras = nível 20 (D-207)
             serialized.FindProperty("internPickaxeDamageGrowth").doubleValue = 2;
             SetLine(serialized, "internSpeed", 50, 5, 19, 0.1);
             SetLine(serialized, "internMining", 50, 1.2, 10, 1);

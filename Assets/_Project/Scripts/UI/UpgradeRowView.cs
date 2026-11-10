@@ -94,7 +94,8 @@ namespace MinersIdle.UI
             if (!preview.IsEnabled) return;
 
             // Compra única (o Estagiário, D-174): sem o "nv 0/1", que não diz nada; feita, apagada e com a moldura cinza.
-            level.text = preview.IsSinglePurchase ? "" : string.Format(_catalog.LevelFormat, preview.Level, preview.MaxLevel);
+            int first = _entry.LevelFromOne ? 1 : 0; // D-207: nível 1 = sem compra
+            level.text = preview.IsSinglePurchase ? "" : string.Format(_catalog.LevelFormat, preview.Level + first, preview.MaxLevel + first);
             SetBuyable(preview.State == UpgradeButtonState.Purchasable);
             SetDone(preview.IsSinglePurchase && preview.Level > 0);
 
@@ -127,7 +128,7 @@ namespace MinersIdle.UI
 
         /// <summary>O preço no botão; uma compra de graça (o Mapa do GDD v7, D-175) mostra o texto do catálogo no lugar do 0.</summary>
         string CostLabel(double cost) =>
-            cost <= 0 && !string.IsNullOrEmpty(_catalog.FreeLabel) ? _catalog.FreeLabel : NumberFormatter.FormatShards(cost);
+            cost <= 0 && !string.IsNullOrEmpty(_catalog.FreeLabel) ? _catalog.FreeLabel : NumberFormatter.FormatCost(cost);
 
         void SetDone(bool done)
         {

@@ -39,6 +39,8 @@
 
 Os 50 níveis da Picareta custam ao todo 2.450 lascas. A taxa e o incremento por compra ficam no asset para o relatório da E4 calibrar.
 
+> **Atualização 2026-11-10 (D-202):** a tabela que o Apellon mandou (Dano Base 1, taxa 1,2, custo 2,1) fecha em `Dano = 1 + 1,2^(nível − 1)` com o **Dano Base fixo** e **custo = 2,1 × o dano** da Picareta no nível atual (4,20 no nível 1; 12,94 no 10; 417,51 no 30). O "+1 por compra" e o "2 × Dano Base" desta seção (D-133) ficaram para trás: as 49 compras passam a somar ≈ 79.721 lascas.
+
 ### 2. Cristais (§3.1, §6.1) — M8 E3b
 
 - Vida `1 × 1,25^(nível da caverna − 1)` (igual ao v6).

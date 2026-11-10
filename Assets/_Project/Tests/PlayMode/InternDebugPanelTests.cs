@@ -53,7 +53,7 @@ namespace MinersIdle.Tests
             _panel.transform.Find("Toggle").GetComponent<Button>().onClick.Invoke();
             _panel.transform.Find("Content/Buttons/Intern").GetComponent<Button>().onClick.Invoke();
             Assert.That(_panel.transform.Find("InternMenu").GetComponent<DebugMenu>().IsOpen, Is.True);
-            Assert.That(Summary, Does.StartWith("Estagiário: não contratado · dano 1 · intervalo 2,00s"));
+            Assert.That(Summary, Does.StartWith("Estagiário: não contratado · dano 5 · intervalo 2,00s"));
 
             Click("Hire");
             Assert.That(Simulation.IsInternHired, Is.True);
@@ -66,13 +66,13 @@ namespace MinersIdle.Tests
             yield return Load();
             Click("GrantInternLevels"); // contrata antes, se preciso
             Assert.That(Simulation.IsInternHired, Is.True);
-            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(5), "Picareta 1: 5");
+            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(10), "1 compra = nível 2: 10 (D-205)");
             Assert.That(Simulation.InternStats.HitInterval, Is.EqualTo(1.9).Within(1e-9), "Velocidade 1: 1,9 s");
-            Assert.That(Summary, Does.Contain("dano 5 · intervalo 1,90s"));
+            Assert.That(Summary, Does.Contain("dano 10 · intervalo 1,90s"));
 
             Click("Train");
             Assert.That(Simulation.Permanents.State.LevelOf(PermanentId.InternTraining), Is.EqualTo(1));
-            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(5.5).Within(1e-9), "+10% na hora");
+            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(11).Within(1e-9), "+10% na hora");
 
             Click("Fire");
             Assert.That(Simulation.IsInternHired, Is.False);
@@ -90,7 +90,7 @@ namespace MinersIdle.Tests
 
             _runner.Rest(force: true);
             Assert.That(Simulation.IsInternHired, Is.True, "a run nova já começa com ele (D-169)");
-            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(2).Within(1e-9), "Dano Base 1 × Treinar 10");
+            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(10).Within(1e-9), "nível 1 (5) × Treinar 10");
 
             // Ele bate no cristal do anão com o relógio dele: em ×20, alguns golpes logo. No nível 1 o anão quebra cada
             // cristal com um golpe (e bate primeiro, no mesmo instante): no 30 o cristal aguenta vários.

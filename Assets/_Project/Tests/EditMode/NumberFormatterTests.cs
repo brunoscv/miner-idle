@@ -44,19 +44,40 @@ namespace MinersIdle.Tests
             Assert.That(NumberFormatter.Format(value), Is.EqualTo(expected));
         }
 
-        /// <summary>D-68 + D-144: lascas truncam, para nunca mostrar mais do que se tem.</summary>
+        /// <summary>D-206 + D-144: lascas com até duas casas, truncadas, para nunca mostrar mais do que se tem.</summary>
         [TestCase(0, "0")]
-        [TestCase(0.99, "0")]
-        [TestCase(999.9, "999")]
+        [TestCase(0.99, "0,99")]
+        [TestCase(0.29, "0,29")]
+        [TestCase(4.579, "4,57")]
+        [TestCase(4.2, "4,2")]
+        [TestCase(12, "12")]
+        [TestCase(999.9, "999,9")]
+        [TestCase(999.999, "999,99")]
         [TestCase(1239, "1,23K")]
         [TestCase(1230, "1,23K")]
         [TestCase(12234.5, "12,23K")]
         [TestCase(999999, "999,99K")]
         [TestCase(1234567.8, "1,23M")]
         [TestCase(1_999_999_999, "1,99B")]
-        public void Shards_AreRoundedDown(double shards, string expected)
+        public void Shards_KeepTwoDecimals_RoundedDown(double shards, string expected)
         {
             Assert.That(NumberFormatter.FormatShards(shards), Is.EqualTo(expected));
+        }
+
+        /// <summary>D-203: o custo mostra a fração abaixo de mil (a Picareta da D-202 cobra 4,20); de mil em diante, como as lascas.</summary>
+        [TestCase(0, "0")]
+        [TestCase(4.2, "4,2")]
+        [TestCase(12.9356, "12,94")]
+        [TestCase(69.1908, "69,19")]
+        [TestCase(417.5097, "417,51")]
+        [TestCase(50, "50")]
+        [TestCase(999.994, "999,99")]
+        [TestCase(999.996, "1,00K")]
+        [TestCase(3705.92, "3,70K")]
+        [TestCase(79721.23, "79,72K")]
+        public void Costs_ShowTheDecimals_BelowAThousand(double cost, string expected)
+        {
+            Assert.That(NumberFormatter.FormatCost(cost), Is.EqualTo(expected));
         }
 
         [Test]

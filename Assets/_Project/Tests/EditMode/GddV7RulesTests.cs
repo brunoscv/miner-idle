@@ -22,7 +22,11 @@ namespace MinersIdle.Tests
                 miningRange: 1, caveCount: caves, caveHealthGrowth: 1.25, caveRewardGrowth: 1.25,
                 pickaxeFormula: formula, pickaxeCaveGrowth: 1.2);
 
-        /// <summary>As linhas do anão no GDD v7, com o Letrado já de custo zero e sem ×2 (D-128).</summary>
+        /// <summary>
+        /// As linhas do anão no GDD v7, com o Letrado já de custo zero e sem ×2 (D-128). A Picareta aqui é a da D-133 (+1 no
+        /// Dano Base, custo 2 × Dano Base), que mede a fórmula com incremento; a do jogo desde a D-202 está em
+        /// <see cref="ApellonPickaxe"/>.
+        /// </summary>
         static EconomyRules V7() => new EconomyRules(
             pickaxe: new UpgradeDefinition(2, 2, 49, 1, CostFormula.Linear),
             speed: new UpgradeDefinition(50, 2, 19, 0.1),
@@ -41,7 +45,7 @@ namespace MinersIdle.Tests
 
         // ── Fórmulas de custo ────────────────────────────────────────────────────────────────────────────────────
 
-        /// <summary>D-133: custo da Picareta = 2 × Dano Base (1, 2, 3…): 2, 4, 6… até 98; os 49 níveis somam 2.450.</summary>
+        /// <summary>A fórmula Linear (a da D-133, antes da D-202): 2 × Dano Base (1, 2, 3…): 2, 4, 6… até 98; somam 2.450.</summary>
         [Test]
         public void LinearCost_IsBasePlusStepTimesLevel()
         {
@@ -51,6 +55,72 @@ namespace MinersIdle.Tests
             Assert.That(pickaxe.CostAt(1), Is.EqualTo(4));
             Assert.That(pickaxe.CostAt(48), Is.EqualTo(98));
             Assert.That(Enumerable.Range(0, pickaxe.MaxLevel).Sum(level => pickaxe.CostAt(level)), Is.EqualTo(2450));
+        }
+
+        // ── Picareta pela tabela do Apellon (D-202) ──────────────────────────────────────────────────────────────
+
+        /// <summary>Dano Base 1 fixo (incremento 0), taxa 1,2, custo 2,1 × o dano da Picareta no nível atual.</summary>
+        static UpgradeDefinition ApellonPickaxe() => new UpgradeDefinition(2.1, 1.2, 49, 0, CostFormula.DamageScaled, costOffset: 1);
+
+        static EconomyRules V7Apellon() => new EconomyRules(
+            pickaxe: ApellonPickaxe(),
+            speed: new UpgradeDefinition(50, 2, 19, 0.1),
+            mining: new UpgradeDefinition(20, 5, 10, 1),
+            doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
+            boots: new UpgradeDefinition(0, 1, 0, 0),
+            minHitInterval: 0.1,
+            letrado: new UpgradeDefinition(0, 1, 10, 1),
+            critical: new UpgradeDefinition(50, 2, 10, 0.05));
+
+        /// <summary>Os pontos da tabela do Apellon: nível da Picareta → dano e custo da próxima compra (D-202).</summary>
+        [TestCase(1, 2.00, 4.20), TestCase(10, 6.16, 12.94), TestCase(20, 32.95, 69.19), TestCase(30, 198.81, 417.51)]
+        public void ApellonPickaxe_MatchesHisTable(int level, double damage, double cost)
+        {
+            var state = GameState.Restore(0, 0, 0, id => id == UpgradeId.Pickaxe ? level - 1 : 0, V7Apellon());
+            var sim = new MiningSimulation(Rules(PickaxeFormula.LevelScaled), new SeededRandom(7), state, V7Apellon(), V7Strike());
+
+            Assert.That(sim.Stats.Damage, Is.EqualTo(damage).Within(0.005), "Dano Base 1 + 1,2^(nível − 1)");
+            Assert.That(sim.Preview(UpgradeId.Pickaxe).NextCost.Value, Is.EqualTo(cost).Within(0.005), "2,1 × o dano");
+        }
+
+        /// <summary>Os mesmos pontos da tabela, agora pelo <c>Balance_GDD_v7</c> que o jogo usa (D-202).</summary>
+        [TestCase(1, 2.00, 4.20), TestCase(10, 6.16, 12.94), TestCase(20, 32.95, 69.19), TestCase(30, 198.81, 417.51)]
+        public void BalanceGddV7Asset_MatchesApellonsTable(int level, double damage, double cost)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7Path);
+            Assert.That(asset, Is.Not.Null, "o setup cria o Balance_GDD_v7");
+            var economy = asset.ToEconomy();
+            var state = GameState.Restore(0, 0, 0, id => id == UpgradeId.Pickaxe ? level - 1 : 0, economy);
+            var sim = new MiningSimulation(asset.ToRules(), new SeededRandom(7), state, economy, asset.ToStrike());
+
+            Assert.That(sim.Stats.Damage, Is.EqualTo(damage).Within(0.005), "dano do nível " + level);
+            Assert.That(sim.Preview(UpgradeId.Pickaxe).NextCost.Value, Is.EqualTo(cost).Within(0.005), "custo no nível " + level);
+            Assert.That(NumberFormatter.FormatCost(sim.Preview(UpgradeId.Pickaxe).NextCost.Value),
+                        Is.EqualTo(cost.ToString("#,0.##", new System.Globalization.CultureInfo("pt-BR"))), "o que a loja mostra");
+        }
+
+        [Test]
+        public void ApellonPickaxe_ChargesTheDecimals_AndTheBaseDamageStaysAtOne()
+        {
+            var sim = new MiningSimulation(Rules(PickaxeFormula.LevelScaled), new SeededRandom(7), economy: V7Apellon(),
+                                           strike: V7Strike());
+            sim.AddShards(4.2 + 4.62);
+
+            Assert.That(sim.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(1 + 1.2).Within(1e-9), "nível 2: Dano Base 1 + 1,2^1");
+            Assert.That(sim.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(1 + 1.44).Within(1e-9), "nível 3: Dano Base 1 + 1,2^2");
+            Assert.That(sim.State.Shards, Is.EqualTo(0).Within(1e-9), "cobrou 4,20 e 4,62, com as casas decimais");
+            Assert.That(sim.Preview(UpgradeId.Pickaxe).NextCost.Value, Is.EqualTo(2.1 * 2.44).Within(1e-9));
+        }
+
+        [Test]
+        public void ApellonPickaxe_FortyNineBuys_CostAbout79721()
+        {
+            var pickaxe = ApellonPickaxe();
+            Assert.That(pickaxe.CostAt(41), Is.EqualTo(2.1 * (1 + Math.Pow(1.2, 41))).Within(1e-6), "42 compras feitas: ≈ 3.705,92");
+            Assert.That(pickaxe.CostAt(48), Is.EqualTo(13273.57).Within(0.005), "a 49ª compra");
+            Assert.That(Enumerable.Range(0, pickaxe.MaxLevel).Sum(level => pickaxe.CostAt(level)), Is.EqualTo(79721.23).Within(0.005));
         }
 
         [Test]
@@ -375,8 +445,9 @@ namespace MinersIdle.Tests
                         "a leitura da D-133, no DBG → Caverna");
 
             var pickaxe = economy.Get(UpgradeId.Pickaxe);
-            Assert.That((pickaxe.CostFormula, pickaxe.BaseCost, pickaxe.CostGrowth, pickaxe.MaxLevel, pickaxe.Effect),
-                        Is.EqualTo((CostFormula.Linear, 2.0, 2.0, 49, 1.0)));
+            Assert.That((pickaxe.CostFormula, pickaxe.BaseCost, pickaxe.CostGrowth, pickaxe.MaxLevel, pickaxe.Effect, pickaxe.CostOffset),
+                        Is.EqualTo((CostFormula.DamageScaled, 2.1, 1.2, 49, 0.0, 1.0)), "custo 2,1 × o dano, Dano Base fixo (D-202)");
+            Assert.That(pickaxe.CostAt(0), Is.EqualTo(4.2).Within(1e-9), "golpe 2 → próxima compra 4,20");
             var speed = economy.Get(UpgradeId.Speed);
             Assert.That((speed.BaseCost, speed.CostGrowth, speed.MaxLevel, speed.Effect), Is.EqualTo((50.0, 2.0, 19, 0.1)));
             Assert.That(economy.MinHitInterval, Is.EqualTo(0.1));

@@ -87,15 +87,17 @@ namespace MinersIdle.Tests
             Assert.That(_shop.IsInternTabBadgeShown, Is.False, "a aba aberta não precisa do \"!\"");
 
             var pickaxe = InternRow(UpgradeId.InternPickaxe);
-            Assert.That(pickaxe.LevelText, Is.EqualTo("nv 0/20"));
-            Assert.That(pickaxe.EffectText, Is.EqualTo("Dano 1 » 5"));
+            Assert.That(pickaxe.LevelText, Is.EqualTo("nv 1/20"), "nível 1 = sem compra (D-207)");
+            Assert.That(pickaxe.EffectText, Is.EqualTo("Dano 5 » 10"), "nível 1 já é o valor-base (D-205)");
             Assert.That(pickaxe.ButtonText, Is.EqualTo("50"));
             Assert.That(InternRow(UpgradeId.InternSpeed).EffectText, Is.EqualTo("Golpe a cada 2,00s » 1,90s"));
-            Assert.That(InternRow(UpgradeId.InternMining).EffectText, Is.EqualTo("Offline +0% » +100%"));
+            Assert.That(InternRow(UpgradeId.InternMining).EffectText, Is.EqualTo("Lascas +0% » +100%"), "online e offline (D-209)");
 
             Click(pickaxe);
-            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(5), "na hora");
-            Assert.That(pickaxe.LevelText, Is.EqualTo("nv 1/20"));
+            Assert.That(Simulation.InternStats.Damage, Is.EqualTo(10), "na hora");
+            Assert.That(pickaxe.LevelText, Is.EqualTo("nv 2/20"));
+            Assert.That(pickaxe.EffectText, Is.EqualTo("Dano 10 » 20"));
+            Assert.That(pickaxe.ButtonText, Is.EqualTo("200"), "50 × 4");
             Assert.That(Simulation.State.Shards, Is.EqualTo(70).Within(1e-9), "120 − 50");
         }
 

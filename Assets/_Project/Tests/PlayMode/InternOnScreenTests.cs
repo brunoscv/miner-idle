@@ -141,6 +141,57 @@ namespace MinersIdle.Tests
             Assert.That(feedback.InternNumbersShown, Is.GreaterThan(numbersBefore), "os números dele subiram");
         }
 
+        /// <summary>
+        /// D-205, na cena de verdade: contratado e sem compras, o golpe dele tira 5 do cristal e mostra "5"; com a 1ª
+        /// Picareta dele (50 lascas), o golpe seguinte tira 10.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator InternHit_InTheScene_DealsTheGddDamage()
+        {
+            yield return Load();
+            var floating = Object.FindAnyObjectByType<FloatingTexts>();
+            Click("Hire");
+            Simulation.SkipToCave(30); // o cristal aguenta vários golpes
+            yield return Frames();
+
+            double damage = 0;
+            string shown = null;
+            bool seen = false;
+            void OnInternHit(MiningHit hit)
+            {
+                if (seen) return;
+                seen = true;
+                damage = hit.Damage;
+                shown = floating.LastText; // a vista do feedback se inscreveu antes: o número já saiu
+            }
+
+            IEnumerator WaitInternHit()
+            {
+                seen = false;
+                float timeout = Time.realtimeSinceStartup + 20f;
+                while (!seen && Time.realtimeSinceStartup < timeout) yield return null;
+                Assert.That(seen, Is.True, "viu um golpe do estagiário");
+            }
+
+            Simulation.InternHitLanded += OnInternHit;
+            try
+            {
+                yield return WaitInternHit();
+                Assert.That(damage, Is.EqualTo(5), "nível 1: 5 × 2^0");
+                Assert.That(shown, Is.EqualTo("5"), "o número que sobe do cristal");
+
+                Simulation.AddShards(50);
+                Assert.That(Simulation.Purchase(UpgradeId.InternPickaxe), Is.EqualTo(PurchaseResult.Purchased));
+                yield return WaitInternHit();
+                Assert.That(damage, Is.EqualTo(10), "nível 2: 5 × 2^1");
+                Assert.That(shown, Is.EqualTo("10"));
+            }
+            finally
+            {
+                Simulation.InternHitLanded -= OnInternHit;
+            }
+        }
+
         /// <summary>O número dele é cinza (D-171), e não a cor de nenhum dos efeitos do anão.</summary>
         [Test]
         public void InternNumber_IsGrey()

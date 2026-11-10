@@ -29,7 +29,7 @@ namespace MinersIdle.EditorTools
             ("GrowthValue", "growthValue", "Taxa 1,2"),
             ("GrowthPlus", "growthPlus", "Taxa +"),
             ("StepMinus", "stepMinus", "Incremento -"),
-            ("StepValue", "stepValue", "Incremento 1"),
+            ("StepValue", "stepValue", "Incremento 0"),
             ("StepPlus", "stepPlus", "Incremento +"),
         };
 

@@ -31,8 +31,8 @@ namespace MinersIdle.Core
         /// </summary>
         Intern,
         /// <summary>
-        /// Picareta do estagiário (§5.4): a compra <i>n</i> leva o dano dele a efeito × crescimento^(n−1) (GDD v7: 5 × 2^(n−1));
-        /// sem compras, ele bate o Dano Base do anão (D-164).
+        /// Picareta do estagiário (§5.4): dano = efeito × crescimento^(nível − 1) (GDD v7: 5 × 2^(nível − 1)), com nível =
+        /// 1 + compras (D-205): contratado e sem compras, ele bate 5; a 1ª compra leva a 10.
         /// </summary>
         InternPickaxe,
         /// <summary>Velocidade do estagiário (§5.4): segundos a menos no intervalo dele por nível (GDD v7: 0,1; piso da D-165).</summary>
@@ -56,19 +56,28 @@ namespace MinersIdle.Core
         /// <i>n</i> a compra (11, 12, 14, 18…; 10 compras somam 1.123).
         /// </summary>
         OffsetExponential,
+        /// <summary>
+        /// <c>inicial × (deslocamento + efeito × nível + crescimento^nível)</c>: a Picareta do anão pela tabela do Apellon
+        /// (D-202), o custo = 2,1 × o dano da Picareta no nível atual (Dano Base 1 + incremento × compras + taxa^compras).
+        /// O inicial é o multiplicador (2,1), o crescimento é a taxa (1,2), o efeito é o incremento (0) e o deslocamento é o
+        /// Dano Base (1): 4,20, 4,62, 5,15…
+        /// </summary>
+        DamageScaled,
     }
 
     /// <summary>
     /// Uma linha de melhoria, somente leitura (D-35: formato do GDD, números no asset). O nível é o número de compras
     /// feitas e começa em 0 (D-38): a próxima compra custa <c>custo inicial × crescimento^nível</c>, ou
     /// <c>inicial + passo × nível</c> na fórmula <see cref="CostFormula.Linear"/>, ou <c>inicial + crescimento^nível</c> na
-    /// <see cref="CostFormula.OffsetExponential"/>.
+    /// <see cref="CostFormula.OffsetExponential"/>, ou <c>inicial × (deslocamento + efeito × nível + crescimento^nível)</c> na
+    /// <see cref="CostFormula.DamageScaled"/>.
     /// O significado de <see cref="Effect"/> depende da linha (ver <see cref="MinerStats"/>).
     /// </summary>
     public sealed class UpgradeDefinition
     {
+        /// <param name="costOffset">Só na <see cref="CostFormula.DamageScaled"/>: o Dano Base somado dentro do custo.</param>
         public UpgradeDefinition(double baseCost, double costGrowth, int maxLevel, double effect,
-                                 CostFormula costFormula = CostFormula.Exponential)
+                                 CostFormula costFormula = CostFormula.Exponential, double costOffset = 0)
         {
             if (baseCost < 0 || double.IsNaN(baseCost)) throw new ArgumentOutOfRangeException(nameof(baseCost));
             if (double.IsNaN(costGrowth) || costGrowth < 0 || (costGrowth == 0 && costFormula != CostFormula.Linear))
@@ -76,12 +85,14 @@ namespace MinersIdle.Core
             if (!Enum.IsDefined(typeof(CostFormula), costFormula)) throw new ArgumentOutOfRangeException(nameof(costFormula));
             if (maxLevel < 0) throw new ArgumentOutOfRangeException(nameof(maxLevel));
             if (double.IsNaN(effect)) throw new ArgumentOutOfRangeException(nameof(effect));
+            if (double.IsNaN(costOffset)) throw new ArgumentOutOfRangeException(nameof(costOffset));
 
             BaseCost = baseCost;
             CostGrowth = costGrowth;
             MaxLevel = maxLevel;
             Effect = effect;
             CostFormula = costFormula;
+            CostOffset = costOffset;
         }
 
         /// <summary>Custo da 1ª compra.</summary>
@@ -92,6 +103,8 @@ namespace MinersIdle.Core
         /// <summary>Número máximo de compras. 0 = linha desligada.</summary>
         public int MaxLevel { get; }
         public double Effect { get; }
+        /// <summary>Só na <see cref="CostFormula.DamageScaled"/>: o Dano Base dentro do custo (D-202: 1).</summary>
+        public double CostOffset { get; }
 
         public bool IsEnabled => MaxLevel > 0;
 
@@ -105,6 +118,8 @@ namespace MinersIdle.Core
             {
                 case CostFormula.Linear: return BaseCost + CostGrowth * level;
                 case CostFormula.OffsetExponential: return BaseCost + Math.Pow(CostGrowth, level);
+                case CostFormula.DamageScaled:
+                    return BaseCost * (CostOffset + Effect * level + Math.Pow(CostGrowth, level));
                 default: return BaseCost * Math.Pow(CostGrowth, level);
             }
         }

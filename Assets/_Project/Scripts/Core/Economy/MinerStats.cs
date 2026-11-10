@@ -38,8 +38,9 @@ namespace MinersIdle.Core
         /// (a leitura da D-133, alternativa no DBG; <see cref="MiningRules.PickaxeFormula"/>), × (Dupla.efeito se comprada) ×
         /// (Letrado.efeito da caverna 2 em diante, com o Letrado dela comprado: GDD v5, M8); crítico = Crítico.efeito × n;
         /// intervalo = max(mínimo, base − Velocidade.efeito × n); caminhada = base × (1 + Botas.efeito × n);
-        /// lascas = × (1 + Mineração.efeito × n). Desde o Marco 8b, as permanentes (D-158): o dano final × Sangue da
-        /// Montanha, as lascas × Coração Ardente e o crítico + Dedos Nervosos (<paramref name="permanents"/>; sem elas, nada).
+        /// lascas = × (1 + Mineração.efeito × n + Coração Ardente + Mineração do estagiário, D-209). Desde o Marco 8b, as permanentes (D-158): o dano final ×
+        /// Sangue da Montanha, o bônus do Coração Ardente somado ao da Mineração (D-208) e o crítico + Dedos Nervosos
+        /// (<paramref name="permanents"/>; sem elas, nada).
         /// </summary>
         public static MinerStats Compute(MiningRules rules, EconomyRules economy, GameState state, Permanents permanents = null)
         {
@@ -85,8 +86,12 @@ namespace MinersIdle.Core
                 rules.HitInterval - economy.Get(UpgradeId.Speed).Effect * Level(UpgradeId.Speed));
 
             double walk = rules.WalkSpeed * (1 + economy.Get(UpgradeId.Boots).Effect * Level(UpgradeId.Boots));
+            // D-208: os bônus somam, cada um no seu teto (Mineração +1000%, Coração Ardente +1000%). D-209: com o estagiário
+            // contratado, a Mineração dele (+1000% no teto) entra na mesma soma, em todo cristal: no máximo ×31.
             double reward = 1 + economy.Get(UpgradeId.Mining).Effect * Level(UpgradeId.Mining);
-            if (permanents != null) reward *= permanents.RewardMultiplier;
+            if (permanents != null) reward += permanents.RewardBonus;
+            if (economy.HasIntern && Level(UpgradeId.Intern) > 0)
+                reward += economy.Get(UpgradeId.InternMining).Effect * Level(UpgradeId.InternMining);
 
             double crit = economy.Get(UpgradeId.Critical).Effect * Level(UpgradeId.Critical);
             if (permanents != null) crit += permanents.CritBonus;

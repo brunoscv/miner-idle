@@ -32,6 +32,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: d6e0384dcb5723e4694bc80115caa918, type: 3}
     frame: {fileID: 21300000, guid: fb04680703a055442b0e7e674b0b125b, type: 3}
     boughtLabel: 
+    levelFromOne: 1
   - locked: 0
     upgrade: 1
     title: Velocidade
@@ -41,6 +42,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 6c0503e7d0cb10e429277ea89fa4e29b, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
     boughtLabel: 
+    levelFromOne: 0
   - locked: 0
     upgrade: 2
     title: "Minera\xE7\xE3o"
@@ -50,6 +52,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 5ba7230256d10df459817cd45d3ebb99, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     boughtLabel: 
+    levelFromOne: 0
   - locked: 0
     upgrade: 6
     title: "Cr\xEDtico"
@@ -59,6 +62,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 50cf080a7cf7fb1479b0aca7996f35fe, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
     boughtLabel: 
+    levelFromOne: 0
   - locked: 0
     upgrade: 3
     title: Picareta Dupla
@@ -68,6 +72,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 233b659d6f4cae84ca55b0f1d590c4fa, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
     boughtLabel: 
+    levelFromOne: 0
   - locked: 0
     upgrade: 4
     title: Botas
@@ -77,6 +82,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: c819af6df36966a478274cf421c71472, type: 3}
     frame: {fileID: 21300000, guid: e47ffb48b7ea79d4181e10e933e9c7c8, type: 3}
     boughtLabel: 
+    levelFromOne: 0
   - locked: 0
     upgrade: 7
     title: "Estagi\xE1rio"
@@ -86,6 +92,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 7d0c49568ce7df744b9d1fc7e04e6e96, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     boughtLabel: contratado
+    levelFromOne: 0
   - locked: 0
     upgrade: 5
     title: Mapa
@@ -95,6 +102,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: fe688fc9d091eda49b7a7c28a7db035e, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
     boughtLabel: 
+    levelFromOne: 0
   runTabLabel: MELHORIAS
   permanentsTabLabel: PERMANENTES
   permanentEntries:
@@ -165,6 +173,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: d6e0384dcb5723e4694bc80115caa918, type: 3}
     frame: {fileID: 21300000, guid: fb04680703a055442b0e7e674b0b125b, type: 3}
     boughtLabel: 
+    levelFromOne: 1
   - locked: 0
     upgrade: 9
     title: Velocidade
@@ -174,12 +183,14 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 6c0503e7d0cb10e429277ea89fa4e29b, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
     boughtLabel: 
+    levelFromOne: 0
   - locked: 0
     upgrade: 10
     title: "Minera\xE7\xE3o"
-    effectFormat: "Offline {0} \xBB {1}"
+    effectFormat: "Lascas {0} \xBB {1}"
     style: 2
     iconColor: {r: 0.7607843, g: 0.23529412, b: 1, a: 1}
     icon: {fileID: 21300000, guid: 5ba7230256d10df459817cd45d3ebb99, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     boughtLabel: 
+    levelFromOne: 0

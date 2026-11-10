@@ -289,7 +289,7 @@ namespace MinersIdle.Game
         }
 
         MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth, _calculation.PickaxeByCave);
-        EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep);
+        EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep, _calculation.PickaxeCaveGrowth);
 
         /// <summary>Apaga o save e começa do zero, as melhorias permanentes também (o "Apagar save" do debug).</summary>
         public void ResetProgress()

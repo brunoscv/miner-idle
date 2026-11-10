@@ -73,12 +73,13 @@ namespace MinersIdle.Tests
             Assert.That(_warning.text, Is.EqualTo("Cálculo: GDD v7"));
             Assert.That(Label("Balance"), Is.EqualTo("GDD v7"));
             Assert.That(Label("GrowthValue"), Is.EqualTo("Taxa 1,2"));
-            Assert.That(Label("StepValue"), Is.EqualTo("Incremento 1"));
+            Assert.That(Label("StepValue"), Is.EqualTo("Incremento 0"), "o Dano Base não sobe com a compra (D-202)");
             Assert.That(_warning.transform.IsChildOf(_panel.transform), Is.True, "o aviso é do DBG: some no release");
 
             yield return null; // o menu aberto atualiza a linha da Picareta
             var pickaxe = _panel.transform.Find("CalcMenu/Content/Pickaxe").GetComponent<TMP_Text>();
             Assert.That(pickaxe.text, Does.Contain("dano agora 2"), "Dano Base 1 + 1,2^0");
+            Assert.That(pickaxe.text, Does.StartWith("Picareta nv 1 "), "nível 1 = sem compra (D-207)");
         }
 
         [UnityTest]
@@ -97,20 +98,23 @@ namespace MinersIdle.Tests
             Assert.That(_runner.Calculation.PickaxeCaveGrowth, Is.EqualTo(1.22).Within(1e-9));
             Assert.That(_runner.Simulation.State.Cave, Is.EqualTo(10), "a taxa não recomeça a run");
             Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(shards));
-            Assert.That(_runner.Simulation.Stats.Damage, Is.EqualTo(3 + Math.Pow(1.22, 2)).Within(1e-9),
-                        "Picareta nível 3 (D-201): Dano Base 3 + 1,22^(3 − 1); a caverna não entra");
+            Assert.That(_runner.Simulation.Stats.Damage, Is.EqualTo(1 + Math.Pow(1.22, 2)).Within(1e-9),
+                        "Picareta nível 3 (D-202): Dano Base 1 + 1,22^(3 − 1); a caverna não entra");
+            Assert.That(_runner.Simulation.Preview(UpgradeId.Pickaxe).NextCost, Is.EqualTo(2.1 * (1 + Math.Pow(1.22, 2))).Within(1e-9),
+                        "o custo acompanha a taxa: 2,1 × o dano (D-202)");
             Assert.That(Label("GrowthValue"), Is.EqualTo("Taxa 1,22"));
             Assert.That(_warning.text, Is.EqualTo("Cálculo: GDD v7 · Picareta taxa 1,22"));
             Assert.That(_warning.color, Is.Not.EqualTo(normal), "fora do GDD, em âmbar");
 
             Click("StepPlus");
-            Assert.That(_runner.Calculation.PickaxeStep, Is.EqualTo(2));
+            Assert.That(_runner.Calculation.PickaxeStep, Is.EqualTo(1));
             double before = _runner.Simulation.Stats.Damage;
             Assert.That(_runner.Simulation.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
-            Assert.That(_runner.Simulation.Stats.Damage - before, Is.EqualTo(2 + Math.Pow(1.22, 3) - Math.Pow(1.22, 2)).Within(1e-9),
-                        "a compra soma 2 no Dano Base e sobe a Picareta para o nível 4");
-            Assert.That(_runner.Simulation.Preview(UpgradeId.Pickaxe).NextCost, Is.EqualTo(14), "3 compras com incremento 2: 2 + 4 × 3");
-            Assert.That(_warning.text, Is.EqualTo("Cálculo: GDD v7 · Picareta taxa 1,22 · Picareta incremento 2"));
+            Assert.That(_runner.Simulation.Stats.Damage - before, Is.EqualTo(1 + Math.Pow(1.22, 3) - Math.Pow(1.22, 2)).Within(1e-9),
+                        "a compra soma 1 no Dano Base e sobe a Picareta para o nível 4");
+            Assert.That(_runner.Simulation.Preview(UpgradeId.Pickaxe).NextCost, Is.EqualTo(2.1 * (1 + 1 * 3 + Math.Pow(1.22, 3))).Within(1e-9),
+                        "3 compras com incremento 1: 2,1 × (Dano Base 4 + 1,22^3)");
+            Assert.That(_warning.text, Is.EqualTo("Cálculo: GDD v7 · Picareta taxa 1,22 · Picareta incremento 1"));
 
             Click("GrowthValue"); // tocar no valor volta ao GDD
             Click("StepMinus");
@@ -133,12 +137,14 @@ namespace MinersIdle.Tests
             _runner.Simulation.SkipToCave(10);
             _runner.Simulation.AddShards(100);
             _runner.Simulation.Purchase(UpgradeId.Pickaxe);
-            Assert.That(_runner.Simulation.Stats.Damage, Is.EqualTo(2 + 1.2).Within(1e-9), "pela compra: Dano Base 2 + 1,2^1");
+            Assert.That(_runner.Simulation.Stats.Damage, Is.EqualTo(1 + 1.2).Within(1e-9), "pela compra: Dano Base 1 + 1,2^1 (D-202)");
             double shards = _runner.Simulation.State.Shards;
 
             button.GetComponent<Button>().onClick.Invoke();
             Assert.That(_runner.Calculation.PickaxeByCave, Is.True);
-            Assert.That(_runner.Simulation.Stats.Damage, Is.EqualTo(2 + Math.Pow(1.2, 9)).Within(1e-9), "pela caverna: Dano Base 2 + 1,2^9");
+            Assert.That(_runner.Simulation.Stats.Damage, Is.EqualTo(1 + Math.Pow(1.2, 9)).Within(1e-9), "pela caverna: Dano Base 1 + 1,2^9");
+            Assert.That(_runner.Simulation.Preview(UpgradeId.Pickaxe).NextCost, Is.EqualTo(2.1 * (1 + 1.2)).Within(1e-9),
+                        "o custo continua pelo nível da compra (D-202)");
             Assert.That(_runner.Simulation.State.Cave, Is.EqualTo(10), "não recomeça a run");
             Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(shards));
             Assert.That(label.text, Is.EqualTo("Picareta: caverna"));

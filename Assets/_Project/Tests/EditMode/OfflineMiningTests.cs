@@ -33,7 +33,7 @@ namespace MinersIdle.Tests
             letrado: new UpgradeDefinition(0, 1, 100, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05),
             intern: new UpgradeDefinition(500, 1, 1, 1),
-            internPickaxe: new UpgradeDefinition(50, 4, 20, 5),
+            internPickaxe: new UpgradeDefinition(50, 4, 19, 5),
             internSpeed: new UpgradeDefinition(50, 5, 19, 0.1),
             internMining: new UpgradeDefinition(50, 1.2, 10, 1),
             internPickaxeGrowth: 2);
@@ -73,7 +73,7 @@ namespace MinersIdle.Tests
             Assert.That(report.SecondsCounted, Is.EqualTo(Hour), "o tempo conta, mas ninguém minera");
         }
 
-        /// <summary>O exemplo do plano: recém-contratado no nível 15, dano 1 a cada 2,0 s.</summary>
+        /// <summary>O exemplo do plano, com o estagiário da D-205: recém-contratado no nível 15, dano 5 a cada 2,0 s.</summary>
         [Test]
         public void FreshIntern_AtLevel15_IsThePlanExample()
         {
@@ -81,11 +81,11 @@ namespace MinersIdle.Tests
 
             double health = Math.Pow(1.25, 14); // 22,7
             Assert.That(report.Hired, Is.True);
-            Assert.That(report.HitsPerCrystal, Is.EqualTo(23), "⌈22,7 ÷ 1⌉");
-            Assert.That(report.SecondsPerCrystal, Is.EqualTo(0.5 + 22 * 2.0).Within(1e-9), "corrida + 22 intervalos (o 1º na chegada)");
-            Assert.That(report.Crystals, Is.EqualTo(80), "⌊3600 ÷ 44,5⌋");
+            Assert.That(report.HitsPerCrystal, Is.EqualTo(5), "⌈22,7 ÷ 5⌉");
+            Assert.That(report.SecondsPerCrystal, Is.EqualTo(0.5 + 4 * 2.0).Within(1e-9), "corrida + 4 intervalos (o 1º na chegada)");
+            Assert.That(report.Crystals, Is.EqualTo(423), "⌊3600 ÷ 8,5⌋");
             Assert.That(report.ShardsPerCrystal, Is.EqualTo(1.2 * health).Within(1e-9), "lascas = vida × 1,2, sem Mineração");
-            Assert.That(report.Shards, Is.EqualTo(80 * 1.2 * health).Within(1e-6));
+            Assert.That(report.Shards, Is.EqualTo(423 * 1.2 * health).Within(1e-6));
         }
 
         [Test]
@@ -109,9 +109,9 @@ namespace MinersIdle.Tests
             var state = At(15, (UpgradeId.Intern, 1));
             var plain = Compute(state, Hour);
 
-            // Treinar 10: dano dele ×2 (0,1 por nível) → ⌈22,7 ÷ 2⌉ = 12 golpes.
+            // Treinar 10: dano dele ×2 (0,1 por nível): 5 → 10, ⌈22,7 ÷ 10⌉ = 3 golpes.
             var trained = Compute(state, Hour, permanents: With(PermanentId.InternTraining, 10));
-            Assert.That(trained.HitsPerCrystal, Is.EqualTo(12));
+            Assert.That(trained.HitsPerCrystal, Is.EqualTo(3));
             Assert.That(trained.Crystals, Is.GreaterThan(plain.Crystals));
 
             // Coração Ardente (lascas do anão) e Sangue da Montanha (dano do anão) não valem (D-194).
@@ -170,10 +170,10 @@ namespace MinersIdle.Tests
         [Test]
         public void HighLevel_WeakIntern_MayBreakNothing()
         {
-            // Nível 100: vida 1,25^99 ≈ 3,8 bi; dano 1 a cada 2 s não quebra nenhum em 6 h.
+            // Nível 100: vida 1,25^99 ≈ 3,9 bi; dano 5 a cada 2 s (≈ 785 mi golpes) não quebra nenhum em 6 h.
             var report = Compute(At(100, (UpgradeId.Intern, 1)), 6 * Hour);
 
-            Assert.That(report.HitsPerCrystal, Is.GreaterThan(1_000_000_000L));
+            Assert.That(report.HitsPerCrystal, Is.GreaterThan(700_000_000L));
             Assert.That(report.Crystals, Is.EqualTo(0));
             Assert.That(report.Shards, Is.EqualTo(0));
             Assert.That(double.IsInfinity(report.SecondsPerCrystal), Is.False);

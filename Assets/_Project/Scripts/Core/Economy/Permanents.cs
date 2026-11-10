@@ -56,8 +56,11 @@ namespace MinersIdle.Core
         /// <summary>Sangue da Montanha: multiplica o dano final (D-158).</summary>
         public double DamageMultiplier => 1 + Effect(PermanentId.MountainBlood);
 
-        /// <summary>Coração Ardente: multiplica as lascas de cada quebra (D-158; 20 × 50% = o teto de +1000%).</summary>
-        public double RewardMultiplier => 1 + Effect(PermanentId.BurningHeart);
+        /// <summary>
+        /// Coração Ardente: a fração de lascas a mais em cada quebra (0,5 por nível; 20 × 50% = o teto de +1000%). Soma
+        /// com a Mineração, cada uma no seu teto (D-208): Mineração 1 + Coração 1 = 1 + 1 + 0,5 = ×2,5.
+        /// </summary>
+        public double RewardBonus => Effect(PermanentId.BurningHeart);
 
         /// <summary>Dedos Nervosos: chance de crítico a mais, no golpe e no toque (D-158).</summary>
         public double CritBonus => Effect(PermanentId.NervousFingers);

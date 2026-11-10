@@ -69,6 +69,10 @@ namespace MinersIdle.EditorTools
                 else if (id == UpgradeId.Mining) mining = entry;
             }
 
+            // D-207: as duas Picaretas contam o nível a partir de 1 (nível 1 = sem compra), como no GDD do Apellon.
+            changed |= MarkLevelFromOne(so.FindProperty("entries"), UpgradeId.Pickaxe);
+            changed |= MarkLevelFromOne(so.FindProperty("internEntries"), UpgradeId.InternPickaxe);
+
             if (string.IsNullOrEmpty(so.FindProperty("internTabLabel").stringValue))
             {
                 so.FindProperty("internTabLabel").stringValue = "ESTAGIÁRIO";
@@ -81,7 +85,7 @@ namespace MinersIdle.EditorTools
             {
                 AddUpgrade(intern, UpgradeId.InternPickaxe, "Picareta", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, pickaxe);
                 AddUpgrade(intern, UpgradeId.InternSpeed, "Velocidade", "Golpe a cada {0} » {1}", ShopCatalog.EffectStyle.Seconds, speed);
-                AddUpgrade(intern, UpgradeId.InternMining, "Mineração", "Offline {0} » {1}", ShopCatalog.EffectStyle.BonusPercent, mining);
+                AddUpgrade(intern, UpgradeId.InternMining, "Mineração", "Lascas {0} » {1}", ShopCatalog.EffectStyle.BonusPercent, mining); // D-209: online e offline
                 changed = true;
             }
 
@@ -107,6 +111,22 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Estagiário na loja: a linha de compra, a aba ESTAGIÁRIO e Treinar/Promoção (M7, E3, D-174).");
+        }
+
+        static bool MarkLevelFromOne(SerializedProperty entries, UpgradeId id)
+        {
+            bool changed = false;
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var entry = entries.GetArrayElementAtIndex(i);
+                if (entry.FindPropertyRelative("locked").boolValue) continue;
+                if ((UpgradeId)entry.FindPropertyRelative("upgrade").enumValueIndex != id) continue;
+                var flag = entry.FindPropertyRelative("levelFromOne");
+                if (flag.boolValue) continue;
+                flag.boolValue = true;
+                changed = true;
+            }
+            return changed;
         }
 
         static void AddUpgrade(SerializedProperty entries, UpgradeId id, string title, string effect,

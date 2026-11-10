@@ -21,10 +21,11 @@ namespace MinersIdle.Tests
                 initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2,
                 spawnDistance: 12, crystalHealth: 1, crystalReward: 1.2, damage: 1, hitInterval: 1, walkSpeed: 4,
                 miningRange: 1, caveCount: caves, caveHealthGrowth: 1.25, caveRewardGrowth: 1.25,
-                pickaxeFormula: PickaxeFormula.CaveScaled, pickaxeCaveGrowth: 1.2);
+                pickaxeFormula: PickaxeFormula.LevelScaled, pickaxeCaveGrowth: 1.2);
 
+        /// <summary>A Picareta pela tabela do Apellon (D-202): Dano Base fixo em 1, custo 2,1 × o dano.</summary>
         static EconomyRules V7() => new EconomyRules(
-            pickaxe: new UpgradeDefinition(2, 2, 49, 1, CostFormula.Linear),
+            pickaxe: new UpgradeDefinition(2.1, 1.2, 49, 0, CostFormula.DamageScaled, costOffset: 1),
             speed: new UpgradeDefinition(50, 2, 19, 0.1),
             mining: new UpgradeDefinition(20, 5, 10, 1),
             doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
@@ -193,6 +194,36 @@ namespace MinersIdle.Tests
             Assert.That(sim.State.Shards, Is.EqualTo(crystal.Reward * 2).Within(1e-9), "lascas × (1 + 0,5 × 2)");
         }
 
+        /// <summary>
+        /// D-208: Mineração e Coração Ardente somam, cada um no seu teto de +1000%. O exemplo do Bruno: um cristal de 1
+        /// lasca com Mineração 1 (+100%) e Coração 1 (+50%) dá 1 + 1 + 0,5 = 2,5.
+        /// </summary>
+        [TestCase(1, 1, 2.5)]
+        [TestCase(5, 4, 8.0)]
+        [TestCase(10, 20, 21.0)]
+        [TestCase(0, 2, 2.0)]
+        [TestCase(3, 0, 4.0)]
+        public void MiningAndBurningHeart_Add_EachUpToItsOwnCap(int mining, int heart, double multiplier)
+        {
+            var state = GameState.Restore(0, 0, 0, id => id == UpgradeId.Mining ? mining : 0, V7(), 100);
+            var sim = Sim(WithLevel(PermanentId.BurningHeart, heart), state);
+            Assert.That(sim.Stats.RewardMultiplier, Is.EqualTo(multiplier).Within(1e-9));
+
+            var crystal = sim.SpawnCrystalAt(5);
+            double reward = crystal.Reward;
+            sim.Tick(10);
+            Assert.That(sim.State.Breaks, Is.EqualTo(1));
+            Assert.That(sim.State.Shards, Is.EqualTo(reward * multiplier).Within(1e-9), "as lascas da quebra");
+        }
+
+        [Test]
+        public void MiningAndBurningHeart_AboveTheirLimits_StayAtTheCap()
+        {
+            var state = GameState.Restore(0, 0, 0, id => id == UpgradeId.Mining ? 99 : 0, V7(), 100);
+            var sim = Sim(WithLevel(PermanentId.BurningHeart, 99), state);
+            Assert.That(sim.Stats.RewardMultiplier, Is.EqualTo(21).Within(1e-9), "1 + 10 + 10: cada uma no seu +1000%");
+        }
+
         [Test]
         public void NervousFingers_AddsToTheCriticalChance()
         {
@@ -221,8 +252,9 @@ namespace MinersIdle.Tests
             Assert.That(run.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(3));
 
             var next = Sim(WithLevel(PermanentId.DwarfSoul, 3), run);
-            Assert.That(next.Stats.Damage, Is.EqualTo(1 + 3 + 1).Within(1e-9), "Dano Base 4 + 1,2^0");
-            Assert.That(next.Preview(UpgradeId.Pickaxe).NextCost, Is.EqualTo(8), "2 × Dano Base 4 (D-133)");
+            Assert.That(next.Stats.Damage, Is.EqualTo(1 + Math.Pow(1.2, 3)).Within(1e-9), "Picareta nível 4: Dano Base 1 + 1,2^3");
+            Assert.That(next.Preview(UpgradeId.Pickaxe).NextCost, Is.EqualTo(2.1 * (1 + Math.Pow(1.2, 3))).Within(1e-9),
+                        "2,1 × o dano do nível 4 (D-202)");
         }
 
         [Test]
