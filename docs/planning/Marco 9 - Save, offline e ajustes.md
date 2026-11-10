@@ -52,6 +52,8 @@ O segundo caso mostra um limite da conta: com um golpe por cristal, quem manda �
 
 ## Perguntas para o Bruno
 
+> **Respondidas em 2026-11-10:** todas com a recomendação (P1…P8 → D-193…D-200; P9 → D-192).
+
 **P1 — A conta do offline.** O ritmo do jogo aberto sem o anão, como acima: corrida de 0,5 s entre cristais, primeiro golpe na chegada, os outros a cada intervalo dele?
 **Rec.:** sim. É a regra que o jogador já vê na tela; o DBG mostra a conta para o time avaliar.
 
@@ -164,7 +166,7 @@ Total: **~24–31 h** (o Roadmap estimava 40–55 h com o AD, que saiu daqui).
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 📝 escrito em 2026-11-10; P9 decidida (D-192) e offline sem som nem vibração (D-191); aguardando P1…P8 | — |
+| Plano | ✅ aprovado em 2026-11-10: P1…P8 com as recomendações (D-193…D-200), P9 (D-192), offline sem som nem vibração (D-191). E1 ainda não começou (a pedido do Bruno) | — |
 | E1 Núcleo do offline, save v5 e DBG → Offline | ⏳ | — |
 | E2 Modal "Bem-vindo de volta" | ⏳ | — |
 | E3 Save que aguenta tudo | ⏳ | — |

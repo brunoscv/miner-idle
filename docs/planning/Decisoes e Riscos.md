@@ -257,6 +257,19 @@
 | **D-191** | **O offline é só conta, sem apresentação:** com o jogo minimizado ou fechado, nada toca, nada vibra e nada anda na tela. O que o estagiário teria minerado é **calculado** a partir do tempo fora, como se ele estivesse de fato dando os golpes, e o resultado entra quando o jogador volta. A vibração do plano do M9 (P7) é **só do jogo aberto**. | M9 |
 | **D-192** | **Só o M9 e os Bônus temporários, nessa ordem (P9 do plano do M9):** o M9 começa já; a E4 do M7 e a E5 do 8b **não entram agora** (exceção à regra de aprovar o marco anterior antes do próximo). Nenhum outro marco começa sem nova decisão. | Roadmap |
 
+### 1.12 Plano do M9, decidido pelo Bruno em 2026-11-10 (aprovou as recomendações P1…P8)
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-193** | **A conta do offline (P1):** o ritmo do jogo aberto sem o anão. Por cristal: k = ⌈vida ÷ dano do estagiário⌉ golpes; tempo = 0,5 s de corrida + (k − 1) × intervalo dele (o 1º golpe é na chegada). Cristais = ⌊tempo fora (até 6 h) ÷ tempo por cristal⌋; lascas = cristais × lascas do nível × (1 + Mineração dele). Calculado em trechos, para os bônus que ainda estiverem ativos (D-181). | M9 |
+| **D-194** | **Coração Ardente não vale no offline (P2):** é permanente do anão. Offline só o que é do estagiário (a Mineração dele e o Treinar). | M9 |
+| **D-195** | **Minimizar conta como offline (P3):** o mesmo caminho de fechar e abrir. Com menos de **60 s** fora, as lascas entram direto, sem modal. | M9 |
+| **D-196** | **Relógio do aparelho (P4):** se a hora voltou (antes da hora do save), o offline é **0**, sem erro, e a hora nova passa a valer. Se adiantou, não dá para saber sem servidor; o teto de 6 h limita o ganho (risco aceito: jogo sem ranking nem compra). | M9 |
+| **D-197** | **Modal "Bem-vindo de volta" (P5):** as lascas entram ao tocar **COLETAR**. O modal mostra o tempo fora ("máx. 6 h" quando passou), as lascas e o estagiário. As lascas contam nas lascas ganhas do dia (resumo do Descansar). Mockup 270×480 antes do código. | M9 |
+| **D-198** | **Tela AJUSTES (P6):** volume dos efeitos (deslizador), tremor da tela, vibração (liga/desliga), **Apagar save** com confirmação e **Créditos** (do `CREDITS.md`, em dados). Música fica para o M10. Mockup 270×480 antes do código. | M9 |
+| **D-199** | **Vibração, só com o jogo aberto (P7, D-191):** curta no **crítico**, mais longa na **quebra da parede**; nada no toque comum. | M9 |
+| **D-200** | **Ajustes num arquivo à parte (P8):** `settings.json`. **Apagar save não mexe nos ajustes.** | M9 |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.
