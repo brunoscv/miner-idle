@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MinersIdle.Core
 {
@@ -37,6 +38,12 @@ namespace MinersIdle.Core
         /// <summary>A volta do offline esperando o COLETAR (M9, E2, D-197); vazia quando não há.</summary>
         public OfflineReturn PendingOffline { get; private set; }
 
+        /// <summary>
+        /// Os bônus com tempo valendo agora (M9b): os do combo. Vão para o save (D-181) e acabam com a run (D-213: o
+        /// descanso começa um <see cref="GameState"/> novo).
+        /// </summary>
+        public ActiveBonuses Bonuses { get; } = new ActiveBonuses();
+
         /// <summary>Nível da melhoria = compras feitas (D-38).</summary>
         public int LevelOf(UpgradeId id) => _levels[(int)id];
 
@@ -55,7 +62,7 @@ namespace MinersIdle.Core
                                         Func<UpgradeId, int> levelOf, EconomyRules economy,
                                         int caveCount = 1, int cave = 1, long caveBreaks = 0, double playSeconds = 0,
                                         double shardsEarned = 0, bool reachedHeart = false,
-                                        OfflineReturn pendingOffline = default)
+                                        OfflineReturn pendingOffline = default, IEnumerable<ActiveBonus> bonuses = null)
         {
             if (levelOf == null) throw new ArgumentNullException(nameof(levelOf));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
@@ -71,6 +78,7 @@ namespace MinersIdle.Core
                 ShardsEarned = NonNegative(shardsEarned),
                 PendingOffline = pendingOffline,
             };
+            state.Bonuses.Restore(bonuses);
             foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
                 state._levels[(int)id] = Math.Min(Math.Max(0, levelOf(id)), economy.Get(id).MaxLevel);
 

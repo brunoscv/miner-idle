@@ -83,6 +83,9 @@ namespace MinersIdle.Tests
             // primeira vez (51 alocações na medição, 2 na segunda vez).
             for (int i = 0; i < 10; i++) _runner.Simulation.Tap();
             yield return Settle();
+            // Desde o M9b, parar no x10 dá +10% por 5 s: o fim dele (DANO do HUD redesenhado) cairia no meio das medidas.
+            _runner.Simulation.ClearBonuses();
+            yield return null;
         }
 
         /// <summary>

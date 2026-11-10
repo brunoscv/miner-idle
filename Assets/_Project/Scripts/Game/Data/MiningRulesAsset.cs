@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MinersIdle.Core;
 using UnityEngine;
 
@@ -121,6 +122,12 @@ namespace MinersIdle.Game
                  "termina o golpe parado e só então corre. Nunca passa do intervalo. 0,72 = os 9 quadros de 80 ms da folha (D-75); 0 desliga.")]
         [SerializeField] double swingRecovery = 0.72;
 
+        [Header("Bônus do combo (M9b; GDD v7 §3.4)")]
+        [Tooltip("Os marcos do combo que viram bônus com tempo quando o jogador para de tocar (D-96). Vazio = sem bônus " +
+                 "(os balanços até o v5). GDD v7: ×10 +10% de dano por 5 s, ×30 +15% por 10 s, ×50 crítico garantido por 20 s, " +
+                 "×100 Frenesi +50% por 30 s.")]
+        [SerializeField] ComboBonusValues[] comboBonuses = new ComboBonusValues[0];
+
         [Header("Dia e melhorias permanentes (Marco 8b; custo em lascas vermelhas, D-158)")]
         [Tooltip("Nível a partir do qual o Descansar aparece e as lascas vermelhas começam (D-138, D-152). GDD v7: 10. 0 desliga.")]
         [SerializeField] int restLevel;
@@ -195,7 +202,25 @@ namespace MinersIdle.Game
         }
 
         public StrikeRules ToStrike() =>
-            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance);
+            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses());
+
+        /// <summary>Os marcos do combo do asset; os mal preenchidos (combo &lt; 1, duração 0, repetidos) ficam de fora, com aviso.</summary>
+        List<ComboBonusRule> ComboBonuses()
+        {
+            var list = new List<ComboBonusRule>();
+            if (comboBonuses == null) return list;
+            foreach (var values in comboBonuses)
+            {
+                if (values == null) continue;
+                if (!values.IsValid || list.Exists(r => r.Combo == values.Combo))
+                {
+                    Debug.LogWarning($"[Valores] Marco do combo ×{values.Combo} inválido ou repetido em {name}: ignorado.", this);
+                    continue;
+                }
+                list.Add(values.ToRule());
+            }
+            return list;
+        }
 
         /// <param name="pickaxeStep">
         /// O incremento trocado no DBG → Cálculos (E3b-3); <c>null</c> = o do asset. Não vale no Multiply (v5). Na fórmula
@@ -230,6 +255,35 @@ namespace MinersIdle.Game
                 : line.CostGrowth;
             return new UpgradeDefinition(line.BaseCost, costGrowth, line.MaxLevel, step.Value, line.CostFormula);
         }
+    }
+
+    /// <summary>Um marco do combo no Inspector (vira uma <see cref="ComboBonusRule"/> do Núcleo).</summary>
+    [Serializable]
+    public sealed class ComboBonusValues
+    {
+        [Tooltip("O combo que é preciso alcançar antes de parar de tocar.")]
+        [SerializeField] int combo;
+        [Tooltip("DamagePercent: +% de dano no golpe e no toque. GuaranteedCritical: todo golpe e todo toque saem críticos.")]
+        [SerializeField] BonusKind kind;
+        [Tooltip("O efeito: 0,1 = +10% de dano. Sem uso no crítico garantido.")]
+        [SerializeField] double value;
+        [Tooltip("Quanto dura, em segundos de jogo.")]
+        [SerializeField] double seconds;
+
+        /// <summary>Para o serializador do Unity.</summary>
+        public ComboBonusValues() { }
+
+        public ComboBonusValues(int combo, BonusKind kind, double value, double seconds)
+        {
+            this.combo = combo;
+            this.kind = kind;
+            this.value = value;
+            this.seconds = seconds;
+        }
+
+        public int Combo => combo;
+        public bool IsValid => combo >= 1 && seconds > 0 && !double.IsNaN(value) && value >= 0 && Enum.IsDefined(typeof(BonusKind), kind);
+        public ComboBonusRule ToRule() => new ComboBonusRule(combo, kind, value, seconds);
     }
 
     /// <summary>Uma linha de melhoria no Inspector (vira uma <see cref="UpgradeDefinition"/> do Núcleo).</summary>

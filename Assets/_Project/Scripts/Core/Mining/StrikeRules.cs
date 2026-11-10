@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MinersIdle.Core
 {
@@ -10,8 +11,13 @@ namespace MinersIdle.Core
     public sealed class StrikeRules
     {
         /// <param name="tapCritChance">Chance base do toque; <c>null</c> = a mesma do golpe (o jogo até o GDD v5).</param>
+        /// <param name="comboBonuses">
+        /// Os marcos do combo que dão bônus ao parar de tocar (M9b, GDD v7 §3.4); <c>null</c> = nenhum (o jogo até o M9).
+        /// Cada marco aparece uma vez.
+        /// </param>
         public StrikeRules(double critChance, double critMultiplier, double tapFraction, double comboWindow,
-                           int maxTapsPerSecond = 0, double? tapCritChance = null)
+                           int maxTapsPerSecond = 0, double? tapCritChance = null,
+                           IEnumerable<ComboBonusRule> comboBonuses = null)
         {
             if (double.IsNaN(critChance) || critChance < 0 || critChance > 1) throw new ArgumentOutOfRangeException(nameof(critChance));
             double tapCrit = tapCritChance ?? critChance;
@@ -27,6 +33,13 @@ namespace MinersIdle.Core
             TapFraction = tapFraction;
             ComboWindow = comboWindow;
             MaxTapsPerSecond = maxTapsPerSecond;
+
+            var bonuses = comboBonuses == null ? new List<ComboBonusRule>() : new List<ComboBonusRule>(comboBonuses);
+            bonuses.Sort((a, b) => a.Combo.CompareTo(b.Combo));
+            for (int i = 1; i < bonuses.Count; i++)
+                if (bonuses[i].Combo == bonuses[i - 1].Combo)
+                    throw new ArgumentException($"O marco ×{bonuses[i].Combo} do combo aparece duas vezes.", nameof(comboBonuses));
+            ComboBonuses = bonuses;
         }
 
         /// <summary>Chance base de crítico do golpe automático (0–1; GDD v7: 0%, D-136).</summary>
@@ -44,6 +57,8 @@ namespace MinersIdle.Core
         /// ignorado: sem dano, sem crítico, sem combo. 0 = sem teto (os testes do M5).
         /// </summary>
         public int MaxTapsPerSecond { get; }
+        /// <summary>Os marcos do combo com bônus (M9b), do menor para o maior; vazio = sem bônus de combo.</summary>
+        public IReadOnlyList<ComboBonusRule> ComboBonuses { get; }
 
         /// <summary>Sem crítico nem teto; toque e combo como no GDD. É o padrão de quem não passa regras (testes do M2–M4).</summary>
         public static StrikeRules NoCritical() => new StrikeRules(0, 2, 0.1, 1);

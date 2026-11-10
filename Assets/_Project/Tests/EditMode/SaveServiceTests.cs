@@ -205,7 +205,7 @@ namespace MinersIdle.Tests
             Assert.That(loaded.PlaySeconds, Is.EqualTo(25).Within(1e-9));
             Assert.That(loaded.ShardsEarned, Is.EqualTo(state.ShardsEarned).And.GreaterThan(0));
             Assert.That(loaded.ReachedHeart, Is.False);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*5"), "save v5 (M9, E1)");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*6"), "save v6 (M9b, E1)");
         }
 
         [Test]
@@ -228,7 +228,7 @@ namespace MinersIdle.Tests
             Assert.That(sim.CanPassCave, Is.True, "o botão de passar volta");
 
             _save.Save(state);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*5"), "regravado na versão nova");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*6"), "regravado na versão nova");
         }
 
         /// <summary>
@@ -259,7 +259,7 @@ namespace MinersIdle.Tests
             Assert.That(end.ReachedHeart, Is.False, "o coração passou para o nível 100");
 
             _save.Save(end);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*5"));
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*6"));
         }
 
         [Test]

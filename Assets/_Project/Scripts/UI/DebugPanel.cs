@@ -99,6 +99,9 @@ namespace MinersIdle.UI
         [Tooltip("DBG → Offline (M9, E1): simular o jogo fechado e voltar o relógio.")]
         [SerializeField] Button offlineButton;
         [SerializeField] DebugMenu offlineMenu;
+        [Tooltip("DBG → Bônus (M9b, E1): os bônus de um combo ×10…×100 sem tocar, Limpar e os ativos com o tempo.")]
+        [SerializeField] Button bonusButton;
+        [SerializeField] DebugMenu bonusMenu;
 
         readonly object[] _statsArgs = new object[16];
 
@@ -155,6 +158,7 @@ namespace MinersIdle.UI
             if (dayButton != null) dayButton.onClick.AddListener(ToggleDay);
             if (internButton != null) internButton.onClick.AddListener(ToggleIntern);
             if (offlineButton != null) offlineButton.onClick.AddListener(ToggleOffline);
+            if (bonusButton != null) bonusButton.onClick.AddListener(ToggleBonus);
         }
 
         void OnDisable()
@@ -191,6 +195,7 @@ namespace MinersIdle.UI
             if (dayButton != null) dayButton.onClick.RemoveListener(ToggleDay);
             if (internButton != null) internButton.onClick.RemoveListener(ToggleIntern);
             if (offlineButton != null) offlineButton.onClick.RemoveListener(ToggleOffline);
+            if (bonusButton != null) bonusButton.onClick.RemoveListener(ToggleBonus);
         }
 
         void Update()
@@ -231,6 +236,7 @@ namespace MinersIdle.UI
             if (dayMenu != null) dayMenu.Hide();
             if (internMenu != null) internMenu.Hide();
             if (offlineMenu != null) offlineMenu.Hide();
+            if (bonusMenu != null) bonusMenu.Hide();
         }
 
         static bool IsMenuOpen(DebugMenu menu) => menu != null && menu.IsOpen;
@@ -242,6 +248,7 @@ namespace MinersIdle.UI
         void ToggleDay() => ToggleMenu(dayMenu);
         void ToggleIntern() => ToggleMenu(internMenu);
         void ToggleOffline() => ToggleMenu(offlineMenu);
+        void ToggleBonus() => ToggleMenu(bonusMenu);
 
         void SetSpeed1() => runner.TimeScale = 1f;
         void SetSpeed5() => runner.TimeScale = 5f;

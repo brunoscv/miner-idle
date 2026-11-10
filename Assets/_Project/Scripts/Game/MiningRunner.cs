@@ -150,6 +150,8 @@ namespace MinersIdle.Game
         {
             if (paused)
             {
+                // D-214: ir para o fundo termina o combo na hora; os bônus dele entram e vão para o save.
+                Simulation?.EndCombo();
                 SaveNow();
                 return;
             }
@@ -158,7 +160,11 @@ namespace MinersIdle.Game
             if (_save != null && _awaySinceUtc.HasValue) ReturnFromAway(_awaySinceUtc.Value);
         }
 
-        void OnApplicationQuit() => SaveNow();
+        void OnApplicationQuit()
+        {
+            Simulation?.EndCombo(); // D-214, como na pausa
+            SaveNow();
+        }
 
         void OnDestroy()
         {

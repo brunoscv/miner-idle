@@ -93,6 +93,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV7HundredLevels();
             EnsureGddV7Permanents();
             EnsureGddV7Intern();
+            EnsureGddV7ComboBonuses();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -548,6 +549,41 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v7: o Estagiário (500), a árvore dele e o Treinar e a Promoção (M7, D-164, D-165).");
+        }
+
+        /// <summary>
+        /// M9b, E1 (GDD v7 §3.4; D-96, D-178): no v7, os quatro marcos do combo, que viram bônus ao parar de tocar: ×10 +10%
+        /// de dano por 5 s, ×30 +15% por 10 s, ×50 crítico garantido por 20 s e ×100 Frenesi, +50% por 30 s. Só preenche a
+        /// lista vazia: um ajuste feito à mão no Inspector fica.
+        /// </summary>
+        static void EnsureGddV7ComboBonuses()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var list = serialized.FindProperty("comboBonuses");
+            if (list.arraySize > 0) return;
+
+            (int combo, BonusKind kind, double value, double seconds)[] tiers =
+            {
+                (10, BonusKind.DamagePercent, 0.10, 5),
+                (30, BonusKind.DamagePercent, 0.15, 10),
+                (50, BonusKind.GuaranteedCritical, 0, 20),
+                (100, BonusKind.DamagePercent, 0.50, 30),
+            };
+            list.arraySize = tiers.Length;
+            for (int i = 0; i < tiers.Length; i++)
+            {
+                var item = list.GetArrayElementAtIndex(i);
+                item.FindPropertyRelative("combo").intValue = tiers[i].combo;
+                item.FindPropertyRelative("kind").enumValueIndex = (int)tiers[i].kind;
+                item.FindPropertyRelative("value").doubleValue = tiers[i].value;
+                item.FindPropertyRelative("seconds").doubleValue = tiers[i].seconds;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v7: os marcos do combo ×10, ×30, ×50 e ×100 viram bônus com tempo (M9b, D-96).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

@@ -182,7 +182,22 @@ namespace MinersIdle.Persistence
                 : default;
             return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
                                      data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart,
-                                     pending);
+                                     pending, data.version >= 6 ? RestoreBonuses(data.bonuses) : null);
+        }
+
+        /// <summary>Os bônus do save v6 (M9b). Tipo ou origem desconhecidos: o bônus fica de fora; os valores, o <see cref="GameState"/> confere.</summary>
+        static List<ActiveBonus> RestoreBonuses(List<SavedBonus> saved)
+        {
+            var bonuses = new List<ActiveBonus>();
+            if (saved == null) return bonuses;
+            foreach (var bonus in saved)
+            {
+                if (bonus == null || !Enum.TryParse(bonus.kind, out BonusKind kind) || !Enum.IsDefined(typeof(BonusKind), kind)
+                    || !Enum.TryParse(bonus.source, out BonusSource source) || !Enum.IsDefined(typeof(BonusSource), source))
+                    continue;
+                bonuses.Add(new ActiveBonus(kind, bonus.value, bonus.duration, bonus.secondsLeft, source, bonus.tier));
+            }
+            return bonuses;
         }
 
         /// <summary>
@@ -223,6 +238,12 @@ namespace MinersIdle.Persistence
             };
             foreach (var id in Lines)
                 data.levels.Add(new SavedLevel { upgrade = id.ToString(), level = state.LevelOf(id) });
+            foreach (var bonus in state.Bonuses.All)
+                data.bonuses.Add(new SavedBonus
+                {
+                    kind = bonus.Kind.ToString(), source = bonus.Source.ToString(), tier = bonus.Tier,
+                    value = bonus.Value, duration = bonus.Duration, secondsLeft = bonus.SecondsLeft,
+                });
             if (permanent != null)
             {
                 data.permanent.redShards = permanent.RedShards;

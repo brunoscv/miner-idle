@@ -230,7 +230,11 @@ namespace MinersIdle.EditorTools
             (InternMenuName, "Intern", "Estagiário", DayMenuHeight, System.Array.Empty<string>()),
             // E os do Offline (M9 E1, OfflineDebugSetup): 3 fileiras de botões e a conta do último offline no alto.
             (OfflineMenuName, "Offline", "Offline", OfflineMenuHeight, System.Array.Empty<string>()),
+            // E os do Bônus (M9b E1, BonusDebugSetup): os bônus ativos no alto e 2 fileiras de botões, como o Dia.
+            (BonusMenuName, "Bonus", "Bônus", DayMenuHeight, System.Array.Empty<string>()),
         };
+
+        internal const string BonusMenuName = "BonusMenu";
 
         internal const string InternMenuName = "InternMenu";
 
@@ -253,7 +257,7 @@ namespace MinersIdle.EditorTools
 
         /// <summary>A ordem dos botões que ficam no DBG.</summary>
         static readonly string[] MainButtons =
-            { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern", "Offline" };
+            { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern", "Offline", "Bonus" };
 
         /// <summary>Altura da faixa do nível e custo das melhorias, no alto da Loja.</summary>
         const float ShopUpgradesHeight = 34f;
@@ -285,7 +289,8 @@ namespace MinersIdle.EditorTools
                 {
                     menu = CreateMenu(panel, name, height,
                                       name == "ShopMenu" ? ShopUpgradesHeight : name == CalcMenuName ? CalcTextHeight
-                                      : name == DayMenuName || name == InternMenuName || name == OfflineMenuName ? DayTextHeight : 0f);
+                                      : name == DayMenuName || name == InternMenuName || name == OfflineMenuName || name == BonusMenuName
+                                          ? DayTextHeight : 0f);
                     var open = CreateButton(grid, buttonName, label);
                     GrayboxSetup.SetReferences(debugPanel, (MenuField(name, "Button"), open),
                                                (MenuField(name, "Menu"), menu.GetComponent<DebugMenu>()));

@@ -102,6 +102,16 @@ namespace MinersIdle.Core
         public static string FormatSeconds(double seconds) => seconds.ToString("0.00", PtBr) + "s";
 
         /// <summary>
+        /// Uma fração como porcentagem (M9b, os bônus): 0,1 → "10%", 0,125 → "12,5%", 1,8 → "180%". Até uma casa, sem o
+        /// zero que sobra.
+        /// </summary>
+        public static string FormatPercent(double fraction)
+        {
+            if (double.IsNaN(fraction) || double.IsInfinity(fraction)) return "0%";
+            return Math.Round(fraction * 100, 1, MidpointRounding.AwayFromZero).ToString("#,0.#", PtBr) + "%";
+        }
+
+        /// <summary>
         /// Tempo de jogo (M8, E3): "45 s", "12 min 05 s", "3 h 07 min"; a partir de uma hora, sem os segundos. Arredonda
         /// para baixo, como as lascas.
         /// </summary>

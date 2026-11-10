@@ -46,6 +46,8 @@ namespace MinersIdle.Core
         double _spawnTimer;
         int _combo;
         double _lastTapTime;
+        // Os marcos que o último combo deu (M9b), reaproveitada para não alocar a cada combo.
+        readonly List<ComboBonusRule> _granted = new List<ComboBonusRule>();
 
         // D-126: se a picareta já desceu no alvo atual, e quanto falta do golpe depois que o toque quebrou o cristal.
         bool _swungAtTarget;
@@ -118,6 +120,16 @@ namespace MinersIdle.Core
         /// <summary>O combo chegou a um múltiplo de 10 (o "pop" especial).</summary>
         public event Action<int> ComboMilestone;
         /// <summary>
+        /// O combo acabou num ou mais marcos com bônus (M9b, D-96): o combo final e os marcos que valeram (pela regra do
+        /// acúmulo, <see cref="ComboStacking"/>). A lista é reaproveitada: leia na hora, não guarde.
+        /// </summary>
+        public event Action<int, IReadOnlyList<ComboBonusRule>> ComboBonusesGranted;
+        /// <summary>
+        /// Os bônus com tempo mudaram (M9b): entrou, acabou, o save trouxe ou o debug limpou. O dano já foi recalculado
+        /// (<see cref="StatsChanged"/> sai antes).
+        /// </summary>
+        public event Action BonusesChanged;
+        /// <summary>
         /// A caverna ou o progresso da trava do Letrado mudou fora de uma quebra (M8): passagem de caverna e atalhos do
         /// debug. A quebra comum já avisa por <see cref="CrystalBroken"/>.
         /// </summary>
@@ -148,6 +160,15 @@ namespace MinersIdle.Core
 
         /// <summary>Atalho do debug: todo golpe e todo toque saem críticos.</summary>
         public bool ForceCritical { get; set; }
+
+        /// <summary>Os bônus com tempo valendo agora (M9b; os mesmos do <see cref="GameState"/>, que vão para o save).</summary>
+        public ActiveBonuses Bonuses => _state.Bonuses;
+
+        /// <summary>
+        /// Como os marcos do combo se acumulam (D-211). O padrão é o do GDD (<see cref="Core.ComboStacking.Cumulative"/>); o
+        /// DBG → Cálculos troca no meio da partida para comparar (D-217). Vale para o próximo combo.
+        /// </summary>
+        public ComboStacking ComboStacking { get; set; } = ComboStacking.Cumulative;
 
         /// <summary>
         /// Quando sai o primeiro golpe num cristal (D-124). Começa no valor de <see cref="MiningRules.ArrivalStrike"/>; o DBG
@@ -288,6 +309,9 @@ namespace MinersIdle.Core
         /// </summary>
         public OfflineReport ApplyOffline(double secondsAway, double noticeSeconds = 0)
         {
+            // Os bônus com tempo correm com o app fechado (D-181, D-214), sem o teto do offline; relógio voltado não devolve tempo.
+            if (secondsAway > 0 && !double.IsInfinity(secondsAway)) AdvanceBonuses(secondsAway);
+
             var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway);
             if (report.Shards <= 0) return report;
             if (noticeSeconds > 0 && report.SecondsCounted >= noticeSeconds)
@@ -491,7 +515,85 @@ namespace MinersIdle.Core
             OnInternChanged(); // o Treinar muda o dano dele
         }
 
-        MinerStats ComputeStats() => MinerStats.Compute(_rules, _economy, _state, _permanents);
+        /// <summary>
+        /// Os atributos do anão com os bônus de agora: o dano × (1 + a soma dos +% ativos), depois do Sangue da Montanha
+        /// (D-179). A loja compara sem eles (<see cref="Preview"/>) e o estagiário não os recebe (D-177).
+        /// </summary>
+        MinerStats ComputeStats()
+        {
+            var stats = MinerStats.Compute(_rules, _economy, _state, _permanents);
+            double bonus = _state.Bonuses.DamagePercent;
+            return bonus > 0
+                ? new MinerStats(stats.Damage * (1 + bonus), stats.HitInterval, stats.WalkSpeed, stats.RewardMultiplier, stats.CritBonus)
+                : stats;
+        }
+
+        // ── Bônus com tempo (M9b) ─────────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Termina o combo agora, como se a janela tivesse passado, e dá os bônus dele (D-214: o app foi para o fundo). O
+        /// runner chama antes de salvar ao pausar. <c>false</c> sem combo.
+        /// </summary>
+        public bool EndCombo()
+        {
+            if (_combo <= 0) return false;
+            int ended = _combo;
+            _combo = 0;
+            ComboChanged?.Invoke(0);
+            GrantComboBonuses(ended);
+            return true;
+        }
+
+        /// <summary>
+        /// Os bônus de um combo que terminou em <paramref name="combo"/> (D-96, D-211, D-212): todos os marcos alcançados
+        /// no acumulativo, só o maior na alternativa. Também é o atalho do DBG → Bônus. Devolve quantos bônus entraram.
+        /// </summary>
+        public int GrantComboBonuses(int combo)
+        {
+            _granted.Clear();
+            var rules = _strike.ComboBonuses;
+            for (int i = 0; i < rules.Count; i++)
+                if (rules[i].Combo <= combo) _granted.Add(rules[i]);
+            if (_granted.Count == 0) return 0;
+
+            if (ComboStacking == ComboStacking.HighestOnly)
+            {
+                var highest = _granted[_granted.Count - 1];
+                _granted.Clear();
+                _granted.Add(highest);
+            }
+            for (int i = 0; i < _granted.Count; i++)
+            {
+                var rule = _granted[i];
+                _state.Bonuses.Add(new ActiveBonus(rule.Kind, rule.Value, rule.Seconds, rule.Seconds, BonusSource.Combo, rule.Combo),
+                                   ComboStacking);
+            }
+            OnBonusesChanged();
+            ComboBonusesGranted?.Invoke(combo, _granted);
+            return _granted.Count;
+        }
+
+        /// <summary>Atalho do debug: tira todos os bônus. <c>false</c> se não havia nenhum.</summary>
+        public bool ClearBonuses()
+        {
+            if (!_state.Bonuses.Clear()) return false;
+            OnBonusesChanged();
+            return true;
+        }
+
+        void AdvanceBonuses(double seconds)
+        {
+            if (_state.Bonuses.Count == 0) return;
+            _state.Bonuses.Advance(seconds);
+            if (_state.Bonuses.RemoveExpired(Epsilon)) OnBonusesChanged();
+        }
+
+        void OnBonusesChanged()
+        {
+            _stats = ComputeStats();
+            StatsChanged?.Invoke(_stats);
+            BonusesChanged?.Invoke();
+        }
 
         InternStats ComputeInternStats() => InternStats.Compute(_rules, _economy, _state, _permanents);
 
@@ -616,7 +718,7 @@ namespace MinersIdle.Core
         /// </summary>
         bool RollCritical(bool isTap)
         {
-            if (ForceCritical) return true;
+            if (ForceCritical || _state.Bonuses.GuaranteedCritical) return true; // o ×50 do combo (D-178)
             double chance = (isTap ? _strike.TapCritChance : _strike.CritChance) + _stats.CritBonus;
             return chance > 0 && _critRandom.NextDouble() < chance;
         }
@@ -636,10 +738,10 @@ namespace MinersIdle.Core
                 changed = false;
 
                 if (_combo > 0 && Elapsed >= _lastTapTime + _strike.ComboWindow - Epsilon)
-                {
-                    _combo = 0;
-                    ComboChanged?.Invoke(0);
-                }
+                    EndCombo(); // o jogador parou de tocar: os marcos alcançados viram bônus (D-96)
+
+                if (_state.Bonuses.Count > 0 && _state.Bonuses.RemoveExpired(Epsilon))
+                    OnBonusesChanged();
 
                 bool canSpawn = _track.Wall == null; // parede de pé (D-107): nada nasce até ela cair
                 if (canSpawn && _track.IsBelowMinimum)
@@ -701,6 +803,8 @@ namespace MinersIdle.Core
             if (_combo > 0)
                 next = Math.Min(next, Math.Max(0, _lastTapTime + _strike.ComboWindow - Elapsed));
 
+            next = Math.Min(next, _state.Bonuses.NextExpiry);
+
             switch (_miner.State)
             {
                 case MinerState.Running when _miner.Target != null:
@@ -724,6 +828,7 @@ namespace MinersIdle.Core
 
             Elapsed += step;
             _state.AddPlayTime(step);
+            _state.Bonuses.Advance(step); // o fim de cada um é evento: some no ProcessDueEvents
 
             // Fila cheia ou parede de pé: o relógio de nascimento espera no limite e nasce assim que der.
             _spawnTimer = SpawnWaits ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;
