@@ -84,7 +84,9 @@ namespace MinersIdle.Tests
         [UnityTest]
         public IEnumerator ComingSoonButtons_ShowNotice_ThenHideIt()
         {
-            foreach (var name in new[] { "AdButton", "SettingsButton" })
+            Assert.That(_safeArea.Find("SettingsButton").GetComponent<ComingSoonButton>(), Is.Null,
+                        "AJUSTES abre a tela desde o M9 (E4): não é mais \"Em breve\"");
+            foreach (var name in new[] { "AdButton" })
             {
                 var button = _safeArea.Find(name).GetComponent<ComingSoonButton>();
                 Assert.That(button.IsNoticeShown, Is.False, name);

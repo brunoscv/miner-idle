@@ -37,6 +37,7 @@ namespace MinersIdle.EditorTools
                 EnsureRestTexts();
                 EnsurePermanentsText();
                 EnsureOfflineTexts();
+                EnsureSettingsTexts();
                 return;
             }
 
@@ -54,6 +55,7 @@ namespace MinersIdle.EditorTools
             EnsureRestTexts();
             EnsurePermanentsText();
             EnsureOfflineTexts();
+            EnsureSettingsTexts();
         }
 
         const string CaveBannerFormat = "Nível {0} · {1}";
@@ -158,6 +160,57 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(texts);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Textos do Bem-vindo de volta nos textos do feedback (M9, E2).");
+        }
+
+        /// <summary>
+        /// Os créditos da tela AJUSTES (M9, E4), a partir do <c>CREDITS.md</c>: o que está no jogo hoje (o que saiu ou só foi
+        /// avaliado não entra). Mockup aprovado pelo Bruno em 2026-11-10.
+        /// </summary>
+        static readonly (bool header, string text)[] Credits =
+        {
+            (true, "Jogo"), (false, "Bruno Carvalho"),
+            (true, "Design e arte"), (false, "Apellon · Bruno Carvalho"),
+            (true, "Interface"), (false, "Pixel UI Kit · REEBOO Labs"), (false, "Fantasy UI Kit Lite · Willosuna"),
+            (false, "Anvil's RPG icons · Ponk (CC BY 4.0)"),
+            (true, "Fontes"), (false, "Press Start 2P · CodeMan38 (OFL 1.1)"),
+            (false, "Pixelify Sans · Stefie Justprince (OFL 1.1)"),
+            (true, "Caverna"), (false, "Pixel Fantasy Caves · Szadi art."), (false, "MineAssets (pedras da beira)"),
+        };
+
+        /// <summary>M9 (E4, D-198): os textos da tela AJUSTES, da confirmação do Apagar save e dos Créditos.</summary>
+        static void EnsureSettingsTexts()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null || !string.IsNullOrEmpty(texts.SettingsTitle)) return;
+
+            var so = new SerializedObject(texts);
+            so.FindProperty("settingsTitle").stringValue = "AJUSTES";
+            so.FindProperty("settingsVolumeLabel").stringValue = "Efeitos";
+            so.FindProperty("settingsVolumeFormat").stringValue = "{0}%";
+            so.FindProperty("settingsShakeLabel").stringValue = "Tremor da tela";
+            so.FindProperty("settingsVibrationLabel").stringValue = "Vibração";
+            so.FindProperty("settingsCredits").stringValue = "CRÉDITOS";
+            so.FindProperty("settingsDeleteSave").stringValue = "APAGAR SAVE";
+            so.FindProperty("deleteTitle").stringValue = "APAGAR O SAVE?";
+            so.FindProperty("deleteBody").stringValue =
+                "Você perde todo o progresso: lascas, níveis, melhorias, lascas vermelhas e permanentes. Os ajustes ficam.";
+            so.FindProperty("deleteWarning").stringValue = "Não dá para desfazer.";
+            so.FindProperty("deleteCancel").stringValue = "CANCELAR";
+            so.FindProperty("deleteConfirm").stringValue = "APAGAR";
+            so.FindProperty("creditsTitle").stringValue = "CRÉDITOS";
+            so.FindProperty("creditsBack").stringValue = "VOLTAR";
+            var list = so.FindProperty("credits");
+            list.arraySize = Credits.Length;
+            for (int i = 0; i < Credits.Length; i++)
+            {
+                var line = list.GetArrayElementAtIndex(i);
+                line.FindPropertyRelative("header").boolValue = Credits[i].header;
+                line.FindPropertyRelative("text").stringValue = Credits[i].text;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Textos dos AJUSTES e os Créditos nos textos do feedback (M9, E4).");
         }
 
         static void SetHeartTexts(SerializedObject so)

@@ -29,6 +29,8 @@ namespace MinersIdle.UI
         [SerializeField] MiningRunner runner;
         [SerializeField] TapInput tapInput;
         [SerializeField] ScreenShake screenShake;
+        [Tooltip("Os AJUSTES (M9, E4): com eles, o \"Tremor on/off\" troca o ajuste (fica gravado), não só a câmera.")]
+        [SerializeField] GameSettings settings;
         [SerializeField] SoundBoard soundBoard;
         [SerializeField] FrameStats frameStats;
 
@@ -269,7 +271,11 @@ namespace MinersIdle.UI
         void DeleteSave() => runner.ResetProgress();
         void ToggleAutoTap() => tapInput.AutoTap = !tapInput.AutoTap;
         void ToggleForceCritical() => runner.ForceCritical = !runner.ForceCritical;
-        void ToggleShake() => screenShake.ShakeEnabled = !screenShake.ShakeEnabled;
+        void ToggleShake()
+        {
+            if (settings != null) settings.ScreenShake = !settings.ScreenShake;
+            else screenShake.ShakeEnabled = !screenShake.ShakeEnabled;
+        }
         void ToggleSound() => soundBoard.SoundEnabled = !soundBoard.SoundEnabled;
         void ResetStats() => frameStats.ResetCounts();
 

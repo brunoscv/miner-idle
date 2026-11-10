@@ -3,8 +3,8 @@ using UnityEngine;
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Tremor da câmera (M5, E3): desloca a câmera em volta da posição de base e volta. Só ilustra; desligável no DBG
-    /// (e nas Configurações, no M8). Um tremor novo só substitui o atual se for mais forte.
+    /// Tremor da câmera (M5, E3): desloca a câmera em volta da posição de base e volta. Só ilustra; desligável nos AJUSTES
+    /// (M9, E4) e no DBG. Um tremor novo só substitui o atual se for mais forte.
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public sealed class ScreenShake : MonoBehaviour

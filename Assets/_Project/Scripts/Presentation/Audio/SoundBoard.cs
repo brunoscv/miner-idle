@@ -6,7 +6,7 @@ namespace MinersIdle.Presentation
     /// <summary>
     /// Som provisório da mineração (M5, E4): um bipe para golpe, toque, crítico, quebra, compra e marco do combo. Só
     /// escuta a simulação. Os clipes são sintetizados uma vez no <c>Awake</c> (<see cref="SfxSynth"/>) e tocam num pool
-    /// fixo de <see cref="AudioSource"/>: nada é criado durante o jogo. Desligável no DBG (e nas Configurações, no M8).
+    /// fixo de <see cref="AudioSource"/>: nada é criado durante o jogo. Desligável no DBG; o volume vem dos AJUSTES (M9, E4).
     /// </summary>
     public sealed class SoundBoard : MiningViewBase
     {
@@ -27,6 +27,13 @@ namespace MinersIdle.Presentation
         int _nextVoice;
 
         public bool SoundEnabled { get; set; } = true;
+
+        /// <summary>O volume dos efeitos, de 0 a 1: o dos AJUSTES (M9, E4), aplicado pelo <c>SettingsEffects</c>.</summary>
+        public float Volume
+        {
+            get => volume;
+            set => volume = Mathf.Clamp01(value);
+        }
         public int Voices => _sources.Length;
 
         /// <summary>Quantas vezes o som tocou nesta cena (para os testes; não depende de haver placa de som).</summary>

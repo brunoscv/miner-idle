@@ -313,12 +313,19 @@ namespace MinersIdle.Game
         MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth, _calculation.PickaxeByCave);
         EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep, _calculation.PickaxeCaveGrowth);
 
-        /// <summary>Apaga o save e começa do zero, as melhorias permanentes também (o "Apagar save" do debug).</summary>
+        /// <summary>
+        /// Apaga o save (e o backup) e começa do zero no nível 1, as melhorias permanentes, o dia e as lascas vermelhas
+        /// também; uma volta do offline ainda não coletada se perde junto. É o "Apagar save" dos AJUSTES (M9, E4) e do DBG.
+        /// Os AJUSTES e a escolha do DBG → Cálculos ficam: estão em arquivos à parte (D-200). Grava a partida nova na hora,
+        /// para que ela, e não um save velho, seja o ponto de partida do offline.
+        /// </summary>
         public void ResetProgress()
         {
             _save?.Delete();
             _permanent = new PermanentState();
             Begin(RunSeed(), new GameState());
+            SaveNow();
+            Debug.Log("[Save] Save apagado: jogo novo no nível 1.");
         }
 
         /// <summary>Grava o progresso agora (sem save ligado, não faz nada). Um erro de disco vai para o log, não derruba o jogo.</summary>

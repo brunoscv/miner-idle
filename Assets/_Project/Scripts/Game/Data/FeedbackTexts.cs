@@ -1,10 +1,13 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MinersIdle.Game
 {
     /// <summary>
     /// Textos do feedback de mineração (M5, E3), da descida (M8: a faixa da caverna, a tela do coração da montanha) e do
-    /// descanso (Marco 8b, E3: o botão, o modal e o resumo do dia, D-151…D-154), em pt-BR e em dados. Asset do jogo: <c>Data/FeedbackTexts</c>.
+    /// descanso (Marco 8b, E3: o botão, o modal e o resumo do dia, D-151…D-154), do "Bem-vindo de volta" e dos AJUSTES com
+    /// os Créditos (M9), em pt-BR e em dados. Asset do jogo: <c>Data/FeedbackTexts</c>.
     /// </summary>
     [CreateAssetMenu(menuName = "Miners Idle/Textos do feedback", fileName = "FeedbackTexts")]
     public sealed class FeedbackTexts : ScriptableObject
@@ -69,6 +72,25 @@ namespace MinersIdle.Game
         [TextArea, SerializeField] string offlineCappedNoteFormat;
         [SerializeField] string offlineCollect;
 
+        [Header("AJUSTES (M9, E4, D-198)")]
+        [SerializeField] string settingsTitle;
+        [SerializeField] string settingsVolumeLabel;
+        [Tooltip("{0} = o volume dos efeitos, de 0 a 100.")]
+        [SerializeField] string settingsVolumeFormat;
+        [SerializeField] string settingsShakeLabel;
+        [SerializeField] string settingsVibrationLabel;
+        [SerializeField] string settingsCredits;
+        [SerializeField] string settingsDeleteSave;
+        [SerializeField] string deleteTitle;
+        [TextArea, SerializeField] string deleteBody;
+        [SerializeField] string deleteWarning;
+        [SerializeField] string deleteCancel;
+        [SerializeField] string deleteConfirm;
+        [SerializeField] string creditsTitle;
+        [SerializeField] string creditsBack;
+        [Tooltip("A lista dos Créditos, do CREDITS.md: um título de grupo e as linhas dele, na ordem.")]
+        [SerializeField] CreditLine[] credits = new CreditLine[0];
+
         public string CriticalLabel => criticalLabel;
         public string ComboFormat => comboFormat;
         public string MilestoneFormat => milestoneFormat;
@@ -108,5 +130,38 @@ namespace MinersIdle.Game
         public string OfflineNoteFormat => offlineNoteFormat;
         public string OfflineCappedNoteFormat => offlineCappedNoteFormat;
         public string OfflineCollect => offlineCollect;
+
+        public string SettingsTitle => settingsTitle;
+        public string SettingsVolumeLabel => settingsVolumeLabel;
+        public string SettingsVolumeFormat => settingsVolumeFormat;
+        public string SettingsShakeLabel => settingsShakeLabel;
+        public string SettingsVibrationLabel => settingsVibrationLabel;
+        public string SettingsCredits => settingsCredits;
+        public string SettingsDeleteSave => settingsDeleteSave;
+        public string DeleteTitle => deleteTitle;
+        public string DeleteBody => deleteBody;
+        public string DeleteWarning => deleteWarning;
+        public string DeleteCancel => deleteCancel;
+        public string DeleteConfirm => deleteConfirm;
+        public string CreditsTitle => creditsTitle;
+        public string CreditsBack => creditsBack;
+        public IReadOnlyList<CreditLine> Credits => credits;
+    }
+
+    /// <summary>Uma linha dos Créditos (M9, E4): o título de um grupo ("Fontes") ou um item dele.</summary>
+    [Serializable]
+    public struct CreditLine
+    {
+        [SerializeField] bool header;
+        [SerializeField] string text;
+
+        public CreditLine(bool header, string text)
+        {
+            this.header = header;
+            this.text = text;
+        }
+
+        public bool Header => header;
+        public string Text => text;
     }
 }

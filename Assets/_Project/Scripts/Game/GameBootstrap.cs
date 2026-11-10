@@ -6,7 +6,8 @@ using UnityEngine.SceneManagement;
 namespace MinersIdle.Game
 {
     /// <summary>
-    /// Ponto de entrada do app (cena Bootstrap): configura os quadros, carrega a cena Game e entrega a ela o save (M4).
+    /// Ponto de entrada do app (cena Bootstrap): configura os quadros, carrega a cena Game e entrega a ela o save (M4) e
+    /// o arquivo dos AJUSTES (M9, E4).
     /// É aqui que a sessão é montada (CLAUDE.md: composição no GameBootstrap, sem singletons). Abrir a cena Game direto
     /// pula este passo: a partida roda sem save.
     ///
@@ -67,6 +68,13 @@ namespace MinersIdle.Game
                                new CalculationStore(new FileSaveStore(Application.persistentDataPath, CalculationStore.FileName)));
             else
                 Debug.LogError("[Bootstrap] A cena Game não tem MiningRunner: o jogo vai rodar sem save.");
+
+            // Os AJUSTES num arquivo à parte (M9, E4, D-200): Apagar save não mexe neles.
+            var settings = FindAnyObjectByType<GameSettings>();
+            if (settings != null)
+                settings.UseStore(new SettingsStore(new FileSaveStore(Application.persistentDataPath, SettingsStore.FileName)));
+            else
+                Debug.LogError("[Bootstrap] A cena Game não tem GameSettings: os ajustes não ficam gravados.");
 
             Destroy(gameObject);
         }

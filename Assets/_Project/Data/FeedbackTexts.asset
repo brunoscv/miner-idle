@@ -44,7 +44,50 @@ MonoBehaviour:
   offlineCountedFormat: "{0} (m\xE1x.)"
   offlineCrystalsLabel: Cristais quebrados
   offlineBroughtLabel: "O estagi\xE1rio trouxe"
-  offlineShardsFormat: "+{0}"
+  offlineShardsFormat: +{0}
   offlineNoteFormat: "Ele minerou no n\xEDvel {0} enquanto voc\xEA esteve fora."
   offlineCappedNoteFormat: "Ele minera no m\xE1ximo {0} com o jogo fechado."
   offlineCollect: COLETAR
+  settingsTitle: AJUSTES
+  settingsVolumeLabel: Efeitos
+  settingsVolumeFormat: '{0}%'
+  settingsShakeLabel: Tremor da tela
+  settingsVibrationLabel: "Vibra\xE7\xE3o"
+  settingsCredits: "CR\xC9DITOS"
+  settingsDeleteSave: APAGAR SAVE
+  deleteTitle: APAGAR O SAVE?
+  deleteBody: "Voc\xEA perde todo o progresso: lascas, n\xEDveis, melhorias, lascas vermelhas e permanentes. Os ajustes ficam."
+  deleteWarning: "N\xE3o d\xE1 para desfazer."
+  deleteCancel: CANCELAR
+  deleteConfirm: APAGAR
+  creditsTitle: "CR\xC9DITOS"
+  creditsBack: VOLTAR
+  credits:
+  - header: 1
+    text: Jogo
+  - header: 0
+    text: Bruno Carvalho
+  - header: 1
+    text: Design e arte
+  - header: 0
+    text: "Apellon \xB7 Bruno Carvalho"
+  - header: 1
+    text: Interface
+  - header: 0
+    text: "Pixel UI Kit \xB7 REEBOO Labs"
+  - header: 0
+    text: "Fantasy UI Kit Lite \xB7 Willosuna"
+  - header: 0
+    text: "Anvil's RPG icons \xB7 Ponk (CC BY 4.0)"
+  - header: 1
+    text: Fontes
+  - header: 0
+    text: "Press Start 2P \xB7 CodeMan38 (OFL 1.1)"
+  - header: 0
+    text: "Pixelify Sans \xB7 Stefie Justprince (OFL 1.1)"
+  - header: 1
+    text: Caverna
+  - header: 0
+    text: "Pixel Fantasy Caves \xB7 Szadi art."
+  - header: 0
+    text: MineAssets (pedras da beira)
