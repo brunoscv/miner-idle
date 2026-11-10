@@ -22,6 +22,8 @@
 > **Atualização de 2026-11-04 — GDD v7 (D-132…D-142):** o v7 passa a ser a referência, e o Bruno respondeu no mesmo dia ao que faltava: Picareta do anão pela caverna (D-133), lascas = vida × 1,2 (D-134), Velocidade até 0,1 s (D-135), Picareta Dupla fora e linha Chance de Crítico (D-136), **botão de descansar** ao lado do PASSAR DE CAVERNA e reset da run (D-137), lascas vermelhas por nível alcançado (D-138), offline só do estagiário (D-139), boost de 60 s = cristal raro (D-140) e **coluna de buffs** à esquerda (D-141). Cada marco abaixo tem uma nota "GDD v7". As propostas D-128…D-131 continuam pendentes, agora pelos números do v7; o marco "Dia e melhorias permanentes" já pode ser planejado. Diferenças completas: [Análise - GDD v7](Analise%20-%20GDD%20v7.md).
 
 > **Atualização de 2026-11-10 — D-177…D-190:** **o M9 (save completo, offline e ajustes) vem antes dos Bônus temporários** (D-182). Offline só do estagiário, com tudo o que é dele, até 6 h, sem passar de nível (D-189). Bônus: acúmulo do combo em duas versões no DBG (D-183), raro de 15% com ritmo alternativo no DBG (D-184, D-185), AD na velocidade e sem acúmulo (D-187, D-188), as 4 cartas do raro (D-190). Nenhuma pergunta do GDD em aberto para os dois marcos.
+>
+> **Atualização de 2026-11-10 — D-191, D-192:** **só o M9 e depois os Bônus temporários.** O M9 começa já; a E4 do M7 e a E5 do 8b ficam de fora por ora (exceção à regra de aprovar o marco anterior). Nenhum outro marco começa sem nova decisão. O offline é só conta, sem som, vibração nem animação (D-191).
 
 ## 1. Como este roadmap se relaciona com o do RM
 

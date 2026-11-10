@@ -70,7 +70,7 @@ O segundo caso mostra um limite da conta: com um golpe por cristal, quem manda �
 **P6 — O que vai na tela AJUSTES.** Volume dos efeitos (deslizador), tremor da tela (liga/desliga), vibração (liga/desliga), **Apagar save** (com confirmação) e **Créditos** (a lista do `CREDITS.md`, em dados). Música não existe ainda (fica para o M10).
 **Rec.:** essa lista. **Mockup em 270×480 antes do código.**
 
-**P7 — Quando vibrar.** Vibração ainda não existe no jogo.
+**P7 — Quando vibrar (com o jogo aberto).** Vibração ainda não existe no jogo. Offline nada vibra nem toca: é só a conta (D-191).
 **Rec.:** curta no **crítico** e mais longa na **quebra da parede**. Não no toque comum (vibraria 15 vezes por segundo).
 
 **P8 — Onde os ajustes ficam.** Num arquivo à parte (`settings.json`), como a escolha do DBG → Cálculos?
@@ -78,6 +78,7 @@ O segundo caso mostra um limite da conta: com um golpe por cristal, quem manda �
 
 **P9 — Começar o M9 antes de fechar o M7 e o 8b?** Falta a E4 do M7 (com a E5 do 8b: alternativas no DBG → Cálculos, sessão de 30 min e o teste no Moto G75) e a sua validação das etapas já feitas. A regra é um marco só começar com o anterior aprovado.
 **Rec.:** fechar primeiro a E4 do M7 (3–6 h) e aprovar o M7 e o 8b juntos; o APK que o Apellon está testando ajuda nessa validação.
+**Decidido (D-192):** o M9 começa já; a E4 do M7 e a E5 do 8b não entram agora. Depois do M9, os Bônus temporários.
 
 ## Etapas
 
@@ -163,7 +164,7 @@ Total: **~24–31 h** (o Roadmap estimava 40–55 h com o AD, que saiu daqui).
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 📝 escrito em 2026-11-10, aguardando as respostas P1…P9 | — |
+| Plano | 📝 escrito em 2026-11-10; P9 decidida (D-192) e offline sem som nem vibração (D-191); aguardando P1…P8 | — |
 | E1 Núcleo do offline, save v5 e DBG → Offline | ⏳ | — |
 | E2 Modal "Bem-vindo de volta" | ⏳ | — |
 | E3 Save que aguenta tudo | ⏳ | — |
