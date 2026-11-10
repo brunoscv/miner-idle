@@ -88,6 +88,36 @@ namespace MinersIdle.Tests
             Assert.That(default(CalculationChoice).WithPickaxeCaveGrowth(1.21).IsDefault, Is.False);
             Assert.That(default(CalculationChoice).WithPickaxeStep(2).IsDefault, Is.False);
             Assert.That(default(CalculationChoice).WithPickaxeStep(2).WithPickaxeStep(null).IsDefault, Is.True);
+            Assert.That(default(CalculationChoice).WithPickaxeByCave(true).IsDefault, Is.False, "Picareta pela caverna (D-201)");
+            Assert.That(default(CalculationChoice).WithPickaxeByCave(true).WithPickaxeByCave(false).IsDefault, Is.True);
+        }
+
+        [Test]
+        public void ByCave_SwitchesTheV7PickaxeToTheCave_AndTheV5IgnoresIt()
+        {
+            var v7 = Load(GddV7Path);
+            Assert.That(v7.ToRules().PickaxeFormula, Is.EqualTo(PickaxeFormula.LevelScaled), "o GDD: pela compra (D-201)");
+            var byCave = v7.ToRules(pickaxeCaveGrowth: 1.3, pickaxeByCave: true);
+            Assert.That(byCave.PickaxeFormula, Is.EqualTo(PickaxeFormula.CaveScaled), "a leitura da D-133");
+            Assert.That(byCave.PickaxeCaveGrowth, Is.EqualTo(1.3), "a taxa do DBG vale nas duas");
+
+            var v5 = Load(GddV5Path);
+            Assert.That(v5.ToRules(pickaxeByCave: true).PickaxeFormula, Is.EqualTo(PickaxeFormula.Multiply));
+        }
+
+        [Test]
+        public void Store_KeepsThePickaxeByCave_AndAnOldFileIsByLevel()
+        {
+            var store = new CalculationStore(new FileSaveStore(_dir, CalculationStore.FileName));
+            var choice = default(CalculationChoice).WithPickaxeByCave(true);
+            store.Save(choice.ToData());
+            Assert.That(CalculationChoice.FromData(store.Load()), Is.EqualTo(choice));
+
+            Directory.CreateDirectory(_dir);
+            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"hasPickaxeStep\": true, \"pickaxeStep\": 3 }");
+            var old = CalculationChoice.FromData(store.Load());
+            Assert.That(old.PickaxeByCave, Is.False, "arquivo de antes da D-201: a do GDD");
+            Assert.That(old.PickaxeStep, Is.EqualTo(3));
         }
 
         [Test]

@@ -10,7 +10,8 @@ namespace MinersIdle.UI
     /// <summary>
     /// DBG → Cálculos (M8 E3b-3, D-143): o seletor do balanço (GDD v7, o padrão, ou GDD v5, o jogo de antes), a taxa e o
     /// incremento da Picareta pela caverna (D-133; passos de 0,01 e de 1; tocar no valor volta ao do GDD), Reiniciar run e
-    /// Padrão GDD. Embaixo do DBG, um aviso fixo diz o cálculo em uso: "Cálculo: GDD v7" quando tudo está no padrão; em
+    /// Padrão GDD; e o botão "Picareta" que mora no menu Caverna (D-201: pela compra, a do GDD v7, ou pela caverna, a
+    /// leitura da D-133). Embaixo do DBG, um aviso fixo diz o cálculo em uso: "Cálculo: GDD v7" quando tudo está no padrão; em
     /// âmbar, com a lista do que saiu do GDD. Fica no menu Cálculos, filho do painel de debug: no release some junto (lá
     /// vale sempre o GDD). Só manda comandos ao <see cref="MiningRunner"/>; quem guarda a escolha no aparelho é ele.
     /// Os textos (rótulos e modelos) ficam na cena.
@@ -64,6 +65,16 @@ namespace MinersIdle.UI
         [SerializeField] string growthChangedFormat;
         [Tooltip("Somado ao aviso quando o incremento saiu do GDD. {0} = incremento.")]
         [SerializeField] string stepChangedFormat;
+
+        [Header("Picareta pela compra ou pela caverna (D-201)")]
+        [Tooltip("O botão \"Picareta\", no menu Caverna do DBG: troca entre a pela compra (GDD v7) e a pela caverna (D-133).")]
+        [SerializeField] Button pickaxeByCave;
+        [Tooltip("Rótulo do botão com a Picareta pela compra (a do GDD).")]
+        [SerializeField] string pickaxeByLevelLabel;
+        [Tooltip("Rótulo do botão com a Picareta pela caverna.")]
+        [SerializeField] string pickaxeByCaveLabel;
+        [Tooltip("Somado ao aviso com a Picareta pela caverna.")]
+        [SerializeField] string pickaxeByCaveChangedFormat;
         [SerializeField] Color defaultColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         [Tooltip("O aviso quando algo saiu do GDD (D-143: âmbar).")]
         [SerializeField] Color changedColor = new Color32(0xFF, 0xB3, 0x2E, 0xFF);
@@ -72,7 +83,7 @@ namespace MinersIdle.UI
         const float DisabledLabelAlpha = 0.35f;
 
         readonly StringBuilder _warning = new StringBuilder();
-        TMP_Text _balanceLabel, _growthLabel, _stepLabel;
+        TMP_Text _balanceLabel, _growthLabel, _stepLabel, _byCaveLabel;
         TMP_Text[] _tuningLabels;
         float _refresh;
 
@@ -81,6 +92,7 @@ namespace MinersIdle.UI
             if (balance != null) _balanceLabel = balance.GetComponentInChildren<TMP_Text>();
             if (growthValue != null) _growthLabel = growthValue.GetComponentInChildren<TMP_Text>();
             if (stepValue != null) _stepLabel = stepValue.GetComponentInChildren<TMP_Text>();
+            if (pickaxeByCave != null) _byCaveLabel = pickaxeByCave.GetComponentInChildren<TMP_Text>();
             _tuningLabels = new[]
             {
                 growthMinus.GetComponentInChildren<TMP_Text>(), _growthLabel, growthPlus.GetComponentInChildren<TMP_Text>(),
@@ -99,6 +111,7 @@ namespace MinersIdle.UI
             stepMinus.onClick.AddListener(LowerStep);
             stepValue.onClick.AddListener(DefaultStep);
             stepPlus.onClick.AddListener(RaiseStep);
+            if (pickaxeByCave != null) pickaxeByCave.onClick.AddListener(TogglePickaxeByCave);
             runner.SimulationStarted += OnSimulationStarted;
             Refresh();
         }
@@ -114,6 +127,7 @@ namespace MinersIdle.UI
             stepMinus.onClick.RemoveListener(LowerStep);
             stepValue.onClick.RemoveListener(DefaultStep);
             stepPlus.onClick.RemoveListener(RaiseStep);
+            if (pickaxeByCave != null) pickaxeByCave.onClick.RemoveListener(TogglePickaxeByCave);
             runner.SimulationStarted -= OnSimulationStarted;
         }
 
@@ -131,8 +145,11 @@ namespace MinersIdle.UI
 
         MiningRulesAsset Asset => runner.Rules;
 
-        /// <summary>A Picareta deste balanço tem taxa e incremento (só a do GDD v7, CaveScaled).</summary>
-        bool Tunable => Asset != null && Asset.PickaxeFormula == PickaxeFormula.CaveScaled;
+        /// <summary>A Picareta deste balanço tem taxa e incremento (a do GDD v7, pela compra ou pela caverna).</summary>
+        bool Tunable => Asset != null && Asset.PickaxeTunable;
+
+        /// <summary>A Picareta deste balanço troca entre a pela compra e a pela caverna (só a do GDD v7, D-201).</summary>
+        bool Switchable => Asset != null && Asset.PickaxeSwitchable;
 
         public double Growth => runner.Calculation.PickaxeCaveGrowth ?? (Asset != null ? Asset.PickaxeCaveGrowth : 0);
         public double Step => runner.Calculation.PickaxeStep ?? (Asset != null ? Asset.PickaxeStep : 0);
@@ -155,6 +172,13 @@ namespace MinersIdle.UI
         public void LowerStep() => SetStep(Step - StepStep);
         public void RaiseStep() => SetStep(Step + StepStep);
         public void DefaultStep() => SetStep(Asset.PickaxeStep);
+
+        /// <summary>O botão "Picareta" do DBG → Caverna (D-201): pela compra ⇄ pela caverna, mantendo o progresso.</summary>
+        public void TogglePickaxeByCave()
+        {
+            if (!Switchable) return;
+            runner.UseCalculation(runner.Calculation.WithPickaxeByCave(!runner.Calculation.PickaxeByCave));
+        }
 
         void SetGrowth(double growth)
         {
@@ -188,6 +212,15 @@ namespace MinersIdle.UI
             if (_growthLabel != null) _growthLabel.text = string.Format(growthFormat, NumberFormatter.Format(Growth));
             if (_stepLabel != null) _stepLabel.text = string.Format(stepFormat, NumberFormatter.Format(Step));
 
+            bool switchable = Switchable;
+            bool byCave = switchable && choice.PickaxeByCave;
+            if (pickaxeByCave != null) pickaxeByCave.interactable = switchable;
+            if (_byCaveLabel != null)
+            {
+                _byCaveLabel.text = byCave ? pickaxeByCaveLabel : pickaxeByLevelLabel;
+                _byCaveLabel.alpha = switchable ? 1f : DisabledLabelAlpha;
+            }
+
             RefreshPickaxe();
 
             if (warning == null) return;
@@ -195,6 +228,7 @@ namespace MinersIdle.UI
             _warning.AppendFormat(warningFormat, balanceName);
             if (tunable && choice.PickaxeCaveGrowth.HasValue) _warning.AppendFormat(growthChangedFormat, NumberFormatter.Format(Growth));
             if (tunable && choice.PickaxeStep.HasValue) _warning.AppendFormat(stepChangedFormat, NumberFormatter.Format(Step));
+            if (byCave) _warning.Append(pickaxeByCaveChangedFormat);
             warning.text = _warning.ToString();
             warning.color = choice.IsDefault ? defaultColor : changedColor;
         }

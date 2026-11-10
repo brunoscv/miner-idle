@@ -224,7 +224,7 @@ namespace MinersIdle.Game
             if (choice.Balance < balances.Length && balances[choice.Balance] != null) rules = balances[choice.Balance];
         }
 
-        MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth);
+        MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth, _calculation.PickaxeByCave);
         EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep);
 
         /// <summary>Apaga o save e começa do zero, as melhorias permanentes também (o "Apagar save" do debug).</summary>

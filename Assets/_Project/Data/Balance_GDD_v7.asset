@@ -31,7 +31,7 @@ MonoBehaviour:
   hitInterval: 2
   walkSpeed: 4
   miningRange: 1
-  pickaxeFormula: 1
+  pickaxeFormula: 2
   pickaxeCaveGrowth: 1.2
   pickaxe:
     costFormula: 1

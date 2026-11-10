@@ -16,6 +16,8 @@ namespace MinersIdle.Persistence
         public double pickaxeCaveGrowth;
         public bool hasPickaxeStep;
         public double pickaxeStep;
+        /// <summary>A Picareta pela caverna do DBG → Caverna (D-201). Arquivo antigo, sem o campo: <c>false</c>, a do GDD.</summary>
+        public bool pickaxeByCave;
     }
 
     /// <summary>

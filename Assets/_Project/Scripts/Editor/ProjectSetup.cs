@@ -455,7 +455,7 @@ namespace MinersIdle.EditorTools
             serialized.FindProperty("caveRewardGrowth").doubleValue = 1.25;
             serialized.FindProperty("damage").doubleValue = 1;
             serialized.FindProperty("hitInterval").doubleValue = 2;
-            serialized.FindProperty("pickaxeFormula").enumValueIndex = (int)PickaxeFormula.CaveScaled;
+            serialized.FindProperty("pickaxeFormula").enumValueIndex = (int)PickaxeFormula.LevelScaled; // D-201
             serialized.FindProperty("pickaxeCaveGrowth").doubleValue = 1.2;
             SetLine(serialized, "pickaxe", 2, 2, 49, 1, CostFormula.Linear);
             SetLine(serialized, "speed", 50, 2, 19, 0.1);

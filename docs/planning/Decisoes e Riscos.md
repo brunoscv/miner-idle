@@ -187,7 +187,7 @@
 | # | Decisão | Marco |
 |---|---|---|
 | **D-132** | **O GDD v7 ([`docs/gdd v7.pdf`](../gdd%20v7.pdf), versão 7.0) passa a ser a referência de design**, no lugar do v6, que fica como histórico. O `Balance_GDD_v5` continua sendo o balanço do jogo até a D-130. Responde às G16, G18…G25 (com as decisões abaixo) e abre as G26…G28. | Roadmap |
-| **D-133** | **Dano da Picareta do anão cresce com o nível da caverna (G18):** `Dano = Dano Base + taxa^(nívelDaCaverna − 1)`. Dano Base começa em 1; **taxa 1,2, configurável** no balanço. Cada compra soma **+1 no Dano Base** (incremento também configurável), até o nível 50. Custo da próxima compra = **2 × Dano Base atual**. Na caverna 1, com Dano Base 1, o golpe dá 2. | M8 (E3b) |
+| **D-133** | **Dano da Picareta do anão cresce com o nível da caverna (G18):** `Dano = Dano Base + taxa^(nívelDaCaverna − 1)`. Dano Base começa em 1; **taxa 1,2, configurável** no balanço. Cada compra soma **+1 no Dano Base** (incremento também configurável), até o nível 50. Custo da próxima compra = **2 × Dano Base atual**. Na caverna 1, com Dano Base 1, o golpe dá 2. *(Revista pela **D-201** em 2026-11-10: o jogo usa o nível da compra no lugar do da caverna; esta leitura fica no DBG → Caverna → "Picareta".)* | M8 (E3b) |
 | **D-134** | **Lascas por cristal = vida × 1,2** (GDD v7 §3.1). A tabela do §6.1 foi feita com × 0,5 e não tem o nível 70: **vale a fórmula**, para todo nível. Vida = `1 × 1,25^(nível da caverna − 1)`. | M8 (E3b) |
 | **D-135** | **Velocidade com mínimo de 0,1 s (G19):** o GDD v7 diz 0 s, mas fica o piso de 0,1 s de hoje. A partir de 2,0 s, com −0,1 s por compra, a linha acaba em 19 compras. Custo `50 × 2^(n−1)`. | M8 (E3b) |
 | **D-136** | **Crítico e Picareta Dupla (G16, G20):** a **Picareta Dupla sai** do jogo. Entra a linha **Chance de Crítico** (GDD v7 §4.1: `50 × 2^(n−1)`, +5% por compra, 10 compras). Chance base: **0% no golpe automático e 5% no toque**; a linha (e a permanente Dedos Nervosos) **soma nos dois**. Dano crítico continua 2 × o golpe. | M8 (E3b) |
@@ -269,6 +269,12 @@
 | **D-198** | **Tela AJUSTES (P6):** volume dos efeitos (deslizador), tremor da tela, vibração (liga/desliga), **Apagar save** com confirmação e **Créditos** (do `CREDITS.md`, em dados). Música fica para o M10. Mockup 270×480 antes do código. | M9 |
 | **D-199** | **Vibração, só com o jogo aberto (P7, D-191):** curta no **crítico**, mais longa na **quebra da parede**; nada no toque comum. | M9 |
 | **D-200** | **Ajustes num arquivo à parte (P8):** `settings.json`. **Apagar save não mexe nos ajustes.** | M9 |
+
+### 1.13 Decidida pelo Bruno em 2026-11-10 (Picareta)
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-201** | **Picareta pelo nível da compra (revê a D-133):** as regras são do Apellon e ficam como ele escreveu, mesmo que o comportamento pareça estranho para nós. O jogo passa a usar `Dano = Dano Base + 1,2^(nível da Picareta − 1)`, com o **nível da Picareta** = 1 + compras (sem compra, nível 1: golpe 2, como antes). Cada compra soma +1 no Dano Base e +1 no nível; o custo continua 2 × Dano Base; a **caverna não entra** no dano. A leitura antiga (n = nível da caverna, D-133) vira alternativa no **DBG → Caverna → botão "Picareta"**, para o Apellon comparar; ela aparece no aviso do cálculo. A taxa e o incremento do DBG → Cálculos valem nas duas. | M8 (ajuste) |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 

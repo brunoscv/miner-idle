@@ -56,15 +56,17 @@ namespace MinersIdle.Game
         [SerializeField] double walkSpeed = 4;
         [Tooltip("Distância do cristal em que o anão para e começa a bater.")]
         [SerializeField] double miningRange = 1;
-        [Tooltip("Multiply: dano = base × Picareta.efeito^nível (até o GDD v5). CaveScaled (GDD v7, D-133): dano = base + " +
-                 "Picareta.efeito × nível + taxa^(caverna − 1).")]
+        [Tooltip("Multiply: dano = base × Picareta.efeito^nível (até o GDD v5). LevelScaled (GDD v7, D-201): dano = base + " +
+                 "Picareta.efeito × compras + taxa^compras. CaveScaled (a leitura da D-133, alternativa no DBG → Caverna): " +
+                 "dano = base + Picareta.efeito × compras + taxa^(caverna − 1).")]
         [SerializeField] PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply;
-        [Tooltip("A taxa da Picareta no CaveScaled (D-133, configurável): o dano ganha taxa^(caverna − 1). GDD v7: 1,2.")]
+        [Tooltip("A taxa da Picareta (configurável): o dano ganha taxa^compras (LevelScaled) ou taxa^(caverna − 1) " +
+                 "(CaveScaled). GDD v7: 1,2.")]
         [SerializeField] double pickaxeCaveGrowth = 1.2;
 
         [Header("Melhorias (custo da próxima compra = inicial × crescimento^nível, ou inicial + passo × nível na fórmula " +
                 "Linear; nível = compras feitas)")]
-        [Tooltip("Efeito: o dano multiplica por este valor a cada nível (Multiply) ou soma no Dano Base (CaveScaled).")]
+        [Tooltip("Efeito: o dano multiplica por este valor a cada nível (Multiply) ou soma no Dano Base (LevelScaled e CaveScaled).")]
         [SerializeField] UpgradeLineValues pickaxe = new UpgradeLineValues(10, 4, 19, 2);
         [Tooltip("Efeito: segundos a menos no intervalo a cada nível.")]
         [SerializeField] UpgradeLineValues speed = new UpgradeLineValues(15, 3, 10, 0.05);
@@ -145,17 +147,27 @@ namespace MinersIdle.Game
         [Tooltip("Promoção do Estagiário (M7): compra única; a run já começa com ele. Só com o Treinar no limite (GDD v7: 50).")]
         [SerializeField] UpgradeLineValues internPromotion = new UpgradeLineValues(50, 1, 0, 1);
 
-        /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos só valem no CaveScaled.</summary>
+        /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos não valem no Multiply (v5).</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
+
+        /// <summary>A Picareta deste balanço tem taxa e incremento (a do GDD v7, pela compra ou pela caverna).</summary>
+        public bool PickaxeTunable => pickaxeFormula != PickaxeFormula.Multiply;
+
+        /// <summary>A Picareta deste balanço é a do GDD v7 pela compra (D-201): só nela o DBG → Caverna troca para a caverna.</summary>
+        public bool PickaxeSwitchable => pickaxeFormula == PickaxeFormula.LevelScaled;
 
         /// <summary>A taxa da Picareta deste balanço (GDD v7: 1,2).</summary>
         public double PickaxeCaveGrowth => pickaxeCaveGrowth;
 
-        /// <summary>O incremento da Picareta deste balanço: Dano Base a mais por compra no CaveScaled (GDD v7: 1).</summary>
+        /// <summary>O incremento da Picareta deste balanço: Dano Base a mais por compra na do GDD v7 (1).</summary>
         public double PickaxeStep => pickaxe.Effect;
 
         /// <param name="pickaxeCaveGrowth">A taxa trocada no DBG → Cálculos (E3b-3); <c>null</c> = a do asset.</param>
-        public MiningRules ToRules(double? pickaxeCaveGrowth = null) => new MiningRules(
+        /// <param name="pickaxeByCave">
+        /// O botão "Picareta" do DBG → Caverna (D-201): a Picareta pela caverna (a leitura da D-133) no lugar da pela compra.
+        /// Só vale num balanço com a Picareta pela compra.
+        /// </param>
+        public MiningRules ToRules(double? pickaxeCaveGrowth = null, bool pickaxeByCave = false) => new MiningRules(
             initialCrystals, firstCrystalDistance, maxCrystals, spawnInterval,
             minCrystalSpacing, spawnDistance,
             crystalHealth, crystalReward,
@@ -164,7 +176,8 @@ namespace MinersIdle.Game
             minCrystals,
             caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor,
             tapReach, arrivalStrike, swingRecovery,
-            pickaxeFormula, pickaxeFormula == PickaxeFormula.CaveScaled ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
+            pickaxeByCave && PickaxeSwitchable ? PickaxeFormula.CaveScaled : pickaxeFormula,
+            PickaxeTunable ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
             levelsPerBiome);
 
         /// <summary>O descanso, as lascas vermelhas e as permanentes deste balanço (Marco 8b). Sem descanso no asset, nada disso.</summary>
@@ -183,7 +196,7 @@ namespace MinersIdle.Game
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance);
 
         /// <param name="pickaxeStep">
-        /// O incremento trocado no DBG → Cálculos (E3b-3); <c>null</c> = o do asset. Só no CaveScaled. O custo segue
+        /// O incremento trocado no DBG → Cálculos (E3b-3); <c>null</c> = o do asset. Não vale no Multiply (v5). O custo segue
         /// "2 × Dano Base" (D-133): o passo do custo cresce na mesma proporção do incremento.
         /// </param>
         public EconomyRules ToEconomy(double? pickaxeStep = null) => new EconomyRules(
@@ -195,7 +208,7 @@ namespace MinersIdle.Game
         UpgradeDefinition PickaxeLine(double? step)
         {
             var line = pickaxe.ToDefinition();
-            if (!step.HasValue || pickaxeFormula != PickaxeFormula.CaveScaled || step.Value == line.Effect) return line;
+            if (!step.HasValue || !PickaxeTunable || step.Value == line.Effect) return line;
 
             double costGrowth = line.CostFormula == CostFormula.Linear && line.Effect != 0
                 ? line.CostGrowth * step.Value / line.Effect

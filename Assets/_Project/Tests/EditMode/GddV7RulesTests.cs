@@ -103,6 +103,50 @@ namespace MinersIdle.Tests
             Assert.That(sim.Stats.Damage, Is.EqualTo(2 + Math.Pow(1.2, 9)).Within(1e-9), "Dano Base 2 + 1,2^9, sem ×2");
         }
 
+        // ── Picareta pela compra (GDD v7, D-201) ─────────────────────────────────────────────────────────────────
+
+        [Test]
+        public void LevelScaledPickaxe_WithoutPurchase_HitsForTwo()
+        {
+            Assert.That(Sim(Rules(PickaxeFormula.LevelScaled)).Stats.Damage, Is.EqualTo(2), "Dano Base 1 + 1,2^(1 − 1)");
+        }
+
+        [Test]
+        public void LevelScaledPickaxe_EachPurchaseAddsOneToTheBase_AndOneLevelToTheRate()
+        {
+            var sim = Sim(Rules(PickaxeFormula.LevelScaled));
+            sim.AddShards(2 + 4);
+
+            Assert.That(sim.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(2 + 1.2).Within(1e-9), "nível 2: Dano Base 2 + 1,2^1");
+            Assert.That(sim.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(3 + 1.44).Within(1e-9), "nível 3: Dano Base 3 + 1,2^2");
+            Assert.That(sim.State.Shards, Is.EqualTo(0).Within(1e-9), "o custo segue 2 × Dano Base: 2 e depois 4");
+        }
+
+        [Test]
+        public void LevelScaledPickaxe_DoesNotGrowWithTheCave()
+        {
+            var sim = Sim(Rules(PickaxeFormula.LevelScaled));
+            sim.AddShards(2);
+            sim.Purchase(UpgradeId.Pickaxe);
+            double inCaveOne = sim.Stats.Damage;
+
+            Assert.That(sim.SkipToCave(10), Is.True);
+
+            Assert.That(sim.Stats.Damage, Is.EqualTo(inCaveOne), "a caverna não entra no dano (D-201)");
+        }
+
+        [Test]
+        public void LevelScaledPickaxe_ThePreviewShowsTheNextLevel()
+        {
+            var sim = Sim(Rules(PickaxeFormula.LevelScaled));
+            var preview = sim.Preview(UpgradeId.Pickaxe);
+
+            Assert.That(preview.CurrentValue, Is.EqualTo(2));
+            Assert.That(preview.NextValue, Is.EqualTo(2 + 1.2).Within(1e-9), "a loja mostra Dano 2 » 3,2");
+        }
+
         [Test]
         public void MultiplyPickaxe_IsTheFormulaUpToGddV5()
         {
@@ -325,8 +369,10 @@ namespace MinersIdle.Tests
             Assert.That(rules.CrystalRewardIn(10), Is.EqualTo(1.2 * Math.Pow(1.25, 9)).Within(1e-9), "lascas = vida × 1,2 (D-134)");
             Assert.That(rules.Damage, Is.EqualTo(1));
             Assert.That(rules.HitInterval, Is.EqualTo(2));
-            Assert.That(rules.PickaxeFormula, Is.EqualTo(PickaxeFormula.CaveScaled));
+            Assert.That(rules.PickaxeFormula, Is.EqualTo(PickaxeFormula.LevelScaled), "Picareta pela compra (D-201)");
             Assert.That(rules.PickaxeCaveGrowth, Is.EqualTo(1.2));
+            Assert.That(asset.ToRules(pickaxeByCave: true).PickaxeFormula, Is.EqualTo(PickaxeFormula.CaveScaled),
+                        "a leitura da D-133, no DBG → Caverna");
 
             var pickaxe = economy.Get(UpgradeId.Pickaxe);
             Assert.That((pickaxe.CostFormula, pickaxe.BaseCost, pickaxe.CostGrowth, pickaxe.MaxLevel, pickaxe.Effect),

@@ -8,10 +8,16 @@ namespace MinersIdle.Core
         /// <summary>Até o GDD v5: <c>dano base × Picareta.efeito^nível</c>.</summary>
         Multiply,
         /// <summary>
-        /// GDD v7 (D-133): <c>Dano Base + Picareta.efeito × nível + taxa^(caverna − 1)</c>. O Dano Base é o dano base das
-        /// regras; cada compra soma o efeito nele; a taxa é <see cref="MiningRules.PickaxeCaveGrowth"/>.
+        /// A leitura da D-133 (desde a D-201, alternativa no DBG → Caverna): <c>Dano Base + Picareta.efeito × nível +
+        /// taxa^(caverna − 1)</c>. O Dano Base é o dano base das regras; cada compra soma o efeito nele; a taxa é
+        /// <see cref="MiningRules.PickaxeCaveGrowth"/>.
         /// </summary>
         CaveScaled,
+        /// <summary>
+        /// GDD v7 (D-201): <c>Dano Base + Picareta.efeito × compras + taxa^(nível da Picareta − 1)</c>, com nível = 1 +
+        /// compras; a caverna não entra. Sem compra, 1 + 0 + taxa^0 = 2, como no <see cref="CaveScaled"/> na caverna 1.
+        /// </summary>
+        LevelScaled,
     }
 
     /// <summary>
@@ -142,9 +148,12 @@ namespace MinersIdle.Core
         /// </summary>
         public double SwingRecovery { get; }
 
-        /// <summary>Como o dano da Picareta é calculado: o do GDD v5 ou o do v7, que cresce com a caverna (D-133).</summary>
+        /// <summary>Como o dano da Picareta é calculado: o do GDD v5, o do v7 pelo nível da compra (D-201) ou pela caverna (D-133).</summary>
         public PickaxeFormula PickaxeFormula { get; }
-        /// <summary>A "taxa" da D-133: no <see cref="Core.PickaxeFormula.CaveScaled"/>, o dano ganha taxa^(caverna − 1) (GDD v7: 1,2).</summary>
+        /// <summary>
+        /// A "taxa" da Picareta (GDD v7: 1,2): o dano ganha taxa^(nível da Picareta − 1) no
+        /// <see cref="Core.PickaxeFormula.LevelScaled"/> e taxa^(caverna − 1) no <see cref="Core.PickaxeFormula.CaveScaled"/>.
+        /// </summary>
         public double PickaxeCaveGrowth { get; }
 
         /// <summary>

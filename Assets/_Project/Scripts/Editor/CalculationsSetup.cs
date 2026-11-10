@@ -44,7 +44,11 @@ namespace MinersIdle.EditorTools
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.CalcMenuName) : null;
             if (menu == null) return changed;
             var existing = menu.GetComponent<CalculationsPanel>();
-            if (existing != null) return EnsureWarningBack(debugPanel, existing) || changed;
+            if (existing != null)
+            {
+                changed |= EnsureWarningBack(debugPanel, existing);
+                return EnsurePickaxeByCave(debugPanel, existing) || changed;
+            }
 
             var grid = menu.Find("Content/Buttons");
             var references = new System.Collections.Generic.List<(string, Object)>
@@ -90,6 +94,55 @@ namespace MinersIdle.EditorTools
 
             Debug.Log("[Setup] Painel de debug: menu \"Cálculos\" com o seletor GDD v7/v5, a taxa e o incremento da Picareta, " +
                       "Reiniciar run e o aviso do cálculo na tela (M8 E3b-3, D-143).");
+            EnsurePickaxeByCave(debugPanel, panel);
+            return true;
+        }
+
+        const string PickaxeByCaveName = "PickaxeByCave";
+        const string PickaxeByLevelLabel = "Picareta: compra";
+        const string PickaxeByCaveLabel = "Picareta: caverna";
+
+        /// <summary>
+        /// D-201: o botão "Picareta" no menu Caverna do DBG (antes do Fechar), ligado ao <see cref="CalculationsPanel"/>,
+        /// que já guarda a escolha e escreve o aviso. Troca a Picareta pela compra (GDD v7) pela da caverna (D-133).
+        /// </summary>
+        static bool EnsurePickaxeByCave(DebugPanel debugPanel, CalculationsPanel panel)
+        {
+            var grid = debugPanel.transform.Find("CaveMenu/Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+
+            var button = grid.Find(PickaxeByCaveName);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(grid, PickaxeByCaveName, PickaxeByLevelLabel).transform;
+                var close = grid.Find("Close");
+                if (close != null) button.SetSiblingIndex(close.GetSiblingIndex());
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            changed |= SetIfDifferent(so.FindProperty("pickaxeByCave"), button.GetComponent<Button>());
+            changed |= SetIfEmpty(so.FindProperty("pickaxeByLevelLabel"), PickaxeByLevelLabel);
+            changed |= SetIfEmpty(so.FindProperty("pickaxeByCaveLabel"), PickaxeByCaveLabel);
+            changed |= SetIfEmpty(so.FindProperty("pickaxeByCaveChangedFormat"), " · Picareta pela caverna");
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            if (changed) Debug.Log("[Setup] Painel de debug: botão \"Picareta\" (compra ⇄ caverna) no menu Caverna (D-201).");
+            return changed;
+        }
+
+        static bool SetIfDifferent(SerializedProperty property, Object value)
+        {
+            if (property.objectReferenceValue == value) return false;
+            property.objectReferenceValue = value;
+            return true;
+        }
+
+        static bool SetIfEmpty(SerializedProperty property, string value)
+        {
+            if (!string.IsNullOrEmpty(property.stringValue)) return false;
+            property.stringValue = value;
             return true;
         }
 

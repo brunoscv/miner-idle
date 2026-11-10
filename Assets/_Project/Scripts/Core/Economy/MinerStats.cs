@@ -33,8 +33,9 @@ namespace MinersIdle.Core
         public double CritBonus { get; }
 
         /// <summary>
-        /// Fórmulas (formato do GDD, REQ-ECO): dano = base × Picareta.efeito^n (até o GDD v5) ou base + Picareta.efeito × n +
-        /// taxa^(caverna − 1) (GDD v7, D-133; <see cref="MiningRules.PickaxeFormula"/>), × (Dupla.efeito se comprada) ×
+        /// Fórmulas (formato do GDD, REQ-ECO): dano = base × Picareta.efeito^n (até o GDD v5), base + Picareta.efeito × n +
+        /// taxa^n (GDD v7, D-201: n = compras = nível da Picareta − 1) ou base + Picareta.efeito × n + taxa^(caverna − 1)
+        /// (a leitura da D-133, alternativa no DBG; <see cref="MiningRules.PickaxeFormula"/>), × (Dupla.efeito se comprada) ×
         /// (Letrado.efeito da caverna 2 em diante, com o Letrado dela comprado: GDD v5, M8); crítico = Crítico.efeito × n;
         /// intervalo = max(mínimo, base − Velocidade.efeito × n); caminhada = base × (1 + Botas.efeito × n);
         /// lascas = × (1 + Mineração.efeito × n). Desde o Marco 8b, as permanentes (D-158): o dano final × Sangue da
@@ -59,9 +60,20 @@ namespace MinersIdle.Core
             int Level(UpgradeId id) => state.LevelOf(id) + (raised == id ? 1 : 0);
 
             double pickaxe = economy.Get(UpgradeId.Pickaxe).Effect;
-            double damage = rules.PickaxeFormula == PickaxeFormula.CaveScaled
-                ? rules.Damage + pickaxe * Level(UpgradeId.Pickaxe) + Math.Pow(rules.PickaxeCaveGrowth, state.Cave - 1)
-                : rules.Damage * Math.Pow(pickaxe, Level(UpgradeId.Pickaxe));
+            int pickaxeLevel = Level(UpgradeId.Pickaxe);
+            double damage;
+            switch (rules.PickaxeFormula)
+            {
+                case PickaxeFormula.LevelScaled: // nível da Picareta − 1 = compras (D-201)
+                    damage = rules.Damage + pickaxe * pickaxeLevel + Math.Pow(rules.PickaxeCaveGrowth, pickaxeLevel);
+                    break;
+                case PickaxeFormula.CaveScaled:
+                    damage = rules.Damage + pickaxe * pickaxeLevel + Math.Pow(rules.PickaxeCaveGrowth, state.Cave - 1);
+                    break;
+                default:
+                    damage = rules.Damage * Math.Pow(pickaxe, pickaxeLevel);
+                    break;
+            }
             if (Level(UpgradeId.DoublePickaxe) > 0) damage *= economy.Get(UpgradeId.DoublePickaxe).Effect;
             // O Letrado n dobra o dano na caverna n+1, a que ele abriu (só se chega nela com ele comprado).
             if (state.Cave > 1 && Level(UpgradeId.Letrado) >= state.Cave - 1) damage *= economy.Get(UpgradeId.Letrado).Effect;
