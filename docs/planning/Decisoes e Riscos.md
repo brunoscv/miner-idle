@@ -285,6 +285,19 @@
 | **D-208** | **Mineração e Coração Ardente somam (revê a D-158 nesse ponto):** lascas da quebra = cristal × (1 + Mineração + Coração Ardente), **cada uma no seu teto de +1000%** (Mineração 10 níveis × 100%, Coração 20 × 50%): no máximo **×21** (antes multiplicavam: ×121). Exemplo do Bruno: cristal de 1 lasca, Mineração 1 e Coração 1 = 1 + 1 + 0,5 = **2,5**. O offline continua só com a Mineração do estagiário (D-189). | M9 (ajuste) |
 | **D-209** | **Mineração do estagiário vale também com o jogo aberto (revê a D-166; GDD v7 §5.1–5.3):** online, o estagiário bate com o dano e as melhorias dele, e a Mineração dele entra **somada** na dos cristais: lascas = cristal × (1 + Mineração do anão + Coração Ardente + Mineração do estagiário), **em todo cristal**, não importa quem dá o último golpe; cada uma no seu teto de +1000% (no máximo **×31**). Exemplo: 1 lasca, Mineração do anão 1 e dele 1 = **3**. Só conta com ele contratado. Offline nada muda: só ele, com o que é dele (D-189). Na LOJA, a linha dele diz "Lascas" (não mais "Offline"). | M9 (ajuste) |
 
+### 1.14 Plano do M9b (Bônus temporários), decidido pelo Bruno em 2026-11-10 (aprovou as recomendações P1…P8)
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-210** | **Escopo (P1):** o mecanismo de bônus com tempo nasce com o **combo** (E1–E3), validado sozinho; depois o **cristal raro** (E4) e o **AD** (E5), cada um com o plano detalhado escrito quando chegar a vez; sessão longa no fim (E6). | M9b |
+| **D-211** | **Dois bônus iguais ao mesmo tempo (P2, detalha a D-183):** no padrão (GDD), cada bônus é independente, com o próprio tempo: dois +10% valem juntos (+20%) enquanto os dois durarem; o crítico garantido **soma o tempo** que sobra. Na alternativa (maior marco), o bônus novo de um marco **renova o tempo** do que já está ativo, sem somar efeito. | M9b |
+| **D-212** | **Combo acima de ×100 (P3):** cada marco (×10, ×30, ×50, ×100) vale **uma vez por combo**; parar no ×230 não dá dois Frenesis. | M9b |
+| **D-213** | **Descansar (P4):** os bônus do combo **acabam no descanso** (a run nova começa sem nada do dia anterior). | M9b |
+| **D-214** | **Minimizar ou fechar no meio do combo (P5):** encerra o combo na hora; os bônus entram naquele instante e o tempo deles corre com o app fechado (D-181). | M9b |
+| **D-215** | **O ganho na tela (P6):** ao zerar o combo, um texto sobe do contador com o som de marco ("+25% DANO", "CRÍTICO GARANTIDO"); no ×100, "FRENESI!" maior, com tremor leve (obedece aos AJUSTES). Os ícones entram na coluna da esquerda (D-141). Sem vibração. Mockup na E2. | M9b |
+| **D-216** | **O DANO do HUD (P7):** mostra o dano **com** os bônus de dano, em âmbar enquanto houver algum; o crítico garantido aparece só na coluna. | M9b |
+| **D-217** | **DBG (P8):** o seletor do acúmulo (D-183) fica no **DBG → Cálculos**, gravado no `calculations.json`, nunca no release, e entra no rótulo "Cálculo:"; os atalhos de cada marco ficam num menu novo, **DBG → Bônus**. | M9b |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.

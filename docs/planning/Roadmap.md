@@ -185,7 +185,7 @@ Formato por marco: **Objetivo · Resultado para o jogador · Tarefas (ver §5) �
 - **GDD v6 (D-127):** o teto do offline passa a **6 h** (G15). O save completo já nasce separado em **run** (lascas, melhorias, nível, estagiário) e **permanente** (lascas vermelhas, melhorias permanentes), que o marco "Dia e melhorias permanentes" cria.
 - **GDD v7 (D-139):** no offline só valem o dano, os bônus e as melhorias do estagiário, até 6 h; a conta exata fica no plano deste marco.
 
-### Bônus temporários (D-89, aprovado em 2026-10-31) ← *GDD v5*
+### Bônus temporários (D-89, aprovado em 2026-10-31) ← *GDD v5* — plano: [Marco 9b](Marco%209b%20-%20Bonus%20temporarios.md) (escrito em 2026-11-10, começa pelo combo)
 - **Objetivo:** o lado "10% roguelite" do v5. **Jogador:** combo longo dá bônus (×10: +10% de dano por 5 s · ×30: +15% por 10 s · ×50: crítico garantido por 20 s · ×100: "Frenesi", +50% por 30 s), sempre visível na tela; quebrar um **cristal raro** abre uma janela com **2 melhorias temporárias** para escolher.
 - **Técnica:** modificadores com tempo no núcleo (o mesmo mecanismo serviria ao boost do AD); indicador de bônus ativo no HUD; o `crystal_glass_rare` do Bruno (D-77) como arte do raro.
 - **Posição:** depois do M8 (D-89). **Já decidido:** bônus quando o combo para, cumulativos (D-96); raro com 15% e bônus de 60 s (D-97); leva também o boost do AD. **Pendências:** G11 (acúmulo), G12 (lista de melhorias), G13 (base dos 15% e pausa). **Esforço:** a estimar quando a G12 for respondida.
