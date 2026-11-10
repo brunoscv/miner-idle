@@ -8,8 +8,9 @@ using UnityEngine;
 namespace MinersIdle.EditorTools
 {
     /// <summary>
-    /// Parte do <see cref="ProjectSetup"/> para a E8 do M1b (D-72, D-102): os biomas das 10 cavernas. Teste da D-145: o
-    /// bioma 1 (níveis 1–10 no GDD v7) usa o chão em faixa <c>ground_01a…e</c>; os outros seguem com o chão gerado abaixo. O chão de cada uma é
+    /// Parte do <see cref="ProjectSetup"/> para a E8 do M1b (D-72, D-102): os biomas das 10 cavernas. Chão em faixa (D-145,
+    /// D-176): os biomas 1–3 (níveis 1–10, 11–20 e 21–30 no GDD v7) usam <c>ground_01a…e</c>, <c>ground_02a…e</c> e
+    /// <c>ground_03a…e</c>; os outros seguem com o chão gerado abaixo. O chão gerado de cada uma é
     /// o tile do Apellon (<c>tileset_ground_01</c>, desenho de 4 cores) com as 4 cores trocadas pela paleta da caverna, e
     /// com pedra pequena, pedra grande e buraco sorteados (semente fixa: sai sempre igual). Cavernas 1–4 = os tons
     /// <c>01</c>…<c>04</c> dele; 5–10 = paletas novas seguindo o piso do GDD v5 §6. Põe os 10 biomas no
@@ -66,8 +67,8 @@ namespace MinersIdle.EditorTools
         static readonly Cave[] Caves =
         {
             new Cave { Name = "Entrada da mina", Ramp = new[] { "#AD7757", "#C09473", "#D7B594", "#E7D5B3" }, WallTint = new Color(1.35f, 1.35f, 1.35f), Fog = "#140D09", LampEvery = 1, Crystal = 0, FloorTiles = "ground_01" },
-            new Cave { Name = "Galeria rochosa", Ramp = new[] { "#7A4841", "#AD7757", "#C09473", "#D7B594" }, WallTint = new Color(1.25f, 1.18f, 1.12f), Fog = "#120B09", LampEvery = 1, Crystal = 1 },
-            new Cave { Name = "Veio profundo", Ramp = new[] { "#4D2B32", "#7A4841", "#AD7757", "#C09473" }, WallTint = new Color(1.15f, 1.05f, 1f), Fog = "#0F090A", LampEvery = 1, Crystal = 2 },
+            new Cave { Name = "Galeria rochosa", Ramp = new[] { "#7A4841", "#AD7757", "#C09473", "#D7B594" }, WallTint = new Color(1.25f, 1.18f, 1.12f), Fog = "#120B09", LampEvery = 1, Crystal = 1, FloorTiles = "ground_02" },
+            new Cave { Name = "Veio profundo", Ramp = new[] { "#4D2B32", "#7A4841", "#AD7757", "#C09473" }, WallTint = new Color(1.15f, 1.05f, 1f), Fog = "#0F090A", LampEvery = 1, Crystal = 2, FloorTiles = "ground_03" },
             new Cave { Name = "Zona metálica", Ramp = new[] { "#241527", "#341C27", "#7A4841", "#AD7757" }, WallTint = new Color(1f, 0.92f, 0.98f), Fog = "#0B060B", LampEvery = 1, Crystal = 0 },
             new Cave { Name = "Câmara subterrânea", Ramp = new[] { "#10201C", "#1C342C", "#2E4E40", "#4F7560" }, WallTint = new Color(0.85f, 1.05f, 0.95f), Fog = "#06100C", LampEvery = 1, Crystal = 1 },
             new Cave { Name = "Fenda cristalina", Ramp = new[] { "#1E1530", "#2E2047", "#463466", "#6A5590" }, WallTint = new Color(0.95f, 0.88f, 1.15f), Fog = "#0C0816", LampEvery = 1, Crystal = 2 },
