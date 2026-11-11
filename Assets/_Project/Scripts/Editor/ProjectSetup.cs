@@ -95,6 +95,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV7Intern();
             EnsureGddV7ComboBonuses();
             EnsureGddV7RareCrystal();
+            EnsureGddV7AdBoost();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -585,6 +586,26 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v7: os marcos do combo ×10, ×30, ×50 e ×100 viram bônus com tempo (M9b, D-96).");
+        }
+
+        /// <summary>
+        /// M9b E5: o boost do AD no balanço do GDD v7 (§7.2, D-187): intervalo ÷ 2,5 por 30 s. Só preenche se está vazio
+        /// (não desfaz um ajuste).
+        /// </summary>
+        static void EnsureGddV7AdBoost()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var divisor = serialized.FindProperty("adSpeedDivisor");
+            var seconds = serialized.FindProperty("adBoostSeconds");
+            if (divisor.doubleValue != 0 || seconds.doubleValue != 0) return;
+            divisor.doubleValue = 2.5;
+            seconds.doubleValue = 30;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v7: boost do AD com velocidade ×2,5 por 30 s (M9b E5, D-187).");
         }
 
         /// <summary>

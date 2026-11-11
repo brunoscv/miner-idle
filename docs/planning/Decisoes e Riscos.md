@@ -306,6 +306,15 @@
 | **D-224** | **Descansar (P14):** as cartas do raro acabam no descanso e uma janela aberta (com a fila) some, como o combo (D-213). | M9b |
 | **D-225** | **O que se vê e ouve (P15):** ao quebrar o raro, o som de marco e a janela abre; ao escolher, a janela fecha, a carta sobe do anão como texto em âmbar ("DANO ×2") e entra na coluna com o anel de 60 s. Sem vibração (D-199). No sorteio, a carta que saiu destacada, a outra apagada, "O jogo escolheu por você" e FECHAR. Mockup aprovado em 2026-11-10 (`tools/ci/out/m9b-e4-mockup.png`). | M9b |
 | **D-226** | **DBG do raro (P16):** no **DBG → Cálculos**, o botão do ritmo "Raro: 15%" ⇄ "Raro: 2%" (D-185), gravado no `calculations.json` e no aviso "Cálculo:"; no **DBG → Bônus**, Próximo raro, Janela agora e uma carta direta de cada tipo. | M9b |
+| **D-227** | **O jogo durante o "anúncio" (P17, 2026-11-10):** como a loja e a janela do raro: o anão continua minerando, o toque no mapa não minera. | M9b |
+| **D-228** | **Sem saída no modal do AD (P18):** nada de "Cancelar"; o modal só fecha pelo **RECOMPENSA**, aos 30 s (como na D-218). | M9b |
+| **D-229** | **Os 30 s do modal (P19):** tempo real de tela; não acelera com o DBG e só corre com o app na frente (minimizar pausa a contagem). Fechar o app no meio: o modal não vai para o save, sem recompensa, e o botão AD fica livre. | M9b |
+| **D-230** | **O botão AD (P20):** livre (madeira normal, ícone e "AD"); apagado com o modal aberto; apagado com os segundos que faltam do boost no lugar de "AD" (D-188). Tocar apagado não faz nada. | M9b |
+| **D-231** | **O que se vê com o boost (P21):** "VELOCIDADE ×2,5" sobe do anão em âmbar com o som de marco; o raio entra na coluna com o anel de 30 s ("AD · 28s" no detalhe); um raio pequeno pulsa acima do anão (§8); a VELOCIDADE do HUD fica âmbar com o valor acelerado (também com a carta Rápido). | M9b |
+| **D-232** | **AD com a carta Rápido (P22):** multiplicam: ÷ 2 e ÷ 2,5 = ÷ 5. | M9b |
+| **D-233** | **Ícones do AD (P23):** dois ícones do projeto em pixel art 32 px, aprovados no mockup: a telinha de madeira com o "play" (`icon_ad.png`, no botão e no modal) e o raio âmbar (`icon_bolt.png`, na coluna e acima do anão). | M9b |
+| **D-234** | **DBG do AD (P24):** no **DBG → Bônus**, **AD agora** (o boost direto, respeitando a D-188) e **Pular espera** (o modal mostra o RECOMPENSA já). | M9b |
+| **D-235** | **AD, descanso e app fechado (P25):** o boost corre com o app fechado, como os do combo (D-181); acaba no descanso (D-213, D-224), e o botão volta livre. No offline não muda nada (não vale para o estagiário, D-177). | M9b |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 

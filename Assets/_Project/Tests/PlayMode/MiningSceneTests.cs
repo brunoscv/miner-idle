@@ -32,6 +32,10 @@ namespace MinersIdle.Tests
             var simulation = runner.Simulation;
             double start = simulation.Miner.Distance;
             var minerOnScreen = stage.MinerOnScreen;
+            // M9b E4: com a semente de cada run, um cristal raro pode quebrar no ×20 e o jogo sortear a carta Lascas ×2
+            // (D-186), que dobra as quebras dela: as lascas então ficam entre 1× e 2× as quebras.
+            bool shardsCard = false;
+            simulation.RareCardApplied += card => shardsCard |= card == RareCard.Shards;
             runner.TimeScale = 20f;
 
             // ~3 s reais × 20 = ~1 min de jogo: dá para quebrar alguns cristais (~12 s cada).
@@ -43,7 +47,9 @@ namespace MinersIdle.Tests
 
             Assert.That(simulation.Elapsed, Is.GreaterThan(20), "o tempo de jogo andou");
             Assert.That(simulation.State.Breaks, Is.GreaterThan(0), "quebrou cristais sem nenhum toque");
-            Assert.That(simulation.State.Shards, Is.EqualTo(simulation.State.Breaks * simulation.Rules.CrystalReward).Within(1e-9));
+            double plain = simulation.State.Breaks * simulation.Rules.CrystalReward;
+            if (shardsCard) Assert.That(simulation.State.Shards, Is.InRange(plain, 2 * plain + 1e-9), "com a carta Lascas ×2");
+            else Assert.That(simulation.State.Shards, Is.EqualTo(plain).Within(1e-9));
             Assert.That(simulation.Miner.Distance, Is.GreaterThan(start), "o anão correu pela fila");
             Assert.That(stage.DrawnCrystals, Is.EqualTo(simulation.Crystals.Count), "um desenho por cristal vivo");
 

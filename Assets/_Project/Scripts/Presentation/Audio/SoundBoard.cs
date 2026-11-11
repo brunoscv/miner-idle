@@ -82,6 +82,7 @@ namespace MinersIdle.Presentation
             simulation.ComboMilestone += OnComboMilestone;
             simulation.ComboBonusesGranted += OnBonusesGranted;
             simulation.RareWindowChanged += OnRareWindowChanged;
+            simulation.AdBoostGranted += OnAdBoostGranted;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -92,6 +93,7 @@ namespace MinersIdle.Presentation
             simulation.ComboMilestone -= OnComboMilestone;
             simulation.ComboBonusesGranted -= OnBonusesGranted;
             simulation.RareWindowChanged -= OnRareWindowChanged;
+            simulation.AdBoostGranted -= OnAdBoostGranted;
         }
 
         protected override void Rebuild(MiningSimulation simulation) { }
@@ -113,6 +115,9 @@ namespace MinersIdle.Presentation
         {
             if (window.IsChoosing) Play(Sfx.Milestone);
         }
+
+        /// <summary>O boost do AD entrou (D-231): o som de marco.</summary>
+        void OnAdBoostGranted() => Play(Sfx.Milestone);
 
         public void Play(Sfx sfx, float pitch = 1f)
         {

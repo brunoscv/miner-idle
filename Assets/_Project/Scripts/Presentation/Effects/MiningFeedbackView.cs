@@ -121,6 +121,7 @@ namespace MinersIdle.Presentation
             simulation.ComboMilestone += OnComboMilestone;
             simulation.ComboBonusesGranted += OnBonusesGranted;
             simulation.RareCardApplied += OnRareCardApplied;
+            simulation.AdBoostGranted += OnAdBoostGranted;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -132,6 +133,7 @@ namespace MinersIdle.Presentation
             simulation.ComboMilestone -= OnComboMilestone;
             simulation.ComboBonusesGranted -= OnBonusesGranted;
             simulation.RareCardApplied -= OnRareCardApplied;
+            simulation.AdBoostGranted -= OnAdBoostGranted;
         }
 
         protected override void Rebuild(MiningSimulation simulation) => OnComboChanged(simulation.Combo);
@@ -288,9 +290,13 @@ namespace MinersIdle.Presentation
         }
 
         /// <summary>A carta do raro entrou (D-225): o nome dela sobe do anão em âmbar ("DANO ×2"), como o ganho do combo.</summary>
-        void OnRareCardApplied(RareCard card)
+        void OnRareCardApplied(RareCard card) => ShowGain(buffs != null ? buffs.Find(BonusSource.Rare, (int)card)?.Gain : null);
+
+        /// <summary>O boost do AD entrou (D-231): "VELOCIDADE ×2,5" sobe do anão em âmbar.</summary>
+        void OnAdBoostGranted() => ShowGain(buffs != null ? buffs.Find(BonusSource.Ad, 0)?.Gain : null);
+
+        void ShowGain(string gain)
         {
-            var gain = buffs != null ? buffs.Find(BonusSource.Rare, (int)card)?.Gain : null;
             if (string.IsNullOrEmpty(gain)) return;
             floatingTexts.Show(gain, stage.MinerOnScreen + Vector3.up * (0.8f * sizeScale), MilestoneColor,
                                0.9f * sizeScale * 0.65f, 1.2f, 1.2f * sizeScale);

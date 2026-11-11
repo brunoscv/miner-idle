@@ -36,7 +36,7 @@ namespace MinersIdle.EditorTools
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.BonusMenuName) : null;
             if (menu == null) return false;
             var current = menu.GetComponent<BonusDebugPanel>();
-            if (current != null) return EnsureRare(menu, current);
+            if (current != null) return EnsureRare(menu, current) | EnsureAd(menu, current);
 
             var grid = menu.Find("Content/Buttons");
             var grant = new Button[GrantButtons.Length];
@@ -82,7 +82,47 @@ namespace MinersIdle.EditorTools
 
             Debug.Log("[Setup] Painel de debug: menu \"Bônus\" com combo ×10, ×30, ×50, ×100 e Limpar bônus (M9b, E1).");
             EnsureRare(menu, panel);
+            EnsureAd(menu, panel);
             return true;
+        }
+
+        /// <summary>M9b E5 (D-234): AD agora e Pular espera, antes do Fechar; o menu cresce para 5 fileiras.</summary>
+        static bool EnsureAd(Transform menu, BonusDebugPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+            Button Ensure(string name, string label)
+            {
+                var found = grid.Find(name);
+                if (found != null) return found.GetComponent<Button>();
+                changed = true;
+                return DebugPanelSetup.CreateButton(grid, name, label);
+            }
+            var now = Ensure("AdNow", "AD agora");
+            var skip = Ensure("AdSkip", "Pular espera");
+            grid.Find("Close")?.SetAsLastSibling();
+
+            var content = (RectTransform)menu.Find("Content");
+            if (content != null && !Mathf.Approximately(content.sizeDelta.y, DebugPanelSetup.BonusMenuHeight))
+            {
+                content.sizeDelta = new Vector2(content.sizeDelta.x, DebugPanelSetup.BonusMenuHeight);
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            var screen = Object.FindAnyObjectByType<SimulatedAdScreen>(FindObjectsInactive.Include);
+            if (so.FindProperty("adNow").objectReferenceValue != now || so.FindProperty("adScreen").objectReferenceValue != screen)
+            {
+                so.FindProperty("adNow").objectReferenceValue = now;
+                so.FindProperty("adSkip").objectReferenceValue = skip;
+                so.FindProperty("adScreen").objectReferenceValue = screen;
+                so.FindProperty("adFormat").stringValue = "AD ×{0}, {1}";
+                so.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+            if (changed) Debug.Log("[Setup] Painel de debug: no menu Bônus, AD agora e Pular espera (M9b E5, D-234).");
+            return changed;
         }
 
         /// <summary>Os atalhos do raro, na ordem da grade depois do Limpar (o nome do objeto, o rótulo).</summary>

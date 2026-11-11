@@ -37,13 +37,13 @@ namespace MinersIdle.EditorTools
 
         /// <summary>Nos botões da coluna, o ícone fica centralizado entre o topo (4 px) e o nome (a 29 px do topo).</summary>
         const float SideIconAreaTop = 4f;
-        const float SideLabelTop = SideSize - 17f;
+        internal const float SideLabelTop = SideSize - 17f;
 
         const float LabelSize = 33f / 4f;   // 8,25: grid da Pixelify (UiSkinSetup.FontPixelStep × 3)
         const float ValueSize = 11f;
 
-        static readonly Color LabelColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
-        static readonly Color DisabledLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
+        internal static readonly Color LabelColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        internal static readonly Color DisabledLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>Faixa horizontal a <paramref name="top"/> px do topo do pai, com <paramref name="height"/> de altura.</summary>
-        static void Band(RectTransform rect, float top, float height)
+        internal static void Band(RectTransform rect, float top, float height)
         {
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(1f, 1f);
@@ -177,7 +177,7 @@ namespace MinersIdle.EditorTools
             rect.offsetMax = new Vector2(-2f, -top);
         }
 
-        static Image Icon(Transform parent, Sprite sprite, float size, bool layout)
+        internal static Image Icon(Transform parent, Sprite sprite, float size, bool layout)
         {
             var go = new GameObject("Icon", typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
@@ -403,10 +403,10 @@ namespace MinersIdle.EditorTools
             return true;
         }
 
-        static float IconSize(Sprite icon) => icon.rect.width <= 16f ? KitIconSize : SideIconSize;
+        internal static float IconSize(Sprite icon) => icon.rect.width <= 16f ? KitIconSize : SideIconSize;
 
         /// <summary>Tamanho e lugar do ícone de um botão da coluna. Devolve se mudou algo.</summary>
-        static bool PlaceSideIcon(RectTransform icon)
+        internal static bool PlaceSideIcon(RectTransform icon)
         {
             float size = IconSize(icon.GetComponent<Image>().sprite);
             float top = SideIconAreaTop + Mathf.Floor((SideLabelTop - SideIconAreaTop - size) / 2f);

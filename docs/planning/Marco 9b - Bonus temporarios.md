@@ -144,9 +144,58 @@ Na alternativa (só o maior marco), o ×104 dá só o Frenesi: ×1,5 por 30 s.
 - **E4b — A janela e o raro na tela (depois do mockup aprovado).** O cristal raro na fila (desenho e brilho), a janela das 2 cartas com a barra dos 30 s, o resultado do sorteio com FECHAR, o texto da carta, os ícones das cartas no `BuffCatalog` e na coluna, o som. **Testes PlayMode:** a janela abre e fecha, o toque fora dela não minera, reabrir o jogo traz a janela com o tempo que faltava.
 - **E4c — Celular.** Roteiro do Moto G75 da E4.
 
-### E5 — Boost do AD (esboço; plano detalhado quando chegar a vez)
+### E5 — Boost do AD (plano aprovado em 2026-11-10: P17…P25 → D-227…D-235; P18 sem saída)
 
-O botão AD deixa de ser "Em breve" (D-67): modal de 30 s "Visualizando AD" com ícone central e, no fim, o botão RECOMPENSA, que fecha o modal e põe o boost na coluna (D-218, no lugar do modal de 5 s com "Aprimorar" do §7.2); velocidade ×2,5 (intervalo ÷ 2,5, D-187) por 30 s, mesmo abaixo do piso de 0,1 s (D-180), o botão só volta quando o boost acaba (D-188), raio pulsante acima do anão (§8). Não vale para o estagiário (D-177). Sem rede de anúncios (D-21): o "assistir" fica atrás de uma interface para trocar depois. Mockup do modal antes.
+O botão AD deixa de ser "Em breve" (D-67): modal de 30 s "Visualizando AD" com ícone central e, no fim, o botão RECOMPENSA, que fecha o modal e põe o boost na coluna (D-218, no lugar do modal de 5 s com "Aprimorar" do §7.2); velocidade ×2,5 (intervalo ÷ 2,5, D-187) por 30 s, mesmo abaixo do piso de 0,1 s (D-180), o botão só volta quando o boost acaba (D-188), raio pulsante acima do anão (§8). Não vale para o estagiário (D-177). Sem rede de anúncios (D-21): o "assistir" fica atrás de uma interface para trocar depois. Mockup do modal: `tools/ci/out/m9b-e5-mockup.png`.
+
+**Como fica por dentro (sem decisão nova):** o boost é mais um bônus da mesma lista (origem "AD", intervalo ÷ 2,5, 30 s), então a coluna, o save (os bônus já vão pelo nome, sem versão nova), o fim exato pelo `Tick` e o tempo correndo com o app fechado vêm de graça. Os números (2,5 e 30 s) entram no `Balance_GDD_v7`. O "assistir" é uma interface (`IRewardedAd`) com uma única implementação hoje, o anúncio simulado: o modal. Trocar por uma rede de anúncios depois (D-21) é escrever outra implementação, sem mexer no boost.
+
+#### Perguntas da E5 (com a minha recomendação)
+
+**P17 — O jogo durante os 30 s do modal.**
+- **(a) Segue atrás, como na loja e na janela do raro (D-223):** o anão continua minerando, o toque no mapa não minera.
+- (b) Pausa a mineração enquanto o "anúncio" passa (como um anúncio de verdade, que tira o jogo da tela).
+**Rec.: (a).** É o mesmo comportamento das outras janelas, não cria o conceito de "pausa" só para isso, e o jogador não perde 30 s de mineração por ver o anúncio.
+
+**P18 — Sair do modal antes dos 30 s.**
+- **(a) Sem saída:** só o RECOMPENSA, no fim (como você descreveu).
+- (b) Um "Cancelar" pequeno no canto: fecha sem recompensa e o botão AD fica livre de novo.
+**Rec.: (b).** 30 s presos sem saída irritam, e os anúncios de recompensa de verdade deixam fechar perdendo a recompensa; quando a rede de anúncios entrar, o comportamento já é o mesmo.
+**Bruno: (a), sem saída (D-228).** O "Cancelar" do mockup b) sai.
+
+**P19 — Os 30 s do modal e o relógio.**
+- **(a) Tempo real de tela:** não acelera com o ×20 do DBG; só corre com o app na frente (minimizar pausa a contagem, como um vídeo). Fechar o app no meio: perde, sem recompensa, e o modal não vai para o save.
+- (b) Tempo do jogo (acelera com o DBG, corre com o app fechado).
+**Rec.: (a).** É um vídeo, não uma regra do jogo; e um atalho do DBG (P24) pula a espera para testar.
+
+**P20 — O botão AD.**
+- **(a) Três estados:** livre (madeira normal, ícone do AD, "AD"); com o modal aberto, apagado; com o boost ativo, apagado com os segundos que faltam ("27s") no lugar de "AD" (D-188). Tocar apagado: nada.
+**Rec.: (a).** O número no botão diz quando ele volta, sem precisar de outro aviso.
+
+**P21 — O que se vê com o boost.**
+- **(a)** Ao tocar em RECOMPENSA: o modal fecha, "VELOCIDADE ×2,5" sobe do anão em âmbar com o som de marco (como a carta do raro), o raio entra na coluna com o anel de 30 s ("AD · 28s" no detalhe), um raio pequeno pulsa acima da cabeça do anão (§8) e a VELOCIDADE do HUD fica âmbar com o valor já acelerado.
+**Rec.: (a).** Tudo reaproveita o que o combo e o raro já têm. A VELOCIDADE âmbar também acende com a carta Rápido do raro, que hoje não acende.
+
+**P22 — AD junto com a carta Rápido do raro.**
+- **(a) Multiplicam:** ÷ 2 e ÷ 2,5 = ÷ 5 (com a Velocidade no máximo, 0,1 s vira 0,02 s).
+- (b) Vale só o maior.
+**Rec.: (a).** É a mesma regra das cartas (cada uma divide o intervalo, D-219); "só o maior" seria uma regra nova.
+
+**P23 — Ícones.** O kit Anvil não tem raio nem tela.
+- **(a)** Desenhar dois ícones do projeto em pixel art 32 px (como o anel da coluna): **o do AD** (uma telinha de madeira com o triângulo de "play"), usado no botão e no centro do modal, e **o raio** âmbar, usado na coluna e acima do anão. Você pode trocar pelos seus quando quiser (mesmo nome de arquivo).
+**Rec.: (a).**
+
+**P24 — Atalhos do DBG.** No menu Bônus: **AD agora** (o boost direto, sem modal) e **Pular espera** (com o modal aberto, mostra o RECOMPENSA já).
+**Rec.: os dois.** O "AD agora" respeita a D-188 (com boost ativo, não faz nada).
+
+**P25 — Descanso e app fechado.** O boost corre com o app fechado, como os do combo (D-181), e acaba no descanso (como o combo e o raro, D-213, D-224), deixando o botão livre. No offline ele não muda nada, porque não vale para o estagiário (D-177).
+**Rec.: assim.**
+
+#### Etapas da E5
+
+- **E5a — Núcleo e o "assistir".** A origem "AD" na lista de bônus; os números no `Balance_GDD_v7` (2,5 e 30 s); `MiningSimulation.CanWatchAd` e `GrantAdBoost` (com boost ativo, não dá outro, D-188); o boost só no anão, depois do piso (D-180); a interface `IRewardedAd`. **Testes EditMode:** ÷ 2,5 no anão e não no estagiário, abaixo do piso, fim aos 30 s, sem acúmulo, junto com o Rápido (P22), save e reabrir, app fechado, descanso.
+- **E5b — Na tela (depois do mockup aprovado).** O botão AD com os três estados (P20), o modal (P17…P19), o texto do ganho, o raio acima do anão, a entrada no `BuffCatalog` e a VELOCIDADE âmbar; os atalhos do DBG (P24). **Testes PlayMode:** tocar no AD abre o modal e apaga o botão; o toque no mapa não minera; aos 30 s o RECOMPENSA aparece e dá o boost; o botão mostra os segundos e volta no fim.
+- **E5c — Celular.** Roteiro do Moto G75 da E5.
 
 ### E6 — Sessão longa e celular
 
@@ -199,6 +248,34 @@ Anote ✅/❌ em cada passo; um ❌ volta para mim com o que apareceu na tela.
 7. **Minimizar e voltar:** com a janela aberta, botão Início, voltar em 1 min: a janela continua com o mesmo tempo. Com uma carta ativa, voltar em 2 min: a carta acabou.
 8. **Leitura:** os textos da carta e o número da barra ficam nítidos no aparelho?
 
+- **E5:** no Editor, antes, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` com a cena `Game` aberta (põe o boost no `Balance_GDD_v7`, o boost e os textos no `BuffCatalog`, troca o "Em breve" do AD pelo botão de verdade, cria o anúncio simulado, o raio acima do anão e os botões novos do DBG). Depois, cena `Bootstrap`, Play:
+  1. **O botão:** o AD da coluna da direita está em madeira, com a TV e "AD" em âmbar (não mais o "Em breve").
+  2. **O anúncio:** tocar no AD. Escurece, abre "VISUALIZANDO AD" com a TV pulsando, "O anúncio termina em" e o número descendo de 30s (âmbar nos últimos 5), a barra enchendo e "Recompensa: Velocidade ×2,5 por 30 s". O botão AD fica apagado. Não há como sair.
+  3. **O jogo segue:** com o anúncio na tela, o anão continua batendo; tocar no mapa não minera.
+  4. **Recompensa:** aos 30 s, "Anúncio concluído!" e o botão **RECOMPENSA**. Tocar: fecha, o som de marco, "VELOCIDADE ×2,5" sobe do anão, o raio pulsa acima dele, a VELOCIDADE do HUD fica âmbar e mais rápida, e o ícone do raio entra na coluna da esquerda. Tocar no ícone: "AD · 28s".
+  5. **O botão conta:** o AD fica apagado com os segundos ("28s", "27s"…) no lugar do "AD". Tocar nele: nada. Aos 30 s o raio some, a VELOCIDADE volta ao branco e o AD fica livre de novo.
+  6. **Atalhos do DBG:** DBG → Bônus → **AD agora** dá o boost sem o anúncio (o alto do menu mostra "AD ×2,5, 30s"); de novo com ele ativo, nada. Com o anúncio aberto, **Pular espera** mostra o RECOMPENSA já (o DBG fica por cima do anúncio).
+  7. **Junto com o Rápido:** DBG → Bônus → **Carta Rápido** e **AD agora**: a VELOCIDADE do HUD vira 1/5 do normal.
+  8. **Estagiário:** com o estagiário (DBG → Estagiário), o boost não muda a velocidade dele.
+  9. **Fechar e abrir:** com o boost ativo (uns 20 s), sair do Play e voltar pela `Bootstrap` em 5 s: o boost volta com ~15 s. Voltar depois de 1 min: acabou. Sair com o **anúncio** aberto: ao voltar, nada de anúncio nem de boost.
+  10. **Descanso:** com o boost ativo, descansar: a run nova começa sem ele.
+
+  Depois, no Moto G75, o roteiro abaixo.
+
+### Roteiro do Moto G75 (E5)
+
+Anote ✅/❌ em cada passo; um ❌ volta para mim com o que apareceu na tela.
+
+1. **Achar o AD:** o botão AD da direita se lê como algo que dá para tocar (madeira, TV, "AD")?
+2. **O modal:** tocar no AD. O modal cabe na tela, o número e a barra se leem e ficam nítidos? A TV pulsando incomoda?
+3. **30 s parado:** esperar os 30 s inteiros. Parece longo demais para um anúncio simulado? (O número vem do GDD; anote a impressão.)
+4. **Recompensa no dedo:** tocar em RECOMPENSA: pega de primeira? O ganho, o raio e a VELOCIDADE âmbar aparecem juntos e dá para perceber que o anão ficou mais rápido?
+5. **O raio:** o raio acima do anão fica longe do texto do combo e não cobre o cristal?
+6. **O botão contando:** os segundos no lugar do "AD" se leem? Fica claro que não dá para tocar até acabar?
+7. **Minimizar no anúncio:** com o anúncio aberto em ~20 s, botão Início, voltar em 10 s: o número continua de onde estava (não pulou os 10 s).
+8. **Minimizar com o boost:** com o boost em ~25 s, botão Início, voltar em 10 s: sobram ~15 s (o boost corre com o app fechado).
+9. **Fechar no anúncio:** com o anúncio aberto, fechar pelo multitarefa e abrir: sem anúncio e sem boost; o AD está livre.
+
 ## Critério de pronto (do combo, E1–E3)
 
 - Parar o combo depois de cada marco dá os bônus do GDD, com o dano e o crítico certos no golpe e no toque, e nada para o estagiário.
@@ -243,5 +320,5 @@ Total: **~29–39 h**; o combo sozinho (E1–E3), **~14–19 h**.
 | E2 Coluna de buffs e feedback | 🔧 implementada em 2026-11-10 | Mockup aprovado (`tools/ci/out/m9b-e2-mockup.png`). `Data/BuffCatalog` (ícones Anvil 2/18/332, nomes, textos do ganho), `BuffColumn`/`BuffSlot` (anel `buff_ring`, piscar nos últimos 5 s, detalhe por 2 s), texto do ganho e "FRENESI!" com tremor no `MiningFeedbackView`, som de marco no `SoundBoard`, DANO âmbar no `HudView`. Setup: `BuffColumnSetup`. `BuffColumnTests` (PlayMode) **só compilados**. |
 | E3 Seletor do acúmulo e o celular | 🔧 implementada em 2026-11-10 (EditMode 398/398, PlayMode 142/142); roteiro do Moto G75 aguardando o Bruno | `CalculationChoice.ComboStacking` (gravado no `calculations.json` como `comboHighestOnly`; arquivo antigo = soma), aplicado pelo `MiningRunner` a cada simulação nova (troca de cálculo, Reiniciar run, descanso, reabrir). DBG → Cálculos ganhou o botão "Acúmulo: soma ⇄ maior" (`CalculationsSetup`), que entra no aviso "Cálculo:". Testes novos: `CalculationTests.Store_KeepsTheComboStacking_AndAnOldFileSums` e `CalculationsPanelTests.ComboStacking_SwitchesToTheHighestMilestone_AndSurvivesANewRun`. |
 | E4 Cristal raro | ✅ aprovada e testada pelo Bruno em 2026-11-10 (plano e mockup: P9…P16 → D-219…D-226; EditMode 422/422, PlayMode 148/148) | Núcleo: `RareRules`/`RareCard` e os bônus dano ×, intervalo ÷, lascas ×, crítico + (`Bonuses.cs`), `RareWindow` no `GameState` (save v7), sorteio do raro num gerador próprio (`MiningRunner.RareSeed`), janela/fila/sorteio aos 30 s como evento do `Tick`, offline em trechos para o estagiário. Tela: `RareWindowView` + `RareWindowSetup` (antes da loja), cartas no `BuffCatalog`, `crystal_glass_rare` com brilho no `DescentStage`, texto do ganho, som de marco, DANO âmbar também com o Dano ×2. DBG → Bônus (Próximo raro, Janela agora, 4 cartas) e DBG → Cálculos (Raro: 15% ⇄ 2%). Testes: `RareCrystalTests`, `RareCrystalFlowTests`, `CalculationTests.Store_KeepsTheRareRhythm_AndAnOldFileUsesTheGdd`. Mockup: `tools/ci/out/m9b-e4-mockup.png` |
-| E5 Boost do AD | ⏳ | — |
+| E5 Boost do AD | ✅ aprovada e testada pelo Bruno em 2026-11-10 (plano e mockup: P17…P25 → D-227…D-235, P18 sem saída; EditMode 432/432, PlayMode 150/150) | Núcleo: origem `Ad` nos bônus, `AdRules` no `StrikeRules` (2,5 e 30 s no `Balance_GDD_v7` pelo setup), `MiningSimulation.CanWatchAd`/`GrantAdBoost`/`AdBoostGranted` (só o anão, depois do piso; multiplica com o Rápido). Tela: `IRewardedAd` + `SimulatedAdScreen` (30 s de tela, sem saída), `AdButtonView` (livre, apagado, segundos), `AdBoostBolt` (raio acima do anão), VELOCIDADE âmbar no `HudView`, texto do ganho, som de marco, "AD · 28s" na coluna; ícones `icon_ad.png`/`icon_bolt.png`. Setup: `AdSetup`. DBG → Bônus: AD agora, Pular espera. Testes: `AdBoostTests`, `AdFlowTests`; `HudSkinTests` mede o AD de verdade (`SideButtons_AreNoLongerComingSoon`). Testes da E4 que falhavam às vezes, pela semente: `TapInputTests` e `TouchFingerTests` com o jogo parado; `MiningSceneTests` aceita a carta Lascas ×2. Mockup: `tools/ci/out/m9b-e5-mockup.png` |
 | E6 Sessão longa e celular | ⏳ | — |

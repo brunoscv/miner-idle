@@ -101,6 +101,16 @@ MonoBehaviour:
     cardText: "+25 pontos na\nchance de\ncr\xEDtico"
     cardNote: "S\xF3 o an\xE3o"
     forIntern: 0
+  - source: 2
+    tier: 0
+    icon: {fileID: 21300000, guid: 775ff7c2f502f9a46a0883f0a386b42d, type: 3}
+    title: "VELOCIDADE \xD72,5"
+    description: "Golpe 2,5\xD7 mais r\xE1pido"
+    headline: 
+    gain: "VELOCIDADE \xD72,5"
+    cardText: 
+    cardNote: 
+    forIntern: 0
   secondsFormat: '{0}s'
   comboFooterFormat: "Combo \xD7{0} \xB7 {1}s"
   gainDamageFormat: +{0} DANO
@@ -114,3 +124,10 @@ MonoBehaviour:
   rareQueueFormat: +{0} raro
   rareClose: FECHAR
   cardSecondsFormat: '{0} s'
+  adFooterFormat: "AD \xB7 {0}s"
+  adTitle: VISUALIZANDO AD
+  adWaitLabel: "O an\xFAncio termina em"
+  adDone: "An\xFAncio conclu\xEDdo!"
+  adRewardFormat: "Recompensa: Velocidade \xD7{0} por {1} s"
+  adReward: RECOMPENSA
+  adButton: AD

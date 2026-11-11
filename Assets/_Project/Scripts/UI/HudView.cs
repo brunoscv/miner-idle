@@ -21,6 +21,8 @@ namespace MinersIdle.UI
         [SerializeField] ShardFlight shardFlight;
         [Tooltip("A cor do DANO enquanto um bônus de dano vale (M9b, D-216).")]
         [SerializeField] Color boostedDamageColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        [Tooltip("A cor da VELOCIDADE enquanto o golpe está acelerado: boost do AD ou carta Rápido (M9b, D-231).")]
+        [SerializeField] Color boostedSpeedColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
 
         const float PulseSeconds = 0.2f;
         const float ShakeSeconds = 0.2f;
@@ -28,6 +30,7 @@ namespace MinersIdle.UI
         RectTransform _rect;
         Vector2 _basePosition;
         Color _damageColor;
+        Color _speedColor;
         float _pulse;
         float _shake;
 
@@ -43,6 +46,8 @@ namespace MinersIdle.UI
         public string CaveText => caveValue.text;
         /// <summary>O DANO está âmbar (um bônus de dano vale agora; para testes).</summary>
         public bool IsDamageBoosted => damageValue.color == boostedDamageColor;
+        /// <summary>A VELOCIDADE está âmbar (boost do AD ou carta Rápido; para testes).</summary>
+        public bool IsSpeedBoosted => speedValue.color == boostedSpeedColor && _speedColor != boostedSpeedColor;
 
         /// <summary>Um bônus de dano vale agora: os +% do combo ou a carta "Dano ×2" do raro (D-216).</summary>
         bool DamageBoosted => Simulation != null && (Simulation.Bonuses.DamagePercent > 0 || Simulation.Bonuses.DamageMultiplier > 1);
@@ -52,6 +57,7 @@ namespace MinersIdle.UI
             _rect = (RectTransform)transform;
             _basePosition = _rect.anchoredPosition;
             _damageColor = damageValue.color;
+            _speedColor = speedValue.color;
         }
 
         protected override void OnEnable()
@@ -116,6 +122,7 @@ namespace MinersIdle.UI
             damageValue.text = NumberFormatter.Format(stats.Damage);
             damageValue.color = DamageBoosted ? boostedDamageColor : _damageColor;
             speedValue.text = NumberFormatter.FormatSeconds(stats.HitInterval);
+            speedValue.color = Simulation != null && Simulation.Bonuses.IntervalDivisor > 1 ? boostedSpeedColor : _speedColor;
         }
     }
 }

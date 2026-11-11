@@ -81,22 +81,20 @@ namespace MinersIdle.Tests
             }
         }
 
-        [UnityTest]
-        public IEnumerator ComingSoonButtons_ShowNotice_ThenHideIt()
+        /// <summary>
+        /// Os dois "Em breve" da coluna (D-67) já viraram botões de verdade: AJUSTES abre a tela desde o M9 (E4) e AD abre o
+        /// anúncio simulado desde o M9b (E5, D-230).
+        /// </summary>
+        [Test]
+        public void SideButtons_AreNoLongerComingSoon()
         {
             Assert.That(_safeArea.Find("SettingsButton").GetComponent<ComingSoonButton>(), Is.Null,
                         "AJUSTES abre a tela desde o M9 (E4): não é mais \"Em breve\"");
-            foreach (var name in new[] { "AdButton" })
-            {
-                var button = _safeArea.Find(name).GetComponent<ComingSoonButton>();
-                Assert.That(button.IsNoticeShown, Is.False, name);
-
-                button.GetComponent<Button>().onClick.Invoke();
-                Assert.That(button.IsNoticeShown, Is.True, $"{name}: \"Em breve\" ao tocar");
-
-                yield return new WaitForSecondsRealtime(1.5f);
-                Assert.That(button.IsNoticeShown, Is.False, $"{name}: o aviso some sozinho");
-            }
+            var ad = _safeArea.Find("AdButton");
+            Assert.That(ad.GetComponent<ComingSoonButton>(), Is.Null, "AD abre o anúncio desde o M9b (E5)");
+            Assert.That(ad.Find("Notice"), Is.Null);
+            Assert.That(ad.GetComponent<AdButtonView>(), Is.Not.Null);
+            Assert.That(ad.Find("Icon")?.GetComponent<Image>().sprite, Is.Not.Null, "a TV (D-233)");
         }
 
         [Test]

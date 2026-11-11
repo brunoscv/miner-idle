@@ -131,6 +131,8 @@ namespace MinersIdle.EditorTools
             changed |= SettingsSetup.EnsureInScene(); // abaixo do "Bem-vindo de volta" (M9, E4)
             changed |= BuffColumnSetup.EnsureInScene(); // logo depois do HUD, atrás das janelas (M9b, E2)
             changed |= RareWindowSetup.EnsureInScene(); // antes da loja, depois do catálogo dos bônus (M9b, E4)
+            changed |= AdSetup.EnsureInScene(); // o botão AD, o anúncio simulado e o raio (M9b, E5)
+            changed |= BonusDebugSetup.EnsureInScene(); // de novo: o "Pular espera" precisa do anúncio já criado
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

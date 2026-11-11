@@ -144,6 +144,8 @@ MonoBehaviour:
   - card: 3
     value: 0.25
     seconds: 60
+  adSpeedDivisor: 2.5
+  adBoostSeconds: 30
   restLevel: 10
   redShardMilestoneStep: 10
   redShardMilestone: 5

@@ -173,6 +173,12 @@ namespace MinersIdle.Core
         /// </summary>
         public event Action<RareCard> RareCardApplied;
 
+        /// <summary>
+        /// O boost do AD entrou (M9b E5, D-231): o texto que sobe do anão e o som. Os atributos e a coluna já mudaram
+        /// (<see cref="BonusesChanged"/> sai antes).
+        /// </summary>
+        public event Action AdBoostGranted;
+
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
         public StrikeRules Strike => _strike;
@@ -710,6 +716,32 @@ namespace MinersIdle.Core
             var window = _state.RareWindow;
             if (!window.IsOpen || window.IsChoosing) return false;
             NextRareWindow(window.Queued);
+            return true;
+        }
+
+        // ── Boost do AD (M9b E5) ─────────────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>O boost do AD está ativo (o botão mostra quando ele volta, D-188, D-230).</summary>
+        public bool HasAdBoost => _state.Bonuses.AdBoost.HasValue;
+
+        /// <summary>Segundos que faltam do boost do AD; 0 sem ele.</summary>
+        public double AdBoostSecondsLeft => _state.Bonuses.AdBoost?.SecondsLeft ?? 0;
+
+        /// <summary>O botão AD pode ser usado: o balanço tem o boost e nenhum está ativo (D-188).</summary>
+        public bool CanWatchAd => _strike.Ad.IsEnabled && !HasAdBoost;
+
+        /// <summary>
+        /// O "anúncio" terminou (o RECOMPENSA, D-218) ou o atalho do debug (D-234): o intervalo do anão ÷ 2,5 por 30 s,
+        /// depois do piso (D-180), não para o estagiário (D-177). <c>false</c> sem AD no balanço ou com um ativo (D-188).
+        /// </summary>
+        public bool GrantAdBoost()
+        {
+            if (!CanWatchAd) return false;
+            var ad = _strike.Ad;
+            _state.Bonuses.AddOrRenew(new ActiveBonus(BonusKind.IntervalDivisor, ad.SpeedDivisor, ad.Seconds, ad.Seconds,
+                                                      BonusSource.Ad, 0));
+            OnBonusesChanged();
+            AdBoostGranted?.Invoke();
             return true;
         }
 

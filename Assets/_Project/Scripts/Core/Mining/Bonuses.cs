@@ -27,6 +27,33 @@ namespace MinersIdle.Core
         Combo,
         /// <summary>Uma carta do cristal raro (D-190); o <see cref="ActiveBonus.Tier"/> é a <see cref="RareCard"/>.</summary>
         Rare,
+        /// <summary>O boost do AD (M9b E5, D-187): intervalo ÷ 2,5 por 30 s, só no anão (D-177).</summary>
+        Ad,
+    }
+
+    /// <summary>
+    /// O boost do AD (M9b E5; GDD v7 §7.2, D-187, D-188): o intervalo do golpe do anão dividido por <see cref="SpeedDivisor"/>
+    /// por <see cref="Seconds"/>, depois do piso (D-180). Sem acúmulo: outro só depois que este acaba. Sem divisor ou sem
+    /// tempo, não há AD (o jogo até o v5).
+    /// </summary>
+    public sealed class AdRules
+    {
+        public AdRules(double speedDivisor, double seconds)
+        {
+            if (double.IsNaN(speedDivisor) || speedDivisor < 0) throw new ArgumentOutOfRangeException(nameof(speedDivisor));
+            if (double.IsNaN(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+            SpeedDivisor = speedDivisor;
+            Seconds = seconds;
+        }
+
+        /// <summary>Quanto o intervalo do golpe divide (GDD v7: 2,5).</summary>
+        public double SpeedDivisor { get; }
+        /// <summary>Quanto dura, em segundos de jogo (GDD v7: 30).</summary>
+        public double Seconds { get; }
+        /// <summary>O balanço tem o boost (o botão AD funciona).</summary>
+        public bool IsEnabled => SpeedDivisor > 1 && Seconds > 0;
+
+        public static AdRules None() => new AdRules(0, 0);
     }
 
     /// <summary>As 4 cartas do cristal raro (D-190). O número vai no <see cref="ActiveBonus.Tier"/>: não reordenar.</summary>
@@ -270,6 +297,17 @@ namespace MinersIdle.Core
                 for (int i = 0; i < _bonuses.Count; i++)
                     if (_bonuses[i].Source == BonusSource.Rare) return true;
                 return false;
+            }
+        }
+
+        /// <summary>O boost do AD ativo, ou <c>null</c> (D-188: no máximo um).</summary>
+        public ActiveBonus? AdBoost
+        {
+            get
+            {
+                for (int i = 0; i < _bonuses.Count; i++)
+                    if (_bonuses[i].Source == BonusSource.Ad) return _bonuses[i];
+                return null;
             }
         }
 

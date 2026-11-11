@@ -39,6 +39,9 @@ namespace MinersIdle.Tests
             _input = UnityEngine.Object.FindAnyObjectByType<TapInput>();
             _runner = UnityEngine.Object.FindAnyObjectByType<MiningRunner>();
             Assert.That(_input, Is.Not.Null, "a cena Game precisa do leitor de toque (rode o setup do projeto)");
+            // O jogo parado: o anão não quebra cristal sozinho, e nenhum cristal raro abre a janela (D-223) por cima do
+            // mapa no meio do teste, o que engolia toques de vez em quando (a semente muda a cada run).
+            _runner.TimeScale = 0f;
             // Em batch o jogo nunca tem foco: sem isto, o Input System desliga a tela de toque virtual.
             _settings = InputSystem.settings;
             var settings = Object.Instantiate(_settings);

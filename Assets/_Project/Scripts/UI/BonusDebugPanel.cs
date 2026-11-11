@@ -12,7 +12,8 @@ namespace MinersIdle.UI
     /// DBG → Bônus (M9b, E1; D-217): dá os bônus de um combo terminado em ×10, ×30, ×50 ou ×100 sem tocar (pela mesma regra
     /// do jogo, <see cref="MiningSimulation.GrantComboBonuses"/>), limpa os ativos e, no alto, mostra o combo de agora, a
     /// regra do acúmulo, o dano a mais somado e cada bônus ativo com o tempo que falta. M9b E4 (D-226): Próximo raro, Janela
-    /// agora e uma carta direta de cada tipo, e a janela do raro no alto. Fica no painel de debug: no release
+    /// agora e uma carta direta de cada tipo, e a janela do raro no alto. M9b E5 (D-234): AD agora e Pular espera. Fica no
+    /// painel de debug: no release
     /// some junto. Só manda comandos à simulação do <see cref="MiningRunner"/>. Os textos ficam na cena.
     /// </summary>
     public sealed class BonusDebugPanel : MonoBehaviour
@@ -46,6 +47,15 @@ namespace MinersIdle.UI
         [SerializeField] string windowPickedFormat;
         [Tooltip("Somado ao alto com o próximo raro marcado.")]
         [SerializeField] string nextRareLabel;
+
+        [Header("AD (M9b E5, D-234)")]
+        [Tooltip("O boost do AD direto, sem o anúncio (com um ativo, nada: D-188).")]
+        [SerializeField] Button adNow;
+        [Tooltip("Com o anúncio na tela, mostra o RECOMPENSA já.")]
+        [SerializeField] Button adSkip;
+        [SerializeField] SimulatedAdScreen adScreen;
+        [Tooltip("O boost do AD ativo. {0} quanto a velocidade multiplica · {1} o tempo que falta")]
+        [SerializeField] string adFormat;
 
         [SerializeField] TMP_Text summary;
         [Tooltip("A primeira linha. {0} combo de agora · {1} regra do acúmulo · {2} dano a mais somado")]
@@ -90,6 +100,8 @@ namespace MinersIdle.UI
                 if (grant[i] != null) grant[i].onClick.AddListener(_grant[i]);
             if (clear != null) clear.onClick.AddListener(Clear);
             if (nextRare != null) nextRare.onClick.AddListener(NextRare);
+            if (adNow != null) adNow.onClick.AddListener(AdNow);
+            if (adSkip != null) adSkip.onClick.AddListener(SkipAd);
             if (openWindow != null) openWindow.onClick.AddListener(OpenWindow);
             for (int i = 0; i < cards.Length; i++)
                 if (cards[i] != null) cards[i].onClick.AddListener(_cards[i]);
@@ -102,6 +114,8 @@ namespace MinersIdle.UI
                 if (grant[i] != null) grant[i].onClick.RemoveListener(_grant[i]);
             if (clear != null) clear.onClick.RemoveListener(Clear);
             if (nextRare != null) nextRare.onClick.RemoveListener(NextRare);
+            if (adNow != null) adNow.onClick.RemoveListener(AdNow);
+            if (adSkip != null) adSkip.onClick.RemoveListener(SkipAd);
             if (openWindow != null) openWindow.onClick.RemoveListener(OpenWindow);
             for (int i = 0; i < cards.Length; i++)
                 if (cards[i] != null) cards[i].onClick.RemoveListener(_cards[i]);
@@ -152,6 +166,19 @@ namespace MinersIdle.UI
             _refresh = 0f;
         }
 
+        /// <summary>AD agora (D-234): o boost direto, sem anúncio; com um ativo, nada (D-188).</summary>
+        public void AdNow()
+        {
+            runner.Simulation?.GrantAdBoost();
+            _refresh = 0f;
+        }
+
+        /// <summary>Pular espera (D-234): o anúncio na tela mostra o RECOMPENSA já.</summary>
+        public void SkipAd()
+        {
+            if (adScreen != null) adScreen.SkipWait();
+        }
+
         /// <summary>O texto do alto do menu (também para os testes).</summary>
         public string SummaryText => summary != null ? summary.text : "";
 
@@ -173,6 +200,8 @@ namespace MinersIdle.UI
                 if (i > 0) _text.Append(separator);
                 if (bonus.Source == BonusSource.Rare)
                     _text.AppendFormat(rareCardFormat ?? "{0} {1}", CardLabel((RareCard)bonus.Tier), Seconds(bonus.SecondsLeft));
+                else if (bonus.Source == BonusSource.Ad)
+                    _text.AppendFormat(adFormat ?? "{0} {1}", NumberFormatter.Format(bonus.Value), Seconds(bonus.SecondsLeft));
                 else
                     _text.AppendFormat(bonus.Kind == BonusKind.GuaranteedCritical ? criticalFormat : damageFormat,
                                        NumberFormatter.FormatPercent(bonus.Value), Seconds(bonus.SecondsLeft), bonus.Tier);

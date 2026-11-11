@@ -183,6 +183,8 @@ namespace MinersIdle.UI
             _detailSeconds = seconds;
             if (bonus.Source == BonusSource.Rare)
                 detailFooter.SetText(catalog != null ? catalog.RareFooterFormat : "{0}", (float)seconds);
+            else if (bonus.Source == BonusSource.Ad)
+                detailFooter.SetText(catalog != null ? catalog.AdFooterFormat : "{0}", (float)seconds);
             else
                 detailFooter.SetText(catalog != null ? catalog.ComboFooterFormat : "{0} {1}", (float)bonus.Tier, (float)seconds);
         }

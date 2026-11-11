@@ -9,7 +9,8 @@ namespace MinersIdle.Game
     /// detalhe e o texto grande do ganho ("FRENESI!"), mais os textos do ganho e do tempo. Tudo em pt-BR e em dados:
     /// nenhum texto de interface no código. O asset do jogo é <c>Data/BuffCatalog</c>. Desde a E4, as cartas do cristal
     /// raro (origem <see cref="BonusSource.Rare"/>, tier = a <see cref="RareCard"/>) com o texto da carta, para quem vale e
-    /// o texto que sobe ao escolher, e os textos da janela (D-225). O AD (E5) entra aqui como linha nova.
+    /// o texto que sobe ao escolher, e os textos da janela (D-225). Desde a E5, o boost do AD (origem
+    /// <see cref="BonusSource.Ad"/>, tier 0) e os textos do anúncio simulado e do botão (D-218, D-230).
     /// </summary>
     [CreateAssetMenu(menuName = "Miners Idle/Catálogo dos bônus", fileName = "BuffCatalog")]
     public sealed class BuffCatalog : ScriptableObject
@@ -92,6 +93,30 @@ namespace MinersIdle.Game
         [SerializeField] string rareClose;
         [Tooltip("A duração na carta e no título. {0} = segundos.")]
         [SerializeField] string cardSecondsFormat;
+
+        [Header("AD (M9b E5, D-218, D-230)")]
+        [Tooltip("A terceira linha do detalhe do boost do AD. {0} = segundos que faltam.")]
+        [SerializeField] string adFooterFormat;
+        [Tooltip("O título do modal do anúncio.")]
+        [SerializeField] string adTitle;
+        [Tooltip("Acima do número, enquanto o anúncio passa.")]
+        [SerializeField] string adWaitLabel;
+        [Tooltip("No lugar do número, quando o anúncio acabou.")]
+        [SerializeField] string adDone;
+        [Tooltip("A recompensa no modal. {0} = quanto a velocidade multiplica (\"2,5\") · {1} = segundos do boost.")]
+        [SerializeField] string adRewardFormat;
+        [Tooltip("O botão que fecha o modal e dá o boost.")]
+        [SerializeField] string adReward;
+        [Tooltip("O nome do botão AD da coluna da direita, quando livre.")]
+        [SerializeField] string adButton;
+
+        public string AdFooterFormat => adFooterFormat;
+        public string AdTitle => adTitle;
+        public string AdWaitLabel => adWaitLabel;
+        public string AdDone => adDone;
+        public string AdRewardFormat => adRewardFormat;
+        public string AdReward => adReward;
+        public string AdButton => adButton;
 
         public string RareFooterFormat => rareFooterFormat;
         public string RareTitle => rareTitle;

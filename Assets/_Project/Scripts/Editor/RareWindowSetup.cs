@@ -267,7 +267,7 @@ namespace MinersIdle.EditorTools
             return true;
         }
 
-        static Image Picture(Transform parent, string name, Sprite sprite)
+        internal static Image Picture(Transform parent, string name, Sprite sprite)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
@@ -282,7 +282,7 @@ namespace MinersIdle.EditorTools
         /// Um texto com a fonte já escolhida: a do jogo, ou a dos números (D-104) para os que se chamam "Seconds", que o
         /// <see cref="UiSkinSetup"/> reconhece como números e não troca.
         /// </summary>
-        static TMP_Text Text(Transform parent, string name, float size, Color color, TextAlignmentOptions alignment,
+        internal static TMP_Text Text(Transform parent, string name, float size, Color color, TextAlignmentOptions alignment,
                              TMP_FontAsset font)
         {
             var text = GrayboxSetup.CreateHudText(parent, name, "", size, color, Vector2.zero, Vector2.one);
@@ -298,22 +298,22 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>Posição pelo canto de cima à esquerda do pai, como no mockup (x para a direita, y para baixo).</summary>
-        static void Place(RectTransform rect, float left, float top, float width, float height)
+        internal static void Place(RectTransform rect, float left, float top, float width, float height)
         {
             rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
             rect.anchoredPosition = new Vector2(left, -top);
             rect.sizeDelta = new Vector2(width, height);
         }
 
-        static void Stretch(RectTransform rect)
+        internal static void Stretch(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
             rect.offsetMin = rect.offsetMax = Vector2.zero;
         }
 
-        static string Wood(string name) => UiSkinSetup.WoodFolder + "/" + name + ".png";
-        static string Fantasy(string name) => UiSkinSetup.FantasyFolder + "/" + name + ".png";
-        static Sprite Load(string path) => System.IO.File.Exists(path) ? AssetDatabase.LoadAssetAtPath<Sprite>(path) : null;
+        internal static string Wood(string name) => UiSkinSetup.WoodFolder + "/" + name + ".png";
+        internal static string Fantasy(string name) => UiSkinSetup.FantasyFolder + "/" + name + ".png";
+        internal static Sprite Load(string path) => System.IO.File.Exists(path) ? AssetDatabase.LoadAssetAtPath<Sprite>(path) : null;
     }
 }

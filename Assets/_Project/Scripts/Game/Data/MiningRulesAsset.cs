@@ -139,6 +139,12 @@ namespace MinersIdle.Game
                  "Shards ×2 e Critical +0,25, 60 s cada.")]
         [SerializeField] RareCardValues[] rareCards = new RareCardValues[0];
 
+        [Header("Boost do AD (M9b E5; GDD v7 §7.2, D-187, D-188)")]
+        [Tooltip("O intervalo do golpe do anão ÷ este valor, depois do piso (D-180). GDD v7: 2,5. 0 = sem AD.")]
+        [SerializeField] double adSpeedDivisor;
+        [Tooltip("Quanto o boost dura, em segundos de jogo. GDD v7: 30. O botão só volta quando ele acaba (D-188).")]
+        [SerializeField] double adBoostSeconds;
+
         [Header("Dia e melhorias permanentes (Marco 8b; custo em lascas vermelhas, D-158)")]
         [Tooltip("Nível a partir do qual o Descansar aparece e as lascas vermelhas começam (D-138, D-152). GDD v7: 10. 0 desliga.")]
         [SerializeField] int restLevel;
@@ -218,7 +224,19 @@ namespace MinersIdle.Game
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses(),
-                            Rare());
+                            Rare(), Ad());
+
+        /// <summary>O boost do AD do asset; números inválidos desligam o AD.</summary>
+        AdRules Ad()
+        {
+            if (adSpeedDivisor == 0 && adBoostSeconds == 0) return AdRules.None();
+            if (double.IsNaN(adSpeedDivisor) || adSpeedDivisor <= 1 || double.IsNaN(adBoostSeconds) || adBoostSeconds <= 0)
+            {
+                Debug.LogWarning($"[Valores] Boost do AD inválido em {name} (÷{adSpeedDivisor}, {adBoostSeconds} s): sem AD.", this);
+                return AdRules.None();
+            }
+            return new AdRules(adSpeedDivisor, adBoostSeconds);
+        }
 
         /// <summary>O cristal raro do asset; cartas mal preenchidas ou repetidas ficam de fora, e números inválidos desligam o raro.</summary>
         RareRules Rare()
