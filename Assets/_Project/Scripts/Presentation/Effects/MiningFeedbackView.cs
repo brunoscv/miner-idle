@@ -120,6 +120,7 @@ namespace MinersIdle.Presentation
             simulation.ComboChanged += OnComboChanged;
             simulation.ComboMilestone += OnComboMilestone;
             simulation.ComboBonusesGranted += OnBonusesGranted;
+            simulation.RareCardApplied += OnRareCardApplied;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -130,6 +131,7 @@ namespace MinersIdle.Presentation
             simulation.ComboChanged -= OnComboChanged;
             simulation.ComboMilestone -= OnComboMilestone;
             simulation.ComboBonusesGranted -= OnBonusesGranted;
+            simulation.RareCardApplied -= OnRareCardApplied;
         }
 
         protected override void Rebuild(MiningSimulation simulation) => OnComboChanged(simulation.Combo);
@@ -210,7 +212,7 @@ namespace MinersIdle.Presentation
             var at = stage.CrystalOnScreen(crystal);
             float calm = Calm();
             float size = SparkBurst.DefaultSize * sizeScale;
-            Color shards = stage.CrystalShardColor(crystal.Id);
+            Color shards = stage.ShardColorOf(crystal);
 
             screenShake.Shake(breakShake * calm * _intensity, breakShakeSeconds);
             sparks.Emit(at, Count(10), HitSparkColor, 5f * sizeScale, size);
@@ -283,6 +285,16 @@ namespace MinersIdle.Presentation
             }
             LastGainText = gain;
             LastHeadline = headline;
+        }
+
+        /// <summary>A carta do raro entrou (D-225): o nome dela sobe do anão em âmbar ("DANO ×2"), como o ganho do combo.</summary>
+        void OnRareCardApplied(RareCard card)
+        {
+            var gain = buffs != null ? buffs.Find(BonusSource.Rare, (int)card)?.Gain : null;
+            if (string.IsNullOrEmpty(gain)) return;
+            floatingTexts.Show(gain, stage.MinerOnScreen + Vector3.up * (0.8f * sizeScale), MilestoneColor,
+                               0.9f * sizeScale * 0.65f, 1.2f, 1.2f * sizeScale);
+            LastGainText = gain;
         }
 
         /// <summary>1 com toques calmos; cai até <see cref="minCalm"/> quando há muitos toques no último segundo.</summary>

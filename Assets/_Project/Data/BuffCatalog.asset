@@ -19,26 +19,98 @@ MonoBehaviour:
     title: +10% de dano
     description: Golpes e toques mais fortes
     headline: 
+    gain: 
+    cardText: 
+    cardNote: 
+    forIntern: 0
   - source: 0
     tier: 30
     icon: {fileID: 21300000, guid: 54759e1f861832e49a60143481536fbf, type: 3}
     title: +15% de dano
     description: Golpes e toques mais fortes
     headline: 
+    gain: 
+    cardText: 
+    cardNote: 
+    forIntern: 0
   - source: 0
     tier: 50
     icon: {fileID: 21300000, guid: 50cf080a7cf7fb1479b0aca7996f35fe, type: 3}
     title: "Cr\xEDtico garantido"
     description: "Todo golpe sai cr\xEDtico"
     headline: 
+    gain: 
+    cardText: 
+    cardNote: 
+    forIntern: 0
   - source: 0
     tier: 100
     icon: {fileID: 21300000, guid: 627fcb7a19ce55c4b976b8ebd64baec1, type: 3}
     title: Frenesi
     description: +50% de dano
     headline: FRENESI!
+    gain: 
+    cardText: 
+    cardNote: 
+    forIntern: 0
+  - source: 1
+    tier: 0
+    icon: {fileID: 21300000, guid: b94ec9689d0e74445bcc7d524a48e6c0, type: 3}
+    title: "DANO \xD72"
+    description: Golpe e toque com o dobro de dano
+    headline: 
+    gain: "DANO \xD72"
+    cardText: 'Golpe e toque
+
+      com o dobro
+
+      de dano'
+    cardNote: "Vale p/ o estagi\xE1rio"
+    forIntern: 1
+  - source: 1
+    tier: 1
+    icon: {fileID: 21300000, guid: 6c0503e7d0cb10e429277ea89fa4e29b, type: 3}
+    title: "R\xC1PIDO"
+    description: "Golpe 2\xD7 mais r\xE1pido (o tempo do golpe \xF7 2)"
+    headline: 
+    gain: "R\xC1PIDO"
+    cardText: "Golpe 2\xD7 mais\nr\xE1pido (o tempo\ndo golpe \xF7 2)"
+    cardNote: "Vale p/ o estagi\xE1rio"
+    forIntern: 1
+  - source: 1
+    tier: 2
+    icon: {fileID: 21300000, guid: e56f4d0c376a2c24d9556bba499a6aac, type: 3}
+    title: "LASCAS \xD72"
+    description: Cada cristal quebrado paga o dobro
+    headline: 
+    gain: "LASCAS \xD72"
+    cardText: 'Cada cristal
+
+      quebrado paga
+
+      o dobro'
+    cardNote: "Vale p/ o estagi\xE1rio"
+    forIntern: 1
+  - source: 1
+    tier: 3
+    icon: {fileID: 21300000, guid: 50cf080a7cf7fb1479b0aca7996f35fe, type: 3}
+    title: "CR\xCDTICO +25%"
+    description: "+25 pontos na chance de cr\xEDtico"
+    headline: 
+    gain: "CR\xCDTICO +25%"
+    cardText: "+25 pontos na\nchance de\ncr\xEDtico"
+    cardNote: "S\xF3 o an\xE3o"
+    forIntern: 0
   secondsFormat: '{0}s'
   comboFooterFormat: "Combo \xD7{0} \xB7 {1}s"
   gainDamageFormat: +{0} DANO
   gainCritical: "CR\xCDTICO GARANTIDO"
   gainBothFormat: "+{0} DANO \xB7 CR\xCDTICO"
+  rareFooterFormat: "Cristal raro \xB7 {0}s"
+  rareTitle: CRISTAL RARO!
+  rareChooseFormat: Escolha uma melhoria por {0}
+  rarePicked: "O jogo escolheu por voc\xEA"
+  rareHint: Toque numa carta para escolher
+  rareQueueFormat: +{0} raro
+  rareClose: FECHAR
+  cardSecondsFormat: '{0} s'

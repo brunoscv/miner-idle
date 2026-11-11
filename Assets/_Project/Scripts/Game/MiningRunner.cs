@@ -364,7 +364,7 @@ namespace MinersIdle.Game
             Seed = seed;
             Simulation = new MiningSimulation(
                 CurrentRules(), new SeededRandom(CritSeed(seed)), state, Economy(), rules.ToStrike(),
-                new Permanents(rules.ToPermanents(), _permanent))
+                new Permanents(rules.ToPermanents(), _permanent), new SeededRandom(RareSeed(seed)), _calculation.RareRhythm)
             {
                 ForceCritical = _forceCritical,
                 // M9b E3 (D-217): o acúmulo do DBG → Cálculos sobrevive a cada simulação nova (compra de Picareta trocada,
@@ -411,5 +411,7 @@ namespace MinersIdle.Game
 
         /// <summary>Semente do sorteio de crítico, derivada da partida (mesma semente = mesmos críticos).</summary>
         static ulong CritSeed(ulong seed) => unchecked(seed * 0x9E3779B97F4A7C15UL + 1);
+        /// <summary>O sorteio do raro e das cartas (M9b E4), separado do crítico: a mesma semente repete os dois.</summary>
+        static ulong RareSeed(ulong seed) => unchecked(seed * 0xBF58476D1CE4E5B9UL + 7);
     }
 }

@@ -181,7 +181,10 @@ namespace MinersIdle.UI
             int seconds = (int)System.Math.Ceiling(System.Math.Max(0, bonus.SecondsLeft) - 1e-9);
             if (seconds == _detailSeconds) return;
             _detailSeconds = seconds;
-            detailFooter.SetText(catalog != null ? catalog.ComboFooterFormat : "{0} {1}", (float)bonus.Tier, (float)seconds);
+            if (bonus.Source == BonusSource.Rare)
+                detailFooter.SetText(catalog != null ? catalog.RareFooterFormat : "{0}", (float)seconds);
+            else
+                detailFooter.SetText(catalog != null ? catalog.ComboFooterFormat : "{0} {1}", (float)bonus.Tier, (float)seconds);
         }
 
         void HideDetail()

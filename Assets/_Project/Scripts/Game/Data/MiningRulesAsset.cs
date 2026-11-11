@@ -128,6 +128,17 @@ namespace MinersIdle.Game
                  "×100 Frenesi +50% por 30 s.")]
         [SerializeField] ComboBonusValues[] comboBonuses = new ComboBonusValues[0];
 
+        [Header("Cristal raro (M9b E4; D-97, D-184…D-186, D-190)")]
+        [Tooltip("Chance de cada cristal que nasce ser raro (0–1). GDD v7: 0,15 (D-184).")]
+        [SerializeField] double rareChance;
+        [Tooltip("O ritmo lento do DBG → Cálculos (0–1), sem raro novo com janela aberta ou carta ativa. D-185: 0,02.")]
+        [SerializeField] double rareSlowChance;
+        [Tooltip("Segundos para escolher a carta; depois o jogo sorteia (D-186: 30). Só correm com o app aberto (D-222).")]
+        [SerializeField] double rareChooseSeconds = 30;
+        [Tooltip("As cartas da janela (D-190). Vazio = sem cristal raro (os balanços até o v5). GDD v7: Damage ×2, Speed ÷2, " +
+                 "Shards ×2 e Critical +0,25, 60 s cada.")]
+        [SerializeField] RareCardValues[] rareCards = new RareCardValues[0];
+
         [Header("Dia e melhorias permanentes (Marco 8b; custo em lascas vermelhas, D-158)")]
         [Tooltip("Nível a partir do qual o Descansar aparece e as lascas vermelhas começam (D-138, D-152). GDD v7: 10. 0 desliga.")]
         [SerializeField] int restLevel;
@@ -201,8 +212,38 @@ namespace MinersIdle.Game
                                       internTraining.ToDefinition(), internPromotion.ToDefinition());
         }
 
+        /// <summary>A chance do raro no padrão e no ritmo lento (para o rótulo do DBG → Cálculos).</summary>
+        public double RareChance => rareChance;
+        public double RareSlowChance => rareSlowChance;
+
         public StrikeRules ToStrike() =>
-            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses());
+            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses(),
+                            Rare());
+
+        /// <summary>O cristal raro do asset; cartas mal preenchidas ou repetidas ficam de fora, e números inválidos desligam o raro.</summary>
+        RareRules Rare()
+        {
+            var cards = new List<RareCardRule>();
+            if (rareCards != null)
+                foreach (var values in rareCards)
+                {
+                    if (values == null) continue;
+                    if (!values.IsValid || cards.Exists(c => c.Card == values.Card))
+                    {
+                        Debug.LogWarning($"[Valores] Carta do raro {values.Card} inválida ou repetida em {name}: ignorada.", this);
+                        continue;
+                    }
+                    cards.Add(values.ToRule());
+                }
+            if (cards.Count == 0) return RareRules.None();
+            bool valid = rareChance >= 0 && rareChance <= 1 && rareSlowChance >= 0 && rareSlowChance <= 1 && rareChooseSeconds > 0;
+            if (!valid)
+            {
+                Debug.LogWarning($"[Valores] Chance ou tempo de escolha do raro inválidos em {name}: sem cristal raro.", this);
+                return RareRules.None();
+            }
+            return new RareRules(rareChance, rareSlowChance, rareChooseSeconds, cards);
+        }
 
         /// <summary>Os marcos do combo do asset; os mal preenchidos (combo &lt; 1, duração 0, repetidos) ficam de fora, com aviso.</summary>
         List<ComboBonusRule> ComboBonuses()
@@ -284,6 +325,32 @@ namespace MinersIdle.Game
         public int Combo => combo;
         public bool IsValid => combo >= 1 && seconds > 0 && !double.IsNaN(value) && value >= 0 && Enum.IsDefined(typeof(BonusKind), kind);
         public ComboBonusRule ToRule() => new ComboBonusRule(combo, kind, value, seconds);
+    }
+
+    /// <summary>Uma carta do cristal raro no Inspector (vira uma <see cref="RareCardRule"/> do Núcleo).</summary>
+    [Serializable]
+    public sealed class RareCardValues
+    {
+        [Tooltip("Damage: dano ×valor. Speed: intervalo ÷valor. Shards: lascas ×valor. Critical: +valor na chance de crítico.")]
+        [SerializeField] RareCard card;
+        [Tooltip("O efeito: 2 = ×2 (ou ÷2 na Speed); 0,25 = +25 pontos no Critical.")]
+        [SerializeField] double value;
+        [Tooltip("Quanto dura, em segundos de jogo (D-97: 60).")]
+        [SerializeField] double seconds;
+
+        /// <summary>Para o serializador do Unity.</summary>
+        public RareCardValues() { }
+
+        public RareCardValues(RareCard card, double value, double seconds)
+        {
+            this.card = card;
+            this.value = value;
+            this.seconds = seconds;
+        }
+
+        public RareCard Card => card;
+        public bool IsValid => Enum.IsDefined(typeof(RareCard), card) && value > 0 && !double.IsNaN(value) && seconds > 0;
+        public RareCardRule ToRule() => new RareCardRule(card, value, seconds);
     }
 
     /// <summary>Uma linha de melhoria no Inspector (vira uma <see cref="UpgradeDefinition"/> do Núcleo).</summary>

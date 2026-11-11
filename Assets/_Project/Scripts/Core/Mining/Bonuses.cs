@@ -3,13 +3,21 @@ using System.Collections.Generic;
 
 namespace MinersIdle.Core
 {
-    /// <summary>O que um bônus com tempo faz (M9b). O cristal raro e o AD trazem os tipos deles nas E4 e E5.</summary>
+    /// <summary>O que um bônus com tempo faz (M9b). O AD traz o dele na E5.</summary>
     public enum BonusKind
     {
         /// <summary>+% no dano do golpe e do toque (D-178); os de vários bônus somam (D-179).</summary>
         DamagePercent,
         /// <summary>Todo golpe e todo toque saem críticos (D-178).</summary>
         GuaranteedCritical,
+        /// <summary>O dano multiplica pelo valor (a carta "Dano ×2" do raro, D-219), depois dos +% do combo.</summary>
+        DamageMultiplier,
+        /// <summary>O intervalo do golpe divide pelo valor (a carta "Rápido", D-219), depois do piso de 0,1 s (D-180).</summary>
+        IntervalDivisor,
+        /// <summary>O que cada cristal quebrado paga multiplica pelo valor (a carta "Lascas ×2", D-219).</summary>
+        ShardsMultiplier,
+        /// <summary>Pontos a mais na chance de crítico do golpe e do toque (a carta "Crítico +25%", D-219): 0,25 = +25.</summary>
+        CritChance,
     }
 
     /// <summary>De onde o bônus veio.</summary>
@@ -17,6 +25,112 @@ namespace MinersIdle.Core
     {
         /// <summary>Um marco do combo (×10, ×30, ×50, ×100), ao parar de tocar (D-96).</summary>
         Combo,
+        /// <summary>Uma carta do cristal raro (D-190); o <see cref="ActiveBonus.Tier"/> é a <see cref="RareCard"/>.</summary>
+        Rare,
+    }
+
+    /// <summary>As 4 cartas do cristal raro (D-190). O número vai no <see cref="ActiveBonus.Tier"/>: não reordenar.</summary>
+    public enum RareCard
+    {
+        /// <summary>Dano ×2 (anão e estagiário).</summary>
+        Damage = 0,
+        /// <summary>Golpe 2× mais rápido: o intervalo ÷ 2 (anão e estagiário).</summary>
+        Speed = 1,
+        /// <summary>Lascas ×2 em cada cristal quebrado (e no offline do estagiário).</summary>
+        Shards = 2,
+        /// <summary>Crítico +25 pontos (só o anão: o estagiário não tem crítico, D-167).</summary>
+        Critical = 3,
+    }
+
+    /// <summary>Uma carta do raro como está no balanço: o efeito e a duração (GDD v7: ×2 / ÷2 / ×2 / +0,25, 60 s, D-190).</summary>
+    public readonly struct RareCardRule
+    {
+        public RareCardRule(RareCard card, double value, double seconds)
+        {
+            if (!Enum.IsDefined(typeof(RareCard), card)) throw new ArgumentOutOfRangeException(nameof(card));
+            if (double.IsNaN(value) || value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
+            if (double.IsNaN(seconds) || seconds <= 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+            Card = card;
+            Value = value;
+            Seconds = seconds;
+        }
+
+        public RareCard Card { get; }
+        public double Value { get; }
+        public double Seconds { get; }
+        public BonusKind Kind => KindOf(Card);
+
+        /// <summary>O tipo de bônus de cada carta.</summary>
+        public static BonusKind KindOf(RareCard card)
+        {
+            switch (card)
+            {
+                case RareCard.Damage: return BonusKind.DamageMultiplier;
+                case RareCard.Speed: return BonusKind.IntervalDivisor;
+                case RareCard.Shards: return BonusKind.ShardsMultiplier;
+                default: return BonusKind.CritChance;
+            }
+        }
+    }
+
+    /// <summary>
+    /// As regras do cristal raro (M9b E4; D-97, D-184…D-186, D-190): a chance de cada cristal que nasce ser raro (o
+    /// padrão e o ritmo lento do DBG), o tempo para escolher e as cartas. Sem cartas (ou com menos de 2), não há raro.
+    /// </summary>
+    public sealed class RareRules
+    {
+        readonly RareCardRule[] _byCard = new RareCardRule[4];
+        readonly bool[] _has = new bool[4];
+
+        public RareRules(double chance, double slowChance, double chooseSeconds, IEnumerable<RareCardRule> cards)
+        {
+            if (double.IsNaN(chance) || chance < 0 || chance > 1) throw new ArgumentOutOfRangeException(nameof(chance));
+            if (double.IsNaN(slowChance) || slowChance < 0 || slowChance > 1) throw new ArgumentOutOfRangeException(nameof(slowChance));
+            if (double.IsNaN(chooseSeconds) || chooseSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(chooseSeconds));
+            Chance = chance;
+            SlowChance = slowChance;
+            ChooseSeconds = chooseSeconds;
+            var list = new List<RareCardRule>();
+            if (cards != null)
+                foreach (var card in cards)
+                {
+                    if (_has[(int)card.Card]) throw new ArgumentException($"A carta {card.Card} aparece duas vezes.", nameof(cards));
+                    _has[(int)card.Card] = true;
+                    _byCard[(int)card.Card] = card;
+                    list.Add(card);
+                }
+            list.Sort((a, b) => a.Card.CompareTo(b.Card));
+            Cards = list;
+        }
+
+        /// <summary>Chance de cada cristal que nasce ser raro (D-184: 15%).</summary>
+        public double Chance { get; }
+        /// <summary>O ritmo lento do DBG (D-185: 2%, sem raro novo com janela aberta ou carta ativa).</summary>
+        public double SlowChance { get; }
+        /// <summary>Segundos para escolher (D-186: 30), só com o app aberto (D-222).</summary>
+        public double ChooseSeconds { get; }
+        /// <summary>As cartas que a janela sorteia, na ordem do enum.</summary>
+        public IReadOnlyList<RareCardRule> Cards { get; }
+
+        /// <summary>Há raro: pelo menos 2 cartas (a janela mostra 2 diferentes, D-190).</summary>
+        public bool IsEnabled => Cards.Count >= 2;
+
+        public bool Has(RareCard card) => _has[(int)card];
+        public RareCardRule Get(RareCard card) =>
+            _has[(int)card] ? _byCard[(int)card] : throw new ArgumentException($"Sem a carta {card}.", nameof(card));
+
+        /// <summary>Sem raro (os balanços até o v5 e os testes que não passam regras).</summary>
+        public static RareRules None() => new RareRules(0, 0, 30, null);
+    }
+
+    /// <summary>
+    /// Quantos raros nascem (D-185): o padrão do documento (15% por cristal) ou o lento do DBG (2%, e nenhum raro novo
+    /// enquanto houver janela aberta ou carta ativa).
+    /// </summary>
+    public enum RareRhythm
+    {
+        Gdd,
+        Slow,
     }
 
     /// <summary>
@@ -121,6 +235,56 @@ namespace MinersIdle.Core
             }
         }
 
+        /// <summary>O produto dos multiplicadores de dano ativos (a carta "Dano ×2"); 1 sem nenhum.</summary>
+        public double DamageMultiplier => Product(BonusKind.DamageMultiplier, internOnly: false);
+
+        /// <summary>O produto dos divisores do intervalo ativos (a carta "Rápido"); 1 sem nenhum.</summary>
+        public double IntervalDivisor => Product(BonusKind.IntervalDivisor, internOnly: false);
+
+        /// <summary>O produto dos multiplicadores de lascas ativos (a carta "Lascas ×2"); 1 sem nenhum.</summary>
+        public double ShardsMultiplier => Product(BonusKind.ShardsMultiplier, internOnly: false);
+
+        /// <summary>A soma dos pontos a mais na chance de crítico (a carta "Crítico +25%"): 0,25 = +25.</summary>
+        public double CritChance
+        {
+            get
+            {
+                double sum = 0;
+                for (int i = 0; i < _bonuses.Count; i++)
+                    if (_bonuses[i].Kind == BonusKind.CritChance) sum += _bonuses[i].Value;
+                return sum;
+            }
+        }
+
+        /// <summary>O dano × do estagiário: só as cartas do raro valem para ele (D-177, D-190).</summary>
+        public double InternDamageMultiplier => Product(BonusKind.DamageMultiplier, internOnly: true);
+
+        /// <summary>O intervalo ÷ do estagiário: só as cartas do raro (o boost do AD não vale para ele, D-177).</summary>
+        public double InternIntervalDivisor => Product(BonusKind.IntervalDivisor, internOnly: true);
+
+        /// <summary>Se alguma carta do raro está ativa (o ritmo lento não faz raro novo, D-185).</summary>
+        public bool HasRareCard
+        {
+            get
+            {
+                for (int i = 0; i < _bonuses.Count; i++)
+                    if (_bonuses[i].Source == BonusSource.Rare) return true;
+                return false;
+            }
+        }
+
+        /// <summary>Se o bônus vale também para o estagiário: só as cartas do raro (D-177, D-190).</summary>
+        public static bool AppliesToIntern(ActiveBonus bonus) => bonus.Source == BonusSource.Rare;
+
+        double Product(BonusKind kind, bool internOnly)
+        {
+            double product = 1;
+            for (int i = 0; i < _bonuses.Count; i++)
+                if (_bonuses[i].Kind == kind && _bonuses[i].Value > 0 && (!internOnly || AppliesToIntern(_bonuses[i])))
+                    product *= _bonuses[i].Value;
+            return product;
+        }
+
         /// <summary>Segundos até o próximo bônus acabar; infinito sem nenhum.</summary>
         public double NextExpiry
         {
@@ -153,6 +317,23 @@ namespace MinersIdle.Core
                     _bonuses[i] = active.WithSecondsLeft(active.SecondsLeft + bonus.SecondsLeft);
                     return;
                 }
+            }
+            _bonuses.Add(bonus);
+        }
+
+        /// <summary>
+        /// Entra uma carta do raro (D-190): igual a outra ainda ativa (mesma origem e mesma carta), só renova o tempo, sem
+        /// somar efeito; diferente, vale junto.
+        /// </summary>
+        internal void AddOrRenew(ActiveBonus bonus)
+        {
+            if (bonus.SecondsLeft <= 0) return;
+            for (int i = 0; i < _bonuses.Count; i++)
+            {
+                var active = _bonuses[i];
+                if (active.Source != bonus.Source || active.Tier != bonus.Tier) continue;
+                _bonuses[i] = new ActiveBonus(bonus.Kind, bonus.Value, bonus.Duration, bonus.SecondsLeft, bonus.Source, bonus.Tier);
+                return;
             }
             _bonuses.Add(bonus);
         }

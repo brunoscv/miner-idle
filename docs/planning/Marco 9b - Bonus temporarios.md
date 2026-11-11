@@ -101,13 +101,52 @@ Na alternativa (só o maior marco), o ×104 dá só o Frenesi: ×1,5 por 30 s.
 - **DBG → Cálculos:** o seletor do acúmulo (GDD × maior marco), gravado como as outras escolhas (P8).
 - **Moto G75:** tocar em rajadas e sentir se o bônus "chega" ao parar (o risco abaixo); conferir que a coluna não atrapalha o toque nem cobre o cristal; minimizar no meio do combo (P5).
 
-### E4 — Cristal raro (esboço; plano detalhado quando chegar a vez)
+### E4 — Cristal raro (plano aprovado em 2026-11-10: P9…P16 → D-219…D-226)
 
-15% de cada cristal que nasce (D-184; no DBG, o ritmo alternativo de 2%, D-185); arte `crystal_glass_rare` (D-77); ao quebrar, a janela com 2 das 4 cartas (dano ×2, golpe 2× mais rápido, lascas ×2, crítico +25%; 60 s cada; D-190), 30 s para escolher, e sem escolha o jogo sorteia (D-186); as cartas valem para o estagiário, também no offline enquanto durarem (D-181, D-190); raro quebrado no offline não dá nada (D-186). Usa a mesma lista de bônus e a mesma coluna. Mockup da janela antes.
+**O que já está decidido (não muda):** 15% de cada cristal que nasce é raro (D-97, D-184); no DBG, o ritmo alternativo de 2%, sem raro novo enquanto houver janela aberta ou carta ativa (D-185). Arte `crystal_glass_rare` (D-77). Ao quebrar, a janela com **2 cartas diferentes** das 4: **dano ×2**, **golpe 2× mais rápido** (intervalo ÷ 2), **lascas ×2** e **crítico +25%**, **60 s** cada (D-190). Uma carta igual a outra ainda ativa só renova o tempo; diferentes valem juntas. **30 s** para escolher; sem escolha, o jogo sorteia uma das 2, aplica e deixa a janela aberta mostrando o que saiu, com **FECHAR** (D-186). A janela **não pausa** a mineração (D-184). As cartas valem também para o estagiário, e no offline enquanto durarem (D-181, D-190). Raro quebrado no offline não dá nada (D-186).
+
+#### Perguntas da E4 (com a minha recomendação)
+
+**P9 — O que cada carta faz, exatamente.**
+**Rec.:**
+- **Dano ×2:** o dano do anão (golpe e toque) depois dos +% do combo: Dano × (1 + Σ%) × 2. O do estagiário também ×2.
+- **Golpe 2× mais rápido:** o intervalo do golpe ÷ 2, depois do piso de 0,1 s (como o AD, D-180), para o anão e para o estagiário.
+- **Lascas ×2:** cada cristal quebrado paga o dobro, quem quer que quebre (golpe, toque, estagiário); no offline, as lascas do estagiário ×2 enquanto a carta durar.
+- **Crítico +25%:** +25 pontos na chance de crítico do golpe e do toque (o golpe vai de 0% a 25%, o toque de 5% a 30%, mais a linha Crítico da loja). **Não vale para o estagiário**, que não tem crítico (D-167): para ele a carta não faz nada.
+- A loja continua comparando sem os bônus (como o combo).
+
+**P10 — Como é o cristal raro.**
+**Rec.:** a mesma vida e as mesmas lascas de um cristal comum da caverna; o que ele dá a mais é a janela. Desenho `crystal_glass_rare` com estilhaços na cor dele, e um brilho leve piscando para se ver de longe na fila. A parede nunca é rara; os cristais do começo da run podem ser.
+
+**P11 — Raro quebrado com uma janela já aberta (no padrão de 15%).**
+**Rec.:** a janela nova **espera na fila**: ao escolher (ou FECHAR), abre a próxima. A janela mostra quantas esperam ("+1 raro"). Com 15% por cristal e quebras rápidas, a fila pode crescer; é o risco que o ritmo de 2% do DBG existe para comparar (D-185).
+
+**P12 — Minimizar ou fechar com a janela aberta.**
+**Rec.:** a janela **espera o jogador**: os 30 s só correm com o app aberto, e ela (as 2 cartas, o tempo que falta e a fila) vai para o save. Ao voltar, a janela está lá. Nenhuma carta entra sem ninguém ver, e não há o que explorar (a carta só vale depois de escolhida). As cartas já escolhidas correm o tempo com o app fechado (D-181).
+
+**P13 — Toque com a janela aberta.**
+**Rec.:** como a loja: o jogo segue (golpe automático, estagiário, tempo dos bônus), mas o toque fora da janela não minera nem conta no combo. A janela fica na metade de baixo da tela, para o anão e a coluna seguirem à vista.
+
+**P14 — Descansar com carta ativa ou janela aberta.**
+**Rec.:** como o combo (D-213): as cartas **acabam no descanso**, e uma janela aberta (e a fila) some. A run nova começa limpa.
+
+**P15 — O que o jogador vê e ouve.**
+**Rec.:** ao quebrar o raro, o som de marco que já existe e a janela abre. Ao escolher, a janela fecha, a carta sobe do anão como texto ("DANO ×2", em âmbar, como o ganho do combo) e entra na coluna da esquerda com o anel de 60 s. Sem vibração (D-199). No sorteio, a carta que saiu fica destacada, a outra apagada, e o texto "O jogo escolheu por você" acima do FECHAR.
+
+**P16 — DBG.**
+**Rec.:**
+- **DBG → Cálculos:** botão **"Raro: 15%" ⇄ "Raro: 2%"** (o ritmo da D-185), gravado no `calculations.json` e no aviso "Cálculo:", como o Acúmulo (D-217).
+- **DBG → Bônus:** **Próximo raro** (o próximo cristal que nascer é raro), **Janela agora** (abre a janela sem quebrar nada) e uma carta direta de cada tipo (**Dano ×2**, **Rápido**, **Lascas ×2**, **Crítico**).
+
+#### Etapas da E4
+
+- **E4a — Núcleo do raro.** O sorteio do raro e das cartas num gerador próprio, separado do crítico (a mesma semente repete a partida, e os críticos de hoje não mudam). Tipos novos de bônus (dano ×, intervalo ÷, lascas ×, chance de crítico +) e a origem "Raro" na mesma lista de bônus. A janela no núcleo: aberta, escolher, sorteio aos 30 s, fila, FECHAR. Os efeitos no anão, no estagiário e nas lascas. O offline em trechos (a carta vale para o estagiário até acabar). **Save v7** (a janela, a fila, as cartas). O ritmo de 2% e os atalhos do DBG. **Testes EditMode** (sorteio, cartas diferentes, renovar o tempo, 30 s e sorteio, fila, cada efeito, estagiário, offline em trechos, save, descanso, ritmo de 2%) e **PlayMode** (quebrar um raro abre a janela, escolher aplica).
+- **E4b — A janela e o raro na tela (depois do mockup aprovado).** O cristal raro na fila (desenho e brilho), a janela das 2 cartas com a barra dos 30 s, o resultado do sorteio com FECHAR, o texto da carta, os ícones das cartas no `BuffCatalog` e na coluna, o som. **Testes PlayMode:** a janela abre e fecha, o toque fora dela não minera, reabrir o jogo traz a janela com o tempo que faltava.
+- **E4c — Celular.** Roteiro do Moto G75 da E4.
 
 ### E5 — Boost do AD (esboço; plano detalhado quando chegar a vez)
 
-O botão AD deixa de ser "Em breve" (D-67): modal de 5 s com "Aprimorar" (§7.2), velocidade ×2,5 (intervalo ÷ 2,5, D-187) por 30 s, mesmo abaixo do piso de 0,1 s (D-180), o botão só volta quando o boost acaba (D-188), raio pulsante acima do anão (§8). Não vale para o estagiário (D-177). Sem rede de anúncios (D-21): o "assistir" fica atrás de uma interface para trocar depois. Mockup do modal antes.
+O botão AD deixa de ser "Em breve" (D-67): modal de 30 s "Visualizando AD" com ícone central e, no fim, o botão RECOMPENSA, que fecha o modal e põe o boost na coluna (D-218, no lugar do modal de 5 s com "Aprimorar" do §7.2); velocidade ×2,5 (intervalo ÷ 2,5, D-187) por 30 s, mesmo abaixo do piso de 0,1 s (D-180), o botão só volta quando o boost acaba (D-188), raio pulsante acima do anão (§8). Não vale para o estagiário (D-177). Sem rede de anúncios (D-21): o "assistir" fica atrás de uma interface para trocar depois. Mockup do modal antes.
 
 ### E6 — Sessão longa e celular
 
@@ -133,6 +172,32 @@ Anote ✅/❌ em cada passo; um ❌ volta para mim com o que apareceu na tela.
 8. **Fechar com bônus:** ganhar o crítico (×50), fechar pelo multitarefa e abrir em 5 s: o crítico ainda está lá, com ~15 s.
 9. **Acúmulo pelo DBG:** DBG → Cálculos → **Acúmulo: maior**. Rajada até ×55: só o crítico. Qual das duas versões parece melhor no dedo? (A resposta vira decisão; o GDD é a soma.)
 10. **Descanso:** com um bônus ativo, descansar (DBG → Dia, ou o botão a partir do nível 10): a run nova começa sem ícones.
+
+- **E4:** no Editor, antes, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` com a cena `Game` aberta (põe o raro no `Balance_GDD_v7`, as 4 cartas no `BuffCatalog`, a janela na cena, o desenho do raro na fila e os botões novos do DBG). Depois, cena `Bootstrap`, Play:
+  1. **O raro na fila:** DBG → Bônus → **Próximo raro**. O próximo cristal que nasce tem o desenho `crystal_glass_rare` e pisca um brilho. Ao quebrar: o som de marco e a janela "CRISTAL RARO!" na metade de baixo, com 2 cartas diferentes e a barra dos 30 s.
+  2. **Escolher:** tocar numa carta. A janela fecha, o nome da carta sobe do anão em âmbar ("DANO ×2") e o ícone entra na coluna da esquerda com 60 s. Com **Dano ×2**, o DANO do HUD fica âmbar. Tocar no ícone: "Cristal raro · 58s" no detalhe.
+  3. **O mapa não minera:** DBG → Bônus → **Janela agora** e tocar no mapa fora da janela: o combo não sobe. O jogo segue atrás (o anão continua batendo).
+  4. **Sem escolha:** **Janela agora** e esperar 30 s (o número fica âmbar nos últimos 10): "O jogo escolheu por você", a carta que saiu com a moldura destacada e a outra apagada, e **FECHAR**.
+  5. **Fila:** **Janela agora** duas vezes: "+1 raro" no alto. Escolher abre a próxima com 30 s inteiros.
+  6. **Fechar e abrir:** com a janela aberta (uns 20 s), sair do Play e voltar pela `Bootstrap` depois de um tempo: a janela volta com os mesmos ~20 s (o tempo fora não corre a janela).
+  7. **Cartas pelo DBG:** os botões **Carta Dano ×2 / Rápido / Lascas ×2 / Crítico** dão a carta direto; o alto do menu Bônus lista as cartas e a janela. Com o estagiário (DBG → Estagiário), **Rápido** e **Dano ×2** valem para ele também; **Crítico** não.
+  8. **Ritmo:** DBG → Cálculos → **Raro: 15%** vira **Raro: 2%** (o aviso no pé ganha "· raro 2%"): bem menos raros, e nenhum enquanto houver janela aberta ou carta ativa. **Padrão GDD** volta aos 15%.
+  9. **Descanso:** com uma carta ativa e a janela aberta, descansar: a run nova começa sem carta e sem janela.
+
+  Depois, no Moto G75, o roteiro abaixo.
+
+### Roteiro do Moto G75 (E4)
+
+Anote ✅/❌ em cada passo; um ❌ volta para mim com o que apareceu na tela.
+
+1. **Ver o raro:** jogar normal no nível 1 por 2 min (15% dos cristais são raros). O raro se destaca na fila sem procurar? O brilho incomoda ou passa batido?
+2. **A janela:** quebrar um raro. A janela abre na metade de baixo sem cobrir o anão nem o cristal da vez? As 2 cartas se leem (nome, efeito, "60 s", para quem vale)?
+3. **Escolher no dedo:** tocar numa carta: o toque pega de primeira? A carta sobe do anão e entra na coluna.
+4. **Toque fora:** com a janela aberta, tocar no mapa: não minera e não fecha a janela. Isso irrita no meio de um combo? (Com 15%, a janela aparece muito: anote se o ritmo pesa; o DBG → Cálculos → **Raro: 2%** é a alternativa.)
+5. **Sorteio:** deixar os 30 s correrem: "O jogo escolheu por você" e FECHAR. Fica claro qual carta saiu?
+6. **Fila:** quebrar dois raros seguidos (DBG → Bônus → **Janela agora** duas vezes): o "+1 raro" se vê?
+7. **Minimizar e voltar:** com a janela aberta, botão Início, voltar em 1 min: a janela continua com o mesmo tempo. Com uma carta ativa, voltar em 2 min: a carta acabou.
+8. **Leitura:** os textos da carta e o número da barra ficam nítidos no aparelho?
 
 ## Critério de pronto (do combo, E1–E3)
 
@@ -177,6 +242,6 @@ Total: **~29–39 h**; o combo sozinho (E1–E3), **~14–19 h**.
 | E1 Núcleo dos bônus e o combo | 🔧 implementada em 2026-11-10 | Núcleo (`Bonuses.cs`, simulação, `StrikeRules`), marcos no `Balance_GDD_v7` pelo setup, save v6, pausa/fechar encerram o combo, DBG → Bônus. Testes `ComboBonusTests` (EditMode) e `ComboBonusFlowTests` (PlayMode) **só compilados**: rodam no fim, com a suíte toda. Ajustados para o comportamento novo: a versão do save nos `SaveServiceTests` (5 → 6) e o aquecimento do `AllocationTests` (limpa o +10% do x10). |
 | E2 Coluna de buffs e feedback | 🔧 implementada em 2026-11-10 | Mockup aprovado (`tools/ci/out/m9b-e2-mockup.png`). `Data/BuffCatalog` (ícones Anvil 2/18/332, nomes, textos do ganho), `BuffColumn`/`BuffSlot` (anel `buff_ring`, piscar nos últimos 5 s, detalhe por 2 s), texto do ganho e "FRENESI!" com tremor no `MiningFeedbackView`, som de marco no `SoundBoard`, DANO âmbar no `HudView`. Setup: `BuffColumnSetup`. `BuffColumnTests` (PlayMode) **só compilados**. |
 | E3 Seletor do acúmulo e o celular | 🔧 implementada em 2026-11-10 (EditMode 398/398, PlayMode 142/142); roteiro do Moto G75 aguardando o Bruno | `CalculationChoice.ComboStacking` (gravado no `calculations.json` como `comboHighestOnly`; arquivo antigo = soma), aplicado pelo `MiningRunner` a cada simulação nova (troca de cálculo, Reiniciar run, descanso, reabrir). DBG → Cálculos ganhou o botão "Acúmulo: soma ⇄ maior" (`CalculationsSetup`), que entra no aviso "Cálculo:". Testes novos: `CalculationTests.Store_KeepsTheComboStacking_AndAnOldFileSums` e `CalculationsPanelTests.ComboStacking_SwitchesToTheHighestMilestone_AndSurvivesANewRun`. |
-| E4 Cristal raro | ⏳ | — |
+| E4 Cristal raro | ✅ aprovada e testada pelo Bruno em 2026-11-10 (plano e mockup: P9…P16 → D-219…D-226; EditMode 422/422, PlayMode 148/148) | Núcleo: `RareRules`/`RareCard` e os bônus dano ×, intervalo ÷, lascas ×, crítico + (`Bonuses.cs`), `RareWindow` no `GameState` (save v7), sorteio do raro num gerador próprio (`MiningRunner.RareSeed`), janela/fila/sorteio aos 30 s como evento do `Tick`, offline em trechos para o estagiário. Tela: `RareWindowView` + `RareWindowSetup` (antes da loja), cartas no `BuffCatalog`, `crystal_glass_rare` com brilho no `DescentStage`, texto do ganho, som de marco, DANO âmbar também com o Dano ×2. DBG → Bônus (Próximo raro, Janela agora, 4 cartas) e DBG → Cálculos (Raro: 15% ⇄ 2%). Testes: `RareCrystalTests`, `RareCrystalFlowTests`, `CalculationTests.Store_KeepsTheRareRhythm_AndAnOldFileUsesTheGdd`. Mockup: `tools/ci/out/m9b-e4-mockup.png` |
 | E5 Boost do AD | ⏳ | — |
 | E6 Sessão longa e celular | ⏳ | — |

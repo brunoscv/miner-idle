@@ -23,6 +23,8 @@ namespace MinersIdle.Persistence
         /// campo: <c>false</c>, a soma.
         /// </summary>
         public bool comboHighestOnly;
+        /// <summary>O ritmo lento do cristal raro (M9b E4, D-226: 2%). Arquivo antigo, sem o campo: <c>false</c>, os 15% do GDD.</summary>
+        public bool rareSlow;
     }
 
     /// <summary>

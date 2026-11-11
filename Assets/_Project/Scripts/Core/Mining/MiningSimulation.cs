@@ -35,6 +35,8 @@ namespace MinersIdle.Core
         readonly EconomyRules _economy;
         readonly StrikeRules _strike;
         readonly IRandom _critRandom;
+        // O sorteio do raro e das cartas (M9b E4), à parte do crítico: os críticos de uma semente não mudam.
+        readonly IRandom _rareRandom;
         readonly Permanents _permanents;
         bool _rested;
 
@@ -68,11 +70,18 @@ namespace MinersIdle.Core
         /// O dia e as melhorias permanentes (Marco 8b), que passam de uma run para a outra. Sem elas, não há descanso nem
         /// permanentes (o jogo até o GDD v5).
         /// </param>
+        /// <param name="rareRandom">
+        /// O sorteio do cristal raro e das cartas (M9b E4), separado do crítico. Sem ele, uma semente fixa (os testes).
+        /// </param>
+        /// <param name="rareRhythm">O ritmo do raro (D-185), já para os cristais do começo da run.</param>
         public MiningSimulation(MiningRules rules, IRandom random, GameState state = null, EconomyRules economy = null,
-                                StrikeRules strike = null, Permanents permanents = null)
+                                StrikeRules strike = null, Permanents permanents = null, IRandom rareRandom = null,
+                                RareRhythm rareRhythm = RareRhythm.Gdd)
         {
             _rules = rules ?? throw new ArgumentNullException(nameof(rules));
             _critRandom = random ?? throw new ArgumentNullException(nameof(random));
+            _rareRandom = rareRandom ?? new SeededRandom(RareFallbackSeed);
+            RareRhythm = rareRhythm;
             _strike = strike ?? StrikeRules.NoCritical();
             _tapTimes = new double[_strike.MaxTapsPerSecond];
             _state = state ?? new GameState();
@@ -85,8 +94,12 @@ namespace MinersIdle.Core
             _miner = new Miner();
             _track = new CrystalTrack(rules);
             _track.SetCrystalValues(rules.CrystalHealthIn(_state.Cave), rules.CrystalRewardIn(_state.Cave));
+            _track.RollRare = RollRare;
             _track.SpawnInitial(_miner.Distance);
         }
+
+        /// <summary>A semente do raro quando ninguém passa um gerador (os testes): qualquer número fixo serve.</summary>
+        const ulong RareFallbackSeed = 0x5241_5245UL;
 
         /// <summary>
         /// Um cristal nasceu. Os do início já existem ao construir: quem desenha lê <see cref="Crystals"/> primeiro. A parede
@@ -148,6 +161,18 @@ namespace MinersIdle.Core
         /// <summary>A volta do offline esperando o COLETAR mudou: chegou uma, somou outra ou foi coletada (M9, E2).</summary>
         public event Action<OfflineReturn> OfflineReturnChanged;
 
+        /// <summary>
+        /// A janela do cristal raro mudou (M9b E4): abriu, entrou um raro na fila, a carta saiu no sorteio, fechou ou abriu
+        /// a próxima da fila. Não sai a cada quadro: o tempo que falta se lê em <see cref="RareWindow"/>.
+        /// </summary>
+        public event Action<RareWindow> RareWindowChanged;
+
+        /// <summary>
+        /// Uma carta do raro entrou (escolhida, sorteada ou pelo debug; D-225): o texto que sobe do anão. Os atributos e a
+        /// coluna já mudaram (<see cref="BonusesChanged"/> sai antes).
+        /// </summary>
+        public event Action<RareCard> RareCardApplied;
+
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
         public StrikeRules Strike => _strike;
@@ -169,6 +194,18 @@ namespace MinersIdle.Core
         /// DBG → Cálculos troca no meio da partida para comparar (D-217). Vale para o próximo combo.
         /// </summary>
         public ComboStacking ComboStacking { get; set; } = ComboStacking.Cumulative;
+
+        /// <summary>
+        /// Quantos raros nascem (D-185): o do documento (15% por cristal) ou o lento do DBG → Cálculos (2%, sem raro novo
+        /// com janela aberta ou carta ativa, D-226). Vale para os cristais que nascerem daqui em diante.
+        /// </summary>
+        public RareRhythm RareRhythm { get; set; }
+
+        /// <summary>Atalho do debug ("Próximo raro", D-226): o próximo cristal que nascer na fila é raro.</summary>
+        public bool ForceNextRare { get; set; }
+
+        /// <summary>A janela do cristal raro (M9b E4): fechada (<c>default</c>), escolhendo, ou mostrando o sorteio.</summary>
+        public RareWindow RareWindow => _state.RareWindow;
 
         /// <summary>
         /// Quando sai o primeiro golpe num cristal (D-124). Começa no valor de <see cref="MiningRules.ArrivalStrike"/>; o DBG
@@ -309,10 +346,12 @@ namespace MinersIdle.Core
         /// </summary>
         public OfflineReport ApplyOffline(double secondsAway, double noticeSeconds = 0)
         {
+            // A conta antes de o tempo dos bônus correr: a carta do raro que estava ativa vale para o estagiário até acabar
+            // (D-181, D-190). A janela do raro não anda: espera o jogador (D-222).
+            var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway);
+
             // Os bônus com tempo correm com o app fechado (D-181, D-214), sem o teto do offline; relógio voltado não devolve tempo.
             if (secondsAway > 0 && !double.IsInfinity(secondsAway)) AdvanceBonuses(secondsAway);
-
-            var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway);
             if (report.Shards <= 0) return report;
             if (noticeSeconds > 0 && report.SecondsCounted >= noticeSeconds)
             {
@@ -517,15 +556,18 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// Os atributos do anão com os bônus de agora: o dano × (1 + a soma dos +% ativos), depois do Sangue da Montanha
-        /// (D-179). A loja compara sem eles (<see cref="Preview"/>) e o estagiário não os recebe (D-177).
+        /// (D-179), × as cartas de dano do raro (D-219); o intervalo ÷ a carta "Rápido", depois do piso (D-180); as lascas ×
+        /// a carta "Lascas ×2"; a chance de crítico + a carta "Crítico". A loja compara sem eles (<see cref="Preview"/>); do
+        /// estagiário, só as cartas do raro (<see cref="ComputeInternStats"/>).
         /// </summary>
         MinerStats ComputeStats()
         {
             var stats = MinerStats.Compute(_rules, _economy, _state, _permanents);
-            double bonus = _state.Bonuses.DamagePercent;
-            return bonus > 0
-                ? new MinerStats(stats.Damage * (1 + bonus), stats.HitInterval, stats.WalkSpeed, stats.RewardMultiplier, stats.CritBonus)
-                : stats;
+            var bonuses = _state.Bonuses;
+            if (bonuses.Count == 0) return stats;
+            return new MinerStats(stats.Damage * (1 + bonuses.DamagePercent) * bonuses.DamageMultiplier,
+                                  stats.HitInterval / bonuses.IntervalDivisor, stats.WalkSpeed,
+                                  stats.RewardMultiplier * bonuses.ShardsMultiplier, stats.CritBonus + bonuses.CritChance);
         }
 
         // ── Bônus com tempo (M9b) ─────────────────────────────────────────────────────────────────────────────────
@@ -592,10 +634,128 @@ namespace MinersIdle.Core
         {
             _stats = ComputeStats();
             StatsChanged?.Invoke(_stats);
+            // As cartas do raro valem para o estagiário (D-190): o dano e o intervalo dele mudam junto.
+            var intern = ComputeInternStats();
+            if (intern.Damage != _internStats.Damage || intern.HitInterval != _internStats.HitInterval)
+            {
+                _internStats = intern;
+                InternChanged?.Invoke(_internStats);
+            }
             BonusesChanged?.Invoke();
         }
 
-        InternStats ComputeInternStats() => InternStats.Compute(_rules, _economy, _state, _permanents);
+        /// <summary>O estagiário com as cartas do raro ativas (dano × e intervalo ÷, D-190); o combo e o AD não valem (D-177).</summary>
+        InternStats ComputeInternStats()
+        {
+            var stats = InternStats.Compute(_rules, _economy, _state, _permanents);
+            if (!stats.IsHired) return stats;
+            double damage = _state.Bonuses.InternDamageMultiplier, divisor = _state.Bonuses.InternIntervalDivisor;
+            if (damage == 1 && divisor == 1) return stats;
+            return new InternStats(true, stats.Damage * damage, stats.HitInterval / divisor, stats.OfflineRewardMultiplier);
+        }
+
+        // ── Cristal raro (M9b E4) ────────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Se o cristal que nasce agora é raro (D-184, D-185): o atalho do debug, ou o sorteio no gerador do raro. No ritmo
+        /// lento, nenhum raro enquanto houver janela aberta ou carta ativa.
+        /// </summary>
+        bool RollRare()
+        {
+            if (ForceNextRare)
+            {
+                ForceNextRare = false;
+                return true;
+            }
+            var rare = _strike.Rare;
+            if (!rare.IsEnabled) return false;
+            double chance = rare.Chance;
+            if (RareRhythm == RareRhythm.Slow)
+            {
+                if (_state.RareWindow.IsOpen || _state.Bonuses.HasRareCard) return false;
+                chance = rare.SlowChance;
+            }
+            return chance > 0 && _rareRandom.NextDouble() < chance;
+        }
+
+        /// <summary>
+        /// Um raro quebrou (ou o atalho "Janela agora" do debug): abre a janela com 2 cartas diferentes; com uma já aberta,
+        /// este espera na fila (D-221). <c>false</c> se o balanço não tem raro.
+        /// </summary>
+        public bool OpenRareWindow()
+        {
+            if (!_strike.Rare.IsEnabled) return false;
+            var window = _state.RareWindow;
+            _state.RareWindow = window.IsOpen ? window.WithQueued(window.Queued + 1) : DrawWindow(0);
+            RareWindowChanged?.Invoke(_state.RareWindow);
+            return true;
+        }
+
+        /// <summary>
+        /// O jogador tocou na carta <paramref name="index"/> (0 ou 1) da janela: ela entra e a janela fecha, ou abre a
+        /// próxima da fila (D-221). <c>false</c> fora da escolha.
+        /// </summary>
+        public bool ChooseRareCard(int index)
+        {
+            var window = _state.RareWindow;
+            if (!window.IsChoosing || index < 0 || index > 1) return false;
+            ApplyRareCard(window.CardAt(index));
+            NextRareWindow(window.Queued);
+            return true;
+        }
+
+        /// <summary>FECHAR na janela do sorteio (D-186): fecha, ou abre a próxima da fila. <c>false</c> se não há o que fechar.</summary>
+        public bool CloseRareWindow()
+        {
+            var window = _state.RareWindow;
+            if (!window.IsOpen || window.IsChoosing) return false;
+            NextRareWindow(window.Queued);
+            return true;
+        }
+
+        /// <summary>Atalho do debug (D-226): a carta direto, sem janela. <c>false</c> se o balanço não tem essa carta.</summary>
+        public bool GrantRareCard(RareCard card)
+        {
+            if (!_strike.Rare.Has(card)) return false;
+            ApplyRareCard(card);
+            return true;
+        }
+
+        /// <summary>2 cartas diferentes das que o balanço tem, sorteadas (D-190).</summary>
+        RareWindow DrawWindow(int queued)
+        {
+            var cards = _strike.Rare.Cards;
+            int count = cards.Count;
+            int first = _rareRandom.NextInt(0, count);
+            int second = _rareRandom.NextInt(0, count - 1);
+            if (second >= first) second++;
+            return new RareWindow(cards[first].Card, cards[second].Card, _strike.Rare.ChooseSeconds, queued: queued);
+        }
+
+        void NextRareWindow(int queued)
+        {
+            _state.RareWindow = queued > 0 && _strike.Rare.IsEnabled ? DrawWindow(queued - 1) : default;
+            RareWindowChanged?.Invoke(_state.RareWindow);
+        }
+
+        /// <summary>Os 30 s acabaram sem escolha (D-186): sorteia uma das 2, aplica e deixa a janela mostrando, até o FECHAR.</summary>
+        void AutoPickRareCard()
+        {
+            var window = _state.RareWindow;
+            int pick = _rareRandom.NextInt(0, 2);
+            _state.RareWindow = window.WithAutoPick(pick);
+            ApplyRareCard(window.CardAt(pick));
+            RareWindowChanged?.Invoke(_state.RareWindow);
+        }
+
+        /// <summary>A carta entra por 60 s (D-190); igual a uma ativa, só renova o tempo.</summary>
+        void ApplyRareCard(RareCard card)
+        {
+            var rule = _strike.Rare.Get(card);
+            _state.Bonuses.AddOrRenew(new ActiveBonus(rule.Kind, rule.Value, rule.Seconds, rule.Seconds, BonusSource.Rare, (int)card));
+            OnBonusesChanged();
+            RareCardApplied?.Invoke(card);
+        }
 
         /// <summary>
         /// Recalcula o estagiário e avisa. Contratado agora, ele nasce no cristal atual do anão (§5.1): se o anão já está
@@ -743,6 +903,12 @@ namespace MinersIdle.Core
                 if (_state.Bonuses.Count > 0 && _state.Bonuses.RemoveExpired(Epsilon))
                     OnBonusesChanged();
 
+                if (_state.RareWindow.IsChoosing && _state.RareWindow.SecondsLeft <= Epsilon)
+                {
+                    AutoPickRareCard(); // 30 s sem escolha (D-186)
+                    changed = true;
+                }
+
                 bool canSpawn = _track.Wall == null; // parede de pé (D-107): nada nasce até ela cair
                 if (canSpawn && _track.IsBelowMinimum)
                 {
@@ -804,6 +970,7 @@ namespace MinersIdle.Core
                 next = Math.Min(next, Math.Max(0, _lastTapTime + _strike.ComboWindow - Elapsed));
 
             next = Math.Min(next, _state.Bonuses.NextExpiry);
+            if (_state.RareWindow.IsChoosing) next = Math.Min(next, _state.RareWindow.SecondsLeft);
 
             switch (_miner.State)
             {
@@ -829,6 +996,8 @@ namespace MinersIdle.Core
             Elapsed += step;
             _state.AddPlayTime(step);
             _state.Bonuses.Advance(step); // o fim de cada um é evento: some no ProcessDueEvents
+            // Os 30 s da janela do raro só correm com o jogo aberto (D-222): o offline não passa por aqui.
+            if (_state.RareWindow.IsChoosing) _state.RareWindow = _state.RareWindow.WithSecondsLeft(_state.RareWindow.SecondsLeft - step);
 
             // Fila cheia ou parede de pé: o relógio de nascimento espera no limite e nasce assim que der.
             _spawnTimer = SpawnWaits ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;
@@ -1014,6 +1183,7 @@ namespace MinersIdle.Core
             CrystalBroken?.Invoke(target);
             if (!target.IsWall) ShardsChanged?.Invoke(_state.Shards);
             TargetChanged?.Invoke(null);
+            if (target.IsRare) OpenRareWindow(); // D-184: a janela abre, sem pausar
             if (!target.IsWall) return;
             if (_state.Cave < _rules.CaveCount)
             {

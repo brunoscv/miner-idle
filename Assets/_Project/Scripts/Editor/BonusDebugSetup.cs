@@ -1,3 +1,4 @@
+using MinersIdle.Core;
 using MinersIdle.Game;
 using MinersIdle.UI;
 using TMPro;
@@ -33,7 +34,9 @@ namespace MinersIdle.EditorTools
         {
             var debugPanel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.BonusMenuName) : null;
-            if (menu == null || menu.GetComponent<BonusDebugPanel>() != null) return false;
+            if (menu == null) return false;
+            var current = menu.GetComponent<BonusDebugPanel>();
+            if (current != null) return EnsureRare(menu, current);
 
             var grid = menu.Find("Content/Buttons");
             var grant = new Button[GrantButtons.Length];
@@ -78,7 +81,75 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[Setup] Painel de debug: menu \"Bônus\" com combo ×10, ×30, ×50, ×100 e Limpar bônus (M9b, E1).");
+            EnsureRare(menu, panel);
             return true;
+        }
+
+        /// <summary>Os atalhos do raro, na ordem da grade depois do Limpar (o nome do objeto, o rótulo).</summary>
+        static readonly (string name, string label)[] RareButtons =
+        {
+            ("NextRare", "Próximo raro"),
+            ("RareWindow", "Janela agora"),
+            ("CardDamage", "Carta Dano ×2"),
+            ("CardSpeed", "Carta Rápido"),
+            ("CardShards", "Carta Lascas ×2"),
+            ("CardCritical", "Carta Crítico"),
+        };
+
+        static readonly string[] CardLabels = { "Dano ×2", "Rápido", "Lascas ×2", "Crítico +25%" };
+
+        /// <summary>
+        /// M9b E4 (D-226): Próximo raro, Janela agora e uma carta de cada tipo, antes do Fechar; o menu cresce para 4
+        /// fileiras; os textos do raro no alto.
+        /// </summary>
+        static bool EnsureRare(Transform menu, BonusDebugPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+            var buttons = new Button[RareButtons.Length];
+            for (int i = 0; i < RareButtons.Length; i++)
+            {
+                var (name, label) = RareButtons[i];
+                var found = grid.Find(name);
+                if (found == null)
+                {
+                    buttons[i] = DebugPanelSetup.CreateButton(grid, name, label);
+                    changed = true;
+                }
+                else buttons[i] = found.GetComponent<Button>();
+            }
+            grid.Find("Close")?.SetAsLastSibling();
+
+            var content = (RectTransform)menu.Find("Content");
+            if (content != null && !Mathf.Approximately(content.sizeDelta.y, DebugPanelSetup.BonusMenuHeight))
+            {
+                content.sizeDelta = new Vector2(content.sizeDelta.x, DebugPanelSetup.BonusMenuHeight);
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            var next = so.FindProperty("nextRare");
+            if (next.objectReferenceValue != buttons[0])
+            {
+                next.objectReferenceValue = buttons[0];
+                so.FindProperty("openWindow").objectReferenceValue = buttons[1];
+                var cards = so.FindProperty("cards");
+                cards.arraySize = 4;
+                for (int i = 0; i < 4; i++) cards.GetArrayElementAtIndex(i).objectReferenceValue = buttons[2 + i];
+                var labels = so.FindProperty("cardLabels");
+                labels.arraySize = CardLabels.Length;
+                for (int i = 0; i < CardLabels.Length; i++) labels.GetArrayElementAtIndex(i).stringValue = CardLabels[i];
+                so.FindProperty("rareCardFormat").stringValue = "{0}, {1}";
+                so.FindProperty("windowFormat").stringValue = "Janela: {0} ou {1}, {2} · fila {3}";
+                so.FindProperty("windowPickedFormat").stringValue = "Janela: saiu {0} (FECHAR) · fila {1}";
+                so.FindProperty("nextRareLabel").stringValue = "O próximo cristal que nascer é raro.";
+                so.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+
+            if (changed) Debug.Log("[Setup] Painel de debug: no menu Bônus, Próximo raro, Janela agora e as 4 cartas (M9b E4, D-226).");
+            return changed;
         }
     }
 }

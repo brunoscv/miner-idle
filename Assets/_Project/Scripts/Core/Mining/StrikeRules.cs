@@ -15,10 +15,12 @@ namespace MinersIdle.Core
         /// Os marcos do combo que dão bônus ao parar de tocar (M9b, GDD v7 §3.4); <c>null</c> = nenhum (o jogo até o M9).
         /// Cada marco aparece uma vez.
         /// </param>
+        /// <param name="rare">O cristal raro (M9b E4); <c>null</c> = nenhum raro (o jogo até o combo).</param>
         public StrikeRules(double critChance, double critMultiplier, double tapFraction, double comboWindow,
                            int maxTapsPerSecond = 0, double? tapCritChance = null,
-                           IEnumerable<ComboBonusRule> comboBonuses = null)
+                           IEnumerable<ComboBonusRule> comboBonuses = null, RareRules rare = null)
         {
+            Rare = rare ?? RareRules.None();
             if (double.IsNaN(critChance) || critChance < 0 || critChance > 1) throw new ArgumentOutOfRangeException(nameof(critChance));
             double tapCrit = tapCritChance ?? critChance;
             if (double.IsNaN(tapCrit) || tapCrit < 0 || tapCrit > 1) throw new ArgumentOutOfRangeException(nameof(tapCritChance));
@@ -59,6 +61,9 @@ namespace MinersIdle.Core
         public int MaxTapsPerSecond { get; }
         /// <summary>Os marcos do combo com bônus (M9b), do menor para o maior; vazio = sem bônus de combo.</summary>
         public IReadOnlyList<ComboBonusRule> ComboBonuses { get; }
+
+        /// <summary>O cristal raro e as cartas dele (M9b E4); sem cartas, nenhum raro nasce.</summary>
+        public RareRules Rare { get; }
 
         /// <summary>Sem crítico nem teto; toque e combo como no GDD. É o padrão de quem não passa regras (testes do M2–M4).</summary>
         public static StrikeRules NoCritical() => new StrikeRules(0, 2, 0.1, 1);

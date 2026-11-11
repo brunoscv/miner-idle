@@ -44,6 +44,12 @@ namespace MinersIdle.Core
         /// </summary>
         public ActiveBonuses Bonuses { get; } = new ActiveBonuses();
 
+        /// <summary>
+        /// A janela do cristal raro (M9b E4): as 2 cartas, o tempo para escolher e a fila. Vai para o save (D-222) e some
+        /// no descanso (D-224). <c>default</c> = fechada.
+        /// </summary>
+        public RareWindow RareWindow { get; internal set; }
+
         /// <summary>Nível da melhoria = compras feitas (D-38).</summary>
         public int LevelOf(UpgradeId id) => _levels[(int)id];
 
@@ -62,7 +68,8 @@ namespace MinersIdle.Core
                                         Func<UpgradeId, int> levelOf, EconomyRules economy,
                                         int caveCount = 1, int cave = 1, long caveBreaks = 0, double playSeconds = 0,
                                         double shardsEarned = 0, bool reachedHeart = false,
-                                        OfflineReturn pendingOffline = default, IEnumerable<ActiveBonus> bonuses = null)
+                                        OfflineReturn pendingOffline = default, IEnumerable<ActiveBonus> bonuses = null,
+                                        RareWindow rareWindow = default)
         {
             if (levelOf == null) throw new ArgumentNullException(nameof(levelOf));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
@@ -77,6 +84,7 @@ namespace MinersIdle.Core
                 PlaySeconds = NonNegative(playSeconds),
                 ShardsEarned = NonNegative(shardsEarned),
                 PendingOffline = pendingOffline,
+                RareWindow = rareWindow,
             };
             state.Bonuses.Restore(bonuses);
             foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))

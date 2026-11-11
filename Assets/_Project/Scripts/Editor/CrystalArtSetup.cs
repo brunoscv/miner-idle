@@ -52,7 +52,7 @@ namespace MinersIdle.EditorTools
 
         /// <summary>
         /// Os cristais desenhados pelo Bruno (D-77), em revezamento na fila, com a cor dos estilhaços de cada um. O raro
-        /// (<c>crystal_glass_rare</c>) fica guardado para um futuro cristal raro (regra nova, precisa de decisão).
+        /// (<c>crystal_glass_rare</c>) é o desenho do cristal raro do M9b (D-220), à parte do revezamento.
         /// </summary>
         internal static readonly (string name, Color32 shards)[] QueueCrystals =
         {
@@ -70,12 +70,13 @@ namespace MinersIdle.EditorTools
         {
             var stage = Object.FindAnyObjectByType<DescentStage>();
             if (stage == null || !File.Exists($"{Folder}/{QueueCrystals[0].name}.png")) return false;
+            bool rare = EnsureRare(stage);
 
             var so = new SerializedObject(stage);
             var textures = so.FindProperty("crystalTextures");
             var first = textures.arraySize > 0 ? textures.GetArrayElementAtIndex(0).objectReferenceValue : null;
             bool generated = first != null && first.name.StartsWith("crystal_white");
-            if (textures.arraySize > 0 && !generated) return false;
+            if (textures.arraySize > 0 && !generated) return rare;
 
             var shards = so.FindProperty("crystalShardColors");
             textures.arraySize = shards.arraySize = QueueCrystals.Length;
@@ -88,6 +89,20 @@ namespace MinersIdle.EditorTools
             so.FindProperty("crystalSize").vector2Value = CrystalSize;
             so.ApplyModifiedPropertiesWithoutUndo();
             Debug.Log("[Setup] Fila com os cristais do Bruno: glass, sapphire, yellow (D-77).");
+            return true;
+        }
+
+        /// <summary>M9b E4 (D-220): o desenho do cristal raro no DescentStage, se ainda não tem.</summary>
+        static bool EnsureRare(DescentStage stage)
+        {
+            var so = new SerializedObject(stage);
+            var field = so.FindProperty("rareCrystalTexture");
+            if (field == null || field.objectReferenceValue != null) return false;
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Folder}/crystal_glass_rare.png");
+            if (texture == null) return false;
+            field.objectReferenceValue = texture;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] Cristal raro na fila: crystal_glass_rare com brilho (M9b E4, D-220).");
             return true;
         }
 

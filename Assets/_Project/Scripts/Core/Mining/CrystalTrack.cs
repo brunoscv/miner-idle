@@ -47,6 +47,12 @@ namespace MinersIdle.Core
         /// <summary>A fila está abaixo do mínimo (D-80): o próximo nasce já.</summary>
         public bool IsBelowMinimum => _crystals.Count < _rules.MinCrystals;
 
+        /// <summary>
+        /// Decide, para cada cristal que nasce na fila (os do começo também), se ele é raro (M9b E4, D-184). <c>null</c> =
+        /// nenhum raro. Os postos à mão (<see cref="SpawnAt"/>, testes e debug) não sorteiam.
+        /// </summary>
+        internal Func<bool> RollRare { get; set; }
+
         /// <summary>A parede de pé no fim da fila (M8), ou <c>null</c>.</summary>
         public Crystal Wall { get; private set; }
 
@@ -107,6 +113,7 @@ namespace MinersIdle.Core
         Crystal Add(double distance)
         {
             var crystal = new Crystal(_nextId++, distance, _health, _reward);
+            if (RollRare != null && RollRare()) crystal.MarkRare();
             _crystals.Add(crystal);
             return crystal;
         }

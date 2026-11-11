@@ -134,6 +134,16 @@ namespace MinersIdle.Presentation
         [Tooltip("Largura e altura dos cristais da fila, em unidades do jogo.")]
         [SerializeField] Vector2 crystalSize = new Vector2(0.84f, 0.8f);
 
+        [Header("Cristal raro (M9b E4, D-220)")]
+        [Tooltip("O desenho do raro na fila (crystal_glass_rare). Vazio = o raro aparece como um comum.")]
+        [SerializeField] Texture2D rareCrystalTexture;
+        [Tooltip("A cor dos estilhaços do raro.")]
+        [SerializeField] Color rareShardColor = new Color32(0x9B, 0xD8, 0xF0, 0xFF);
+        [Tooltip("O brilho que pisca no raro: quanto clareia no auge (0 = sem brilho).")]
+        [SerializeField, Range(0f, 1f)] float rareGlint = 0.45f;
+        [Tooltip("Piscadas do brilho do raro por segundo.")]
+        [SerializeField, Min(0f)] float rareGlintSpeed = 1.5f;
+
         [Header("Anão (M1b E6, D-75: folhas do PixelLab; vazio = desenho gerado por código)")]
         [Tooltip("Folha da corrida: quadros quadrados em grade, da esquerda para a direita e de cima para baixo.")]
         [SerializeField] Texture2D dwarfRunSheet;
@@ -1149,6 +1159,7 @@ namespace MinersIdle.Presentation
 
             var crystals = simulation.Crystals;
             _drawnCrystals = Mathf.Min(crystals.Count, CrystalSlots);
+            int rareShown = 0;
             bool wallShown = false;
             for (int i = 0; i < CrystalSlots; i++)
             {
@@ -1170,7 +1181,11 @@ namespace MinersIdle.Presentation
                 }
 
                 // Uma textura atribuída no Inspector substitui o cristal provisório; mantém-se a arte antiga como fallback.
-                _crystals[i].SetTexture(CrystalTexture(crystal.Id));
+                // O raro (D-220): o desenho dele e um brilho piscando (cor acima de 1 clareia).
+                bool rare = IsRareShown(crystal);
+                _crystals[i].SetTexture(rare ? rareCrystalTexture : CrystalTexture(crystal.Id));
+                _crystals[i].SetColor(rare ? RareGlintColor() : Color.white);
+                if (rare) rareShown++;
                 _crystals[i].Place(new Vector3(shake, 0f, z), crystalSize);
                 _crystals[i].Transform.localRotation = lean;
                 PlaceShadow(_crystalShadows[i], 0f, z, DescentArt.ShadowSize.x * 1.1f);
@@ -1179,6 +1194,7 @@ namespace MinersIdle.Presentation
             if (!wallShown && _wallShown)
                 for (int k = 0; k < _wallBlocks.Length; k++) _wallBlocks[k].Visible = false;
             _wallShown = wallShown;
+            RareCrystalsShown = rareShown;
 
             LayoutHealthBar(miner.Target, distance);
             LayoutPosts(front);
@@ -1202,6 +1218,21 @@ namespace MinersIdle.Presentation
         }
 
         bool HasCrystalArt => crystalTextures != null && crystalTextures.Length > 0;
+
+        /// <summary>Quantos cristais raros a fila desenhou no último quadro (para os testes).</summary>
+        public int RareCrystalsShown { get; private set; }
+
+        bool IsRareShown(Crystal crystal) => crystal.IsRare && rareCrystalTexture != null;
+
+        Color RareGlintColor()
+        {
+            float wave = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * rareGlintSpeed * 2f * Mathf.PI);
+            float light = 1f + rareGlint * wave;
+            return new Color(light, light, light, 1f);
+        }
+
+        /// <summary>A cor dos estilhaços de um cristal da fila: a do raro (D-220) ou a do desenho que ele tem.</summary>
+        public Color ShardColorOf(Crystal crystal) => IsRareShown(crystal) ? rareShardColor : CrystalShardColor(crystal.Id);
 
         /// <summary>
         /// A textura do cristal da fila: o da caverna mostrada (D-116, uma cor por caverna) ou, sem ele no bioma, o

@@ -230,11 +230,14 @@ namespace MinersIdle.EditorTools
             (InternMenuName, "Intern", "Estagiário", DayMenuHeight, System.Array.Empty<string>()),
             // E os do Offline (M9 E1, OfflineDebugSetup): 3 fileiras de botões e a conta do último offline no alto.
             (OfflineMenuName, "Offline", "Offline", OfflineMenuHeight, System.Array.Empty<string>()),
-            // E os do Bônus (M9b E1, BonusDebugSetup): os bônus ativos no alto e 2 fileiras de botões, como o Dia.
-            (BonusMenuName, "Bonus", "Bônus", DayMenuHeight, System.Array.Empty<string>()),
+            // E os do Bônus (M9b E1, BonusDebugSetup): os bônus ativos no alto e 4 fileiras de botões (o raro desde a E4).
+            (BonusMenuName, "Bonus", "Bônus", BonusMenuHeight, System.Array.Empty<string>()),
         };
 
         internal const string BonusMenuName = "BonusMenu";
+
+        /// <summary>O menu Bônus (M9b): os bônus e a janela do raro no alto (<see cref="DayTextHeight"/>) e 4 fileiras de botões.</summary>
+        internal const float BonusMenuHeight = 120f;
 
         internal const string InternMenuName = "InternMenu";
 

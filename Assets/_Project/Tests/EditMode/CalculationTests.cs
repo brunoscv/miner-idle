@@ -119,6 +119,25 @@ namespace MinersIdle.Tests
                         "arquivo de antes do M9b: a soma do GDD");
         }
 
+        /// <summary>M9b E4 (D-226): o ritmo do raro do DBG → Cálculos vai para o calculations.json; arquivo antigo = o GDD.</summary>
+        [Test]
+        public void Store_KeepsTheRareRhythm_AndAnOldFileUsesTheGdd()
+        {
+            Assert.That(default(CalculationChoice).RareRhythm, Is.EqualTo(RareRhythm.Gdd), "15% do GDD (D-184)");
+            Assert.That(default(CalculationChoice).WithRareRhythm(RareRhythm.Slow).IsDefault, Is.False);
+
+            var store = new CalculationStore(new FileSaveStore(_dir, CalculationStore.FileName));
+            var choice = default(CalculationChoice).WithComboStacking(ComboStacking.HighestOnly).WithRareRhythm(RareRhythm.Slow);
+            store.Save(choice.ToData());
+            var back = CalculationChoice.FromData(store.Load());
+            Assert.That(back, Is.EqualTo(choice));
+            Assert.That(back.WithBalance(1).RareRhythm, Is.EqualTo(RareRhythm.Slow), "trocar outra coisa não volta o ritmo");
+
+            Directory.CreateDirectory(_dir);
+            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"comboHighestOnly\": true }");
+            Assert.That(CalculationChoice.FromData(store.Load()).RareRhythm, Is.EqualTo(RareRhythm.Gdd));
+        }
+
         [Test]
         public void ByCave_SwitchesTheV7PickaxeToTheCave_AndTheV5IgnoresIt()
         {

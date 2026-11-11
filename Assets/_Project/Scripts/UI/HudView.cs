@@ -44,6 +44,9 @@ namespace MinersIdle.UI
         /// <summary>O DANO está âmbar (um bônus de dano vale agora; para testes).</summary>
         public bool IsDamageBoosted => damageValue.color == boostedDamageColor;
 
+        /// <summary>Um bônus de dano vale agora: os +% do combo ou a carta "Dano ×2" do raro (D-216).</summary>
+        bool DamageBoosted => Simulation != null && (Simulation.Bonuses.DamagePercent > 0 || Simulation.Bonuses.DamageMultiplier > 1);
+
         void Awake()
         {
             _rect = (RectTransform)transform;
@@ -111,7 +114,7 @@ namespace MinersIdle.UI
         void OnStatsChanged(MinerStats stats)
         {
             damageValue.text = NumberFormatter.Format(stats.Damage);
-            damageValue.color = Simulation != null && Simulation.Bonuses.DamagePercent > 0 ? boostedDamageColor : _damageColor;
+            damageValue.color = DamageBoosted ? boostedDamageColor : _damageColor;
             speedValue.text = NumberFormatter.FormatSeconds(stats.HitInterval);
         }
     }

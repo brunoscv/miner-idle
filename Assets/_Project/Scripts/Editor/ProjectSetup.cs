@@ -94,6 +94,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV7Permanents();
             EnsureGddV7Intern();
             EnsureGddV7ComboBonuses();
+            EnsureGddV7RareCrystal();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -584,6 +585,39 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v7: os marcos do combo ×10, ×30, ×50 e ×100 viram bônus com tempo (M9b, D-96).");
+        }
+
+        /// <summary>
+        /// M9b E4: o cristal raro no balanço do GDD v7 (D-97, D-184…D-186, D-190): 15% por cristal (2% no ritmo lento do
+        /// DBG), 30 s para escolher e as 4 cartas de 60 s. Só preenche se as cartas estão vazias (não desfaz um ajuste).
+        /// </summary>
+        static void EnsureGddV7RareCrystal()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV7BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var list = serialized.FindProperty("rareCards");
+            if (list.arraySize > 0) return;
+
+            (RareCard card, double value)[] cards =
+            {
+                (RareCard.Damage, 2), (RareCard.Speed, 2), (RareCard.Shards, 2), (RareCard.Critical, 0.25),
+            };
+            serialized.FindProperty("rareChance").doubleValue = 0.15;
+            serialized.FindProperty("rareSlowChance").doubleValue = 0.02;
+            serialized.FindProperty("rareChooseSeconds").doubleValue = 30;
+            list.arraySize = cards.Length;
+            for (int i = 0; i < cards.Length; i++)
+            {
+                var item = list.GetArrayElementAtIndex(i);
+                item.FindPropertyRelative("card").enumValueIndex = (int)cards[i].card;
+                item.FindPropertyRelative("value").doubleValue = cards[i].value;
+                item.FindPropertyRelative("seconds").doubleValue = 60;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v7: cristal raro com 15% por cristal (2% no ritmo lento), 30 s para escolher e as 4 cartas de 60 s (M9b E4).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

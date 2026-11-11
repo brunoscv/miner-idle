@@ -182,7 +182,17 @@ namespace MinersIdle.Persistence
                 : default;
             return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
                                      data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart,
-                                     pending, data.version >= 6 ? RestoreBonuses(data.bonuses) : null);
+                                     pending, data.version >= 6 ? RestoreBonuses(data.bonuses) : null,
+                                     data.version >= 7 ? RestoreRareWindow(data.rareWindow) : default);
+        }
+
+        /// <summary>A janela do raro do save v7 (M9b E4). Carta desconhecida ou repetida: a janela fecha.</summary>
+        static RareWindow RestoreRareWindow(SavedRareWindow saved)
+        {
+            if (saved == null || !saved.open || !Enum.TryParse(saved.first, out RareCard first)
+                || !Enum.TryParse(saved.second, out RareCard second))
+                return default;
+            return RareWindow.Restore(true, (int)first, (int)second, saved.secondsLeft, saved.chosen, saved.autoPicked, saved.queued);
         }
 
         /// <summary>Os bônus do save v6 (M9b). Tipo ou origem desconhecidos: o bônus fica de fora; os valores, o <see cref="GameState"/> confere.</summary>
@@ -238,6 +248,13 @@ namespace MinersIdle.Persistence
             };
             foreach (var id in Lines)
                 data.levels.Add(new SavedLevel { upgrade = id.ToString(), level = state.LevelOf(id) });
+            var window = state.RareWindow;
+            if (window.IsOpen)
+                data.rareWindow = new SavedRareWindow
+                {
+                    open = true, first = window.First.ToString(), second = window.Second.ToString(),
+                    secondsLeft = window.SecondsLeft, chosen = window.Chosen, autoPicked = window.AutoPicked, queued = window.Queued,
+                };
             foreach (var bonus in state.Bonuses.All)
                 data.bonuses.Add(new SavedBonus
                 {

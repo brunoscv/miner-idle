@@ -48,6 +48,7 @@ namespace MinersIdle.EditorTools
             {
                 changed |= EnsureWarningBack(debugPanel, existing);
                 changed |= EnsureComboStacking(menu, existing);
+                changed |= EnsureRareRhythm(menu, existing);
                 return EnsurePickaxeByCave(debugPanel, existing) || changed;
             }
 
@@ -97,7 +98,39 @@ namespace MinersIdle.EditorTools
                       "Reiniciar run e o aviso do cálculo na tela (M8 E3b-3, D-143).");
             EnsurePickaxeByCave(debugPanel, panel);
             EnsureComboStacking(menu, panel);
+            EnsureRareRhythm(menu, panel);
             return true;
+        }
+
+        const string RareRhythmName = "RareRhythm";
+
+        /// <summary>
+        /// M9b E4 (D-226): o botão "Raro" na grade do menu Cálculos (antes do Fechar): o ritmo do cristal raro do documento
+        /// (15%) ⇄ o lento (2%, D-185). O rótulo mostra a chance em uso, lida do balanço.
+        /// </summary>
+        static bool EnsureRareRhythm(Transform menu, CalculationsPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+
+            var button = grid.Find(RareRhythmName);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(grid, RareRhythmName, "Raro: 15%").transform;
+                var close = grid.Find("Close");
+                if (close != null) button.SetSiblingIndex(close.GetSiblingIndex());
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            changed |= SetIfDifferent(so.FindProperty("rareRhythm"), button.GetComponent<Button>());
+            changed |= SetIfEmpty(so.FindProperty("rareRhythmFormat"), "Raro: {0}");
+            changed |= SetIfEmpty(so.FindProperty("rareSlowChangedFormat"), " · raro {0}");
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            if (changed) Debug.Log("[Setup] Painel de debug: botão \"Raro\" (ritmo 15% ⇄ 2%) no menu Cálculos (M9b E4, D-226).");
+            return changed;
         }
 
         const string ComboStackingName = "ComboStacking";

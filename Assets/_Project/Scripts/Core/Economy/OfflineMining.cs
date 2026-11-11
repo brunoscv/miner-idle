@@ -129,8 +129,51 @@ namespace MinersIdle.Core
             double reward = rules.CrystalRewardIn(state.Cave) * intern.OfflineRewardMultiplier;
             long hits = HitsPerCrystal(health, intern.Damage);
             double perCrystal = SecondsPerCrystal(rules, hits, intern.HitInterval);
-            var stretch = Stretch(perCrystal, reward, counted);
-            return new OfflineReport(secondsAway, counted, true, stretch.Crystals, hits, perCrystal, reward, stretch.Shards);
+            if (!HasInternCard(state.Bonuses, counted))
+            {
+                var stretch = Stretch(perCrystal, reward, counted);
+                return new OfflineReport(secondsAway, counted, true, stretch.Crystals, hits, perCrystal, reward, stretch.Shards);
+            }
+
+            // M9b E4 (D-181, D-190): cada carta do raro ativa vale para ele até acabar; cada pedaço de tempo com outras
+            // cartas é um trecho, e o tempo no meio de um cristal passa para o seguinte. O relatório mostra o ritmo sem cartas.
+            long crystals = 0;
+            double shards = 0, carried = 0, from = 0;
+            var bonuses = state.Bonuses.All;
+            while (from < counted)
+            {
+                double until = counted, damage = 1, divisor = 1, multiplier = 1;
+                for (int i = 0; i < bonuses.Count; i++)
+                {
+                    var bonus = bonuses[i];
+                    if (!IsInternCard(bonus) || bonus.SecondsLeft <= from) continue;
+                    until = Math.Min(until, bonus.SecondsLeft);
+                    if (bonus.Kind == BonusKind.DamageMultiplier) damage *= bonus.Value;
+                    else if (bonus.Kind == BonusKind.IntervalDivisor) divisor *= bonus.Value;
+                    else multiplier *= bonus.Value;
+                }
+                long stretchHits = HitsPerCrystal(health, intern.Damage * damage);
+                double stretchPerCrystal = SecondsPerCrystal(rules, stretchHits, intern.HitInterval / divisor);
+                var stretch = Stretch(stretchPerCrystal, reward * multiplier, until - from, carried);
+                crystals += stretch.Crystals;
+                shards += stretch.Shards;
+                carried = stretch.LeftoverSeconds;
+                from = until;
+            }
+            return new OfflineReport(secondsAway, counted, true, crystals, hits, perCrystal, reward, shards);
+        }
+
+        /// <summary>Uma carta do raro que muda o estagiário: dano ×, intervalo ÷ ou lascas × (o crítico não, D-167).</summary>
+        static bool IsInternCard(ActiveBonus bonus) =>
+            ActiveBonuses.AppliesToIntern(bonus) && bonus.Value > 0 &&
+            (bonus.Kind == BonusKind.DamageMultiplier || bonus.Kind == BonusKind.IntervalDivisor || bonus.Kind == BonusKind.ShardsMultiplier);
+
+        static bool HasInternCard(ActiveBonuses bonuses, double counted)
+        {
+            if (counted <= 0) return false;
+            for (int i = 0; i < bonuses.Count; i++)
+                if (IsInternCard(bonuses.All[i]) && bonuses.All[i].SecondsLeft > 0) return true;
+            return false;
         }
 
         /// <summary>Golpes para quebrar um cristal: ⌈vida ÷ dano⌉ (a folga evita um golpe a mais por arredondamento).</summary>

@@ -11,7 +11,8 @@ namespace MinersIdle.UI
     /// <summary>
     /// DBG → Bônus (M9b, E1; D-217): dá os bônus de um combo terminado em ×10, ×30, ×50 ou ×100 sem tocar (pela mesma regra
     /// do jogo, <see cref="MiningSimulation.GrantComboBonuses"/>), limpa os ativos e, no alto, mostra o combo de agora, a
-    /// regra do acúmulo, o dano a mais somado e cada bônus ativo com o tempo que falta. Fica no painel de debug: no release
+    /// regra do acúmulo, o dano a mais somado e cada bônus ativo com o tempo que falta. M9b E4 (D-226): Próximo raro, Janela
+    /// agora e uma carta direta de cada tipo, e a janela do raro no alto. Fica no painel de debug: no release
     /// some junto. Só manda comandos à simulação do <see cref="MiningRunner"/>. Os textos ficam na cena.
     /// </summary>
     public sealed class BonusDebugPanel : MonoBehaviour
@@ -27,6 +28,24 @@ namespace MinersIdle.UI
         [Tooltip("Combo ×10, ×30, ×50 e ×100, na ordem de Combos.")]
         [SerializeField] Button[] grant = Array.Empty<Button>();
         [SerializeField] Button clear;
+
+        [Header("Cristal raro (M9b E4, D-226)")]
+        [Tooltip("O próximo cristal que nascer é raro.")]
+        [SerializeField] Button nextRare;
+        [Tooltip("Abre a janela das cartas sem quebrar nada (com uma aberta, entra na fila).")]
+        [SerializeField] Button openWindow;
+        [Tooltip("Uma carta direto, na ordem do enum RareCard (Dano, Rápido, Lascas, Crítico).")]
+        [SerializeField] Button[] cards = Array.Empty<Button>();
+        [Tooltip("O nome de cada carta no alto do menu, na ordem do enum RareCard.")]
+        [SerializeField] string[] cardLabels = Array.Empty<string>();
+        [Tooltip("Uma carta ativa. {0} o nome · {1} o tempo que falta")]
+        [SerializeField] string rareCardFormat;
+        [Tooltip("A janela aberta. {0} e {1} as cartas · {2} o tempo para escolher · {3} raros na fila")]
+        [SerializeField] string windowFormat;
+        [Tooltip("A janela mostrando o sorteio. {0} a carta que saiu · {1} raros na fila")]
+        [SerializeField] string windowPickedFormat;
+        [Tooltip("Somado ao alto com o próximo raro marcado.")]
+        [SerializeField] string nextRareLabel;
 
         [SerializeField] TMP_Text summary;
         [Tooltip("A primeira linha. {0} combo de agora · {1} regra do acúmulo · {2} dano a mais somado")]
@@ -44,6 +63,7 @@ namespace MinersIdle.UI
 
         readonly StringBuilder _text = new StringBuilder(256);
         UnityEngine.Events.UnityAction[] _grant = Array.Empty<UnityEngine.Events.UnityAction>();
+        UnityEngine.Events.UnityAction[] _cards = Array.Empty<UnityEngine.Events.UnityAction>();
         DebugMenu _menu;
         float _refresh;
 
@@ -56,6 +76,12 @@ namespace MinersIdle.UI
                 int index = i;
                 _grant[i] = () => Grant(index);
             }
+            _cards = new UnityEngine.Events.UnityAction[cards.Length];
+            for (int i = 0; i < cards.Length; i++)
+            {
+                var card = (RareCard)i;
+                _cards[i] = () => GrantCard(card);
+            }
         }
 
         void OnEnable()
@@ -63,6 +89,10 @@ namespace MinersIdle.UI
             for (int i = 0; i < grant.Length; i++)
                 if (grant[i] != null) grant[i].onClick.AddListener(_grant[i]);
             if (clear != null) clear.onClick.AddListener(Clear);
+            if (nextRare != null) nextRare.onClick.AddListener(NextRare);
+            if (openWindow != null) openWindow.onClick.AddListener(OpenWindow);
+            for (int i = 0; i < cards.Length; i++)
+                if (cards[i] != null) cards[i].onClick.AddListener(_cards[i]);
             _refresh = 0f;
         }
 
@@ -71,6 +101,10 @@ namespace MinersIdle.UI
             for (int i = 0; i < grant.Length; i++)
                 if (grant[i] != null) grant[i].onClick.RemoveListener(_grant[i]);
             if (clear != null) clear.onClick.RemoveListener(Clear);
+            if (nextRare != null) nextRare.onClick.RemoveListener(NextRare);
+            if (openWindow != null) openWindow.onClick.RemoveListener(OpenWindow);
+            for (int i = 0; i < cards.Length; i++)
+                if (cards[i] != null) cards[i].onClick.RemoveListener(_cards[i]);
         }
 
         void Update()
@@ -96,6 +130,28 @@ namespace MinersIdle.UI
             _refresh = 0f;
         }
 
+        /// <summary>Próximo raro (D-226): o próximo cristal que nascer na fila é raro.</summary>
+        public void NextRare()
+        {
+            if (runner.Simulation == null) return;
+            runner.Simulation.ForceNextRare = true;
+            _refresh = 0f;
+        }
+
+        /// <summary>Janela agora (D-226): a janela das cartas, como se um raro tivesse quebrado.</summary>
+        public void OpenWindow()
+        {
+            runner.Simulation?.OpenRareWindow();
+            _refresh = 0f;
+        }
+
+        /// <summary>A carta direto, sem janela (D-226).</summary>
+        public void GrantCard(RareCard card)
+        {
+            runner.Simulation?.GrantRareCard(card);
+            _refresh = 0f;
+        }
+
         /// <summary>O texto do alto do menu (também para os testes).</summary>
         public string SummaryText => summary != null ? summary.text : "";
 
@@ -115,11 +171,24 @@ namespace MinersIdle.UI
             {
                 var bonus = bonuses.All[i];
                 if (i > 0) _text.Append(separator);
-                _text.AppendFormat(bonus.Kind == BonusKind.GuaranteedCritical ? criticalFormat : damageFormat,
-                                   NumberFormatter.FormatPercent(bonus.Value), Seconds(bonus.SecondsLeft), bonus.Tier);
+                if (bonus.Source == BonusSource.Rare)
+                    _text.AppendFormat(rareCardFormat ?? "{0} {1}", CardLabel((RareCard)bonus.Tier), Seconds(bonus.SecondsLeft));
+                else
+                    _text.AppendFormat(bonus.Kind == BonusKind.GuaranteedCritical ? criticalFormat : damageFormat,
+                                       NumberFormatter.FormatPercent(bonus.Value), Seconds(bonus.SecondsLeft), bonus.Tier);
             }
+
+            var window = simulation.RareWindow;
+            if (window.IsChoosing && !string.IsNullOrEmpty(windowFormat))
+                _text.Append('\n').AppendFormat(windowFormat, CardLabel(window.First), CardLabel(window.Second),
+                                                 Seconds(window.SecondsLeft), window.Queued);
+            else if (window.IsOpen && !string.IsNullOrEmpty(windowPickedFormat))
+                _text.Append('\n').AppendFormat(windowPickedFormat, CardLabel(window.CardAt(window.Chosen)), window.Queued);
+            if (simulation.ForceNextRare && !string.IsNullOrEmpty(nextRareLabel)) _text.Append('\n').Append(nextRareLabel);
             summary.SetText(_text);
         }
+
+        string CardLabel(RareCard card) => (int)card < cardLabels.Length ? cardLabels[(int)card] : card.ToString();
 
         /// <summary>O tempo que falta com um décimo ("4,3 s"): no DBG, para ver o fim exato.</summary>
         static string Seconds(double seconds) => Math.Max(0, seconds).ToString("0.0", PtBr) + " s";

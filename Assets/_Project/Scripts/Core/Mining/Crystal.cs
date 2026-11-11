@@ -37,6 +37,17 @@ namespace MinersIdle.Core
         /// <summary>A parede da passagem de caverna (M8, D-98), não um cristal.</summary>
         public bool IsWall { get; }
 
+        /// <summary>
+        /// Cristal raro (M9b E4, D-184, D-220): a mesma vida e as mesmas lascas; ao quebrar, a janela das cartas. A parede
+        /// nunca é rara.
+        /// </summary>
+        public bool IsRare { get; private set; }
+
+        internal void MarkRare()
+        {
+            if (!IsWall) IsRare = true;
+        }
+
         public bool IsBroken => Health <= 0;
 
         /// <summary>Tira vida (nunca abaixo de zero). Devolve <c>true</c> só no golpe que quebra o cristal.</summary>
@@ -52,6 +63,7 @@ namespace MinersIdle.Core
         }
 
         public override string ToString() =>
-            string.Format(CultureInfo.InvariantCulture, "{0}#{1} a {2:0.###} un {3}/{4}", IsWall ? "Wall" : "Crystal", Id, Distance, Health, MaxHealth);
+            string.Format(CultureInfo.InvariantCulture, "{0}#{1} a {2:0.###} un {3}/{4}",
+                          IsWall ? "Wall" : IsRare ? "Rare" : "Crystal", Id, Distance, Health, MaxHealth);
     }
 }

@@ -13,7 +13,8 @@ namespace MinersIdle.UI
     /// Padrão GDD; e o botão "Picareta" que mora no menu Caverna (D-201: pela compra, a do GDD v7, ou pela caverna, a
     /// leitura da D-133). Embaixo do DBG, um aviso fixo diz o cálculo em uso: "Cálculo: GDD v7" quando tudo está no padrão; em
     /// âmbar, com a lista do que saiu do GDD. M9b E3 (D-217): o botão "Acúmulo" troca a soma dos marcos do combo (GDD,
-    /// D-183) por só o do maior marco, e entra no aviso. Fica no menu Cálculos, filho do painel de debug: no release some junto (lá
+    /// D-183) por só o do maior marco, e entra no aviso. M9b E4 (D-226): o botão "Raro" troca o ritmo do cristal raro (15%
+    /// ⇄ 2%, D-185), também no aviso. Fica no menu Cálculos, filho do painel de debug: no release some junto (lá
     /// vale sempre o GDD). Só manda comandos ao <see cref="MiningRunner"/>; quem guarda a escolha no aparelho é ele.
     /// Os textos (rótulos e modelos) ficam na cena.
     /// </summary>
@@ -86,6 +87,14 @@ namespace MinersIdle.UI
         [Tooltip("Somado ao aviso com só o maior marco.")]
         [SerializeField] string stackingChangedFormat;
 
+        [Header("Ritmo do cristal raro (M9b E4, D-226)")]
+        [Tooltip("O botão \"Raro\": o ritmo do documento ⇄ o lento.")]
+        [SerializeField] Button rareRhythm;
+        [Tooltip("Rótulo do botão. {0} = a chance do ritmo em uso (15%, 2%).")]
+        [SerializeField] string rareRhythmFormat;
+        [Tooltip("Somado ao aviso com o ritmo lento. {0} = a chance dele.")]
+        [SerializeField] string rareSlowChangedFormat;
+
         [SerializeField] Color defaultColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         [Tooltip("O aviso quando algo saiu do GDD (D-143: âmbar).")]
         [SerializeField] Color changedColor = new Color32(0xFF, 0xB3, 0x2E, 0xFF);
@@ -94,7 +103,7 @@ namespace MinersIdle.UI
         const float DisabledLabelAlpha = 0.35f;
 
         readonly StringBuilder _warning = new StringBuilder();
-        TMP_Text _balanceLabel, _growthLabel, _stepLabel, _byCaveLabel, _stackingLabel;
+        TMP_Text _balanceLabel, _growthLabel, _stepLabel, _byCaveLabel, _stackingLabel, _rareLabel;
         TMP_Text[] _tuningLabels;
         float _refresh;
 
@@ -105,6 +114,7 @@ namespace MinersIdle.UI
             if (stepValue != null) _stepLabel = stepValue.GetComponentInChildren<TMP_Text>();
             if (pickaxeByCave != null) _byCaveLabel = pickaxeByCave.GetComponentInChildren<TMP_Text>();
             if (comboStacking != null) _stackingLabel = comboStacking.GetComponentInChildren<TMP_Text>();
+            if (rareRhythm != null) _rareLabel = rareRhythm.GetComponentInChildren<TMP_Text>();
             _tuningLabels = new[]
             {
                 growthMinus.GetComponentInChildren<TMP_Text>(), _growthLabel, growthPlus.GetComponentInChildren<TMP_Text>(),
@@ -125,6 +135,7 @@ namespace MinersIdle.UI
             stepPlus.onClick.AddListener(RaiseStep);
             if (pickaxeByCave != null) pickaxeByCave.onClick.AddListener(TogglePickaxeByCave);
             if (comboStacking != null) comboStacking.onClick.AddListener(ToggleComboStacking);
+            if (rareRhythm != null) rareRhythm.onClick.AddListener(ToggleRareRhythm);
             runner.SimulationStarted += OnSimulationStarted;
             Refresh();
         }
@@ -142,6 +153,7 @@ namespace MinersIdle.UI
             stepPlus.onClick.RemoveListener(RaiseStep);
             if (pickaxeByCave != null) pickaxeByCave.onClick.RemoveListener(TogglePickaxeByCave);
             if (comboStacking != null) comboStacking.onClick.RemoveListener(ToggleComboStacking);
+            if (rareRhythm != null) rareRhythm.onClick.RemoveListener(ToggleRareRhythm);
             runner.SimulationStarted -= OnSimulationStarted;
         }
 
@@ -204,6 +216,13 @@ namespace MinersIdle.UI
             runner.UseCalculation(runner.Calculation.WithComboStacking(next));
         }
 
+        /// <summary>O botão "Raro" (D-226): o ritmo do documento (15%) ⇄ o lento (2%), mantendo o progresso.</summary>
+        public void ToggleRareRhythm()
+        {
+            var next = runner.Calculation.RareRhythm == RareRhythm.Gdd ? RareRhythm.Slow : RareRhythm.Gdd;
+            runner.UseCalculation(runner.Calculation.WithRareRhythm(next));
+        }
+
         void SetGrowth(double growth)
         {
             if (!Tunable) return;
@@ -248,6 +267,11 @@ namespace MinersIdle.UI
             bool highestOnly = choice.ComboStacking == ComboStacking.HighestOnly;
             if (_stackingLabel != null) _stackingLabel.text = highestOnly ? stackingHighestLabel : stackingCumulativeLabel;
 
+            bool rareSlow = choice.RareRhythm == RareRhythm.Slow;
+            double rareChance = Asset == null ? 0 : rareSlow ? Asset.RareSlowChance : Asset.RareChance;
+            if (_rareLabel != null && !string.IsNullOrEmpty(rareRhythmFormat))
+                _rareLabel.text = string.Format(rareRhythmFormat, NumberFormatter.FormatPercent(rareChance));
+
             RefreshPickaxe();
 
             if (warning == null) return;
@@ -257,6 +281,8 @@ namespace MinersIdle.UI
             if (tunable && choice.PickaxeStep.HasValue) _warning.AppendFormat(stepChangedFormat, NumberFormatter.Format(Step));
             if (byCave) _warning.Append(pickaxeByCaveChangedFormat);
             if (highestOnly) _warning.Append(stackingChangedFormat);
+            if (rareSlow && !string.IsNullOrEmpty(rareSlowChangedFormat))
+                _warning.AppendFormat(rareSlowChangedFormat, NumberFormatter.FormatPercent(rareChance));
             warning.text = _warning.ToString();
             warning.color = choice.IsDefault ? defaultColor : changedColor;
         }

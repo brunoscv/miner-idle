@@ -81,6 +81,7 @@ namespace MinersIdle.Presentation
             simulation.UpgradePurchased += OnPurchased;
             simulation.ComboMilestone += OnComboMilestone;
             simulation.ComboBonusesGranted += OnBonusesGranted;
+            simulation.RareWindowChanged += OnRareWindowChanged;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -90,6 +91,7 @@ namespace MinersIdle.Presentation
             simulation.UpgradePurchased -= OnPurchased;
             simulation.ComboMilestone -= OnComboMilestone;
             simulation.ComboBonusesGranted -= OnBonusesGranted;
+            simulation.RareWindowChanged -= OnRareWindowChanged;
         }
 
         protected override void Rebuild(MiningSimulation simulation) { }
@@ -105,6 +107,12 @@ namespace MinersIdle.Presentation
         void OnComboMilestone(int combo) => Play(Sfx.Milestone);
         /// <summary>O ganho do combo (M9b, D-215) usa o som de marco que já existe.</summary>
         void OnBonusesGranted(int combo, IReadOnlyList<ComboBonusRule> granted) => Play(Sfx.Milestone);
+
+        /// <summary>Um raro quebrou (D-225): a janela abre, ou ganha um na fila, com o som de marco.</summary>
+        void OnRareWindowChanged(RareWindow window)
+        {
+            if (window.IsChoosing) Play(Sfx.Milestone);
+        }
 
         public void Play(Sfx sfx, float pitch = 1f)
         {
