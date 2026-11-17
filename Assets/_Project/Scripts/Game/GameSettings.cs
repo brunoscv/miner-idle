@@ -66,6 +66,23 @@ namespace MinersIdle.Game
         }
 
         /// <summary>
+        /// O avanço automático (M9c E3, P6): ligado de fábrica. Só vale depois do marco do andar 5; antes, a linha dos AJUSTES
+        /// fica travada. Quem passa ao jogo é o <c>SettingsEffects</c>.
+        /// </summary>
+        public bool AutoAdvance
+        {
+            get => _data.autoAdvance;
+            set
+            {
+                if (value == _data.autoAdvance) return;
+                _data.autoAdvance = value;
+                _dirty = true;
+                Flush();
+                Notify();
+            }
+        }
+
+        /// <summary>
         /// Liga o arquivo dos ajustes e abre com o que está nele (chamado pelo <c>GameBootstrap</c>). Sem arquivo, ou com um
         /// ilegível, ficam os de fábrica.
         /// </summary>
@@ -77,7 +94,8 @@ namespace MinersIdle.Game
             _data.effectsVolume = float.IsNaN(_data.effectsVolume) ? SettingsData.DefaultEffectsVolume : Mathf.Clamp01(_data.effectsVolume);
             _dirty = false;
             Debug.Log($"[Ajustes] Efeitos {Mathf.RoundToInt(_data.effectsVolume * 100f)}%, tremor {(_data.screenShake ? "ligado" : "desligado")}, " +
-                      $"vibração {(_data.vibration ? "ligada" : "desligada")}" + (loaded == null ? " (de fábrica)." : "."));
+                      $"vibração {(_data.vibration ? "ligada" : "desligada")}, avanço automático {(_data.autoAdvance ? "ligado" : "desligado")}" +
+                      (loaded == null ? " (de fábrica)." : "."));
             Notify();
         }
 

@@ -150,6 +150,16 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
 - **DBG → Andar:** **Recorde: 1 / 5 / 10 / 20** (põe o andar mais fundo direto) e **Auto liga/desliga**.
 - **Testes EditMode:** cada marco liga só depois do recorde; o recorde sobrevive ao descanso; o automático passa sozinho com o ajuste ligado e não passa com ele desligado.
 
+**Como ficou (2026-11-17):**
+
+- Os três marcos estão no balanço (`Balance_GDD_v8`: avanço automático 5, estagiário 5, raro 10), ao lado do marco do offline (20), que já vinha da E1. Todos olham o **andar mais fundo** (`DeepestFloor`), que já sobrevivia ao descanso desde a E1.
+- **Avanço automático** (P6): com o recorde no 5 e o ajuste ligado, a barra cheia desce **na hora**, com a mesma transição do toque; o botão mostra o selo verde **AUTO** no canto de cima (o do mockup da E2). Desligado, a barra fica cheia e espera o toque (P4); religado, desce. **O andar 100 espera o toque** mesmo com o automático: o coração da montanha é o fim da partida, e chegar nele sem querer seria estranho. Se você preferir que ele também vá sozinho, é uma linha.
+- **AJUSTES:** a linha **"Avanço automático"** depois da Vibração; antes do andar 5, apagada e com **"Andar 5"** no lugar do botão. Fica no `settings.json` com os outros ajustes (D-200); o `SettingsEffects` passa o ajuste ao `MiningRunner`, que o entrega a cada partida (descanso, reiniciar).
+- **LOJA** (P7): o Estagiário mostra **"Andar 5"** no lugar do preço até o recorde chegar lá. A Promoção continua dando ele desde o andar 1.
+- **Raro:** não nasce antes do andar 10, nem com a chance do balanço. O atalho DBG → Bônus → Raro agora continua valendo em qualquer andar.
+- **DBG → Andar:** **"Recorde: n"** (um botão: 1 → 5 → 10 → 20 → 1) e **"Auto: ligado/desligado"** (o mesmo ajuste dos AJUSTES). Pôr o recorde **abaixo** do andar de agora leva a partida até ele, para o recorde nunca ficar acima de onde se está.
+- Testes corrigidos para o comportamento novo: `InternShopTests` começa com o recorde no 5 (o teste é da contratação); `RestFlowTests` desliga o automático no andar 12 (o teste mede o toque com a barra cheia); `LongSessionTests` dá um tick sem tempo antes da foto da reabertura (um descanso no mesmo quadro, com a Memória, abre o andar 1 de barra cheia, e o automático desce no primeiro tick).
+
 ### E4 — Offline que desce andares
 
 - `OfflineMining` em trechos por andar: em cada andar, quantos cristais faltam para a barra, o tempo de cada um com a vida de lá; com o automático, ao completar passa ao seguinte e continua; sem ele, fica no andar (a barra cheia, P4).
@@ -181,7 +191,14 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
   4. DBG → Andar → **Transição curta: sim**: a próxima descida leva 0,3 s (Encher a barra e tocar). Tocar de novo volta para "não".
   5. DBG → Andar → **Andar 100 (fim)**: o botão diz **DESCER · CORAÇÃO**; tocar abre o coração ("Você desceu os 100 andares."), e o botão some.
   6. Descansar: a tela diz "andar" no lugar de "nível".
-- **E3:** DBG → Andar → **Ir para o andar 5**: os AJUSTES mostram "Avanço automático" ligado; a barra enche e o jogo desce sozinho. Desligar nos AJUSTES: a barra fica cheia e o botão espera o toque. A LOJA mostra o Estagiário destravado. DBG → Andar → **Recorde 1** e reabrir a LOJA: travado com "Andar 5". Recorde 10: aparecem raros; Recorde 20: DBG → Offline → Fora 8 h conta 6 h.
+- **E3:** cena `Bootstrap`, Play (um save que já passou do andar 5 abre com os marcos ligados; para ver do zero, DBG → Andar → **Recorde** até "Recorde: 1"):
+  1. **AJUSTES**: a linha "Avanço automático" apagada, com **Andar 5**. **LOJA**: o Estagiário com **Andar 5** no lugar do preço.
+  2. DBG → Andar → **Recorde: 5** (um toque). O botão ganha o selo **AUTO**; os AJUSTES mostram o botão ligado; a LOJA mostra o preço do Estagiário.
+  3. Quebrar cristais até encher a barra: o jogo **desce sozinho**, com a transição, sem toque.
+  4. Desligar o "Avanço automático" nos AJUSTES (ou DBG → Andar → **Auto: desligado**): o AUTO some, a barra enche e fica esperando o toque. Ligar de novo: desce.
+  5. DBG → Andar → **Recorde: 10**: os raros voltam a aparecer. **Recorde: 20**: DBG → Estagiário → Contratar e DBG → Offline → Fora 8 h contam **6 h**.
+  6. Descansar: na partida nova, no andar 1, o AUTO continua (os marcos valem para sempre).
+  7. DBG → Andar → **Andar 100 (fim)**: com o AUTO, a barra cheia **espera o toque** para o coração.
 - **E4:** DBG → Estagiário → Contratar, DBG → Andar → Ir para o andar 5 (automático ligado), DBG → Offline → **Fora 1 h**: o "Bem-vindo de volta" mostra os andares descidos; COLETAR e o HUD está no andar novo. Repetir com o automático desligado: o andar não muda e a barra está cheia.
 - **E5:** a sessão longa é automática; no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)` e o roteiro abaixo.
 
@@ -241,7 +258,7 @@ Total: **~29–40 h**.
 | Plano | ✅ aprovado em 2026-11-16: P1…P9 (D-256…D-264); P10 → as três transições no DBG, C primeiro (D-266, D-267) | — |
 | E0 Transições no DBG | ✅ aprovada em 2026-11-17: fica a **B** (D-268), a padrão da cena; C, B mosaico e A seguem no DBG | Testes: EditMode 438/438 (6 em `FloorTransitionTests`); PlayMode 152/153, com um teste por transição (`TenLevels_ChangeTheBiome_InTheDark` para a C, `CameraDrop_RisesBlursAndComesBackInFocus`, `BlurCard_BlursInPlace_AndComesBackInFocus`) e o do botão, que percorre a lista. Instáveis por tempo real, fora da transição, cada um falhou uma vez: `AllocationTests` (às vezes, quando uma quebra de cristal cai dentro da medição: 7 e 9 alocações num run, 1 no seguinte com a mesma quebra) e `TapInputTests.TappingBreaksCrystalsFaster_AndAutoTapRuns` |
 | E1 Núcleo do v8 | ✅ aprovada pelo Bruno em 2026-11-17 | Testes: EditMode 463/463 (novo `GddV8RulesTests`; `CaveTests` reescrito para a barra; os do Mapa e da parede corrigidos para a passagem nova); PlayMode 153/153 (`CaveFlowTests` mede encher a barra → PASSAR → transição → andar 2 e o andar 100 → coração; `AllocationTests` mede a transição com a fila velha na tela; a vibração longa mede a descida de andar). Ver "Como ficou" na E1 |
-| E2 Próximo Andar na tela | 🔄 implementada em 2026-11-17 (opção c com o cheio da b, D-269), aguardando a validação do Bruno | Testes: EditMode 463/463; PlayMode 156/156 (novo `NextFloorFlowTests`: enche com os cristais, não responde antes, desce e zera, HUD "ANDAR", transição curta; `CaveFlowTests` e `RestFlowTests` corrigidos para o botão novo e o centro livre). Ver "Como ficou" na E2 |
-| E3 Marcos de andar | ⏳ | — |
+| E2 Próximo Andar na tela | ✅ aprovada pelo Bruno em 2026-11-17 (opção c com o cheio da b, D-269) | Testes: EditMode 463/463; PlayMode 156/156 (novo `NextFloorFlowTests`: enche com os cristais, não responde antes, desce e zera, HUD "ANDAR", transição curta; `CaveFlowTests` e `RestFlowTests` corrigidos para o botão novo e o centro livre). Ver "Como ficou" na E2 |
+| E3 Marcos de andar | 🔄 implementada em 2026-11-17, aguardando a validação do Bruno | Testes: EditMode 475/475 (novo `FloorMilestoneTests`: automático antes e depois do 5, ligado/desligado, com a transição, o andar 100 espera; Estagiário com "Andar 5"; raro só no 10; marcos depois do descanso; DBG Recorde); PlayMode 159/159 (`NextFloorFlowTests`: AUTO e descida sozinha, AJUSTES travado/liberado, LOJA). Ver "Como ficou" na E3 |
 | E4 Offline que desce andares | ⏳ | — |
 | E5 Sessão longa e celular | ⏳ | — |

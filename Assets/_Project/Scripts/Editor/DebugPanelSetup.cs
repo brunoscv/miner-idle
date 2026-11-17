@@ -558,8 +558,9 @@ namespace MinersIdle.EditorTools
         }
 
         const string FloorMenuLabel = "Andar";
-        /// <summary>O menu Andar: 5 fileiras de botões (com a Transição e a Transição curta, M9c E2, e o Fechar).</summary>
-        const float FloorMenuHeight = 109f;
+        /// <summary>O menu Andar: 6 fileiras de botões (com a Transição, a Transição curta, M9c E2, o Recorde e o Auto, M9c E3,
+        /// e o Fechar).</summary>
+        const float FloorMenuHeight = 131f;
         const string FillFloorLabel = "Encher a barra";
         const string NextFloorLabel = "Próximo andar";
         const string GoToFloorName = "GoToFloor";

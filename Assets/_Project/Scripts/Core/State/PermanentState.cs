@@ -62,6 +62,9 @@ namespace MinersIdle.Core
         /// <summary>O jogador chegou ao andar <paramref name="floor"/>: o recorde sobe, nunca desce.</summary>
         internal void ReachFloor(int floor) => DeepestFloor = Math.Max(DeepestFloor, floor);
 
+        /// <summary>Atalho do debug (DBG → Andar → Recorde, M9c E3): o recorde direto, também para baixo.</summary>
+        internal void SetDeepestFloor(int floor) => DeepestFloor = Math.Max(1, floor);
+
         /// <summary>Atalho do debug: banco, níveis e dia do zero.</summary>
         internal void Clear()
         {

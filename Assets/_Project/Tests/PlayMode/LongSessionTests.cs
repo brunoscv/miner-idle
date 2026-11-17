@@ -137,6 +137,9 @@ namespace MinersIdle.Tests
                 if (played >= nextReopen)
                 {
                     nextReopen += 40 * 60;
+                    // Um tick sem tempo antes da foto: o que vence agora acontece aqui, não no primeiro quadro depois de abrir
+                    // (M9c E3: um descanso no mesmo quadro, com a Memória, abre o andar 1 de barra cheia e o automático desce).
+                    Simulation.Tick(0);
                     var before = Snapshot.Of(Simulation);
                     _runner.SaveNow();
                     yield return Open(); // fecha e abre no mesmo instante: nada de offline

@@ -99,11 +99,14 @@ namespace MinersIdle.UI
             SetBuyable(preview.State == UpgradeButtonState.Purchasable);
             SetDone(preview.IsSinglePurchase && preview.Level > 0);
 
-            // Travada (as linhas do estagiário antes de contratá-lo): o efeito e o "Em breve" no lugar do preço.
+            // Travada: as linhas do estagiário antes de contratá-lo ("Em breve"), e contratá-lo antes do andar 5 ("Andar 5",
+            // M9c E3, P7), no lugar do preço.
             if (preview.State == UpgradeButtonState.Locked)
             {
                 effect.text = string.Format(_entry.EffectFormat, Format(preview.CurrentValue), Format(preview.NextValue));
-                buyLabel.text = _catalog.LockedLabel;
+                buyLabel.text = preview.RequiredFloor > 0 && !string.IsNullOrEmpty(_catalog.FloorLockedFormat)
+                    ? string.Format(_catalog.FloorLockedFormat, preview.RequiredFloor)
+                    : _catalog.LockedLabel;
                 return;
             }
 

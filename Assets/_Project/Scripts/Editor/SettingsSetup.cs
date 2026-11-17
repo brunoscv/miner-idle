@@ -57,6 +57,8 @@ namespace MinersIdle.EditorTools
             if (settings == null) return changed;
             changed |= EnsureDebugReference(settings);
             changed |= EnsureScreen(settings);
+            changed |= EnsureAutoAdvanceRow();
+            changed |= EnsureEffectsRunner();
             changed |= EnsureThinFill();
             changed |= EnsureHudButton();
             return changed;
@@ -190,6 +192,52 @@ namespace MinersIdle.EditorTools
                 ("credits", creditsScreen), ("creditsTitle", creditsTitle), ("creditsCloseButton", creditsClose),
                 ("creditsList", list), ("backButton", back), ("backLabel", backLabel));
             Debug.Log("[Setup] Tela AJUSTES na cena Game, com a confirmação do Apagar save e os Créditos (M9, E4, D-198).");
+            return true;
+        }
+
+        /// <summary>
+        /// M9c E3 (P6): a linha "Avanço automático" depois da Vibração, com o botão e o "Andar 5" que fica no lugar dele até
+        /// o marco.
+        /// </summary>
+        static bool EnsureAutoAdvanceRow()
+        {
+            var view = Object.FindAnyObjectByType<SettingsScreen>(FindObjectsInactive.Include);
+            if (view == null) return false;
+            var serialized = new SerializedObject(view);
+            if (serialized.FindProperty("autoAdvanceButton").objectReferenceValue != null) return false;
+            var vibration = serialized.FindProperty("vibrationButton").objectReferenceValue as Button;
+            var vibrationRow = vibration != null ? vibration.transform.parent : null;
+            var inset = vibrationRow != null ? vibrationRow.parent : null;
+            if (inset == null) return false;
+            _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
+            _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
+
+            var row = Block(inset, "AutoAdvance", RowHeight);
+            row.SetSiblingIndex(vibrationRow.GetSiblingIndex() + 1);
+            var label = Label(row, RowPad);
+            var toggle = Toggle(row);
+            var locked = Text(row, "Locked", SmallText, MutedText, TextAlignmentOptions.MidlineRight, _font);
+            locked.margin = new Vector4(0f, 0f, RowPad, 0f);
+            Stretch(locked.rectTransform);
+            locked.gameObject.SetActive(false);
+
+            GrayboxSetup.SetReferences(view, ("autoAdvanceLabel", label), ("autoAdvanceButton", toggle),
+                ("autoAdvanceLocked", locked));
+            Debug.Log("[Setup] AJUSTES: a linha \"Avanço automático\", travada até o andar 5 (M9c E3, P6).");
+            return true;
+        }
+
+        /// <summary>M9c E3: o avanço automático dos AJUSTES chega ao jogo pelo <see cref="SettingsEffects"/>.</summary>
+        static bool EnsureEffectsRunner()
+        {
+            var effects = Object.FindAnyObjectByType<SettingsEffects>(FindObjectsInactive.Include);
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            if (effects == null || runner == null) return false;
+            var serialized = new SerializedObject(effects);
+            var property = serialized.FindProperty("runner");
+            if (property.objectReferenceValue == runner) return false;
+            property.objectReferenceValue = runner;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
             return true;
         }
 

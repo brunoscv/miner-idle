@@ -101,7 +101,9 @@ namespace MinersIdle.EditorTools
             }
             foreach (var (name, value) in new[] { ("nextFloorTitle", "PRÓXIMO ANDAR"), ("nextFloorCountFormat", "{0}/{1}"),
                                                   ("nextFloorReady", "DESCER"), ("nextFloorTargetFormat", "ANDAR {0}"),
-                                                  ("nextFloorHeart", "CORAÇÃO") })
+                                                  ("nextFloorHeart", "CORAÇÃO"), ("nextFloorAuto", "AUTO"),
+                                                  ("settingsAutoAdvanceLabel", "Avanço automático"),
+                                                  ("settingsAutoAdvanceLockedFormat", "Andar {0}") })
             {
                 var field = so.FindProperty(name);
                 if (!string.IsNullOrEmpty(field.stringValue)) continue;

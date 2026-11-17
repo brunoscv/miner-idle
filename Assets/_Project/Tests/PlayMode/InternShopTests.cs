@@ -37,6 +37,7 @@ namespace MinersIdle.Tests
             if (!Simulation.Economy.HasIntern) Assert.Ignore("O balanço ativo não tem estagiário (rode o setup: GDD v7).");
             _runner.TimeScale = 0f; // sem mineração: as lascas são só as do teste
             _runner.UseRules(_runner.Rules);
+            Simulation.SetDeepestFloor(5); // M9c E3 (P7): a LOJA contrata depois do andar 5; antes, ver NextFloorFlowTests
             yield return null;
         }
 

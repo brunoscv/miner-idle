@@ -101,6 +101,22 @@ namespace MinersIdle.Game
             }
         }
 
+        bool _autoAdvance = true;
+
+        /// <summary>
+        /// O avanço automático dos AJUSTES (M9c E3, P6): vale para a partida de agora e para as seguintes (descanso,
+        /// reiniciar). Só desce sozinho depois do marco do andar 5 (<see cref="MiningSimulation.IsAutoAdvanceUnlocked"/>).
+        /// </summary>
+        public bool AutoAdvance
+        {
+            get => _autoAdvance;
+            set
+            {
+                _autoAdvance = value;
+                if (Simulation != null) Simulation.AutoAdvance = value;
+            }
+        }
+
         public MiningSimulation Simulation { get; private set; }
         public ulong Seed { get; private set; }
 
@@ -354,6 +370,7 @@ namespace MinersIdle.Game
                 // M9b E3 (D-217): o acúmulo do DBG → Cálculos sobrevive a cada simulação nova (compra de Picareta trocada,
                 // Reiniciar run, descanso, reabrir).
                 ComboStacking = _calculation.ComboStacking,
+                AutoAdvance = _autoAdvance,
             };
             if (_arrivalStrike.HasValue) Simulation.ArrivalStrike = _arrivalStrike.Value;
             Simulation.UpgradePurchased += OnUpgradePurchased;

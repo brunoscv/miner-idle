@@ -42,6 +42,14 @@ namespace MinersIdle.UI
         [SerializeField] Button shakeButton;
         [SerializeField] TMP_Text vibrationLabel;
         [SerializeField] Button vibrationButton;
+        [Header("Avanço automático (M9c E3, P6)")]
+        [SerializeField] TMP_Text autoAdvanceLabel;
+        [SerializeField] Button autoAdvanceButton;
+        [Tooltip("No lugar do botão até o marco: \"Andar 5\".")]
+        [SerializeField] TMP_Text autoAdvanceLocked;
+        [SerializeField] Color labelColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
+        [SerializeField] Color lockedLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
+        [Space]
         [SerializeField] Sprite toggleOn;
         [SerializeField] Sprite toggleOff;
         [SerializeField] Button creditsButton;
@@ -77,6 +85,10 @@ namespace MinersIdle.UI
         public string VolumeText => volumeValue.text;
         public bool ShowsShakeOn => ((Image)shakeButton.targetGraphic).sprite == toggleOn;
         public bool ShowsVibrationOn => ((Image)vibrationButton.targetGraphic).sprite == toggleOn;
+        public bool ShowsAutoAdvanceOn => ((Image)autoAdvanceButton.targetGraphic).sprite == toggleOn;
+        /// <summary>A linha do avanço automático travada, com "Andar 5" no lugar do botão.</summary>
+        public bool IsAutoAdvanceLocked => autoAdvanceLocked.gameObject.activeSelf;
+        public string AutoAdvanceLockedText => autoAdvanceLocked.text;
         public string CreditsText => creditsList.text;
 
         void Awake()
@@ -85,6 +97,7 @@ namespace MinersIdle.UI
             volumeLabel.text = texts.SettingsVolumeLabel;
             shakeLabel.text = texts.SettingsShakeLabel;
             vibrationLabel.text = texts.SettingsVibrationLabel;
+            if (autoAdvanceLabel != null) autoAdvanceLabel.text = texts.SettingsAutoAdvanceLabel;
             creditsLabel.text = texts.SettingsCredits;
             deleteLabel.text = texts.SettingsDeleteSave;
             confirmTitle.text = texts.DeleteTitle;
@@ -111,6 +124,7 @@ namespace MinersIdle.UI
             volumeSlider.onValueChanged.AddListener(OnVolumeSlider);
             shakeButton.onClick.AddListener(ToggleShake);
             vibrationButton.onClick.AddListener(ToggleVibration);
+            if (autoAdvanceButton != null) autoAdvanceButton.onClick.AddListener(ToggleAutoAdvance);
             creditsButton.onClick.AddListener(OpenCredits);
             deleteButton.onClick.AddListener(AskDelete);
             cancelButton.onClick.AddListener(CancelDelete);
@@ -128,6 +142,7 @@ namespace MinersIdle.UI
             volumeSlider.onValueChanged.RemoveListener(OnVolumeSlider);
             shakeButton.onClick.RemoveListener(ToggleShake);
             vibrationButton.onClick.RemoveListener(ToggleVibration);
+            if (autoAdvanceButton != null) autoAdvanceButton.onClick.RemoveListener(ToggleAutoAdvance);
             creditsButton.onClick.RemoveListener(OpenCredits);
             deleteButton.onClick.RemoveListener(AskDelete);
             cancelButton.onClick.RemoveListener(CancelDelete);
@@ -159,6 +174,7 @@ namespace MinersIdle.UI
 
         public void ToggleShake() => settings.ScreenShake = !settings.ScreenShake;
         public void ToggleVibration() => settings.Vibration = !settings.Vibration;
+        public void ToggleAutoAdvance() => settings.AutoAdvance = !settings.AutoAdvance;
 
         public void OpenCredits()
         {
@@ -201,6 +217,27 @@ namespace MinersIdle.UI
             volumeValue.text = string.Format(texts.SettingsVolumeFormat, Mathf.RoundToInt(settings.EffectsVolume * 100f));
             ((Image)shakeButton.targetGraphic).sprite = settings.ScreenShake ? toggleOn : toggleOff;
             ((Image)vibrationButton.targetGraphic).sprite = settings.Vibration ? toggleOn : toggleOff;
+            RefreshAutoAdvance();
+        }
+
+        /// <summary>
+        /// O avanço automático (P6): o botão depois do marco (andar 5, para sempre); antes, a linha apagada com "Andar 5" no
+        /// lugar dele. Num balanço sem avanço automático, a linha some.
+        /// </summary>
+        void RefreshAutoAdvance()
+        {
+            if (autoAdvanceButton == null) return;
+            ((Image)autoAdvanceButton.targetGraphic).sprite = settings.AutoAdvance ? toggleOn : toggleOff;
+            var simulation = runner != null ? runner.Simulation : null;
+            if (simulation == null) return;
+            int floor = simulation.Rules.AutoAdvanceFloor;
+            var row = autoAdvanceButton.transform.parent.gameObject;
+            if (row.activeSelf != floor > 0) row.SetActive(floor > 0);
+            bool unlocked = simulation.IsAutoAdvanceUnlocked;
+            autoAdvanceButton.gameObject.SetActive(unlocked);
+            autoAdvanceLocked.gameObject.SetActive(!unlocked);
+            autoAdvanceLocked.text = string.Format(texts.SettingsAutoAdvanceLockedFormat, floor);
+            autoAdvanceLabel.color = unlocked ? labelColor : lockedLabelColor;
         }
 
         /// <summary>A lista dos Créditos num texto só: os títulos em âmbar, os itens recuados.</summary>

@@ -57,6 +57,14 @@ namespace MinersIdle.Game
         [Tooltip("O andar que, alcançado uma vez, sobe o offline para as horas acima (GDD v8: 20, D-253). 0 = nunca.")]
         [SerializeField] int offlineDeepFloor;
 
+        [Header("Marcos de andar (M9c E3, D-253: valem para sempre a partir do recorde)")]
+        [Tooltip("O andar que libera o avanço automático (GDD v8: 5). 0 = sem avanço automático.")]
+        [SerializeField] int autoAdvanceFloor;
+        [Tooltip("O andar que libera contratar o estagiário na LOJA (GDD v8: 5). 0 = desde o começo.")]
+        [SerializeField] int internFloor;
+        [Tooltip("O andar depois do qual o cristal raro nasce (GDD v8: 10). 0 = desde o começo.")]
+        [SerializeField] int rareFloor;
+
         [Header("Anão")]
         [Tooltip("Dano base por golpe, sem melhorias.")]
         [SerializeField] double damage = 1;
@@ -200,7 +208,8 @@ namespace MinersIdle.Game
             tapReach, arrivalStrike, swingRecovery,
             pickaxeFormula,
             PickaxeTunable ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
-            levelsPerBiome, offlineMaxHours * 3600, rewardFormula, offlineDeepHours * 3600, offlineDeepFloor);
+            levelsPerBiome, offlineMaxHours * 3600, rewardFormula, offlineDeepHours * 3600, offlineDeepFloor,
+            autoAdvanceFloor, internFloor, rareFloor);
 
         /// <summary>O descanso, as lascas vermelhas e as permanentes deste balanço (Marco 8b). Sem descanso no asset, nada disso.</summary>
         public PermanentRules ToPermanents()

@@ -52,7 +52,84 @@ namespace MinersIdle.EditorTools
             changed |= NameTheCountValue(safeArea);
             changed |= FitTheRestButton(safeArea);
             changed |= RenameHudLabel(safeArea);
+            changed |= EnsureAutoChip(safeArea, texts);
             return changed;
+        }
+
+        // ── M9c E3 ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+        const float ChipWidth = 26f, ChipHeight = 11f, ChipRight = 3f, ChipRaise = 5f, ChipBorder = 1f;
+        static readonly Color ChipDark = new Color32(0x2A, 0x1A, 0x10, 0xFF);
+        static readonly Color ChipGreen = new Color32(0x2E, 0x7D, 0x3A, 0xFF);
+
+        /// <summary>
+        /// O selo "AUTO" (P6, o do mockup da E2): verde, no canto de cima à direita da barra, meio para fora. Aparece quando o
+        /// jogo desce sozinho.
+        /// </summary>
+        static bool EnsureAutoChip(Transform safeArea, FeedbackTexts texts)
+        {
+            var view = safeArea.Find(ContainerName)?.GetComponent<NextFloorButton>();
+            var bar = safeArea.Find(ContainerName + "/Bar");
+            if (view == null || bar == null) return false;
+            var serialized = new SerializedObject(view);
+            if (serialized.FindProperty("autoChip").objectReferenceValue != null) return false;
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
+
+            var chip = new GameObject("Auto", typeof(RectTransform), typeof(Image));
+            chip.transform.SetParent(bar, false);
+            chip.transform.SetAsLastSibling();
+            var rect = (RectTransform)chip.transform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.one;
+            rect.anchoredPosition = new Vector2(-ChipRight, ChipRaise);
+            rect.sizeDelta = new Vector2(ChipWidth, ChipHeight);
+            var dark = chip.GetComponent<Image>();
+            dark.color = ChipDark;
+            dark.raycastTarget = false;
+            var green = new GameObject("Green", typeof(RectTransform), typeof(Image));
+            green.transform.SetParent(chip.transform, false);
+            Stretch((RectTransform)green.transform, ChipBorder);
+            var greenImage = green.GetComponent<Image>();
+            greenImage.color = ChipGreen;
+            greenImage.raycastTarget = false;
+            var label = Text(chip.transform, "Label", texts.NextFloorAuto, TitleSize, WhiteText, font, Vector2.zero, Vector2.one);
+            chip.SetActive(false);
+
+            GrayboxSetup.SetReferences(view, ("autoChip", chip), ("autoLabel", label));
+            Debug.Log("[Setup] Próximo Andar: o selo AUTO do avanço automático (M9c E3, P6).");
+            return true;
+        }
+
+        const string RecordButtonName = "FloorRecord";
+        const string AutoButtonName = "FloorAuto";
+
+        static Button FindOrCreate(Transform grid, string name, string label)
+        {
+            var existing = grid.Find(name);
+            return existing != null ? existing.GetComponent<Button>() : DebugPanelSetup.CreateButton(grid, name, label);
+        }
+
+        /// <summary>
+        /// DBG → Andar → "Recorde: n" e "Auto: ligado" (M9c E3), antes do Fechar. Depois dos AJUSTES (usa o
+        /// <see cref="GameSettings"/>) e da Transição curta.
+        /// </summary>
+        public static bool EnsureMilestoneDebug()
+        {
+            var panel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
+            var settings = Object.FindAnyObjectByType<GameSettings>(FindObjectsInactive.Include);
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            var menu = panel != null ? panel.transform.Find("CaveMenu") : null;
+            var grid = menu != null ? menu.Find("Content/Buttons") : null;
+            if (grid == null || settings == null || runner == null) return false;
+            if (menu.GetComponent<FloorMilestoneDebug>() != null) return false;
+
+            var record = FindOrCreate(grid, RecordButtonName, "Recorde: 1");
+            var auto = FindOrCreate(grid, AutoButtonName, "Auto: ligado");
+            grid.Find("Close")?.SetAsLastSibling();
+
+            var debug = menu.gameObject.AddComponent<FloorMilestoneDebug>();
+            GrayboxSetup.SetReferences(debug, ("runner", runner), ("settings", settings), ("record", record), ("auto", auto));
+            Debug.Log("[Setup] Painel de debug: \"Recorde\" e \"Auto\" no menu Andar (M9c E3).");
+            return true;
         }
 
         static bool EnsureArrowSprite()

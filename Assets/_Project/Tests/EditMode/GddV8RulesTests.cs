@@ -240,6 +240,8 @@ namespace MinersIdle.Tests
             Assert.That(rules.PickaxeFormula, Is.EqualTo(PickaxeFormula.LevelScaled));
             Assert.That(rules.OfflineMaxSecondsFor(1), Is.EqualTo(4 * 3600), "4 h (D-253)");
             Assert.That(rules.OfflineMaxSecondsFor(20), Is.EqualTo(6 * 3600), "6 h a partir do andar 20");
+            Assert.That((rules.AutoAdvanceFloor, rules.InternFloor, rules.RareFloor), Is.EqualTo((5, 5, 10)),
+                        "marcos: automático e estagiário no 5, raro depois do 10 (M9c E3)");
             Assert.That(strike.CritMultiplier, Is.EqualTo(1.5), "×1,5 (D-249)");
             Assert.That(strike.CritChance, Is.EqualTo(0));
             Assert.That(strike.TapCritChance, Is.EqualTo(0.05));

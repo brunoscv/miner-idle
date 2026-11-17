@@ -308,6 +308,49 @@ namespace MinersIdle.Core
         /// <summary>A duração da transição que está correndo (a de quando ela começou; 0 fora dela).</summary>
         public double FloorTransitionLength => _floorTransitionLength;
 
+        // ── Marcos de andar (M9c E3, D-253) ──────────────────────────────────────────────────────────────────────────
+
+        /// <summary>O andar mais fundo já alcançado (o recorde das permanentes): sobrevive ao descanso e liga os marcos.</summary>
+        public int DeepestFloor => Purchases.DeepestFloor(_state, _permanents);
+
+        /// <summary>
+        /// O ajuste "Avanço automático" (P6; ligado de fábrica, vem dos AJUSTES). Só vale depois do marco
+        /// (<see cref="IsAutoAdvanceUnlocked"/>): então a barra cheia desce sozinha, na hora, com a mesma transição.
+        /// </summary>
+        public bool AutoAdvance { get; set; } = true;
+
+        /// <summary>Se o avanço automático já existe (GDD v8: depois do andar 5, para sempre).</summary>
+        public bool IsAutoAdvanceUnlocked => _rules.IsAutoAdvanceUnlocked(DeepestFloor);
+
+        /// <summary>Se o jogo desce sozinho agora: o marco alcançado e o ajuste ligado (o botão mostra "AUTO").</summary>
+        public bool IsAutoAdvancing => AutoAdvance && IsAutoAdvanceUnlocked;
+
+        /// <summary>Se a LOJA já contrata o estagiário (GDD v8: depois do andar 5, P7).</summary>
+        public bool IsInternUnlocked => _rules.IsInternUnlocked(DeepestFloor);
+
+        /// <summary>Se o cristal raro já nasce (GDD v8: depois do andar 10).</summary>
+        public bool IsRareUnlocked => _rules.IsRareUnlocked(DeepestFloor);
+
+        /// <summary>
+        /// Atalho do debug (DBG → Andar → Recorde, M9c E3): o andar mais fundo direto, também para baixo. Abaixo do andar
+        /// de agora, a partida volta a ele antes (o recorde nunca fica acima de onde se está). <c>false</c> se já era.
+        /// </summary>
+        public bool SetDeepestFloor(int floor)
+        {
+            floor = Math.Max(1, Math.Min(floor, _rules.CaveCount));
+            if (floor < _state.Cave) GoToFloor(floor);
+            if (floor == _permanents.State.DeepestFloor) return false;
+            _permanents.State.SetDeepestFloor(floor);
+            PermanentsChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        /// A barra encheu com o automático valendo (P6): desce. O último andar espera o toque, porque o coração da
+        /// montanha é o fim da partida.
+        /// </summary>
+        bool ShouldAutoAdvance => IsAutoAdvancing && _state.Cave < _rules.CaveCount && CanAdvance;
+
         /// <summary>Avança <paramref name="dt"/> segundos de jogo.</summary>
         public void Tick(double dt)
         {
@@ -728,7 +771,7 @@ namespace MinersIdle.Core
                 return true;
             }
             var rare = _strike.Rare;
-            if (!rare.IsEnabled) return false;
+            if (!rare.IsEnabled || !IsRareUnlocked) return false; // GDD v8: só depois do andar 10 (M9c E3)
             double chance = rare.Chance;
             if (RareRhythm == RareRhythm.Slow)
             {
@@ -1042,6 +1085,13 @@ namespace MinersIdle.Core
             {
                 changed = false;
                 if (_floorTransitionLeft > 0) return; // descendo de andar (D-266): nada vence até ela acabar
+
+                if (ShouldAutoAdvance)
+                {
+                    EnterCave(_state.Cave + 1); // o avanço automático (P6): na hora em que a barra enche
+                    changed = true;
+                    continue;
+                }
 
                 if (_combo > 0 && Elapsed >= _lastTapTime + _strike.ComboWindow - Epsilon)
                     EndCombo(); // o jogador parou de tocar: os marcos alcançados viram bônus (D-96)

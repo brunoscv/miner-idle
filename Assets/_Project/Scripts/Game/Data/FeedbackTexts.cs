@@ -31,6 +31,8 @@ namespace MinersIdle.Game
         [SerializeField] string nextFloorTargetFormat;
         [Tooltip("Cheio, no último andar: no lugar do \"ANDAR n\", aonde ele leva.")]
         [SerializeField] string nextFloorHeart;
+        [Tooltip("O selo do avanço automático no canto do botão (M9c E3, P6).")]
+        [SerializeField] string nextFloorAuto;
 
         [Header("Coração da montanha (M8, E3, D-112)")]
         [SerializeField] string heartTitle;
@@ -91,6 +93,10 @@ namespace MinersIdle.Game
         [SerializeField] string settingsVolumeFormat;
         [SerializeField] string settingsShakeLabel;
         [SerializeField] string settingsVibrationLabel;
+        [Tooltip("A linha do avanço automático (M9c E3, P6).")]
+        [SerializeField] string settingsAutoAdvanceLabel;
+        [Tooltip("No lugar do botão, antes do marco: {0} = o andar que libera.")]
+        [SerializeField] string settingsAutoAdvanceLockedFormat;
         [SerializeField] string settingsCredits;
         [SerializeField] string settingsDeleteSave;
         [SerializeField] string deleteTitle;
@@ -112,6 +118,7 @@ namespace MinersIdle.Game
         public string NextFloorReady => nextFloorReady;
         public string NextFloorTargetFormat => nextFloorTargetFormat;
         public string NextFloorHeart => nextFloorHeart;
+        public string NextFloorAuto => nextFloorAuto;
         public string HeartTitle => heartTitle;
         public string HeartBodyFormat => heartBodyFormat;
         public string HeartContinue => heartContinue;
@@ -153,6 +160,8 @@ namespace MinersIdle.Game
         public string SettingsVolumeFormat => settingsVolumeFormat;
         public string SettingsShakeLabel => settingsShakeLabel;
         public string SettingsVibrationLabel => settingsVibrationLabel;
+        public string SettingsAutoAdvanceLabel => settingsAutoAdvanceLabel;
+        public string SettingsAutoAdvanceLockedFormat => settingsAutoAdvanceLockedFormat;
         public string SettingsCredits => settingsCredits;
         public string SettingsDeleteSave => settingsDeleteSave;
         public string DeleteTitle => deleteTitle;

@@ -23,6 +23,7 @@ MonoBehaviour:
   nextFloorReady: DESCER
   nextFloorTargetFormat: ANDAR {0}
   nextFloorHeart: "CORA\xC7\xC3O"
+  nextFloorAuto: AUTO
   heartTitle: "Cora\xE7\xE3o da montanha"
   heartBodyFormat: "Voc\xEA desceu os 100 andares.\n\nTempo de jogo: {0}\nLascas coletadas: {1}"
   heartContinue: CONTINUAR
@@ -60,6 +61,8 @@ MonoBehaviour:
   settingsVolumeFormat: '{0}%'
   settingsShakeLabel: Tremor da tela
   settingsVibrationLabel: "Vibra\xE7\xE3o"
+  settingsAutoAdvanceLabel: "Avan\xE7o autom\xE1tico"
+  settingsAutoAdvanceLockedFormat: Andar {0}
   settingsCredits: "CR\xC9DITOS"
   settingsDeleteSave: APAGAR SAVE
   deleteTitle: APAGAR O SAVE?

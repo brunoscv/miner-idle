@@ -10,7 +10,7 @@ namespace MinersIdle.Core
         NotEnoughShards,
         /// <summary>No limite ("máx."), ou compra única já feita ("comprada"), ou linha desligada.</summary>
         Maxed,
-        /// <summary>Travada: as linhas do estagiário antes de contratá-lo (M7).</summary>
+        /// <summary>Travada: as linhas do estagiário antes de contratá-lo (M7), e contratá-lo antes do andar 5 (M9c E3).</summary>
         Locked,
     }
 
@@ -22,8 +22,9 @@ namespace MinersIdle.Core
     public readonly struct UpgradePreview
     {
         UpgradePreview(UpgradeId id, int level, int maxLevel, double? nextCost, UpgradeButtonState state,
-                       double currentValue, double nextValue)
+                       double currentValue, double nextValue, int requiredFloor = 0)
         {
+            RequiredFloor = requiredFloor;
             Id = id;
             Level = level;
             MaxLevel = maxLevel;
@@ -39,6 +40,8 @@ namespace MinersIdle.Core
         /// <summary>Custo da próxima compra; <c>null</c> no limite.</summary>
         public double? NextCost { get; }
         public UpgradeButtonState State { get; }
+        /// <summary>Travada por um marco de andar (o Estagiário, GDD v8: 5, P7): o andar que libera. 0 = não é isso.</summary>
+        public int RequiredFloor { get; }
 
         /// <summary>
         /// O atributo que a linha melhora, agora: dano (Picareta e Dupla), intervalo em segundos (Velocidade), multiplicador
@@ -76,7 +79,8 @@ namespace MinersIdle.Core
             {
                 double now = InternValueOf(id, InternStats.Compute(rules, economy, state, permanents));
                 double then = cost == null ? now : InternValueOf(id, InternStats.Compute(rules, economy, state, id, permanents));
-                return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, now, then);
+                int requiredFloor = id == UpgradeId.Intern && buttonState == UpgradeButtonState.Locked ? rules.InternFloor : 0;
+                return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, now, then, requiredFloor);
             }
 
             double current = ValueOf(id, MinerStats.Compute(rules, economy, state, permanents));

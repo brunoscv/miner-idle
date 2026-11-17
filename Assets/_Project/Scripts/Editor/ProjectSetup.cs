@@ -103,6 +103,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV7RareCrystal();
             EnsureGddV7AdBoost();
             EnsureGddV8Balance();
+            EnsureGddV8FloorMilestones();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -684,6 +685,28 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log($"[Setup] Valores do GDD v8 criados em {GddV8BalancePath} (M9c E1).");
+        }
+
+        /// <summary>
+        /// Os marcos de andar do GDD v8 (M9c E3, D-253): o avanço automático e o estagiário no andar 5 (P6, P7), o raro
+        /// depois do 10. Só preenche se os três estiverem em 0: um ajuste feito à mão no Inspector fica.
+        /// </summary>
+        static void EnsureGddV8FloorMilestones()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var auto = serialized.FindProperty("autoAdvanceFloor");
+            var intern = serialized.FindProperty("internFloor");
+            var rare = serialized.FindProperty("rareFloor");
+            if (auto.intValue != 0 || intern.intValue != 0 || rare.intValue != 0) return;
+            auto.intValue = 5;
+            intern.intValue = 5;
+            rare.intValue = 10;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8: marcos de andar — avanço automático e estagiário no 5, raro depois do 10 (M9c E3).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

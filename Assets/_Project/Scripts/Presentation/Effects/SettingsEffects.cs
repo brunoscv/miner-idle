@@ -6,7 +6,8 @@ namespace MinersIdle.Presentation
     /// <summary>
     /// Faz o som, o tremor e a vibração obedecerem aos AJUSTES (M9, E4): a cada mudança do <see cref="GameSettings"/> (e
     /// ao ligar), passa o volume ao <see cref="SoundBoard"/>, o tremor ao <see cref="ScreenShake"/> e a vibração ao
-    /// <see cref="Haptics"/>. Assim nenhum deles precisa conhecer os ajustes nem o arquivo.
+    /// <see cref="Haptics"/>. Assim nenhum deles precisa conhecer os ajustes nem o arquivo. Desde o M9c E3, também o avanço
+    /// automático ao <see cref="MiningRunner"/>, que o passa a cada partida.
     /// </summary>
     public sealed class SettingsEffects : MonoBehaviour
     {
@@ -14,6 +15,7 @@ namespace MinersIdle.Presentation
         [SerializeField] SoundBoard soundBoard;
         [SerializeField] ScreenShake screenShake;
         [SerializeField] Haptics haptics;
+        [SerializeField] MiningRunner runner;
 
         void OnEnable()
         {
@@ -36,6 +38,7 @@ namespace MinersIdle.Presentation
             if (soundBoard != null) soundBoard.Volume = settings.EffectsVolume;
             if (screenShake != null) screenShake.ShakeEnabled = settings.ScreenShake;
             if (haptics != null) haptics.Enabled = settings.Vibration;
+            if (runner != null) runner.AutoAdvance = settings.AutoAdvance;
         }
     }
 }

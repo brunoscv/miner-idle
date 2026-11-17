@@ -38,6 +38,10 @@ namespace MinersIdle.UI
         [SerializeField] Graphic glow;
         [SerializeField, Min(0.1f)] float glowPeriod = 1.1f;
         [SerializeField, Range(0f, 1f)] float glowMinAlpha = 0.35f;
+        [Header("AUTO (M9c E3, P6)")]
+        [Tooltip("O selo do avanço automático, no canto de cima da barra.")]
+        [SerializeField] GameObject autoChip;
+        [SerializeField] TMP_Text autoLabel;
 
         float _fraction = -1f;
         long _done = -1, _goal = -1;
@@ -53,11 +57,14 @@ namespace MinersIdle.UI
         public string CountText => count.text;
         /// <summary>O "ANDAR n" na tela (para testes).</summary>
         public string TargetText => target.text;
+        /// <summary>Se o selo "AUTO" está na tela (o jogo desce sozinho, P6).</summary>
+        public bool IsAutoShown => autoChip != null && autoChip.activeSelf;
 
         void Awake()
         {
             title.text = texts.NextFloorTitle;
             readyTitle.text = texts.NextFloorReady;
+            if (autoLabel != null) autoLabel.text = texts.NextFloorAuto;
         }
 
         protected override void OnEnable()
@@ -162,6 +169,14 @@ namespace MinersIdle.UI
 
         void Update()
         {
+            // O selo "AUTO": o marco do andar 5 e o ajuste ligado (pode mudar nos AJUSTES ou no DBG a qualquer hora).
+            if (autoChip != null)
+            {
+                var simulation = Simulation;
+                bool auto = simulation != null && visual.activeSelf && simulation.IsAutoAdvancing;
+                if (autoChip.activeSelf != auto) autoChip.SetActive(auto);
+            }
+
             if (!glow.enabled) return;
             float wave = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * (2f * Mathf.PI / glowPeriod));
             glow.canvasRenderer.SetAlpha(Mathf.Lerp(glowMinAlpha, 1f, wave));

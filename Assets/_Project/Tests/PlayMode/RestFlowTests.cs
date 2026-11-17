@@ -169,6 +169,7 @@ namespace MinersIdle.Tests
         public IEnumerator TapOutsideTheBar_StillHitsTheCrystal()
         {
             yield return LoadGame();
+            _runner.AutoAdvance = false; // M9c E3: no andar 12 o automático desceria com a barra cheia; aqui ela fica cheia
             Simulation.SkipToCave(12);
             yield return null;
             var input = Object.FindAnyObjectByType<TapInput>();

@@ -30,6 +30,9 @@ MonoBehaviour:
   offlineMaxHours: 4
   offlineDeepHours: 6
   offlineDeepFloor: 20
+  autoAdvanceFloor: 5
+  internFloor: 5
+  rareFloor: 10
   damage: 1
   hitInterval: 2
   walkSpeed: 4

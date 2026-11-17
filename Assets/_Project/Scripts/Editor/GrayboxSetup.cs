@@ -136,6 +136,7 @@ namespace MinersIdle.EditorTools
             changed |= BonusDebugSetup.EnsureInScene(); // de novo: o "Pular espera" precisa do anúncio já criado
             changed |= HudHiderSetup.EnsureInScene(); // DBG → Efeitos → Esconder HUD
             changed |= FloorTransitionSetup.EnsureInScene(); // a transição de andar e o DBG → Caverna → Transição (M9c E0)
+            changed |= NextFloorSetup.EnsureMilestoneDebug(); // DBG → Andar → Recorde e Auto (M9c E3), depois dos AJUSTES
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

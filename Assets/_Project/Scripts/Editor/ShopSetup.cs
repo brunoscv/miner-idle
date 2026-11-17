@@ -50,6 +50,7 @@ namespace MinersIdle.EditorTools
                 RemoveMap();
                 EnsureCritical();
                 EnsureFreeLabel();
+                EnsureFloorLockedFormat();
                 return;
             }
 
@@ -64,6 +65,7 @@ namespace MinersIdle.EditorTools
             so.FindProperty("lockedLabel").stringValue = "Em breve";
             so.FindProperty("bonusPercentFormat").stringValue = "+{0}%";
             so.FindProperty("freeLabel").stringValue = FreeLabel;
+            so.FindProperty("floorLockedFormat").stringValue = FloorLockedFormat;
 
             var entries = so.FindProperty("entries");
             entries.arraySize = 0;
@@ -82,6 +84,23 @@ namespace MinersIdle.EditorTools
 
         /// <summary>D-175: uma compra de custo 0 diz isto no lugar do preço.</summary>
         const string FreeLabel = "COMPRAR";
+
+        /// <summary>M9c E3 (P7): o Estagiário antes do andar 5 diz isto no lugar do preço.</summary>
+        const string FloorLockedFormat = "Andar {0}";
+
+        /// <summary>M9c E3 (P7): o catálogo de antes ganha o texto da trava por andar (só se estiver vazio).</summary>
+        static void EnsureFloorLockedFormat()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
+            var so = new SerializedObject(catalog);
+            var label = so.FindProperty("floorLockedFormat");
+            if (!string.IsNullOrEmpty(label.stringValue)) return;
+            label.stringValue = FloorLockedFormat;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Loja: o Estagiário diz \"Andar 5\" até o andar 5 (M9c E3, P7).");
+        }
 
         /// <summary>D-175: o catálogo de antes ganha o texto da compra de graça (só se estiver vazio).</summary>
         static void EnsureFreeLabel()

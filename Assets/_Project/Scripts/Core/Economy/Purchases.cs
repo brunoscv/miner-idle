@@ -39,14 +39,20 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// As da árvore do estagiário (M7, §5.4) só depois de contratá-lo. <c>null</c> = liberado (as outras linhas nunca
-        /// travam; a trava do Letrado saiu com o Mapa no v8, D-256).
+        /// As da árvore do estagiário (M7, §5.4) só depois de contratá-lo; contratar, só depois do andar do marco (GDD v8: 5,
+        /// P7). <c>null</c> = liberado (as outras linhas nunca travam; a trava do Letrado saiu com o Mapa no v8, D-256).
         /// </summary>
         public static PurchaseResult? Blocked(GameState state, MiningRules rules, UpgradeId id, Permanents permanents = null)
         {
             if (EconomyRules.IsInternTree(id)) return state.LevelOf(UpgradeId.Intern) > 0 ? (PurchaseResult?)null : PurchaseResult.Locked;
+            if (id == UpgradeId.Intern && rules != null && !rules.IsInternUnlocked(DeepestFloor(state, permanents)))
+                return PurchaseResult.Locked;
             return null;
         }
+
+        /// <summary>O andar mais fundo já alcançado (o recorde das permanentes, D-253), ou o de agora, o que for maior.</summary>
+        public static int DeepestFloor(GameState state, Permanents permanents) =>
+            System.Math.Max(state.Cave, permanents?.State.DeepestFloor ?? 1);
 
         /// <param name="rules">Para as travas (<see cref="Blocked"/>).</param>
         public static PurchaseResult TryPurchase(GameState state, EconomyRules economy, UpgradeId id,

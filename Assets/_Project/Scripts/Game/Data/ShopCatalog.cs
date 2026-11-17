@@ -102,6 +102,8 @@ namespace MinersIdle.Game
         [SerializeField] string bonusPercentFormat;
         [Tooltip("Botão de uma compra que custa 0 (o Mapa, GDD v7, D-175): no lugar do preço \"0\". Vazio = mostra o 0.")]
         [SerializeField] string freeLabel;
+        [Tooltip("Botão de uma linha travada por um marco de andar (o Estagiário, M9c E3, P7): {0} = o andar que libera.")]
+        [SerializeField] string floorLockedFormat;
         [SerializeField] Entry[] entries = Array.Empty<Entry>();
 
         [Header("Abas (Marco 8b, E4, D-155)")]
@@ -123,6 +125,7 @@ namespace MinersIdle.Game
         public string LockedLabel => lockedLabel;
         public string BonusPercentFormat => bonusPercentFormat;
         public string FreeLabel => freeLabel;
+        public string FloorLockedFormat => floorLockedFormat;
         public System.Collections.Generic.IReadOnlyList<Entry> Entries => entries;
         public string RunTabLabel => runTabLabel;
         public string PermanentsTabLabel => permanentsTabLabel;

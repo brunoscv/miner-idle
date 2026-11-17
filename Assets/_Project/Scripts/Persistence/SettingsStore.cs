@@ -18,6 +18,8 @@ namespace MinersIdle.Persistence
         public float effectsVolume = DefaultEffectsVolume;
         public bool screenShake = true;
         public bool vibration = true;
+        /// <summary>O avanço automático do Próximo Andar (M9c E3, P6): ligado de fábrica; só vale depois do andar 5.</summary>
+        public bool autoAdvance = true;
     }
 
     /// <summary>

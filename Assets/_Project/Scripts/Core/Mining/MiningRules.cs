@@ -47,7 +47,8 @@ namespace MinersIdle.Core
             double swingRecovery = 0,
             PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply, double pickaxeCaveGrowth = 1.2,
             int levelsPerBiome = 1, double offlineMaxSeconds = 6 * 3600,
-            RewardFormula rewardFormula = RewardFormula.Growth, double offlineDeepMaxSeconds = 0, int offlineDeepFloor = 0)
+            RewardFormula rewardFormula = RewardFormula.Growth, double offlineDeepMaxSeconds = 0, int offlineDeepFloor = 0,
+            int autoAdvanceFloor = 0, int internFloor = 0, int rareFloor = 0)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -75,6 +76,9 @@ namespace MinersIdle.Core
             if (!Enum.IsDefined(typeof(RewardFormula), rewardFormula)) throw new ArgumentOutOfRangeException(nameof(rewardFormula));
             if (offlineDeepMaxSeconds < 0 || double.IsNaN(offlineDeepMaxSeconds)) throw new ArgumentOutOfRangeException(nameof(offlineDeepMaxSeconds));
             if (offlineDeepFloor < 0) throw new ArgumentOutOfRangeException(nameof(offlineDeepFloor));
+            if (autoAdvanceFloor < 0) throw new ArgumentOutOfRangeException(nameof(autoAdvanceFloor));
+            if (internFloor < 0) throw new ArgumentOutOfRangeException(nameof(internFloor));
+            if (rareFloor < 0) throw new ArgumentOutOfRangeException(nameof(rareFloor));
 
             InitialCrystals = initialCrystals;
             FirstCrystalDistance = firstCrystalDistance;
@@ -96,6 +100,9 @@ namespace MinersIdle.Core
             RewardFormula = rewardFormula;
             OfflineDeepMaxSeconds = offlineDeepMaxSeconds;
             OfflineDeepFloor = offlineDeepFloor;
+            AutoAdvanceFloor = autoAdvanceFloor;
+            InternFloor = internFloor;
+            RareFloor = rareFloor;
             TapReach = tapReach;
             ArrivalStrike = arrivalStrike;
             SwingRecovery = swingRecovery;
@@ -188,6 +195,22 @@ namespace MinersIdle.Core
         /// <summary>O teto do offline para quem já chegou ao andar <paramref name="deepestFloor"/> (GDD v8: 4 h; 6 h do 20 em diante).</summary>
         public double OfflineMaxSecondsFor(int deepestFloor) =>
             OfflineDeepFloor > 0 && OfflineDeepMaxSeconds > 0 && deepestFloor >= OfflineDeepFloor ? OfflineDeepMaxSeconds : OfflineMaxSeconds;
+
+        // ── Marcos de andar (M9c E3, D-253): valem para sempre a partir do andar mais fundo já alcançado ──────────────
+
+        /// <summary>O andar que libera o avanço automático (GDD v8: 5, P6). 0 = o balanço não tem avanço automático.</summary>
+        public int AutoAdvanceFloor { get; }
+        /// <summary>O andar que libera contratar o estagiário na LOJA (GDD v8: 5, P7). 0 = desde o começo.</summary>
+        public int InternFloor { get; }
+        /// <summary>O andar depois do qual o cristal raro nasce (GDD v8: 10). 0 = desde o começo.</summary>
+        public int RareFloor { get; }
+
+        /// <summary>Se o avanço automático já existe para quem chegou ao andar <paramref name="deepestFloor"/>.</summary>
+        public bool IsAutoAdvanceUnlocked(int deepestFloor) => AutoAdvanceFloor > 0 && deepestFloor >= AutoAdvanceFloor;
+        /// <summary>Se a LOJA já contrata o estagiário para quem chegou ao andar <paramref name="deepestFloor"/>.</summary>
+        public bool IsInternUnlocked(int deepestFloor) => deepestFloor >= InternFloor;
+        /// <summary>Se o raro já nasce para quem chegou ao andar <paramref name="deepestFloor"/>.</summary>
+        public bool IsRareUnlocked(int deepestFloor) => deepestFloor >= RareFloor;
 
         /// <summary>
         /// Cristais que o andar <paramref name="floor"/> pede para o Próximo Andar, antes da Memória: <c>andar × </c>
