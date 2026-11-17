@@ -316,6 +316,38 @@
 | **D-234** | **DBG do AD (P24):** no **DBG → Bônus**, **AD agora** (o boost direto, respeitando a D-188) e **Pular espera** (o modal mostra o RECOMPENSA já). | M9b |
 | **D-235** | **AD, descanso e app fechado (P25):** o boost corre com o app fechado, como os do combo (D-181); acaba no descanso (D-213, D-224), e o botão volta livre. No offline não muda nada (não vale para o estagiário, D-177). | M9b |
 
+### 1.15 Respostas do Bruno às perguntas do GDD v8.2, em 2026-11-16 (com as do Apellon)
+
+Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o autor do GDD; o que ele respondeu ao Bruno vale como texto do GDD (como na D-201). O v8.2 virou a referência no mesmo dia (D-248).
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-236** | **Andar = caverna (P1):** tudo o que o v7 chamava de caverna/nível passa a ser **andar** (o jogador está dentro de uma caverna e desce os andares dela, §4.3). Biomas, lascas vermelhas e o "andar 20" do offline são por andar. As lascas vermelhas seguem a lógica de hoje: acumulam por andar até o descanso. | GDD v8 |
+| **D-237** | **Saem o toque no cristal e o combo (P2; Apellon):** o v8 não tem mais o combo (x10…x100, D-212 e afins), nem o toque de 33% (D-86); saem de vez, e tocar no cristal não dá mais dano. A interação na tela passa a ser a **Bomba** (swipe up). O "xN pulsante" da §8 e o "combo" da §8.1 são sobra do v7. Revê as decisões do toque e do combo (D-86, D-179, D-183, D-210…D-217 e as do M5). | GDD v8 |
+| **D-238** | **Lascas por cristal (P3):** andar 1: `vida × 0,2`; demais: `vida × 0,2 × (andar − 1)`, como está no GDD. | GDD v8 |
+| **D-239** | **Cristais por andar e Memória (P4, P14, P21):** requisito = `andar × 10 − 5 × nível da Memória` (cada compra tira 5 cristais); se der negativo, o próximo andar pede 0 e já pode passar. O andar 100 pede 1.000 cristais. Memória até o **nível 100**, custo `10 + 2^(n−1)`, mesmo que os últimos níveis sejam impagáveis. | GDD v8 |
+| **D-240** | **Bombas (P5…P7; Apellon):** **8 bombas por enquanto**: tier 1 Pequena 10%, Pequena Vermelha 20%, Normal 30%, Normal Vermelha 40%; tier 2 Dinamite 50%, Pacote 60%, Caixa 70%, Barril 100%. O jogador **começa com a Pequena**; a melhoria permanente da Bomba (lascas vermelhas, custo `10 + 2^(n−1)`) troca pela seguinte a cada compra. Carga **sempre 5 s**, para todas; a bomba **não é consumível**. A % é sobre a **vida máxima** do cristal, qualquer que seja o dano já sofrido. | GDD v8 |
+| **D-241** | **Distância entre cristais e Atalho (P8, P13):** é a distância de um cristal ao seguinte na fila. No nível máximo do Atalho os cristais ficam **quase colados**; a conta é feita para isso acontecer, aumentando a distância inicial se precisar (números em aberto: Q4 da Análise do v8). Os "3 m até o anão" da câmera são outra coisa. | GDD v8 |
+| **D-242** | **Sangue da Montanha (P9):** segue a fórmula do GDD: +10% por nível **sobre o dano da Picareta**, antes dos bônus com tempo. É o que o jogo já faz (o Sangue multiplica o dano da Picareta e os bônus vêm depois, D-179); não muda nada. | GDD v8 |
+| **D-243** | **Cartas do raro (P10):** passam a ser as do v8. Tier 1: Dano ×2, Lascas ×2, Dano de Crítico ×2, +10% de Chance de Crítico; tier 2: ×4, ×4, ×4, +20%; **30 s** cada. Sai o "golpe 2× mais rápido". Revê a D-190 (cartas e 60 s). | GDD v8 |
+| **D-244** | **Anúncios (P11, P18):** três anúncios (curto, médio, grande) no menu do Boost. Com um ativo, pode **assistir de novo o mesmo tipo**, e isso **renova a duração** do bônus dele (revê a D-188). As horas extras de offline **somam** (+1, +2, +4 h), com teto de **8 h**, também depois do andar 20. | GDD v8 |
+| **D-245** | **Câmera (P12):** inclinação 60°, altura 5,5 m, 3 m até o anão, campo de visão 60°. **Substitui** o enquadramento de frente da D-52. | GDD v8 |
+| **D-246** | **Offline (P15…P17; Apellon):** os cristais quebrados offline **contam** para a barra do Próximo Andar; com o avanço automático (andar 5) ligado, o offline **passa de andar**. Raro quebrado offline dá um **buff aleatório** do tier liberado, que vale para o estagiário. O bônus de anúncio ativo **vale para o estagiário** no offline enquanto durar (ex.: dano ×2 de 60 s, saiu aos 15 s: os 45 s que faltam valem para ele). Revê D-177, D-186, D-189 e D-235. | GDD v8 |
+| **D-247** | **Sem simulador (P22):** os números do v8 entram sem rodar o relatório de economia (mantém a D-149). | GDD v8 |
+
+### 1.16 O que sobrou do GDD v8.2, decidido pelo Bruno em 2026-11-16 (aprovou as recomendações Q1…Q8)
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-248** | **O GDD v8.2 ([`docs/GDD_Idle_Miner v82.pdf`](../GDD_Idle_Miner%20v82.pdf), versão 8.2, 12/11/2026) passa a ser a referência de design (Q8)**, no lugar do v7, que fica como histórico. Valem as D-236…D-255 e, sem pergunta, o resto do v8: vida `1 × 1,5^(andar−1)`, crítico ×1,5, Picareta custa `7 × Dano Base`, Dedo Fogoso (+0,5 no dano do crítico, nível 10), Atalho, estagiário a partir do andar 5, Promoção com Treinar 5, offline 4 h (6 h a partir do andar 20), permanentes compradas só no Descansar, Próximo Andar com barra (sem Mapa e sem parede), HUD com lascas e lascas vermelhas. **O código ainda é o do v7**: muda em blocos, pelo plano da [Análise do v8](Analise%20-%20GDD%20v8.md) §5, cada um com plano de marco antes. | Roadmap |
+| **D-249** | **Crítico acima de 100% (Q1):** cada 1% de chance acima de 100% soma **+1 ponto** no dano do crítico (150% → 151%), junto com o Dedo Fogoso. Provisória até o Apellon definir. | GDD v8 |
+| **D-250** | **Tier 2 do raro por anúncio (Q2):** um **4º anúncio** no menu do Boost ("tier 2 por 1 h"), que aparece quando os raros estão liberados (andar 10) e **some** depois que o tier 2 é comprado com as 500 lascas vermelhas, até o Apellon definir outro benefício (talvez um tier 3). | GDD v8 |
+| **D-251** | **Anúncios de tipos diferentes juntos (Q3):** **vale o maior** em cada atributo (curto 2× com grande 4× = 4×); o menor continua contando o tempo por baixo e volta a valer se o maior acabar antes. | GDD v8 |
+| **D-252** | **Distância entre cristais (Q4, detalha a D-241):** começa em **3 m** e o Atalho tira **0,5 m por nível** (3 → 2,5 → 2 → 1,5 → 1 → **0,5 m** no nível 5). Muda o "−1 m" do GDD para chegar quase colado. Hoje o espaço mínimo é 1 m (`minCrystalSpacing` = 2 un, D-58); o valor fino se ajusta com a câmera nova (D-245). | GDD v8 |
+| **D-253** | **Avanço automático (Q5):** liberado **para sempre** na primeira vez que o jogador chega ao andar 5 (como os andares 10 e 20); **ligado por padrão**, desliga em Ajustes. | GDD v8 |
+| **D-254** | **Horas extras de offline (Q6):** contam os anúncios **ativos na hora em que o app fecha** (+1, +2, +4 h), teto de 8 h (D-244). | GDD v8 |
+| **D-255** | **Compras da Bomba (Q7, detalha a D-240):** a Pequena vem **de graça** desde o início; **7 compras** até o Barril, a `10 + 2^(n−1)` lascas vermelhas (11, 12, 14, 18, 26, 42, 74). A bomba **não pega crítico nem bônus**: tira a % fixa da vida máxima. | GDD v8 |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.
