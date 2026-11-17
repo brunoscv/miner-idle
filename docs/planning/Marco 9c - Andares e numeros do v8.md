@@ -113,6 +113,16 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
 - **DBG → Andar** (no lugar do DBG → Caverna): **Encher a barra**, **Próximo andar**, **Ir para o andar…** (1, 5, 10, 20, 50, 100). DBG → Cálculos sem o seletor de balanço.
 - **Testes EditMode:** vida e lascas nos andares 1, 2, 10, 100; requisito com Memória 0, 2, 20 e negativo; crítico com 80%, 100% e 140%; custo da Picareta; passagem (zera a barra, refaz a fila, andar 100 → coração); migração v7 → v8. Os testes do Mapa e da parede **são corrigidos para medir a passagem nova** (nunca apagados só para passar).
 
+**Como ficou (2026-11-17):**
+
+- O botão de passagem de hoje (`CavePassButton`, "PASSAR") ficou como **provisório**: aparece com a barra cheia e chama o `AdvanceFloor()`. A E2 troca ele pelo `NextFloorButton` com a barra.
+- **"Ir para o andar…"** virou **um botão só**, "Ir ao andar N", que vai ao próximo marco depois do andar atual (1 → 5 → 10 → 20 → 50 → 100 → 1). Junto dele: **Encher a barra**, **Próximo andar** (sem a barra), **+10 andares** e **Andar 100 (fim)** (vai ao 100 já com a barra cheia).
+- A **fila do andar velho** fica na tela até o escuro da transição: os cristais do andar novo só aparecem quando ninguém vê.
+- A **vibração longa** era a da parede; passou para a **descida de andar** (uma por andar).
+- O **andar mais fundo** (`DeepestFloor`) entrou já na E1, nas permanentes e no save, porque a migração da P8 precisa dele; ele também liga o **teto de 6 h** do offline a partir do andar 20 (o modal mostra o teto certo). Os outros marcos de andar seguem na E3.
+- A **Memória** na LOJA diz "Andar −N cristais" (o Mapa saiu); os textos "CAVERNA" → "ANDAR" seguem na E2.
+- Os balanços v1, v5 e v7 seguem em `Data/` só para os testes que os usam; o jogo e o DBG usam só o `Balance_GDD_v8`.
+
 ### E2 — Próximo Andar na tela
 
 - **Mockup** em 270×480 antes do código: o botão à direita, embaixo, com a barra que enche e o "x/y" de cristais; o Descansar fica à esquerda; o centro fica livre para a Bomba (Bloco E). E os **quadros da transição** (saída, cartão, chegada), com desfoque e com pixelado lado a lado.
@@ -145,7 +155,15 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
 
 ## Como testar (Bruno) — ao fim de cada etapa
 
-- **E1:** sem tela nova ainda; os testes cobrem (`bash tools/ci/run-tests.sh`, com o Editor fechado). Para ver: cena `Bootstrap`, Play, DBG → Andar → **Encher a barra** → **Próximo andar**: o HUD vai para 2 e os cristais ficam mais duros. DBG → Andar → **Ir para o andar 100** → Encher → Próximo: abre o coração.
+- **E1:** sem tela nova ainda; os testes cobrem (`bash tools/ci/run-tests.sh`, com o Editor fechado). Para ver, cena `Bootstrap`, Play:
+  1. Um save antigo (v7) abre numa **run nova no andar 1**, com as lascas vermelhas, as permanentes e o dia (D-263).
+  2. DBG → **Andar** → **Encher a barra**: aparece o **PASSAR** embaixo à direita (provisório até a E2).
+  3. Tocar **PASSAR**: a transição B, o HUD vai para 2, os cristais novos só aparecem no escuro e o PASSAR some até a barra do andar 2 encher (20 cristais).
+  4. DBG → Andar → **Ir ao andar 5** (cada toque vai ao próximo marco: 10, 20, 50, 100, 1): o andar muda direto; os cristais ficam mais duros e pagam mais.
+  5. DBG → Andar → **Andar 100 (fim)**: andar 100 com a barra cheia; **PASSAR** abre a tela do coração da montanha.
+  6. **LOJA**: sem o Mapa; a Picareta custa **14**. **PERMANENTES**: a Memória diz "Andar −0 » −5 cristais".
+  7. DBG → **Cálculos**: sem o botão de balanço; o aviso diz "Cálculo: GDD v8".
+  8. DBG → Estagiário → Contratar, DBG → Offline → **Fora 8 h**: conta **4 h**. Depois de DBG → Andar → Ir ao andar 20, Fora 8 h conta **6 h**.
 - **E2:** cena `Bootstrap`, Play. O botão Próximo Andar embaixo à direita, apagado, com "0/10". Quebrar 10 cristais: a barra enche e o botão acende. Tocar: o anão para, a câmera sobe e a tela desfoca, aparece "ANDAR 2", a câmera desce até o anão, o HUD mostra ANDAR 2 e o botão "0/20"; só então o anão corre. DBG → Andar → **Transição curta**: a mesma coisa em 0,3 s. A LOJA não tem mais o Mapa.
 - **E3:** DBG → Andar → **Ir para o andar 5**: os AJUSTES mostram "Avanço automático" ligado; a barra enche e o jogo desce sozinho. Desligar nos AJUSTES: a barra fica cheia e o botão espera o toque. A LOJA mostra o Estagiário destravado. DBG → Andar → **Recorde 1** e reabrir a LOJA: travado com "Andar 5". Recorde 10: aparecem raros; Recorde 20: DBG → Offline → Fora 8 h conta 6 h.
 - **E4:** DBG → Estagiário → Contratar, DBG → Andar → Ir para o andar 5 (automático ligado), DBG → Offline → **Fora 1 h**: o "Bem-vindo de volta" mostra os andares descidos; COLETAR e o HUD está no andar novo. Repetir com o automático desligado: o andar não muda e a barra está cheia.
@@ -206,7 +224,7 @@ Total: **~29–40 h**.
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-16: P1…P9 (D-256…D-264); P10 → as três transições no DBG, C primeiro (D-266, D-267) | — |
 | E0 Transições no DBG | ✅ aprovada em 2026-11-17: fica a **B** (D-268), a padrão da cena; C, B mosaico e A seguem no DBG | Testes: EditMode 438/438 (6 em `FloorTransitionTests`); PlayMode 152/153, com um teste por transição (`TenLevels_ChangeTheBiome_InTheDark` para a C, `CameraDrop_RisesBlursAndComesBackInFocus`, `BlurCard_BlursInPlace_AndComesBackInFocus`) e o do botão, que percorre a lista. Instáveis por tempo real, fora da transição, cada um falhou uma vez: `AllocationTests` (às vezes, quando uma quebra de cristal cai dentro da medição: 7 e 9 alocações num run, 1 no seguinte com a mesma quebra) e `TapInputTests.TappingBreaksCrystalsFaster_AndAutoTapRuns` |
-| E1 Núcleo do v8 | ⏳ | — |
+| E1 Núcleo do v8 | 🔄 implementada em 2026-11-17, aguardando a validação do Bruno | Testes: EditMode 463/463 (novo `GddV8RulesTests`; `CaveTests` reescrito para a barra; os do Mapa e da parede corrigidos para a passagem nova); PlayMode 153/153 (`CaveFlowTests` mede encher a barra → PASSAR → transição → andar 2 e o andar 100 → coração; `AllocationTests` mede a transição com a fila velha na tela; a vibração longa mede a descida de andar). Ver "Como ficou" na E1 |
 | E2 Próximo Andar na tela | ⏳ | — |
 | E3 Marcos de andar | ⏳ | — |
 | E4 Offline que desce andares | ⏳ | — |

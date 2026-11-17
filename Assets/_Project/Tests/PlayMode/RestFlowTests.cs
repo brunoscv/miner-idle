@@ -47,11 +47,14 @@ namespace MinersIdle.Tests
                 Assert.Ignore("O balanço ativo não tem descanso (rode o setup do projeto: GDD v7).");
         }
 
-        void BuyTheMap()
+        /// <summary>
+        /// Enche a barra do andar (o Mapa saiu no v8, D-256) e pula o que falta da transição do andar novo (M9c E0): só
+        /// fora dela o botão da passagem aparece.
+        /// </summary>
+        void FillTheBar()
         {
-            Simulation.FillCaveBreaks();
-            Simulation.AddShards(1e12);
-            Assert.That(Simulation.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased));
+            Simulation.FillFloorBar();
+            if (Simulation.IsInFloorTransition) Simulation.Tick(Simulation.FloorTransitionLeft);
         }
 
         static Button ButtonAt(Component root, string path) => root.transform.Find(path).GetComponent<Button>();
@@ -78,15 +81,16 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
-        public IEnumerator PassButton_OnlyWithTheMap_AndEachButtonOnItsSide()
+        public IEnumerator PassButton_OnlyWithTheFullBar_AndEachButtonOnItsSide()
         {
             yield return LoadGame();
             Simulation.SkipToCave(12);
-            Assert.That(_pass.IsShown, Is.False, "sem o Mapa, sem PASSAR");
+            if (Simulation.IsInFloorTransition) Simulation.Tick(Simulation.FloorTransitionLeft);
+            Assert.That(_pass.IsShown, Is.False, "barra vazia, sem PASSAR");
             Assert.That(_rest.IsShown, Is.True);
 
-            BuyTheMap();
-            Assert.That(_pass.IsShown, Is.True, "com o Mapa, o PASSAR");
+            FillTheBar();
+            Assert.That(_pass.IsShown, Is.True, "barra cheia, o PASSAR");
             yield return null;
 
             var restRect = (RectTransform)_rest.transform.Find("RestButton");
@@ -162,15 +166,14 @@ namespace MinersIdle.Tests
         {
             yield return LoadGame();
             Simulation.SkipToCave(12);
-            BuyTheMap();
             yield return null;
             var input = Object.FindAnyObjectByType<TapInput>();
             // M9c E0 (D-266): na transição do andar novo o toque não vale; passada ela, vale.
             if (Simulation.IsInFloorTransition)
-            {
                 Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.False, "na transição, não");
-                Simulation.Tick(Simulation.FloorTransitionLeft);
-            }
+            FillTheBar();
+            Assert.That(_pass.IsShown, Is.True);
+            yield return null; // um quadro de layout para o botão que acabou de aparecer
 
             int combo = Simulation.Combo;
             Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.True, "o meio da tela");

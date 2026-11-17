@@ -65,8 +65,12 @@ namespace MinersIdle.Core
         /// <summary>Dedos Nervosos: chance de crítico a mais, no golpe e no toque (D-158).</summary>
         public double CritBonus => Effect(PermanentId.NervousFingers);
 
-        /// <summary>Memória: os cristais que a trava do Mapa pede, no mínimo 0 (no máximo a Memória remove a trava).</summary>
-        public long MapLock(MiningRules rules) => Math.Max(0, (long)Math.Round(rules.LetradoBreaks - Effect(PermanentId.Memory)));
+        /// <summary>
+        /// Os cristais que o andar <paramref name="floor"/> pede para o Próximo Andar (GDD v8, D-239): <c>andar × 10</c>
+        /// menos a Memória (5 por nível), no mínimo 0 (aí a barra já nasce cheia).
+        /// </summary>
+        public long FloorRequirement(MiningRules rules, int floor) =>
+            Math.Max(0, (long)Math.Round(rules.FloorBreaksIn(floor) - Effect(PermanentId.Memory)));
 
         /// <summary>Alma dos Anões: os níveis de Picareta com que a run começa.</summary>
         public int StartingPickaxe => (int)Math.Round(Effect(PermanentId.DwarfSoul));

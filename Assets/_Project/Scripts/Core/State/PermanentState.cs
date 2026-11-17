@@ -16,6 +16,11 @@ namespace MinersIdle.Core
 
         /// <summary>O dia em curso: começa no 1 e soma um a cada descanso (o resumo do dia mostra, D-154).</summary>
         public int Day { get; private set; } = 1;
+        /// <summary>
+        /// O andar mais fundo já alcançado (M9c, GDD v8): sobrevive ao descanso. Os marcos de andar (5, 10, 20) valem para
+        /// sempre a partir dele (D-253).
+        /// </summary>
+        public int DeepestFloor { get; private set; } = 1;
 
         /// <summary>Nível da melhoria permanente = compras feitas (D-38).</summary>
         public int LevelOf(PermanentId id) => _levels[(int)id];
@@ -26,7 +31,8 @@ namespace MinersIdle.Core
         /// desligada nas regras (o GDD v5, que não tem permanentes) guarda o nível como veio: sem efeito ali, e de volta no
         /// balanço que a tem.
         /// </summary>
-        public static PermanentState Restore(double redShards, int day, Func<PermanentId, int> levelOf, PermanentRules rules)
+        public static PermanentState Restore(double redShards, int day, Func<PermanentId, int> levelOf, PermanentRules rules,
+                                             int deepestFloor = 1)
         {
             if (levelOf == null) throw new ArgumentNullException(nameof(levelOf));
             if (rules == null) throw new ArgumentNullException(nameof(rules));
@@ -35,6 +41,7 @@ namespace MinersIdle.Core
             {
                 RedShards = double.IsNaN(redShards) || double.IsInfinity(redShards) || redShards < 0 ? 0 : redShards,
                 Day = Math.Max(1, day),
+                DeepestFloor = Math.Max(1, deepestFloor),
             };
             foreach (PermanentId id in Enum.GetValues(typeof(PermanentId)))
             {
@@ -52,12 +59,15 @@ namespace MinersIdle.Core
         internal void RaiseLevel(PermanentId id) => _levels[(int)id]++;
 
         internal void NextDay() => Day++;
+        /// <summary>O jogador chegou ao andar <paramref name="floor"/>: o recorde sobe, nunca desce.</summary>
+        internal void ReachFloor(int floor) => DeepestFloor = Math.Max(DeepestFloor, floor);
 
         /// <summary>Atalho do debug: banco, níveis e dia do zero.</summary>
         internal void Clear()
         {
             RedShards = 0;
             Day = 1;
+            DeepestFloor = 1;
             Array.Clear(_levels, 0, _levels.Length);
         }
     }

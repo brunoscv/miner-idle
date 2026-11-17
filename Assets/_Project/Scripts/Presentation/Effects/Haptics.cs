@@ -1,11 +1,12 @@
 using MinersIdle.Core;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Vibração (M9, E4, D-199), só com o jogo aberto: curta no golpe crítico, mais longa na quebra da parede da passagem;
-    /// nada no toque comum nem na quebra de um cristal. Só escuta a simulação. Desligável nos AJUSTES (<see cref="Enabled"/>,
+    /// Vibração (M9, E4, D-199), só com o jogo aberto: curta no golpe crítico, mais longa ao descer de andar (no v8, M9c E1,
+    /// no lugar da quebra da parede da passagem); nada no toque comum nem na quebra de um cristal. Só escuta a simulação. Desligável nos AJUSTES (<see cref="Enabled"/>,
     /// aplicado pelo <see cref="SettingsEffects"/>).
     ///
     /// No Android chama o vibrador do aparelho com a duração pedida (<c>VibrationEffect</c> a partir do Android 8). No
@@ -16,12 +17,14 @@ namespace MinersIdle.Presentation
     {
         [Tooltip("Duração do pulso no golpe crítico, em milissegundos.")]
         [SerializeField, Min(1)] int criticalMilliseconds = 30;
-        [Tooltip("Duração do pulso na quebra da parede da passagem, em milissegundos.")]
-        [SerializeField, Min(1)] int wallMilliseconds = 120;
-        [Tooltip("Intervalo mínimo, em segundos reais, entre dois pulsos (a parede sempre passa na frente de um crítico).")]
+        [Tooltip("Duração do pulso ao descer de andar, em milissegundos.")]
+        [FormerlySerializedAs("wallMilliseconds")]
+        [SerializeField, Min(1)] int floorMilliseconds = 120;
+        [Tooltip("Intervalo mínimo, em segundos reais, entre dois pulsos (o do andar sempre passa na frente de um crítico).")]
         [SerializeField, Min(0f)] float minGapSeconds = 0.12f;
 
         float _lastPulse = float.NegativeInfinity;
+        int _floor;
 
         /// <summary>A vibração dos AJUSTES. Desligada, nenhum pulso sai (nem conta).</summary>
         public bool Enabled { get; set; } = true;
@@ -33,33 +36,36 @@ namespace MinersIdle.Presentation
         public int LastPulseMilliseconds { get; private set; }
 
         public int CriticalMilliseconds => criticalMilliseconds;
-        public int WallMilliseconds => wallMilliseconds;
+        public int FloorMilliseconds => floorMilliseconds;
 
         protected override void Subscribe(MiningSimulation simulation)
         {
             simulation.HitLanded += OnHit;
-            simulation.CrystalBroken += OnBroken;
+            simulation.CaveChanged += OnFloorChanged;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
         {
             simulation.HitLanded -= OnHit;
-            simulation.CrystalBroken -= OnBroken;
+            simulation.CaveChanged -= OnFloorChanged;
         }
 
-        protected override void Rebuild(MiningSimulation simulation) { }
+        protected override void Rebuild(MiningSimulation simulation) => _floor = simulation.State.Cave;
 
         void OnHit(MiningHit hit)
         {
             if (hit.IsCritical) Pulse(criticalMilliseconds, priority: false);
         }
 
-        void OnBroken(Crystal crystal)
+        /// <summary>Desceu de andar (o Próximo Andar ou o DBG); a barra enchendo no mesmo andar não vibra.</summary>
+        void OnFloorChanged(int floor)
         {
-            if (crystal.IsWall) Pulse(wallMilliseconds, priority: true);
+            bool down = floor > _floor;
+            _floor = floor;
+            if (down) Pulse(floorMilliseconds, priority: true);
         }
 
-        /// <param name="priority">Passa por cima do intervalo mínimo (a parede, rara e mais importante).</param>
+        /// <param name="priority">Passa por cima do intervalo mínimo (o andar, raro e mais importante).</param>
         void Pulse(int milliseconds, bool priority)
         {
             if (!Enabled) return;

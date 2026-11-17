@@ -9,7 +9,7 @@ namespace MinersIdle.Core
     /// </summary>
     public enum PermanentId
     {
-        /// <summary>Memória: cada nível tira <see cref="UpgradeDefinition.Effect"/> cristais da trava do Mapa (GDD v7: 10).</summary>
+        /// <summary>Memória: cada nível tira <see cref="UpgradeDefinition.Effect"/> cristais do requisito do andar (GDD v8: 5, D-239).</summary>
         Memory,
         /// <summary>Sangue da Montanha: o dano final multiplica por (1 + efeito × nível) (GDD v7: 0,1 = +10%).</summary>
         MountainBlood,

@@ -102,7 +102,9 @@ namespace MinersIdle.UI
             shardsValue.text = string.Format(texts.OfflineShardsFormat, NumberFormatter.FormatShards(pending.Shards));
             note.text = pending.Capped
                 ? string.Format(texts.OfflineCappedNoteFormat,
-                                NumberFormatter.FormatDuration(Simulation.Rules.OfflineMaxSeconds, trimWholeHours: true))
+                                NumberFormatter.FormatDuration(
+                                    OfflineMining.MaxSeconds(Simulation.Rules, Simulation.State, Simulation.Permanents),
+                                    trimWholeHours: true))
                 : string.Format(texts.OfflineNoteFormat, pending.Level);
             screen.SetActive(true);
             // A linha "Contou" entra ou sai: o painel se ajusta ao conteúdo já neste quadro.

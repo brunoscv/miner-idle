@@ -99,18 +99,11 @@ namespace MinersIdle.UI
             SetBuyable(preview.State == UpgradeButtonState.Purchasable);
             SetDone(preview.IsSinglePurchase && preview.Level > 0);
 
-            // Letrado (M8, D-109): sem os cristais da caverna, o progresso no lugar do efeito e o preço apagado.
+            // Travada (as linhas do estagiário antes de contratá-lo): o efeito e o "Em breve" no lugar do preço.
             if (preview.State == UpgradeButtonState.Locked)
             {
-                effect.text = string.Format(_catalog.ProgressFormat, preview.Progress, preview.ProgressGoal);
-                buyLabel.text = CostLabel(preview.NextCost.Value);
-                return;
-            }
-
-            if (preview.State == UpgradeButtonState.PassFirst)
-            {
                 effect.text = string.Format(_entry.EffectFormat, Format(preview.CurrentValue), Format(preview.NextValue));
-                buyLabel.text = _catalog.PassFirstLabel;
+                buyLabel.text = _catalog.LockedLabel;
                 return;
             }
 

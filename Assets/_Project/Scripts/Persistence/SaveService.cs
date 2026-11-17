@@ -155,9 +155,21 @@ namespace MinersIdle.Persistence
             foreach (var saved in data.levels ?? new List<SavedLevel>())
                 if (saved != null && saved.upgrade != null) levels[saved.upgrade] = saved.level;
 
-            permanent = RestorePermanent(data, permanentRules);
             if (data.version >= 5 && data.savedAtUtcTicks > DateTime.MinValue.Ticks && data.savedAtUtcTicks <= DateTime.MaxValue.Ticks)
                 LoadedSavedAtUtc = new DateTime(data.savedAtUtcTicks, DateTimeKind.Utc);
+
+            if (data.version < SaveData.FirstV8Version)
+            {
+                // D-263: os números do v8 são outros (um andar 30 do v7 tem vida 646; no v8, 127.834). Run nova no andar 1,
+                // com as lascas vermelhas, as permanentes e o dia; o andar da run antiga vira o mais fundo.
+                int reached = Math.Max(1, Math.Min(data.cave, Math.Max(1, caveCount)));
+                permanent = RestorePermanent(data, permanentRules, reached);
+                Debug.Log($"[Save] Save da versão {data.version} (antes do GDD v8): run nova no andar 1, com as lascas " +
+                          $"vermelhas, as permanentes e o dia; o andar mais fundo fica no {reached} (D-263).");
+                return new Permanents(permanentRules, permanent).NewRun(economy);
+            }
+
+            permanent = RestorePermanent(data, permanentRules, data.permanent?.deepestFloor ?? 1);
             Func<UpgradeId, int> levelOf = id => levels.TryGetValue(id.ToString(), out int level) ? level : 0; // linha desconhecida: ignorada
             if (data.version == 1)
             {
@@ -211,18 +223,19 @@ namespace MinersIdle.Persistence
         }
 
         /// <summary>
-        /// A parte permanente do save. Até a versão 3 não existe: zerada, no dia 1. Valores fora do lugar são corrigidos
-        /// pelo <see cref="PermanentState.Restore"/>, sem mexer na run.
+        /// A parte permanente do save. Até a versão 3 não existe: zerada, no dia 1 (com o andar mais fundo dado). Valores
+        /// fora do lugar são corrigidos pelo <see cref="PermanentState.Restore"/>, sem mexer na run.
         /// </summary>
-        static PermanentState RestorePermanent(SaveData data, PermanentRules rules)
+        static PermanentState RestorePermanent(SaveData data, PermanentRules rules, int deepestFloor)
         {
-            if (data.version < 4 || data.permanent == null) return new PermanentState();
+            if (data.version < 4 || data.permanent == null)
+                return PermanentState.Restore(0, 1, _ => 0, rules, deepestFloor);
 
             var levels = new Dictionary<string, int>();
             foreach (var saved in data.permanent.levels ?? new List<SavedLevel>())
                 if (saved != null && saved.upgrade != null) levels[saved.upgrade] = saved.level;
             return PermanentState.Restore(data.permanent.redShards, data.permanent.day,
-                                          id => levels.TryGetValue(id.ToString(), out int level) ? level : 0, rules);
+                                          id => levels.TryGetValue(id.ToString(), out int level) ? level : 0, rules, deepestFloor);
         }
 
         /// <param name="permanent">
@@ -265,6 +278,7 @@ namespace MinersIdle.Persistence
             {
                 data.permanent.redShards = permanent.RedShards;
                 data.permanent.day = permanent.Day;
+                data.permanent.deepestFloor = permanent.DeepestFloor;
                 foreach (var id in PermanentLines)
                     data.permanent.levels.Add(new SavedLevel { upgrade = id.ToString(), level = permanent.LevelOf(id) });
             }

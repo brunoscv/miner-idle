@@ -6,13 +6,8 @@ namespace MinersIdle.Core
         NotEnoughShards,
         /// <summary>Limite de compras atingido (ou linha desligada).</summary>
         MaxLevel,
-        /// <summary>
-        /// Letrado (M8, D-93): faltam cristais quebrados na caverna atual. Também uma linha do estagiário antes de contratá-lo
-        /// (M7) e a Promoção antes do Treinar no limite.
-        /// </summary>
+        /// <summary>Uma linha do estagiário antes de contratá-lo (M7) e a Promoção antes do Treinar no limite.</summary>
         Locked,
-        /// <summary>Letrado (M8): o desta caverna já foi comprado; falta passar de caverna.</summary>
-        PassFirst,
     }
 
     /// <summary>
@@ -44,25 +39,16 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// A trava do Letrado (M8, GDD v5, D-93): o nível <i>n</i> só se compra na caverna <i>n</i> (um por caverna) e depois
-        /// de <see cref="MiningRules.LetradoBreaks"/> cristais quebrados nela (menos os da Memória, Marco 8b:
-        /// <see cref="MapLock"/>). As da árvore do estagiário (M7, §5.4) só depois de contratá-lo. <c>null</c> = liberado
-        /// (as outras linhas nunca travam).
+        /// As da árvore do estagiário (M7, §5.4) só depois de contratá-lo. <c>null</c> = liberado (as outras linhas nunca
+        /// travam; a trava do Letrado saiu com o Mapa no v8, D-256).
         /// </summary>
         public static PurchaseResult? Blocked(GameState state, MiningRules rules, UpgradeId id, Permanents permanents = null)
         {
             if (EconomyRules.IsInternTree(id)) return state.LevelOf(UpgradeId.Intern) > 0 ? (PurchaseResult?)null : PurchaseResult.Locked;
-            if (id != UpgradeId.Letrado) return null;
-            if (state.LevelOf(id) >= state.Cave) return PurchaseResult.PassFirst;
-            if (state.CaveBreaks < MapLock(rules, permanents)) return PurchaseResult.Locked;
             return null;
         }
 
-        /// <summary>Os cristais que a trava do Mapa pede: os das regras, menos os da Memória (D-158).</summary>
-        public static long MapLock(MiningRules rules, Permanents permanents = null) =>
-            permanents != null ? permanents.MapLock(rules) : rules.LetradoBreaks;
-
-        /// <param name="rules">Para a trava do Letrado (<see cref="Blocked"/>). Sem ela, nada trava.</param>
+        /// <param name="rules">Para as travas (<see cref="Blocked"/>).</param>
         public static PurchaseResult TryPurchase(GameState state, EconomyRules economy, UpgradeId id,
                                                  MiningRules rules = null, Permanents permanents = null)
         {

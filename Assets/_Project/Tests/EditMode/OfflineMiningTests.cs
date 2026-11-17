@@ -19,7 +19,7 @@ namespace MinersIdle.Tests
             new MiningRules(
                 initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2,
                 spawnDistance: 12, crystalHealth: 1, crystalReward: 1.2, damage: 1, hitInterval: 2, walkSpeed: 4,
-                miningRange: 1, caveCount: 100, caveHealthGrowth: 1.25, caveRewardGrowth: 1.25, letradoBreaks: 100,
+                miningRange: 1, caveCount: 100, caveHealthGrowth: 1.25, caveRewardGrowth: 1.25, floorBreaks: 100,
                 arrivalStrike: arrival, pickaxeFormula: PickaxeFormula.LevelScaled, levelsPerBiome: 10,
                 offlineMaxSeconds: maxHours * Hour);
 
@@ -30,7 +30,6 @@ namespace MinersIdle.Tests
             doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
             boots: new UpgradeDefinition(0, 1, 0, 0),
             minHitInterval: 0.1,
-            letrado: new UpgradeDefinition(0, 1, 100, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05),
             intern: new UpgradeDefinition(500, 1, 1, 1),
             internPickaxe: new UpgradeDefinition(50, 4, 19, 5),
@@ -245,7 +244,7 @@ namespace MinersIdle.Tests
         // ── Na simulação (D-189, D-197) ──────────────────────────────────────────────────────────────────────
 
         [Test]
-        public void ApplyOffline_PaysTheShards_IntoTheDay_WithoutMovingTheMapLock()
+        public void ApplyOffline_PaysTheShards_IntoTheDay_WithoutFillingTheFloorBar()
         {
             var state = At(15, (UpgradeId.Intern, 1));
             var sim = new MiningSimulation(Rules(), new SeededRandom(1), state, V7(), permanents: NoPermanents());
@@ -257,7 +256,7 @@ namespace MinersIdle.Tests
             Assert.That(report.Shards, Is.GreaterThan(0));
             Assert.That(sim.State.Shards, Is.EqualTo(report.Shards).Within(1e-6));
             Assert.That(sim.State.ShardsEarned, Is.EqualTo(report.Shards).Within(1e-6), "conta nas lascas ganhas do dia");
-            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0), "não conta na trava do Mapa");
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0), "não conta na barra do andar");
             Assert.That(sim.State.Breaks, Is.EqualTo(0));
             Assert.That(sim.State.Cave, Is.EqualTo(15), "não passa de nível");
             Assert.That(paid, Is.EqualTo(1), "o HUD fica sabendo");

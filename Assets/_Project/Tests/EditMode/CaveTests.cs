@@ -7,37 +7,29 @@ using NUnit.Framework;
 namespace MinersIdle.Tests
 {
     /// <summary>
-    /// Marco 8, E1: as cavernas e o Letrado no núcleo. Vida × 8 e lascas × 3 por caverna (D-92); o Letrado só com 100
-    /// cristais quebrados na caverna, contando toda quebra (D-93, D-95), um por caverna; o nível n leva à caverna n+1 e
-    /// dobra o dano dali em diante (GDD v5). E2: a passagem põe a parede a 12 un (D-107), com 2 × a vida do cristal da
-    /// caverna nova (D-98); ela apanha de golpe, toque e crítico, não paga lascas nem conta (D-108), e a caverna muda
-    /// quando ela cai. E3: na caverna 10, o Letrado 10 leva à última parede e ao coração da montanha (D-112); o tempo de
-    /// jogo e as lascas ganhas, para a tela do fim.
+    /// Os andares no núcleo. Marco 8: vida e lascas crescem por andar (D-92); toda quebra conta para a passagem (D-95);
+    /// tempo de jogo e lascas ganhas para a tela do fim; no último andar, o coração da montanha (D-112). M9c E1 (GDD v8): o
+    /// Mapa (o Letrado) e a parede saíram (D-256); a passagem é o Próximo Andar, com a barra de <c>andar × 10</c> cristais
+    /// (D-239): cheia, fica cheia (D-259), e o Próximo Andar entra no andar seguinte, zera a barra e refaz a fila com os
+    /// cristais de lá; no último andar leva ao coração (D-258). Os testes do Mapa e da parede viraram estes.
     /// </summary>
     public class CaveTests
     {
-        const int Breaks = 100;
+        /// <summary>Cristais por andar na barra (GDD v8: 10; o andar n pede n × 10).</summary>
+        const int Breaks = 10;
 
         /// <summary>
-        /// Dano 100 contra vida 10: um toque (33%) já quebra o cristal da caverna 1. Sem tempo passando (Tick(0)), o anão
+        /// Dano 100 contra vida 10: um toque (33%) já quebra o cristal do andar 1. Sem tempo passando (Tick(0)), o anão
         /// não golpeia: só quebra o que o teste manda.
         /// </summary>
         static MiningRules Rules(int caveCount = 10, double spawnInterval = 1e9) =>
             new MiningRules(
                 initialCrystals: 4, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: spawnInterval, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: 10, crystalReward: 1, damage: 100, hitInterval: 1, walkSpeed: 4, miningRange: 1,
-                minCrystals: 4, caveCount: caveCount, caveHealthGrowth: 8, caveRewardGrowth: 3, letradoBreaks: Breaks);
+                minCrystals: 4, caveCount: caveCount, caveHealthGrowth: 8, caveRewardGrowth: 3, floorBreaks: Breaks);
 
-        /// <summary>Só o Letrado à venda (GDD v5: 100 × 10^(n−1), 10 níveis, dano × 2).</summary>
-        static EconomyRules WithLetrado()
-        {
-            var off = new UpgradeDefinition(0, 1, 0, 0);
-            return new EconomyRules(off, off, off, off, off, 0.1, letrado: new UpgradeDefinition(100, 10, 10, 2));
-        }
-
-        static MiningSimulation Sim(EconomyRules economy = null, MiningRules rules = null, ulong seed = 1) =>
-            new MiningSimulation(rules ?? Rules(), new SeededRandom(seed), economy: economy ?? WithLetrado(),
-                                 strike: new StrikeRules(0, 2, 0.33, 1));
+        static MiningSimulation Sim(MiningRules rules = null, ulong seed = 1) =>
+            new MiningSimulation(rules ?? Rules(), new SeededRandom(seed), strike: new StrikeRules(0, 2, 0.33, 1));
 
         /// <summary>Quebra <paramref name="count"/> cristais pelo atalho do debug (o mesmo caminho de uma quebra normal).</summary>
         static void BreakCrystals(MiningSimulation sim, int count)
@@ -47,29 +39,6 @@ namespace MinersIdle.Tests
                 sim.Tick(0); // escolhe o alvo (e repõe a fila no mínimo)
                 Assert.That(sim.BreakTarget(), Is.True, $"quebra {i + 1}");
             }
-        }
-
-        /// <summary>Os 100 cristais, o Letrado comprado e a parede posta.</summary>
-        static MiningSimulation WithTheWall(MiningRules rules = null)
-        {
-            var sim = Sim(rules: rules);
-            sim.AddShards(1e6);
-            sim.FillCaveBreaks();
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased));
-            Assert.That(sim.PassCave(), Is.True);
-            return sim;
-        }
-
-        /// <summary>Quebra pelo debug os cristais antes da parede, até ela ser o alvo do anão.</summary>
-        static void ReachTheWall(MiningSimulation sim)
-        {
-            for (int i = 0; i < 20; i++)
-            {
-                sim.Tick(0);
-                if (sim.Miner.Target == sim.Wall) return;
-                sim.BreakTarget();
-            }
-            Assert.Fail("a parede não virou o alvo");
         }
 
         [Test]
@@ -85,180 +54,193 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Letrado_IsLockedUntil100Breaks_AndATapBreakCounts()
+        public void TheBar_FillsWithEveryBreak_AndATapBreakCounts()
         {
             var sim = Sim();
-            sim.AddShards(1e6);
-
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Locked));
-            var locked = sim.Preview(UpgradeId.Letrado);
-            Assert.That(locked.State, Is.EqualTo(UpgradeButtonState.Locked));
-            Assert.That(locked.Progress, Is.EqualTo(0));
-            Assert.That(locked.ProgressGoal, Is.EqualTo(Breaks));
-            Assert.That(locked.NextCost, Is.EqualTo(100), "o preço aparece apagado");
+            Assert.That(sim.RequiredBreaks, Is.EqualTo(Breaks), "andar 1: 1 × 10");
+            Assert.That(sim.FloorProgress, Is.EqualTo(0));
+            Assert.That(sim.CanAdvance, Is.False);
+            Assert.That(sim.AdvanceFloor(), Is.False, "sem a barra cheia");
 
             BreakCrystals(sim, Breaks - 1);
             Assert.That(sim.State.CaveBreaks, Is.EqualTo(Breaks - 1));
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Locked), "99 não bastam");
-            Assert.That(sim.Preview(UpgradeId.Letrado).Progress, Is.EqualTo(Breaks - 1));
+            Assert.That(sim.FloorProgress, Is.EqualTo(0.9).Within(1e-9));
+            Assert.That(sim.CanAdvance, Is.False, "9 não bastam");
 
-            // O 100º pelo toque (D-95: toda quebra conta).
+            // O 10º pelo toque (D-95: toda quebra conta).
             sim.Tick(0);
             sim.Tap();
             Assert.That(sim.State.CaveBreaks, Is.EqualTo(Breaks), "a quebra do toque conta");
-            Assert.That(sim.Preview(UpgradeId.Letrado).State, Is.EqualTo(UpgradeButtonState.Purchasable));
-
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased));
-            Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(1));
-            Assert.That(sim.State.Shards, Is.EqualTo(1e6 + Breaks - 100).Within(1e-6), "custou 100");
+            Assert.That(sim.FloorProgress, Is.EqualTo(1));
+            Assert.That(sim.CanAdvance, Is.True);
         }
 
         [Test]
-        public void Letrado_IsOnePerCave_AndShowsTheCaveItOpens()
+        public void TheBar_StaysFull_AndTheExtraBreaksDoNotCarryOver()
         {
             var sim = Sim();
-            sim.AddShards(1e9);
-            sim.FillCaveBreaks();
+            BreakCrystals(sim, Breaks + 5);
+            Assert.That(sim.FloorProgress, Is.EqualTo(1), "cheia fica em 100% (D-259)");
+            Assert.That(sim.CanAdvance, Is.True);
 
-            var before = sim.Preview(UpgradeId.Letrado);
-            Assert.That(before.CurrentValue, Is.EqualTo(1), "Caverna 1 »");
-            Assert.That(before.NextValue, Is.EqualTo(2), "» 2");
-
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased));
-            BreakCrystals(sim, Breaks);
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.PassFirst), "o 2º só na caverna 2");
-            Assert.That(sim.Preview(UpgradeId.Letrado).State, Is.EqualTo(UpgradeButtonState.PassFirst));
-            Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(1));
+            Assert.That(sim.AdvanceFloor(), Is.True);
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0), "o andar 2 começa do zero");
+            Assert.That(sim.FloorProgress, Is.EqualTo(0));
         }
 
         [Test]
-        public void PassCave_NeedsTheLetrado_ThenMovesOnWhenTheWallFalls_AndTheCountStartsOver()
+        public void TheRequirement_GrowsWithTheFloor()
         {
             var sim = Sim();
-            var caves = new List<int>();
-            sim.CaveChanged += caves.Add;
-            sim.AddShards(1e6);
+            foreach (int floor in new[] { 2, 5, 10 })
+            {
+                sim.SkipToCave(floor);
+                Assert.That(sim.RequiredBreaks, Is.EqualTo(floor * Breaks), $"andar {floor}: {floor} × 10 (D-239)");
+            }
+        }
 
-            Assert.That(sim.CanPassCave, Is.False, "sem Letrado");
-            Assert.That(sim.PassCave(), Is.False);
+        [Test]
+        public void AdvanceFloor_EntersTheNextFloor_AndTheCountStartsOver()
+        {
+            var sim = Sim();
+            var floors = new List<int>();
+            sim.CaveChanged += floors.Add;
 
             BreakCrystals(sim, Breaks);
-            sim.Purchase(UpgradeId.Letrado);
-            Assert.That(sim.CanPassCave, Is.True);
+            Assert.That(floors, Is.Empty, "a quebra avisa pelo CrystalBroken");
 
-            Assert.That(sim.PassCave(), Is.True);
-            Assert.That(sim.State.Cave, Is.EqualTo(1), "a caverna só muda quando a parede cai");
-            Assert.That(sim.Wall, Is.Not.Null);
-            Assert.That(sim.CanPassCave, Is.False, "uma parede por vez");
-            Assert.That(sim.PassCave(), Is.False);
-            Assert.That(caves, Is.Empty);
-
-            ReachTheWall(sim);
-            sim.BreakTarget();
-            Assert.That(sim.Wall, Is.Null);
+            Assert.That(sim.AdvanceFloor(), Is.True);
             Assert.That(sim.State.Cave, Is.EqualTo(2));
-            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0), "a trava recomeça na caverna nova");
-            Assert.That(caves, Is.EqualTo(new[] { 2 }));
-            Assert.That(sim.CanPassCave, Is.False, "falta o Letrado 2");
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Locked));
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0), "a barra recomeça no andar novo");
+            Assert.That(floors, Is.EqualTo(new[] { 2 }));
+            Assert.That(sim.RequiredBreaks, Is.EqualTo(2 * Breaks));
+            Assert.That(sim.CanAdvance, Is.False, "a barra do andar 2 está vazia");
+            Assert.That(sim.AdvanceFloor(), Is.False);
         }
 
         [Test]
-        public void NewCave_SpawnsTougherCrystals_AndTheOldOnesStayAsTheyWere()
+        public void AdvanceFloor_RefreshesTheQueue_WithTheNewFloorsCrystals()
         {
             var sim = Sim();
-            sim.SkipToNextCave();
+            sim.FillFloorBar();
+            sim.Tick(0); // o alvo: o primeiro da fila do andar 1
+            Assume.That(sim.Miner.Target, Is.Not.Null);
+            var old = sim.Crystals.ToList();
+            var spawned = new List<Crystal>();
+            var targets = new List<Crystal>();
+            sim.CrystalSpawned += spawned.Add;
+            sim.TargetChanged += targets.Add;
 
-            Assert.That(sim.Crystals.All(c => c.MaxHealth == 10), Is.True, "os da fila são da caverna 1");
-            var crystal = sim.SpawnCrystalNow();
-            Assert.That(crystal.MaxHealth, Is.EqualTo(80));
-            Assert.That(crystal.Reward, Is.EqualTo(3));
+            Assert.That(sim.AdvanceFloor(), Is.True);
 
-            // A quebra paga as lascas da caverna do cristal.
-            sim.Tick(0);
-            double shards = sim.State.Shards;
-            sim.BreakTarget();
-            Assert.That(sim.State.Shards - shards, Is.EqualTo(1), "o da frente ainda é da caverna 1");
+            Assert.That(sim.Crystals.Intersect(old), Is.Empty, "a fila do andar 1 sai");
+            Assert.That(sim.Crystals.Count, Is.EqualTo(4), "a do andar 2 nasce como a do começo");
+            Assert.That(sim.Crystals.All(c => c.MaxHealth == 80 && c.Reward == 3), Is.True, "vida e lascas do andar 2");
+            Assert.That(sim.Crystals.Select(c => c.Distance - sim.Miner.Distance), Is.EqualTo(new[] { 3.0, 5, 7, 9 }),
+                        "na tela, à frente do anão (D-60)");
+            Assert.That(spawned, Is.EqualTo(sim.Crystals), "quem desenha fica sabendo, cristal por cristal");
+            Assert.That(targets, Is.EqualTo(new Crystal[] { null }), "o alvo velho sai");
+            Assert.That(sim.Miner.Target, Is.Null);
+            Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running), "o anão corre até o primeiro do andar novo");
         }
 
         [Test]
-        public void Letrado_DoublesTheDamage_FromCave2On()
+        public void AdvanceFloor_PaysNothing_AndIsNotABreak()
+        {
+            var sim = Sim();
+            sim.FillFloorBar();
+            double shards = sim.State.Shards;
+            long breaks = sim.State.Breaks;
+
+            sim.AdvanceFloor();
+
+            Assert.That(sim.State.Shards, Is.EqualTo(shards), "passar não paga");
+            Assert.That(sim.State.Breaks, Is.EqualTo(breaks), "nem conta como cristal");
+        }
+
+        [Test]
+        public void TheFloor_DoesNotChangeTheDamage()
         {
             var sim = Sim();
             double damage = sim.Stats.Damage;
-            var stats = new List<double>();
-            sim.StatsChanged += s => stats.Add(s.Damage);
-
             sim.SkipToNextCave();
-            Assert.That(sim.Stats.Damage, Is.EqualTo(damage * 2));
-            Assert.That(stats, Is.EqualTo(new[] { damage * 2 }), "o HUD fica sabendo");
-
-            sim.SkipToNextCave();
-            Assert.That(sim.Stats.Damage, Is.EqualTo(damage * 2), "não acumula: só o da caverna");
+            Assert.That(sim.Stats.Damage, Is.EqualTo(damage), "sem o ×2 do Letrado (saiu no v8, D-256)");
+            sim.SkipToCave(10);
+            Assert.That(sim.Stats.Damage, Is.EqualTo(damage));
         }
 
         [Test]
-        public void LastCave_TheLastLetradoLeadsToTheLastWall_AndTheHeart()
+        public void LastFloor_TheFullBarLeadsToTheHeart()
         {
             var sim = Sim();
-            for (int cave = 1; cave < 10; cave++) Assert.That(sim.SkipToNextCave(), Is.True, $"caverna {cave}");
+            for (int floor = 1; floor < 10; floor++) Assert.That(sim.SkipToNextCave(), Is.True, $"andar {floor}");
 
             Assert.That(sim.State.Cave, Is.EqualTo(10));
-            Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(9), "o atalho dá o Letrado de cada caverna");
-            Assert.That(sim.SkipToNextCave(), Is.False, "não há caverna 11");
-            Assert.That(sim.CanPassCave, Is.False, "sem o Letrado 10");
+            Assert.That(sim.SkipToNextCave(), Is.False, "não há andar 11");
+            Assert.That(sim.CanAdvance, Is.False, "a barra do 10 está vazia");
 
             int hearts = 0;
-            var caves = new List<int>();
+            var floors = new List<int>();
             sim.HeartReached += () => hearts++;
-            sim.CaveChanged += caves.Add;
-            sim.AddShards(1e12);
-            sim.FillCaveBreaks();
-            caves.Clear();
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased), "o Letrado 10 existe");
-            Assert.That(sim.CanPassCave, Is.True, "o último Letrado leva à última parede (D-112)");
+            sim.CaveChanged += floors.Add;
+            sim.FillFloorBar();
+            floors.Clear();
+            Assert.That(sim.CanAdvance, Is.True, "no último andar o Próximo Andar leva ao coração (D-258)");
 
-            Assert.That(sim.PassCave(), Is.True);
-            Assert.That(sim.Wall.MaxHealth, Is.EqualTo(2 * 10 * Math.Pow(8, 10)), "a fórmula da D-98, uma caverna além");
-            ReachTheWall(sim);
-            sim.BreakTarget();
-
+            Assert.That(sim.AdvanceFloor(), Is.True);
             Assert.That(hearts, Is.EqualTo(1));
             Assert.That(sim.State.ReachedHeart, Is.True);
-            Assert.That(sim.State.Cave, Is.EqualTo(10), "o jogo segue na caverna 10, sem reset");
-            Assert.That(caves, Is.Empty, "não muda de caverna");
-            Assert.That(sim.CanPassCave, Is.False, "depois do coração, não há passagem");
-            Assert.That(sim.PassCave(), Is.False);
+            Assert.That(sim.State.Cave, Is.EqualTo(10), "o jogo segue no andar 10, sem reset");
+            Assert.That(floors, Is.Empty, "não muda de andar");
+            Assert.That(sim.CanAdvance, Is.False, "depois do coração, não há passagem");
+            Assert.That(sim.AdvanceFloor(), Is.False);
 
             sim.Tick(0);
-            Assert.That(sim.Crystals.Count, Is.EqualTo(4), "a fila volta");
-            Assert.That(sim.Crystals.All(c => c.MaxHealth == 10 * Math.Pow(8, 9)), Is.True, "cristais da caverna 10");
+            Assert.That(sim.Crystals.Count, Is.GreaterThanOrEqualTo(4), "a fila segue");
+            Assert.That(sim.Crystals.All(c => c.MaxHealth == 10 * Math.Pow(8, 9)), Is.True, "cristais do andar 10");
             Assert.That(hearts, Is.EqualTo(1), "o fim sai uma vez só");
         }
 
         [Test]
-        public void SkipToCave_GoesStraightThere_WithTheLetradosBefore()
+        public void SkipToCave_GoesStraightThere()
         {
             var sim = Sim();
-            var caves = new List<int>();
-            sim.CaveChanged += caves.Add;
-            double damage = sim.Stats.Damage;
+            var floors = new List<int>();
+            sim.CaveChanged += floors.Add;
 
             Assert.That(sim.SkipToCave(10), Is.True);
 
-            Assert.That(caves, Is.EqualTo(new[] { 10 }), "um aviso só, direto na 10");
+            Assert.That(floors, Is.EqualTo(new[] { 10 }), "um aviso só, direto no 10");
             Assert.That(sim.State.Cave, Is.EqualTo(10));
-            Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(9));
             Assert.That(sim.State.CaveBreaks, Is.EqualTo(0));
-            Assert.That(sim.Stats.Damage, Is.EqualTo(damage * 2), "o ×2 do Letrado, como em qualquer caverna depois da 1");
+            Assert.That(sim.Crystals.All(c => c.MaxHealth == 10 * Math.Pow(8, 9)), Is.True, "a fila do andar 10");
             Assert.That(sim.SkipToCave(5), Is.False, "não volta");
-            Assert.That(sim.SkipToCave(15), Is.False, "não passa da última");
+            Assert.That(sim.SkipToCave(15), Is.False, "não passa do último");
+        }
+
+        [Test]
+        public void GoToFloor_GoesUpOrDown_AndLeavesTheHeartBehind()
+        {
+            var sim = Sim();
+            Assert.That(sim.GoToFloor(10), Is.True);
+            sim.FillFloorBar();
+            sim.AdvanceFloor();
+            Assume.That(sim.State.ReachedHeart, Is.True);
+
+            Assert.That(sim.GoToFloor(10), Is.False, "já está nele");
+            Assert.That(sim.GoToFloor(5), Is.True, "o atalho do DBG sobe também");
+            Assert.That(sim.State.Cave, Is.EqualTo(5));
+            Assert.That(sim.State.ReachedHeart, Is.False, "o coração fica para trás");
+            Assert.That(sim.Crystals.All(c => c.MaxHealth == 10 * Math.Pow(8, 4)), Is.True, "a fila do andar 5");
+            Assert.That(sim.GoToFloor(0), Is.True, "abaixo de 1 vale o 1");
+            Assert.That(sim.State.Cave, Is.EqualTo(1));
+            Assert.That(sim.Permanents.State.DeepestFloor, Is.EqualTo(10), "o recorde não desce");
         }
 
         [Test]
         public void PlayTime_AndShardsEarned_CountForTheEnd()
         {
-            var sim = Sim(rules: Rules(spawnInterval: 1));
+            var sim = Sim(Rules(spawnInterval: 1));
             sim.Tick(30);
             Assert.That(sim.State.PlaySeconds, Is.EqualTo(30).Within(1e-9), "o tempo de jogo é o da simulação");
             Assume.That(sim.State.Breaks, Is.GreaterThan(0));
@@ -267,171 +249,68 @@ namespace MinersIdle.Tests
             double earned = sim.State.ShardsEarned;
             sim.AddShards(500);
             Assert.That(sim.State.ShardsEarned, Is.EqualTo(earned), "as do debug não contam");
-            sim.FillCaveBreaks();
-            sim.Purchase(UpgradeId.Letrado);
-            Assert.That(sim.State.ShardsEarned, Is.EqualTo(earned), "gastar não desconta");
+            sim.FillFloorBar();
+            sim.AdvanceFloor();
+            Assert.That(sim.State.ShardsEarned, Is.EqualTo(earned), "passar de andar não conta");
         }
 
         [Test]
-        public void FillCaveBreaks_UnlocksTheLetrado_AndNotifies()
+        public void FillFloorBar_EnablesTheAdvance_AndNotifies()
         {
             var sim = Sim();
             int notified = 0;
             sim.CaveChanged += _ => notified++;
 
-            sim.FillCaveBreaks();
+            sim.FillFloorBar();
             Assert.That(sim.State.CaveBreaks, Is.EqualTo(Breaks));
+            Assert.That(sim.CanAdvance, Is.True);
             Assert.That(notified, Is.EqualTo(1));
 
-            sim.FillCaveBreaks();
-            Assert.That(notified, Is.EqualTo(1), "já cheio: nada muda");
+            sim.FillFloorBar();
+            Assert.That(notified, Is.EqualTo(1), "já cheia: nada muda");
         }
 
         [Test]
-        public void WithoutTheLetrado_TheGameStaysInCave1()
+        public void WithOneFloor_TheFullBarLeadsStraightToTheHeart()
         {
-            var off = new UpgradeDefinition(0, 1, 0, 0);
-            var sim = Sim(new EconomyRules(new UpgradeDefinition(10, 4, 19, 2), off, off, off, off, 0.5), Rules(caveCount: 1));
-            sim.AddShards(1e6);
-            sim.FillCaveBreaks();
+            var sim = Sim(Rules(caveCount: 1));
+            sim.FillFloorBar();
 
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.MaxLevel));
-            Assert.That(sim.CanPassCave, Is.False);
             Assert.That(sim.SkipToNextCave(), Is.False);
+            Assert.That(sim.AdvanceFloor(), Is.True);
+            Assert.That(sim.State.ReachedHeart, Is.True);
             Assert.That(sim.State.Cave, Is.EqualTo(1));
         }
 
         [Test]
-        public void TheWall_Stands12Ahead_AndTheCrystalsBeyondItAreGone()
+        public void TheNewFloor_KeepsSpawning_LikeAnyOther()
         {
-            var sim = Sim();
-            sim.AddShards(1e6);
-            sim.FillCaveBreaks();
-            sim.Purchase(UpgradeId.Letrado);
-            sim.Tick(0); // o alvo: o cristal a 3 un
-            foreach (double at in new[] { 11.0, 15, 20 }) sim.SpawnCrystalAt(at);
-            var spawned = new List<Crystal>();
-            sim.CrystalSpawned += spawned.Add;
-
-            Assert.That(sim.PassCave(), Is.True);
-
-            var wall = sim.Wall;
-            Assert.That(wall.IsWall, Is.True);
-            Assert.That(wall.Distance, Is.EqualTo(sim.Miner.Distance + 12), "onde os cristais nascem (D-107)");
-            Assert.That(wall.MaxHealth, Is.EqualTo(2 * 80), "2 × o cristal da caverna 2 (D-98)");
-            Assert.That(wall.Reward, Is.EqualTo(0));
-            Assert.That(spawned, Is.EqualTo(new[] { wall }), "quem desenha fica sabendo");
-            Assert.That(sim.Crystals.Last(), Is.SameAs(wall), "a parede é a última da fila");
-            Assert.That(sim.Crystals.Where(c => !c.IsWall).Select(c => c.Distance), Is.EqualTo(new[] { 3.0, 5, 7, 9 }),
-                        "os de depois somem (o de 11 ficaria a menos do espaço mínimo dela)");
-        }
-
-        [Test]
-        public void TheWall_StaysBehindTheTarget()
-        {
-            var sim = Sim();
-            sim.AddShards(1e6);
-            sim.FillCaveBreaks();
-            sim.Purchase(UpgradeId.Letrado);
-            var far = sim.SpawnCrystalAt(30);
-            BreakCrystals(sim, 4); // os quatro do começo; a fila se repõe depois do de 30
-            sim.Tick(0);
-            Assume.That(sim.Miner.Target, Is.SameAs(far), "o alvo está além dos 12 un");
-
-            sim.PassCave();
-            Assert.That(sim.Crystals, Does.Contain(far), "o alvo do anão não some");
-            Assert.That(sim.Wall.Distance, Is.EqualTo(far.Distance + 2), "a parede fica logo depois dele");
-        }
-
-        [Test]
-        public void NothingIsBorn_WhileTheWallStands()
-        {
-            var sim = WithTheWall(Rules(spawnInterval: 1));
+            var sim = Sim(Rules(spawnInterval: 1));
+            sim.FillFloorBar();
+            sim.AdvanceFloor();
             var events = new List<string>();
             sim.CrystalSpawned += c => events.Add("nasce");
-            sim.CrystalBroken += c => events.Add(c.IsWall ? "parede" : "quebra");
+            sim.CrystalBroken += c => events.Add("quebra");
 
-            Assert.That(sim.SpawnCrystalNow(), Is.Null, "nem pelo debug");
-            sim.Tick(60); // golpes de 100: os cristais e a parede (160) caem bem antes
+            Assert.That(sim.SpawnCrystalNow(), Is.Not.Null, "o atalho do debug também");
+            sim.Tick(60); // golpes de 100 contra cristais de 80: o anão quebra e a fila se repõe
 
-            int wall = events.IndexOf("parede");
-            Assert.That(wall, Is.GreaterThan(0), "a parede caiu");
-            Assert.That(events.Take(wall), Has.No.Member("nasce"), "nada nasce com ela de pé");
-            Assert.That(events.Skip(wall), Has.Member("nasce"), "depois, a fila volta");
-            Assert.That(sim.State.Cave, Is.EqualTo(2));
+            Assert.That(events, Has.Member("quebra"));
+            Assert.That(events.Count(e => e == "nasce"), Is.GreaterThan(1), "a fila se repõe no andar novo");
+            Assert.That(sim.State.Cave, Is.EqualTo(2), "sem o Próximo Andar, o andar não muda sozinho");
+            Assert.That(sim.State.CaveBreaks, Is.GreaterThan(0), "as quebras do andar 2 enchem a barra dele");
         }
 
         [Test]
-        public void TapAndCritical_HitTheWall()
+        public void NextFloorShortcut_DoesNotNeedTheBar()
         {
-            var sim = WithTheWall();
-            ReachTheWall(sim);
-            var hits = new List<MiningHit>();
-            sim.HitLanded += hits.Add;
-
-            sim.ForceCritical = true;
-            sim.Tap();
-
-            Assert.That(hits.Count, Is.EqualTo(1));
-            Assert.That(hits[0].Crystal.IsWall, Is.True);
-            Assert.That(hits[0].IsTap && hits[0].IsCritical, Is.True);
-            Assert.That(sim.Wall.Health, Is.EqualTo(160 - 100 * 0.33 * 2).Within(1e-9), "toque (33%) × crítico (×2)");
-        }
-
-        [Test]
-        public void TheWall_PaysNoShards_AndIsNotABreak()
-        {
-            var sim = WithTheWall();
-            ReachTheWall(sim);
-            double shards = sim.State.Shards;
-            long breaks = sim.State.Breaks;
-            int shardEvents = 0;
-            sim.ShardsChanged += _ => shardEvents++;
-
-            sim.BreakTarget();
-
-            Assert.That(sim.State.Shards, Is.EqualTo(shards), "sem lascas (D-108)");
-            Assert.That(shardEvents, Is.EqualTo(0));
-            Assert.That(sim.State.Breaks, Is.EqualTo(breaks), "não conta como cristal");
-            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0), "a caverna nova começa do zero");
-        }
-
-        [Test]
-        public void BreakingTheWall_EntersTheNextCave_WithItsCrystals()
-        {
-            var sim = WithTheWall();
-            var caves = new List<int>();
-            sim.CaveChanged += caves.Add;
-            ReachTheWall(sim);
-            double damage = sim.Stats.Damage;
-
-            sim.Tap(); // com toques: a regra é a mesma do golpe
-            sim.Tap();
-            sim.Tap();
-            sim.Tap();
-            sim.Tap();
-            Assert.That(sim.Wall, Is.Null, "5 toques de 33 tiram os 160");
-
-            Assert.That(caves, Is.EqualTo(new[] { 2 }));
-            Assert.That(sim.State.Cave, Is.EqualTo(2));
-            Assert.That(sim.Stats.Damage, Is.EqualTo(damage * 2), "o dano dobra na caverna 2");
+            var sim = Sim();
             sim.Tick(0);
-            Assert.That(sim.Crystals.Count, Is.EqualTo(4), "a fila volta no mínimo");
-            Assert.That(sim.Crystals.All(c => c.MaxHealth == 80 && c.Distance >= sim.Miner.Distance + 12), Is.True,
-                        "cristais da caverna 2, nascendo fora da tela");
-        }
-
-        [Test]
-        public void NextCaveShortcut_TakesTheWallAway()
-        {
-            var sim = WithTheWall();
-            ReachTheWall(sim);
 
             Assert.That(sim.SkipToNextCave(), Is.True);
-            Assert.That(sim.Wall, Is.Null);
-            Assert.That(sim.Crystals.Any(c => c.IsWall), Is.False);
             Assert.That(sim.Miner.Target, Is.Null);
             Assert.That(sim.State.Cave, Is.EqualTo(2));
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0));
         }
 
         [Test]
@@ -440,18 +319,16 @@ namespace MinersIdle.Tests
             MiningSimulation Play()
             {
                 var sim = Sim(seed: 7);
-                sim.AddShards(1e6);
                 sim.Tick(30);
-                sim.FillCaveBreaks();
-                sim.Purchase(UpgradeId.Letrado);
-                sim.PassCave();
+                sim.FillFloorBar();
+                sim.AdvanceFloor();
                 sim.Tick(120);
                 return sim;
             }
 
             var a = Play();
             var b = Play();
-            Assert.That(a.State.Cave, Is.EqualTo(2), "a parede caiu nos 120 s");
+            Assert.That(a.State.Cave, Is.EqualTo(2));
             Assert.That(b.State.Cave, Is.EqualTo(a.State.Cave));
             Assert.That(b.State.Shards, Is.EqualTo(a.State.Shards));
             Assert.That(b.State.CaveBreaks, Is.EqualTo(a.State.CaveBreaks).And.GreaterThan(0));

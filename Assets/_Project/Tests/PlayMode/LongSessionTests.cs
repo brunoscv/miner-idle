@@ -103,7 +103,7 @@ namespace MinersIdle.Tests
                 {
                     nextShop += 30;
                     purchases += BuyWhatFits();
-                    if (Simulation.CanPassCave && Simulation.PassCave()) caves++;
+                    if (Simulation.CanAdvance && Simulation.AdvanceFloor()) caves++;
                 }
 
                 if (played >= nextOffline)

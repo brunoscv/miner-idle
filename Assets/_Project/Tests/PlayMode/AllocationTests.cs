@@ -180,41 +180,37 @@ namespace MinersIdle.Tests
                         "x10: \"xN\" e \"x10!\" pelo SetText");
         }
 
-        /// <summary>M8 (E2): com a parede da passagem na tela, o anão batendo nela e o corredor desenhando, nada aloca.</summary>
+        /// <summary>
+        /// M9c E1: a parede saiu (D-256). O que ficou no lugar dela é a transição de andar: o palco segura a fila do andar
+        /// velho e a desenha até o escuro. Com essa fila na tela, a simulação contando a transição e o corredor desenhando,
+        /// nada aloca por quadro.
+        /// </summary>
         [UnityTest]
-        public IEnumerator HittingTheWall_DoesNotAllocate()
+        public IEnumerator AdvancingTheFloor_HoldingTheOldQueue_DoesNotAllocate()
         {
-            yield return LoadAndWarmUp(TestBalance.GddV5); // no v7 o dano da caverna 2 derruba a parede antes da medida
+            yield return LoadAndWarmUp();
             var simulation = _runner.Simulation;
-            if (!simulation.Economy.Get(UpgradeId.Letrado).IsEnabled)
-                Assert.Ignore("O balanço ativo não tem o Letrado (rode o setup do projeto).");
             var stage = UnityEngine.Object.FindAnyObjectByType<DescentStage>();
+            if (simulation.FloorTransitionSeconds <= 0)
+                Assert.Ignore("Sem transição de andar no balanço ativo (rode o setup do projeto).");
 
-            simulation.AddShards(1e6);
-            simulation.FillCaveBreaks();
-            simulation.Purchase(UpgradeId.Letrado);
-            Assert.That(simulation.PassCave(), Is.True);
-            for (int i = 0; i < 20 && simulation.Miner.Target != simulation.Wall; i++)
+            // Ensaio: uma passagem inteira, com a fila velha desenhada pela primeira vez e a transição até o fim.
+            simulation.FillFloorBar();
+            Assert.That(simulation.AdvanceFloor(), Is.True);
+            for (int f = 0; f < 5; f++)
             {
-                simulation.Tick(0);
-                if (simulation.Miner.Target != simulation.Wall) simulation.BreakTarget();
+                simulation.Tick(1.0 / 60);
+                stage.Draw();
             }
-            _runner.TimeScale = 20f;
-            for (float t = 0; t < 3f && simulation.Miner.State != MinerState.Mining; t += Time.unscaledDeltaTime) yield return null;
-            _runner.TimeScale = 0f; // só os Tick do teste andam
+            for (float t = 0; t < 10f && simulation.IsInFloorTransition; t += Time.unscaledDeltaTime) yield return null;
+            Assume.That(simulation.IsInFloorTransition, Is.False, "a transição de ensaio acabou");
             yield return Settle();
-            Assume.That(simulation.Wall, Is.Not.Null, "a parede ainda de pé");
-            Assume.That(simulation.Miner.State, Is.EqualTo(MinerState.Mining), "o anão na parede");
 
-            // Um quadro de ensaio (tremor, faíscas e barra da parede pela primeira vez), depois um intervalo de golpe
-            // inteiro em quadros de 60 fps (2 s no GDD v5): pelo menos um golpe cai dentro da medida.
-            simulation.Tick(simulation.Stats.HitInterval);
-            stage.Draw();
-            yield return Settle();
-            int frames = (int)Math.Ceiling(simulation.Stats.HitInterval * 60) + 1;
-            int hits = 0;
-            Action<MiningHit> onHit = _ => hits++;
-            simulation.HitLanded += onHit;
+            _runner.TimeScale = 0f; // só os Tick do teste andam
+            simulation.FillFloorBar();
+            Assert.That(simulation.AdvanceFloor(), Is.True);
+            Assume.That(stage.IsHoldingOldQueue, Is.True, "o palco segura a fila do andar velho");
+            int frames = Math.Max(1, Math.Min(30, (int)Math.Floor(simulation.FloorTransitionLeft * 60) - 2));
             int total = AllocationsAndEvents(() =>
             {
                 for (int f = 0; f < frames; f++)
@@ -223,13 +219,12 @@ namespace MinersIdle.Tests
                     stage.Draw();
                 }
             }, out int events);
-            simulation.HitLanded -= onHit;
 
-            Debug.Log($"[Alloc] parede: {frames} quadros · {hits} golpes · {total} alocações (quebras e nascimentos: {events})");
-            Assume.That(simulation.Wall, Is.Not.Null, "a parede aguentou a medida");
-            Assert.That(stage.IsWallShown, Is.True);
-            Assert.That(hits, Is.GreaterThan(0), "o anão bateu na parede");
-            Assert.That(total, Is.LessThanOrEqualTo(MaxAllocsPerEvent * events), "nada por golpe nem por quadro");
+            Debug.Log($"[Alloc] transição de andar: {frames} quadros · {total} alocações (quebras e nascimentos: {events})");
+            Assert.That(simulation.IsInFloorTransition, Is.True, "a medida coube na transição");
+            Assert.That(stage.IsHoldingOldQueue, Is.True, "a fila velha ficou na tela a medida inteira");
+            Assert.That(total, Is.LessThanOrEqualTo(MaxAllocsPerEvent * events), "nada por quadro");
+            _runner.TimeScale = 1f;
         }
 
         [UnityTest]

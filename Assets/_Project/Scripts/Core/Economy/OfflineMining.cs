@@ -111,6 +111,17 @@ namespace MinersIdle.Core
     /// </summary>
     public static class OfflineMining
     {
+        /// <summary>
+        /// O teto do tempo contado (GDD v8, D-253): 4 h; 6 h para quem já chegou ao andar 20 (o mais fundo de todas as runs,
+        /// <see cref="PermanentState.DeepestFloor"/>, ou o andar de agora, o que for maior).
+        /// </summary>
+        public static double MaxSeconds(MiningRules rules, GameState state, Permanents permanents)
+        {
+            if (rules == null) throw new ArgumentNullException(nameof(rules));
+            int deepest = Math.Max(state?.Cave ?? 1, permanents?.State.DeepestFloor ?? 1);
+            return rules.OfflineMaxSecondsFor(deepest);
+        }
+
         /// <summary>A conta do tempo fora, com o estado da run e as permanentes de agora.</summary>
         public static OfflineReport Compute(MiningRules rules, EconomyRules economy, GameState state, Permanents permanents,
                                             double secondsAway)
@@ -121,7 +132,7 @@ namespace MinersIdle.Core
             if (double.IsNaN(secondsAway)) throw new ArgumentOutOfRangeException(nameof(secondsAway));
 
             var intern = InternStats.Compute(rules, economy, state, permanents);
-            double counted = secondsAway <= 0 ? 0 : Math.Min(secondsAway, rules.OfflineMaxSeconds);
+            double counted = secondsAway <= 0 ? 0 : Math.Min(secondsAway, MaxSeconds(rules, state, permanents));
             if (!intern.IsHired)
                 return new OfflineReport(secondsAway, counted, false, 0, 0, 0, 0, 0);
 

@@ -8,21 +8,19 @@ using UnityEngine.UI;
 namespace MinersIdle.EditorTools
 {
     /// <summary>
-    /// Parte do <see cref="ProjectSetup"/> para a E3b-3 do M8 (D-143), com a cena Game aberta: os balanços do seletor no
-    /// <see cref="MiningRunner"/> (GDD v7, o padrão, e GDD v5) e o menu DBG → Cálculos (<see cref="CalculationsPanel"/>):
-    /// os botões, a linha da Picareta e o aviso fixo ao lado do botão DBG. O menu em si (fundo, grade, Fechar) vem do
+    /// Parte do <see cref="ProjectSetup"/> para a E3b-3 do M8 (D-143), com a cena Game aberta: o menu DBG → Cálculos
+    /// (<see cref="CalculationsPanel"/>): os botões, a linha da Picareta e o aviso fixo ao lado do botão DBG. No v8 (M9c E1,
+    /// D-256) saem o seletor de balanço e o botão "Picareta" (pela caverna) do menu Andar. O menu em si (fundo, grade, Fechar) vem do
     /// <see cref="DebugPanelSetup"/>. Só cria o que falta; os textos ficam na cena.
     /// </summary>
     static class CalculationsSetup
     {
-        /// <summary>Na ordem dos <see cref="MiningRunner.Balances"/>: o primeiro é o do GDD.</summary>
-        static readonly string[] BalancePaths = { ProjectSetup.GddV7BalancePath, ProjectSetup.GddV5BalancePath };
-        static readonly string[] BalanceLabels = { "GDD v7", "GDD v5" };
+        /// <summary>O nome do balanço no aviso: o único desde o v8.</summary>
+        const string BalanceLabel = "GDD v8";
 
         /// <summary>Os botões do menu, na ordem da grade de 3 colunas (o Fechar vai por último).</summary>
         static readonly (string name, string field, string label)[] Buttons =
         {
-            ("Balance", "balance", "GDD v7"),
             ("RestartRun", "restartRun", "Reiniciar run"),
             ("ResetDefaults", "resetDefaults", "Padrão GDD"),
             ("GrowthMinus", "growthMinus", "Taxa -"),
@@ -38,7 +36,7 @@ namespace MinersIdle.EditorTools
 
         public static bool EnsureInScene()
         {
-            bool changed = EnsureBalances();
+            bool changed = false;
 
             var debugPanel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.CalcMenuName) : null;
@@ -49,7 +47,7 @@ namespace MinersIdle.EditorTools
                 changed |= EnsureWarningBack(debugPanel, existing);
                 changed |= EnsureComboStacking(menu, existing);
                 changed |= EnsureRareRhythm(menu, existing);
-                return EnsurePickaxeByCave(debugPanel, existing) || changed;
+                return RemoveRetiredButtons(debugPanel, menu, existing) || changed;
             }
 
             var grid = menu.Find("Content/Buttons");
@@ -82,9 +80,7 @@ namespace MinersIdle.EditorTools
             GrayboxSetup.SetReferences(panel, references.ToArray());
 
             var so = new SerializedObject(panel);
-            var labels = so.FindProperty("balanceLabels");
-            labels.arraySize = BalanceLabels.Length;
-            for (int i = 0; i < BalanceLabels.Length; i++) labels.GetArrayElementAtIndex(i).stringValue = BalanceLabels[i];
+            so.FindProperty("balanceLabel").stringValue = BalanceLabel;
             so.FindProperty("growthFormat").stringValue = "Taxa {0}";
             so.FindProperty("stepFormat").stringValue = "Incremento {0}";
             so.FindProperty("pickaxeFormat").stringValue = PickaxeFormat;
@@ -94,9 +90,8 @@ namespace MinersIdle.EditorTools
             so.FindProperty("stepChangedFormat").stringValue = " · Picareta incremento {0}";
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            Debug.Log("[Setup] Painel de debug: menu \"Cálculos\" com o seletor GDD v7/v5, a taxa e o incremento da Picareta, " +
-                      "Reiniciar run e o aviso do cálculo na tela (M8 E3b-3, D-143).");
-            EnsurePickaxeByCave(debugPanel, panel);
+            Debug.Log("[Setup] Painel de debug: menu \"Cálculos\" com a taxa e o incremento da Picareta, Reiniciar run e o " +
+                      "aviso do cálculo na tela (M8 E3b-3, D-143).");
             EnsureComboStacking(menu, panel);
             EnsureRareRhythm(menu, panel);
             return true;
@@ -167,37 +162,29 @@ namespace MinersIdle.EditorTools
             return changed;
         }
 
-        const string PickaxeByCaveName = "PickaxeByCave";
-        const string PickaxeByLevelLabel = "Picareta: compra";
-        const string PickaxeByCaveLabel = "Picareta: caverna";
-
         /// <summary>
-        /// D-201: o botão "Picareta" no menu Caverna do DBG (antes do Fechar), ligado ao <see cref="CalculationsPanel"/>,
-        /// que já guarda a escolha e escreve o aviso. Troca a Picareta pela compra (GDD v7) pela da caverna (D-133).
+        /// M9c E1 (D-256): o seletor de balanço do menu Cálculos e o botão "Picareta" (pela caverna) do menu Andar saem da
+        /// cena; o aviso passa a dizer "GDD v8". Devolve se mudou.
         /// </summary>
-        static bool EnsurePickaxeByCave(DebugPanel debugPanel, CalculationsPanel panel)
+        static bool RemoveRetiredButtons(DebugPanel debugPanel, Transform menu, CalculationsPanel panel)
         {
-            var grid = debugPanel.transform.Find("CaveMenu/Content/Buttons");
-            if (grid == null) return false;
             bool changed = false;
-
-            var button = grid.Find(PickaxeByCaveName);
-            if (button == null)
+            foreach (var retired in new[] { menu.Find("Content/Buttons/Balance"),
+                                            debugPanel.transform.Find("CaveMenu/Content/Buttons/PickaxeByCave") })
             {
-                button = DebugPanelSetup.CreateButton(grid, PickaxeByCaveName, PickaxeByLevelLabel).transform;
-                var close = grid.Find("Close");
-                if (close != null) button.SetSiblingIndex(close.GetSiblingIndex());
+                if (retired == null) continue;
+                Object.DestroyImmediate(retired.gameObject);
                 changed = true;
             }
-
             var so = new SerializedObject(panel);
-            changed |= SetIfDifferent(so.FindProperty("pickaxeByCave"), button.GetComponent<Button>());
-            changed |= SetIfEmpty(so.FindProperty("pickaxeByLevelLabel"), PickaxeByLevelLabel);
-            changed |= SetIfEmpty(so.FindProperty("pickaxeByCaveLabel"), PickaxeByCaveLabel);
-            changed |= SetIfEmpty(so.FindProperty("pickaxeByCaveChangedFormat"), " · Picareta pela caverna");
-            so.ApplyModifiedPropertiesWithoutUndo();
-
-            if (changed) Debug.Log("[Setup] Painel de debug: botão \"Picareta\" (compra ⇄ caverna) no menu Caverna (D-201).");
+            var label = so.FindProperty("balanceLabel");
+            if (label.stringValue != BalanceLabel)
+            {
+                label.stringValue = BalanceLabel;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+            if (changed) Debug.Log("[Setup] DBG: sem o seletor de balanço e sem a Picareta pela caverna; o aviso diz GDD v8 (M9c E1).");
             return changed;
         }
 
@@ -254,27 +241,6 @@ namespace MinersIdle.EditorTools
             Object.DestroyImmediate(old.gameObject);
             GrayboxSetup.SetReferences(panel, ("warning", CreateWarning(debugPanel.transform)));
             Debug.Log("[Setup] Aviso do cálculo com faixa escura atrás (E3b-3).");
-            return true;
-        }
-
-        /// <summary>O seletor do DBG → Cálculos passa pelos balanços do GDD v7 (o padrão) e do v5. Devolve se mudou.</summary>
-        static bool EnsureBalances()
-        {
-            var runner = Object.FindAnyObjectByType<MiningRunner>();
-            if (runner == null) return false;
-
-            var so = new SerializedObject(runner);
-            var balances = so.FindProperty("balances");
-            bool same = balances.arraySize == BalancePaths.Length;
-            for (int i = 0; same && i < BalancePaths.Length; i++)
-                same = AssetDatabase.GetAssetPath(balances.GetArrayElementAtIndex(i).objectReferenceValue) == BalancePaths[i];
-            if (same) return false;
-
-            balances.arraySize = BalancePaths.Length;
-            for (int i = 0; i < BalancePaths.Length; i++)
-                balances.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(BalancePaths[i]);
-            so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log("[Setup] Balanços do DBG → Cálculos no MiningRunner: GDD v7 (padrão) e GDD v5 (E3b-3).");
             return true;
         }
     }

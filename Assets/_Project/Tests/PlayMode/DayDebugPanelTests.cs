@@ -90,16 +90,16 @@ namespace MinersIdle.Tests
             Assert.That(_runner.Simulation.Permanents.State.RedShards, Is.EqualTo(110));
             Click("GrantPermanents");
             Assert.That(_runner.Simulation.Stats.Damage, Is.EqualTo(damage * 1.1).Within(1e-9), "Sangue da Montanha 1");
-            Assert.That(_runner.Simulation.MapLock, Is.EqualTo(90), "Memória 1");
+            Assert.That(_runner.Simulation.RequiredBreaks, Is.EqualTo(5), "Memória 1: −5 da barra do andar 1 (v8, D-239)");
 
             Click("RestNow");
             Assert.That(_runner.Simulation.State.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(1), "Alma dos Anões 1");
-            Assert.That(_runner.Simulation.MapLock, Is.EqualTo(90));
+            Assert.That(_runner.Simulation.RequiredBreaks, Is.EqualTo(5));
 
             Click("ResetPermanents");
             Assert.That(_runner.Simulation.Permanents.State.RedShards, Is.EqualTo(0));
             Assert.That(_runner.Simulation.Permanents.State.Day, Is.EqualTo(1));
-            Assert.That(_runner.Simulation.MapLock, Is.EqualTo(100));
+            Assert.That(_runner.Simulation.RequiredBreaks, Is.EqualTo(10), "o andar 1 pede 10 quebras");
         }
     }
 }

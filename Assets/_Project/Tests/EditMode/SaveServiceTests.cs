@@ -12,7 +12,9 @@ namespace MinersIdle.Tests
     /// Marco 4, E3: o save guarda e devolve o progresso, e um arquivo ruim nunca trava o jogo (D-43, D-44). Marco 8, E3: a
     /// versão 2 guarda a descida (caverna, quebras nela, tempo de jogo, lascas ganhas, coração da montanha) e a versão 1
     /// abre migrada. Marco 8b, E2: a versão 4 guarda também a parte permanente (banco, dia e níveis das permanentes); até
-    /// a 3, ela abre zerada.
+    /// a 3, ela abre zerada. M9c E1 (D-263): a versão 8 guarda o andar mais fundo; um save até a 7 (dos números do v7)
+    /// abre numa run nova no andar 1, com as lascas vermelhas, as permanentes e o dia, e o andar a que tinha chegado vira o
+    /// mais fundo. Os testes das versões antigas medem essa migração; os de valores fora do lugar usam a versão 8.
     /// </summary>
     public class SaveServiceTests
     {
@@ -149,7 +151,7 @@ namespace MinersIdle.Tests
         {
             Directory.CreateDirectory(_dir);
             File.WriteAllText(_store.FilePath,
-                "{ \"version\": 1, \"shards\": -50, \"hits\": -3, \"breaks\": 7, \"levels\": [" +
+                "{ \"version\": 8, \"shards\": -50, \"hits\": -3, \"breaks\": 7, \"levels\": [" +
                 "{ \"upgrade\": \"Pickaxe\", \"level\": 999 }, { \"upgrade\": \"Speed\", \"level\": -2 }, " +
                 "{ \"upgrade\": \"Telescopio\", \"level\": 4 }, { \"upgrade\": \"Boots\", \"level\": 3 } ] }");
 
@@ -167,18 +169,21 @@ namespace MinersIdle.Tests
 
         const int Caves = 10;
 
-        /// <summary>O balanço com a descida: só o Letrado à venda (GDD v5).</summary>
-        static EconomyRules WithLetrado()
+        /// <summary>O arquivo gravado na versão 8.</summary>
+        const string VersionEight = "\"version\":\\s*8";
+
+        /// <summary>O balanço com a descida, sem melhorias à venda (o Mapa saiu no v8, D-256).</summary>
+        static EconomyRules NoShop()
         {
             var off = new UpgradeDefinition(0, 1, 0, 0);
-            return new EconomyRules(off, off, off, off, off, 0.1, letrado: new UpgradeDefinition(100, 10, 10, 2));
+            return new EconomyRules(off, off, off, off, off, 0.1);
         }
 
         static MiningRules CaveRules() =>
             new MiningRules(
                 initialCrystals: 4, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2, spawnDistance: 12,
                 crystalHealth: 10, crystalReward: 1, damage: 100, hitInterval: 1, walkSpeed: 4, miningRange: 1,
-                minCrystals: 4, caveCount: Caves, caveHealthGrowth: 8, caveRewardGrowth: 3, letradoBreaks: 100);
+                minCrystals: 4, caveCount: Caves, caveHealthGrowth: 8, caveRewardGrowth: 3, floorBreaks: 10);
 
         void WriteSave(string json)
         {
@@ -187,128 +192,121 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void CurrentVersion_KeepsTheDescent()
+        public void CurrentVersion_KeepsTheDescent_AndTheDeepestFloor()
         {
             var state = new GameState();
-            var sim = new MiningSimulation(CaveRules(), new SeededRandom(1), state, WithLetrado());
+            var permanent = new PermanentState();
+            var sim = new MiningSimulation(CaveRules(), new SeededRandom(1), state, NoShop(),
+                                           permanents: new Permanents(PermanentRules.None, permanent));
             sim.Tick(20); // quebras, lascas e tempo de jogo
             sim.SkipToCave(4);
             sim.Tick(5);
-            _save.Save(state);
+            Assert.That(sim.BreakTarget(), Is.True, "um cristal do andar 4 na barra");
+            _save.Save(state, permanent);
 
-            var loaded = _save.Load(WithLetrado(), out var status, Caves);
+            var loaded = _save.Load(NoShop(), PermanentRules.None, out var back, out var status, Caves);
 
             Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
             Assert.That(loaded.Cave, Is.EqualTo(4));
             Assert.That(loaded.CaveBreaks, Is.EqualTo(state.CaveBreaks).And.GreaterThan(0));
-            Assert.That(loaded.LevelOf(UpgradeId.Letrado), Is.EqualTo(3));
             Assert.That(loaded.PlaySeconds, Is.EqualTo(25).Within(1e-9));
             Assert.That(loaded.ShardsEarned, Is.EqualTo(state.ShardsEarned).And.GreaterThan(0));
             Assert.That(loaded.ReachedHeart, Is.False);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*7"), "save v7 (M9b, E4)");
+            Assert.That(back.DeepestFloor, Is.EqualTo(4), "o recorde vai junto (M9c E1)");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionEight), "save v8 (M9c E1)");
         }
 
         [Test]
-        public void Version1_OpensInCave1_WithTheCountFromZero()
+        public void Version1_OpensANewRun_OnFloor1()
         {
-            // O save do Moto G75 em 2026-10-31 (achado da E2): o Letrado 1 gravado, a caverna não.
+            // O save do Moto G75 em 2026-10-31 (achado da E2 do M8): de antes da descida. No v8, run nova (D-263).
             WriteSave("{ \"version\": 1, \"shards\": 32.0, \"hits\": 78, \"breaks\": 114, \"levels\": [" +
-                      "{ \"upgrade\": \"Pickaxe\", \"level\": 0 }, { \"upgrade\": \"Letrado\", \"level\": 1 } ] }");
+                      "{ \"upgrade\": \"Pickaxe\", \"level\": 3 }, { \"upgrade\": \"Letrado\", \"level\": 1 } ] }");
 
-            var state = _save.Load(WithLetrado(), out var status, Caves);
+            var state = _save.Load(NoShop(), PermanentRules.None, out var permanent, out var status, Caves);
 
             Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
-            Assert.That(state.Shards, Is.EqualTo(32));
-            Assert.That(state.Breaks, Is.EqualTo(114));
+            Assert.That(state.Shards, Is.EqualTo(0), "a run recomeça");
+            Assert.That(state.Breaks, Is.EqualTo(0));
             Assert.That(state.Cave, Is.EqualTo(1));
             Assert.That(state.CaveBreaks, Is.EqualTo(0));
-            Assert.That(state.LevelOf(UpgradeId.Letrado), Is.EqualTo(1), "comprado, a parede por quebrar");
-            Assert.That(state.ShardsEarned, Is.EqualTo(32), "o que se sabe das lascas ganhas");
-            var sim = new MiningSimulation(CaveRules(), new SeededRandom(1), state, WithLetrado());
-            Assert.That(sim.CanPassCave, Is.True, "o botão de passar volta");
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(0));
+            Assert.That(state.LevelOf(UpgradeId.Letrado), Is.EqualTo(0));
+            Assert.That(permanent.DeepestFloor, Is.EqualTo(1), "a v1 não tinha andar");
 
-            _save.Save(state);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*7"), "regravado na versão nova");
+            _save.Save(state, permanent);
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionEight), "regravado na versão nova");
         }
 
         /// <summary>
-        /// E3b-2 do M8 (D-129): as 10 cavernas do save v2 viram os 10 primeiros dos 100 níveis do GDD v7. O nível e o Mapa
-        /// (o Letrado) ficam como estavam; o coração da caverna 10 não vale mais (ele está no nível 100).
+        /// M9c E1 (D-263): o nível de um save v2 (as 10 cavernas do M8) ou v7 (os 100 níveis) não vale nos números do v8;
+        /// ele vira o andar mais fundo, e a run recomeça no andar 1. O coração de antes também fica para trás.
         /// </summary>
         [Test]
-        public void Version2_OpensAtTheSameLevel_OfTheHundred()
+        public void Version2_OpensANewRun_AndTheOldLevelIsTheDeepest()
         {
-            var off = new UpgradeDefinition(0, 1, 0, 0);
-            var map = new EconomyRules(off, off, off, off, off, 0.1, letrado: new UpgradeDefinition(0, 1, 100, 1));
             WriteSave("{ \"version\": 2, \"shards\": 50.0, \"cave\": 7, \"caveBreaks\": 40, \"playSeconds\": 600, " +
                       "\"shardsEarned\": 900, \"levels\": [ { \"upgrade\": \"Letrado\", \"level\": 7 } ] }");
 
-            var state = _save.Load(map, out var status, 100);
+            var state = _save.Load(NoShop(), PermanentRules.None, out var permanent, out var status, 100);
 
             Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
-            Assert.That(state.Cave, Is.EqualTo(7));
-            Assert.That(state.CaveBreaks, Is.EqualTo(40));
-            Assert.That(state.LevelOf(UpgradeId.Letrado), Is.EqualTo(7), "o Mapa do nível 7 comprado: falta passar");
-            Assert.That(state.PlaySeconds, Is.EqualTo(600));
-            Assert.That(state.ShardsEarned, Is.EqualTo(900));
+            Assert.That(state.Cave, Is.EqualTo(1));
+            Assert.That(state.CaveBreaks, Is.EqualTo(0));
+            Assert.That(state.Shards, Is.EqualTo(0));
+            Assert.That(state.PlaySeconds, Is.EqualTo(0), "o dia recomeça com a run");
+            Assert.That(permanent.DeepestFloor, Is.EqualTo(7));
 
-            WriteSave("{ \"version\": 2, \"cave\": 10, \"reachedHeart\": true, " +
-                      "\"levels\": [ { \"upgrade\": \"Letrado\", \"level\": 10 } ] }");
-            var end = _save.Load(map, out _, 100);
-            Assert.That(end.Cave, Is.EqualTo(10));
-            Assert.That(end.ReachedHeart, Is.False, "o coração passou para o nível 100");
+            WriteSave("{ \"version\": 7, \"cave\": 100, \"reachedHeart\": true }");
+            var end = _save.Load(NoShop(), PermanentRules.None, out var endPermanent, out _, 100);
+            Assert.That(end.Cave, Is.EqualTo(1));
+            Assert.That(end.ReachedHeart, Is.False, "o coração fica com a run antiga");
+            Assert.That(endPermanent.DeepestFloor, Is.EqualTo(100));
 
-            _save.Save(end);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(@"""version"":\s*7"));
+            WriteSave("{ \"version\": 7, \"cave\": 150 }");
+            _save.Load(NoShop(), PermanentRules.None, out var deep, out _, 100);
+            Assert.That(deep.DeepestFloor, Is.EqualTo(100), "no máximo o último andar");
         }
 
         [Test]
         public void TheDescentOutOfPlace_IsCorrected()
         {
-            WriteSave("{ \"version\": 2, \"cave\": 15, \"caveBreaks\": -4, \"playSeconds\": -1, \"shardsEarned\": -9, " +
-                      "\"levels\": [ { \"upgrade\": \"Letrado\", \"level\": 3 } ] }");
-            var deep = _save.Load(WithLetrado(), out _, Caves);
-            Assert.That(deep.Cave, Is.EqualTo(10), "caverna 15 vira a última");
+            WriteSave("{ \"version\": 8, \"cave\": 15, \"caveBreaks\": -4, \"playSeconds\": -1, \"shardsEarned\": -9 }");
+            var deep = _save.Load(NoShop(), out _, Caves);
+            Assert.That(deep.Cave, Is.EqualTo(10), "andar 15 vira o último");
             Assert.That(deep.CaveBreaks, Is.EqualTo(0));
             Assert.That(deep.PlaySeconds, Is.EqualTo(0));
             Assert.That(deep.ShardsEarned, Is.EqualTo(0));
-            Assert.That(deep.LevelOf(UpgradeId.Letrado), Is.EqualTo(9), "na caverna 10, ao menos o Letrado que levou até ela");
 
-            WriteSave("{ \"version\": 2, \"cave\": 0, \"reachedHeart\": true, " +
-                      "\"levels\": [ { \"upgrade\": \"Letrado\", \"level\": 7 } ] }");
-            var shallow = _save.Load(WithLetrado(), out _, Caves);
-            Assert.That(shallow.Cave, Is.EqualTo(1), "caverna 0 vira 1");
-            Assert.That(shallow.LevelOf(UpgradeId.Letrado), Is.EqualTo(1), "não mais Letrados do que a caverna abre");
-            Assert.That(shallow.ReachedHeart, Is.False, "o coração só na última caverna");
+            WriteSave("{ \"version\": 8, \"cave\": 0, \"reachedHeart\": true }");
+            var shallow = _save.Load(NoShop(), out _, Caves);
+            Assert.That(shallow.Cave, Is.EqualTo(1), "andar 0 vira 1");
+            Assert.That(shallow.ReachedHeart, Is.False, "o coração só no último andar");
 
-            var noDescent = _save.Load(Prototype(), out _); // o protótipo tem uma caverna só
+            var noDescent = _save.Load(Prototype(), out _); // o protótipo tem um andar só
             Assert.That(noDescent.Cave, Is.EqualTo(1));
         }
 
         [Test]
-        public void AStandingWall_IsNotSaved_AndTheHeartIsKept()
+        public void AFullBar_IsSaved_AndTheHeartIsKept()
         {
             var state = new GameState();
-            var sim = new MiningSimulation(CaveRules(), new SeededRandom(1), state, WithLetrado());
-            sim.AddShards(1e6);
-            sim.FillCaveBreaks();
-            sim.Purchase(UpgradeId.Letrado);
-            Assume.That(sim.PassCave(), Is.True);
+            var sim = new MiningSimulation(CaveRules(), new SeededRandom(1), state, NoShop());
+            sim.FillFloorBar();
+            Assume.That(sim.CanAdvance, Is.True);
             _save.Save(state);
 
-            var reopened = new MiningSimulation(CaveRules(), new SeededRandom(1), _save.Load(WithLetrado(), out _, Caves), WithLetrado());
-            Assert.That(reopened.Wall, Is.Null, "a parede de pé não volta");
+            var reopened = new MiningSimulation(CaveRules(), new SeededRandom(1), _save.Load(NoShop(), out _, Caves), NoShop());
             Assert.That(reopened.State.Cave, Is.EqualTo(1));
-            Assert.That(reopened.CanPassCave, Is.True, "o botão de passar volta");
+            Assert.That(reopened.CanAdvance, Is.True, "a barra cheia volta, e o Próximo Andar com ela");
 
-            WriteSave("{ \"version\": 2, \"cave\": 10, \"reachedHeart\": true, " +
-                      "\"levels\": [ { \"upgrade\": \"Letrado\", \"level\": 10 } ] }");
+            WriteSave("{ \"version\": 8, \"cave\": 10, \"reachedHeart\": true }");
             int hearts = 0;
-            var end = new MiningSimulation(CaveRules(), new SeededRandom(1), _save.Load(WithLetrado(), out _, Caves), WithLetrado());
+            var end = new MiningSimulation(CaveRules(), new SeededRandom(1), _save.Load(NoShop(), out _, Caves), NoShop());
             end.HeartReached += () => hearts++;
             end.Tick(10);
             Assert.That(end.State.ReachedHeart, Is.True);
-            Assert.That(end.CanPassCave, Is.False, "depois do coração, não há passagem");
+            Assert.That(end.CanAdvance, Is.False, "depois do coração, não há passagem");
             Assert.That(hearts, Is.EqualTo(0), "o fim não aparece de novo");
         }
 
@@ -352,28 +350,54 @@ namespace MinersIdle.Tests
             Assert.That(File.ReadAllText(_store.FilePath), Does.Contain("\"permanent\""));
         }
 
-        /// <summary>Um save de antes do Marco 8b: a run abre como estava, as permanentes zeradas, no dia 1.</summary>
+        /// <summary>Um save de antes do Marco 8b: run nova (D-263), as permanentes zeradas, no dia 1.</summary>
         [Test]
-        public void Version3_OpensTheRun_WithThePermanentsZeroed()
+        public void Version3_OpensANewRun_WithThePermanentsZeroed()
         {
             WriteSave("{ \"version\": 3, \"shards\": 77.0, \"levels\": [ { \"upgrade\": \"Pickaxe\", \"level\": 2 } ] }");
 
             var state = _save.Load(Prototype(), V7Permanents(), out var permanent, out var status);
 
             Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
-            Assert.That(state.Shards, Is.EqualTo(77));
-            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(2));
+            Assert.That(state.Shards, Is.EqualTo(0), "run nova no v8");
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(0), "sem a Alma dos Anões, a Picareta do começo");
             Assert.That(permanent.RedShards, Is.EqualTo(0));
             Assert.That(permanent.Day, Is.EqualTo(1));
             foreach (PermanentId id in Enum.GetValues(typeof(PermanentId)))
                 Assert.That(permanent.LevelOf(id), Is.EqualTo(0), id.ToString());
         }
 
+        /// <summary>
+        /// M9c E1 (D-263): um save v7 abre numa run nova, mas o que fica de um dia para o outro vem junto: lascas
+        /// vermelhas, permanentes (a Alma dos Anões já dá a Picareta da run nova) e o dia.
+        /// </summary>
+        [Test]
+        public void Version7_OpensANewRun_KeepingTheRedShards_ThePermanents_AndTheDay()
+        {
+            WriteSave("{ \"version\": 7, \"shards\": 5000.0, \"cave\": 30, \"caveBreaks\": 12, \"levels\": [ " +
+                      "{ \"upgrade\": \"Pickaxe\", \"level\": 20 }, { \"upgrade\": \"Speed\", \"level\": 5 } ], " +
+                      "\"permanent\": { \"redShards\": 42, \"day\": 6, \"levels\": [ " +
+                      "{ \"upgrade\": \"Memory\", \"level\": 2 }, { \"upgrade\": \"DwarfSoul\", \"level\": 3 } ] } }");
+
+            var state = _save.Load(Prototype(), V7Permanents(), out var permanent, out var status, 100);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(state.Cave, Is.EqualTo(1), "andar 1 (D-263)");
+            Assert.That(state.CaveBreaks, Is.EqualTo(0));
+            Assert.That(state.Shards, Is.EqualTo(0));
+            Assert.That(state.LevelOf(UpgradeId.Speed), Is.EqualTo(0), "as melhorias da run recomeçam");
+            Assert.That(state.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(3), "a Alma dos Anões 3, como depois de um descanso");
+            Assert.That(permanent.RedShards, Is.EqualTo(42));
+            Assert.That(permanent.Day, Is.EqualTo(6));
+            Assert.That(permanent.LevelOf(PermanentId.Memory), Is.EqualTo(2));
+            Assert.That(permanent.DeepestFloor, Is.EqualTo(30), "o andar a que a run antiga chegou");
+        }
+
         /// <summary>Valores errados na parte permanente zeram ou vão para o limite só nela; a run abre inteira.</summary>
         [Test]
         public void PermanentValuesOutOfPlace_AreCorrected_WithoutTouchingTheRun()
         {
-            WriteSave("{ \"version\": 4, \"shards\": 77.0, \"cave\": 5, " +
+            WriteSave("{ \"version\": 8, \"shards\": 77.0, \"cave\": 5, " +
                       "\"permanent\": { \"redShards\": -3, \"day\": -2, \"levels\": [ " +
                       "{ \"upgrade\": \"Memory\", \"level\": 99 }, { \"upgrade\": \"DwarfSoul\", \"level\": -4 }, " +
                       "{ \"upgrade\": \"Unknown\", \"level\": 3 } ] } }");
@@ -437,7 +461,7 @@ namespace MinersIdle.Tests
 
             var state = _save.Load(Prototype(), V7Permanents(), out _, out var status, 10);
             Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
-            Assert.That(state.Shards, Is.EqualTo(77), "a run abre inteira");
+            Assert.That(state.Shards, Is.EqualTo(0), "run nova no v8 (D-263)");
             Assert.That(_save.LoadedSavedAtUtc, Is.Null, "até a v4 não há hora: nenhum offline");
         }
 
@@ -479,16 +503,18 @@ namespace MinersIdle.Tests
         {
             WriteSave("{ \"version\": 5, \"shards\": 77.0, \"cave\": 5, \"savedAtUtcTicks\": 638000000000000000 }");
 
-            var state = _save.Load(Prototype(), V7Permanents(), out _, out var status, 10);
+            var state = _save.Load(Prototype(), V7Permanents(), out var permanent, out var status, 10);
             Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
-            Assert.That(state.Shards, Is.EqualTo(77));
+            Assert.That(state.Shards, Is.EqualTo(0), "run nova no v8 (D-263)");
             Assert.That(state.PendingOffline.HasShards, Is.False, "um save da E1 não tem volta pendente");
+            Assert.That(permanent.DeepestFloor, Is.EqualTo(5));
+            Assert.That(_save.LoadedSavedAtUtc, Is.Not.Null, "a hora fica: o offline desde ela conta na run nova");
         }
 
         [Test]
         public void BadPendingNumbers_AreCleanedUp()
         {
-            WriteSave("{ \"version\": 5, \"shards\": 1.0, \"pendingOffline\": " +
+            WriteSave("{ \"version\": 8, \"shards\": 1.0, \"pendingOffline\": " +
                       "{ \"secondsAway\": -5.0, \"secondsCounted\": -1.0, \"crystals\": -3, \"shards\": -10.0, \"level\": -2 } }");
 
             var state = _save.Load(Prototype(), V7Permanents(), out _, out _, 10);

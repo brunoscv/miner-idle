@@ -15,7 +15,7 @@ namespace MinersIdle.Tests
             new MiningRules(
                 initialCrystals: 4, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2,
                 spawnDistance: 12, crystalHealth: 1e9, crystalReward: 1, damage: 1, hitInterval: 1, walkSpeed: 4,
-                miningRange: 1, minCrystals: 4, caveCount: 10, caveHealthGrowth: 2, caveRewardGrowth: 2, letradoBreaks: 100);
+                miningRange: 1, minCrystals: 4, caveCount: 10, caveHealthGrowth: 2, caveRewardGrowth: 2, floorBreaks: 100);
 
         static MiningSimulation Sim() =>
             new MiningSimulation(Rules(), new SeededRandom(1), strike: new StrikeRules(0, 2, 0.33, 1));

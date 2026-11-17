@@ -2,7 +2,7 @@ using System;
 
 namespace MinersIdle.Core
 {
-    /// <summary>As linhas de melhoria do M3 (D-36), mais o Letrado (M8). A ordem é a de criação; a da loja vem do catálogo.</summary>
+    /// <summary>As linhas de melhoria do M3 (D-36) e as que vieram depois. A ordem é a de criação; a da loja vem do catálogo.</summary>
     public enum UpgradeId
     {
         /// <summary>Dano por golpe.</summary>
@@ -16,8 +16,8 @@ namespace MinersIdle.Core
         /// <summary>Velocidade de caminhada (linha nova, nasce do mapa).</summary>
         Boots,
         /// <summary>
-        /// Letrado (M8, GDD v5): o nível <i>n</i> leva à caverna <i>n+1</i> e dobra o dano nela. Só se compra com os cristais
-        /// da caverna atual quebrados e um por caverna (<see cref="Purchases.Blocked"/>).
+        /// Letrado / Mapa (M8 até o GDD v7): saiu do jogo no v8 (D-256), junto com a parede. Fica aqui só para não mudar a
+        /// numeração das linhas; nenhum balanço o vende e nada o lê.
         /// </summary>
         Letrado,
         /// <summary>

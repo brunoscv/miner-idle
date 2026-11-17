@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MinersIdle.Core;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace MinersIdle.Game
 {
@@ -34,21 +35,27 @@ namespace MinersIdle.Game
         [SerializeField] double crystalHealth = 10;
         [SerializeField] double crystalReward = 1;
 
-        [Header("Cavernas (M8; o cristal da caverna c = base × crescimento^(c−1), D-92)")]
-        [Tooltip("Número de cavernas. 1 = o jogo não passa de caverna.")]
+        [Header("Andares (o cristal do andar n = vida base × crescimento^(n−1))")]
+        [Tooltip("Número de andares. 1 = o jogo não passa de andar. GDD v8: 100.")]
         [SerializeField] int caveCount = 1;
-        [Tooltip("A vida do cristal multiplica por isto a cada caverna.")]
+        [Tooltip("A vida do cristal multiplica por isto a cada andar. GDD v8: 1,5.")]
         [SerializeField] double caveHealthGrowth = 1;
-        [Tooltip("As lascas do cristal multiplicam por isto a cada caverna.")]
+        [Tooltip("Growth (até o v7): as lascas multiplicam por isto a cada andar. FloorScaled (GDD v8, D-238): lascas = vida " +
+                 "do andar × lascas base × max(1, andar − 1), e este crescimento não vale.")]
+        [SerializeField] RewardFormula rewardFormula = RewardFormula.Growth;
+        [Tooltip("As lascas do cristal multiplicam por isto a cada andar (só na fórmula Growth).")]
         [SerializeField] double caveRewardGrowth = 1;
-        [Tooltip("Cristais a quebrar na caverna para liberar o Letrado dela (D-93).")]
-        [SerializeField] int letradoBreaks = 100;
-        [Tooltip("A parede da passagem tem esta vez a vida do cristal da caverna nova (D-98).")]
-        [SerializeField] double wallHealthFactor = 2;
-        [Tooltip("Níveis seguidos no mesmo bioma: 1 = um bioma por caverna (v5); 10 = um a cada 10 níveis (v7, D-129).")]
+        [Tooltip("Cristais por andar no Próximo Andar: o andar n pede n × isto, menos a Memória (GDD v8: 10, D-239).")]
+        [FormerlySerializedAs("letradoBreaks")]
+        [SerializeField] int floorBreaks = 100;
+        [Tooltip("Andares seguidos no mesmo bioma: 1 = um bioma por andar (v5); 10 = um a cada 10 (v7 e v8, D-129).")]
         [SerializeField] int levelsPerBiome = 1;
-        [Tooltip("Offline (M9): até quantas horas fora contam para o estagiário; o resto se perde (GDD v7 §1.1, D-189: 6).")]
+        [Tooltip("Offline: até quantas horas fora contam para o estagiário; o resto se perde (GDD v8: 4).")]
         [SerializeField] double offlineMaxHours = 6;
+        [Tooltip("Offline depois do andar abaixo (GDD v8: 6 h a partir do andar 20). 0 = sem esse marco.")]
+        [SerializeField] double offlineDeepHours;
+        [Tooltip("O andar que, alcançado uma vez, sobe o offline para as horas acima (GDD v8: 20, D-253). 0 = nunca.")]
+        [SerializeField] int offlineDeepFloor;
 
         [Header("Anão")]
         [Tooltip("Dano base por golpe, sem melhorias.")]
@@ -59,17 +66,15 @@ namespace MinersIdle.Game
         [SerializeField] double walkSpeed = 4;
         [Tooltip("Distância do cristal em que o anão para e começa a bater.")]
         [SerializeField] double miningRange = 1;
-        [Tooltip("Multiply: dano = base × Picareta.efeito^nível (até o GDD v5). LevelScaled (GDD v7, D-201): dano = base + " +
-                 "Picareta.efeito × compras + taxa^compras. CaveScaled (a leitura da D-133, alternativa no DBG → Caverna): " +
-                 "dano = base + Picareta.efeito × compras + taxa^(caverna − 1).")]
+        [Tooltip("Multiply: dano = base × Picareta.efeito^nível (até o GDD v5). LevelScaled (GDD v7 e v8, D-201): dano = base + " +
+                 "Picareta.efeito × compras + taxa^compras.")]
         [SerializeField] PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply;
-        [Tooltip("A taxa da Picareta (configurável): o dano ganha taxa^compras (LevelScaled) ou taxa^(caverna − 1) " +
-                 "(CaveScaled). GDD v7: 1,2.")]
+        [Tooltip("A taxa da Picareta (configurável): o dano ganha taxa^compras (LevelScaled). GDD v7 e v8: 1,2.")]
         [SerializeField] double pickaxeCaveGrowth = 1.2;
 
         [Header("Melhorias (custo da próxima compra = inicial × crescimento^nível, ou inicial + passo × nível na fórmula " +
                 "Linear; nível = compras feitas)")]
-        [Tooltip("Efeito: o dano multiplica por este valor a cada nível (Multiply) ou soma no Dano Base (LevelScaled e CaveScaled).")]
+        [Tooltip("Efeito: o dano multiplica por este valor a cada nível (Multiply) ou soma no Dano Base (LevelScaled).")]
         [SerializeField] UpgradeLineValues pickaxe = new UpgradeLineValues(10, 4, 19, 2);
         [Tooltip("Efeito: segundos a menos no intervalo a cada nível.")]
         [SerializeField] UpgradeLineValues speed = new UpgradeLineValues(15, 3, 10, 0.05);
@@ -79,8 +84,6 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues doublePickaxe = new UpgradeLineValues(500, 1, 1, 2);
         [Tooltip("Efeito: fração a mais de corrida a cada nível (0,1 = 10%). Limite 0 desliga a linha.")]
         [SerializeField] UpgradeLineValues boots = new UpgradeLineValues(10, 2, 10, 0.1);
-        [Tooltip("Letrado (M8): o nível n leva à caverna n+1. Efeito: multiplicador do dano dali em diante. Limite 0 desliga.")]
-        [SerializeField] UpgradeLineValues letrado = new UpgradeLineValues(100, 10, 0, 2);
         [Tooltip("Chance de Crítico (GDD v7, D-136). Efeito: chance a mais por nível, no golpe e no toque. Limite 0 desliga.")]
         [SerializeField] UpgradeLineValues critical = new UpgradeLineValues(50, 2, 0, 0.05);
         [Tooltip("Intervalo mínimo entre golpes, em segundos (o do anão e o do estagiário, D-165).")]
@@ -158,7 +161,7 @@ namespace MinersIdle.Game
         [SerializeField] double redShardBigMilestone = 10;
         [Tooltip("Lascas vermelhas dos outros níveis a partir do primeiro (GDD v7: 1).")]
         [SerializeField] double redShardPerLevel = 1;
-        [Tooltip("Memória. Efeito: cristais a menos na trava do Mapa por nível (GDD v7: 10).")]
+        [Tooltip("Memória. Efeito: cristais a menos no requisito do andar por nível (GDD v8: 5, até o nível 100).")]
         [SerializeField] UpgradeLineValues memory = new UpgradeLineValues(10, 2, 0, 10, CostFormula.OffsetExponential);
         [Tooltip("Sangue da Montanha. Efeito: fração a mais de dano por nível, no dano final (GDD v7: 0,1).")]
         [SerializeField] UpgradeLineValues mountainBlood = new UpgradeLineValues(10, 2, 0, 0.1, CostFormula.OffsetExponential);
@@ -176,11 +179,8 @@ namespace MinersIdle.Game
         /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos não valem no Multiply (v5).</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
 
-        /// <summary>A Picareta deste balanço tem taxa e incremento (a do GDD v7, pela compra ou pela caverna).</summary>
+        /// <summary>A Picareta deste balanço tem taxa e incremento (a do GDD v7 e v8, pela compra).</summary>
         public bool PickaxeTunable => pickaxeFormula != PickaxeFormula.Multiply;
-
-        /// <summary>A Picareta deste balanço é a do GDD v7 pela compra (D-201): só nela o DBG → Caverna troca para a caverna.</summary>
-        public bool PickaxeSwitchable => pickaxeFormula == PickaxeFormula.LevelScaled;
 
         /// <summary>A taxa da Picareta deste balanço (GDD v7: 1,2).</summary>
         public double PickaxeCaveGrowth => pickaxeCaveGrowth;
@@ -189,22 +189,18 @@ namespace MinersIdle.Game
         public double PickaxeStep => pickaxe.Effect;
 
         /// <param name="pickaxeCaveGrowth">A taxa trocada no DBG → Cálculos (E3b-3); <c>null</c> = a do asset.</param>
-        /// <param name="pickaxeByCave">
-        /// O botão "Picareta" do DBG → Caverna (D-201): a Picareta pela caverna (a leitura da D-133) no lugar da pela compra.
-        /// Só vale num balanço com a Picareta pela compra.
-        /// </param>
-        public MiningRules ToRules(double? pickaxeCaveGrowth = null, bool pickaxeByCave = false) => new MiningRules(
+        public MiningRules ToRules(double? pickaxeCaveGrowth = null) => new MiningRules(
             initialCrystals, firstCrystalDistance, maxCrystals, spawnInterval,
             minCrystalSpacing, spawnDistance,
             crystalHealth, crystalReward,
             damage, hitInterval,
             walkSpeed, miningRange,
             minCrystals,
-            caveCount, caveHealthGrowth, caveRewardGrowth, letradoBreaks, wallHealthFactor,
+            caveCount, caveHealthGrowth, caveRewardGrowth, floorBreaks,
             tapReach, arrivalStrike, swingRecovery,
-            pickaxeByCave && PickaxeSwitchable ? PickaxeFormula.CaveScaled : pickaxeFormula,
+            pickaxeFormula,
             PickaxeTunable ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
-            levelsPerBiome, offlineMaxHours * 3600);
+            levelsPerBiome, offlineMaxHours * 3600, rewardFormula, offlineDeepHours * 3600, offlineDeepFloor);
 
         /// <summary>O descanso, as lascas vermelhas e as permanentes deste balanço (Marco 8b). Sem descanso no asset, nada disso.</summary>
         public PermanentRules ToPermanents()
@@ -291,7 +287,7 @@ namespace MinersIdle.Game
         /// </param>
         public EconomyRules ToEconomy(double? pickaxeStep = null, double? pickaxeCaveGrowth = null) => new EconomyRules(
             PickaxeLine(pickaxeStep, pickaxeCaveGrowth), speed.ToDefinition(), mining.ToDefinition(),
-            doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, letrado.ToDefinition(),
+            doublePickaxe.ToDefinition(), boots.ToDefinition(), minHitInterval, null, // o Letrado saiu no v8 (D-256)
             critical.ToDefinition(), intern.ToDefinition(), internPickaxe.ToDefinition(), internSpeed.ToDefinition(),
             internMining.ToDefinition(), internPickaxeDamageGrowth);
 

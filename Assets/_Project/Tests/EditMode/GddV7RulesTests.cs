@@ -9,13 +9,15 @@ namespace MinersIdle.Tests
 {
     /// <summary>
     /// E3b-1 do M8: as regras do GDD v7 no núcleo (D-133…D-136) e o <c>Balance_GDD_v7</c> que o setup cria (D-130).
-    /// Os números das regras estão escritos à mão; o teste do asset confere que ele traz esses mesmos números.
+    /// Os números das regras estão escritos à mão; o teste do asset confere que ele traz esses mesmos números. Desde o v8
+    /// (M9c E1, D-256) o v7 é só comparação: a Picareta pela caverna, o Mapa e a parede saíram, e os testes deles medem a
+    /// passagem pela barra do andar.
     /// </summary>
     public class GddV7RulesTests
     {
         const string GddV7Path = "Assets/_Project/Data/Balance_GDD_v7.asset";
 
-        static MiningRules Rules(PickaxeFormula formula = PickaxeFormula.CaveScaled, double health = 1e12, int caves = 10) =>
+        static MiningRules Rules(PickaxeFormula formula = PickaxeFormula.LevelScaled, double health = 1e12, int caves = 10) =>
             new MiningRules(
                 initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2,
                 spawnDistance: 12, crystalHealth: health, crystalReward: 1.2, damage: 1, hitInterval: 1, walkSpeed: 4,
@@ -23,8 +25,8 @@ namespace MinersIdle.Tests
                 pickaxeFormula: formula, pickaxeCaveGrowth: 1.2);
 
         /// <summary>
-        /// As linhas do anão no GDD v7, com o Letrado já de custo zero e sem ×2 (D-128). A Picareta aqui é a da D-133 (+1 no
-        /// Dano Base, custo 2 × Dano Base), que mede a fórmula com incremento; a do jogo desde a D-202 está em
+        /// As linhas do anão no GDD v7 (o Mapa saiu no v8, D-256). A Picareta aqui é a da D-133 (+1 no Dano Base, custo
+        /// 2 × Dano Base), que mede a fórmula com incremento; a do jogo desde a D-202 está em
         /// <see cref="ApellonPickaxe"/>.
         /// </summary>
         static EconomyRules V7() => new EconomyRules(
@@ -34,7 +36,6 @@ namespace MinersIdle.Tests
             doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
             boots: new UpgradeDefinition(0, 1, 0, 0),
             minHitInterval: 0.1,
-            letrado: new UpgradeDefinition(0, 1, 10, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05));
 
         /// <summary>GDD v7 §3.3 (D-136): golpe automático sem crítico de base, toque com 5%; sem teto de toques.</summary>
@@ -69,7 +70,6 @@ namespace MinersIdle.Tests
             doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
             boots: new UpgradeDefinition(0, 1, 0, 0),
             minHitInterval: 0.1,
-            letrado: new UpgradeDefinition(0, 1, 10, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05));
 
         /// <summary>Os pontos da tabela do Apellon: nível da Picareta → dano e custo da próxima compra (D-202).</summary>
@@ -140,37 +140,21 @@ namespace MinersIdle.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new UpgradeDefinition(10, 0, 5, 1));
         }
 
-        // ── Picareta pela caverna (D-133) ────────────────────────────────────────────────────────────────────────
+        // ── Picareta pela caverna (D-133): saiu no v8 (D-256) ───────────────────────────────────────────────────
 
         [Test]
-        public void CaveScaledPickaxe_InCaveOne_HitsForTwo()
+        public void CaveScaledPickaxe_IsGone_AndTheFloorNeverEntersTheDamage()
         {
-            Assert.That(Sim().Stats.Damage, Is.EqualTo(2), "Dano Base 1 + 1,2^0");
-        }
-
-        [Test]
-        public void CaveScaledPickaxe_EachPurchaseAddsOneToTheBase()
-        {
+            Assert.That(Enum.GetNames(typeof(PickaxeFormula)), Is.EquivalentTo(new[] { "Multiply", "LevelScaled" }),
+                        "a leitura pela caverna saiu (D-256)");
             var sim = Sim();
             sim.AddShards(2 + 4);
-
-            Assert.That(sim.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
-            Assert.That(sim.Stats.Damage, Is.EqualTo(3));
-            Assert.That(sim.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Purchased));
-            Assert.That(sim.Stats.Damage, Is.EqualTo(4));
-            Assert.That(sim.State.Shards, Is.EqualTo(0).Within(1e-9), "custou 2 e depois 4");
-        }
-
-        [Test]
-        public void CaveScaledPickaxe_GrowsWithTheCave_WithoutTheLetradoDoubling()
-        {
-            var sim = Sim();
-            sim.AddShards(2);
-            sim.Purchase(UpgradeId.Pickaxe); // Dano Base 2
+            sim.Purchase(UpgradeId.Pickaxe);
+            sim.Purchase(UpgradeId.Pickaxe);
+            double inFloorOne = sim.Stats.Damage;
 
             Assert.That(sim.SkipToCave(10), Is.True);
-
-            Assert.That(sim.Stats.Damage, Is.EqualTo(2 + Math.Pow(1.2, 9)).Within(1e-9), "Dano Base 2 + 1,2^9, sem ×2");
+            Assert.That(sim.Stats.Damage, Is.EqualTo(inFloorOne), "Dano Base 3 + 1,2^2 no andar 1 e no 10");
         }
 
         // ── Picareta pela compra (GDD v7, D-201) ─────────────────────────────────────────────────────────────────
@@ -336,14 +320,14 @@ namespace MinersIdle.Tests
 
         // ── O asset (D-130) ──────────────────────────────────────────────────────────────────────────────────────
 
-        // ---- E3b-2: Mapa e 100 níveis (D-128, D-129) ----
+        // ---- E3b-2: 100 níveis (D-128, D-129); o Mapa saiu no v8 (D-256) ----
 
         static MiningRules HundredLevels() =>
             new MiningRules(
                 initialCrystals: 4, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2,
                 spawnDistance: 12, crystalHealth: 1, crystalReward: 1.2, damage: 1, hitInterval: 1, walkSpeed: 4,
                 miningRange: 1, minCrystals: 4, caveCount: 100, caveHealthGrowth: 1.25, caveRewardGrowth: 1.25,
-                pickaxeFormula: PickaxeFormula.CaveScaled, pickaxeCaveGrowth: 1.2, levelsPerBiome: 10);
+                pickaxeFormula: PickaxeFormula.LevelScaled, pickaxeCaveGrowth: 1.2, levelsPerBiome: 10);
 
         static EconomyRules Map() => new EconomyRules(
             pickaxe: new UpgradeDefinition(2, 2, 49, 1, CostFormula.Linear),
@@ -352,7 +336,6 @@ namespace MinersIdle.Tests
             doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
             boots: new UpgradeDefinition(0, 1, 0, 0),
             minHitInterval: 0.1,
-            letrado: new UpgradeDefinition(0, 1, 100, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05));
 
         [TestCase(1, 0), TestCase(10, 0), TestCase(11, 1), TestCase(20, 1), TestCase(21, 2), TestCase(91, 9), TestCase(100, 9)]
@@ -377,29 +360,21 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Map_IsFree_AfterTheHundredCrystals_AndDoesNotDoubleTheDamage()
+        public void WithoutTheMap_TheFullBarPasses_AndTheDamageStays()
         {
             var sim = new MiningSimulation(HundredLevels(), new SeededRandom(1), economy: Map(), strike: V7Strike());
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Locked), "a trava dos 100 cristais");
-
-            sim.FillCaveBreaks();
-            Assert.That(sim.State.Shards, Is.EqualTo(0));
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased), "de graça (D-128)");
-            Assert.That(sim.PassCave(), Is.True);
+            Assert.That(sim.CanAdvance, Is.False, "a barra vazia");
             double before = sim.Stats.Damage;
 
-            for (int i = 0; i < 40 && sim.Wall != null; i++)
-            {
-                sim.Tick(0);
-                sim.BreakTarget();
-            }
+            sim.FillFloorBar();
+            Assert.That(sim.State.Shards, Is.EqualTo(0), "passar não custa nada");
+            Assert.That(sim.AdvanceFloor(), Is.True, "sem Mapa (D-256)");
             Assert.That(sim.State.Cave, Is.EqualTo(2));
-            Assert.That(sim.Stats.Damage, Is.EqualTo(1 + Math.Pow(1.2, 1)).Within(1e-9), "só a taxa da caverna, sem ×2");
-            Assert.That(sim.Stats.Damage, Is.GreaterThan(before));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(before), "a Picareta pela compra não cresce com o andar (D-201)");
         }
 
         [Test]
-        public void LevelHundred_TheLastMapLeadsToTheHeart()
+        public void LevelHundred_TheFullBarLeadsToTheHeart()
         {
             var sim = new MiningSimulation(HundredLevels(), new SeededRandom(1), economy: Map(), strike: V7Strike());
             int hearts = 0;
@@ -407,21 +382,13 @@ namespace MinersIdle.Tests
 
             Assert.That(sim.SkipToCave(150), Is.True, "vai até o último nível");
             Assert.That(sim.State.Cave, Is.EqualTo(100));
-            Assert.That(sim.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(99));
-            sim.FillCaveBreaks();
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased), "o Mapa 100");
-            Assert.That(sim.PassCave(), Is.True, "a última parede");
-            Assert.That(sim.Wall.MaxHealth, Is.EqualTo(2 * Math.Pow(1.25, 100)).Within(1e-6).Percent, "D-98: 2 × a vida de um nível além");
+            sim.FillFloorBar();
+            Assert.That(sim.AdvanceFloor(), Is.True, "a barra cheia do 100 leva ao coração (D-258)");
 
-            for (int i = 0; i < 40 && sim.Wall != null; i++)
-            {
-                sim.Tick(0);
-                sim.BreakTarget();
-            }
             Assert.That(hearts, Is.EqualTo(1));
             Assert.That(sim.State.ReachedHeart, Is.True);
             Assert.That(sim.State.Cave, Is.EqualTo(100));
-            Assert.That(sim.CanPassCave, Is.False);
+            Assert.That(sim.CanAdvance, Is.False);
         }
 
         [Test]
@@ -441,8 +408,6 @@ namespace MinersIdle.Tests
             Assert.That(rules.HitInterval, Is.EqualTo(2));
             Assert.That(rules.PickaxeFormula, Is.EqualTo(PickaxeFormula.LevelScaled), "Picareta pela compra (D-201)");
             Assert.That(rules.PickaxeCaveGrowth, Is.EqualTo(1.2));
-            Assert.That(asset.ToRules(pickaxeByCave: true).PickaxeFormula, Is.EqualTo(PickaxeFormula.CaveScaled),
-                        "a leitura da D-133, no DBG → Caverna");
 
             var pickaxe = economy.Get(UpgradeId.Pickaxe);
             Assert.That((pickaxe.CostFormula, pickaxe.BaseCost, pickaxe.CostGrowth, pickaxe.MaxLevel, pickaxe.Effect, pickaxe.CostOffset),
@@ -457,12 +422,10 @@ namespace MinersIdle.Tests
             Assert.That((critical.BaseCost, critical.CostGrowth, critical.MaxLevel, critical.Effect), Is.EqualTo((50.0, 2.0, 10, 0.05)));
             Assert.That(economy.Get(UpgradeId.DoublePickaxe).IsEnabled, Is.False);
             Assert.That(economy.Get(UpgradeId.Boots).IsEnabled, Is.False);
-            var letrado = economy.Get(UpgradeId.Letrado);
-            Assert.That((letrado.CostAt(0), letrado.CostAt(99), letrado.Effect), Is.EqualTo((0.0, 0.0, 1.0)), "Mapa: custo zero e sem ×2 (D-128)");
-            Assert.That(letrado.MaxLevel, Is.EqualTo(100), "um Mapa por nível; o 100º leva à parede do coração");
+            Assert.That(economy.Get(UpgradeId.Letrado).IsEnabled, Is.False, "o Mapa saiu no v8 (D-256)");
             Assert.That(rules.CaveCount, Is.EqualTo(100), "100 níveis (D-129)");
             Assert.That(rules.LevelsPerBiome, Is.EqualTo(10), "um bioma a cada 10 níveis (D-129)");
-            Assert.That(rules.LetradoBreaks, Is.EqualTo(100), "a trava dos 100 cristais continua");
+            Assert.That(rules.FloorBreaks, Is.EqualTo(100), "a trava dos 100 cristais do v7 vira a barra (andar × 100)");
 
             Assert.That(strike.CritChance, Is.EqualTo(0));
             Assert.That(strike.TapCritChance, Is.EqualTo(0.05));

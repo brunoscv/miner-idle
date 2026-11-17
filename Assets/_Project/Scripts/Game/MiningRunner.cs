@@ -15,8 +15,8 @@ namespace MinersIdle.Game
     /// sair. Aberta direto (Play na
     /// cena Game, testes PlayMode), a cena roda sem save: os testes nunca mexem no progresso de quem joga.
     ///
-    /// Cálculos (M8 E3b-3, D-143): o balanço sai de <see cref="Balances"/> (o primeiro é o do GDD) e a taxa e o incremento
-    /// da Picareta podem ser trocados pelo DBG (<see cref="UseCalculation"/>). A escolha só é lida e gravada no aparelho
+    /// Cálculos (M8 E3b-3, D-143): a taxa e o incremento da Picareta, o acúmulo do combo e o ritmo do raro podem ser
+    /// trocados pelo DBG (<see cref="UseCalculation"/>); o balanço é um só, o do GDD v8 (M9c E1, D-256). A escolha só é lida e gravada no aparelho
     /// pelo caminho do <c>GameBootstrap</c>, como o save, e nunca num build de release (lá vale sempre o GDD).
     ///
     /// Dia e melhorias permanentes (Marco 8b): o <see cref="PermanentState"/> fica aqui, de uma partida para a outra;
@@ -32,10 +32,6 @@ namespace MinersIdle.Game
         public const float AutosaveSeconds = 30f;
 
         [SerializeField] MiningRulesAsset rules;
-
-        [Tooltip("Os balanços do DBG → Cálculos (E3b-3), na ordem do seletor. O primeiro é o do GDD (o padrão, o mesmo do " +
-                 "campo acima): Balance_GDD_v7, depois Balance_GDD_v5.")]
-        [SerializeField] MiningRulesAsset[] balances = Array.Empty<MiningRulesAsset>();
 
         [Tooltip("Ligado: toda partida usa a semente abaixo (para reproduzir um caso). Desligado: semente nova a cada partida.")]
         [SerializeField] bool useFixedSeed;
@@ -108,11 +104,8 @@ namespace MinersIdle.Game
         public MiningSimulation Simulation { get; private set; }
         public ulong Seed { get; private set; }
 
-        /// <summary>O balanço em uso (Balance_GDD_v7 no jogo, D-130).</summary>
+        /// <summary>O balanço em uso (Balance_GDD_v8 no jogo, M9c E1).</summary>
         public MiningRulesAsset Rules => rules;
-
-        /// <summary>Os balanços do seletor do DBG → Cálculos; o primeiro é o do GDD.</summary>
-        public IReadOnlyList<MiningRulesAsset> Balances => balances;
 
         /// <summary>O cálculo em uso (o padrão é tudo como o GDD diz).</summary>
         public CalculationChoice Calculation => _calculation;
@@ -183,7 +176,7 @@ namespace MinersIdle.Game
             {
                 _calculations = calculations;
                 ApplyCalculation(CalculationChoice.FromData(calculations.Load()));
-                if (!_calculation.IsDefault) Debug.Log($"[Cálculos] O jogo abre com o cálculo do DBG (balanço {_calculation.Balance}).");
+                if (!_calculation.IsDefault) Debug.Log("[Cálculos] O jogo abre com o cálculo do DBG.");
             }
             var state = save.Load(Economy(), rules.ToPermanents(), out var permanent, out var status, CurrentRules().CaveCount);
             _permanent = permanent;
@@ -259,13 +252,11 @@ namespace MinersIdle.Game
         }
 
         /// <summary>
-        /// Troca o cálculo (o DBG → Cálculos, E3b-3) e grava a escolha no aparelho, se veio pelo <c>GameBootstrap</c>. Outro
-        /// balanço recomeça a run do zero (as regras são outras); a taxa e o incremento da Picareta mudam com o progresso
-        /// mantido, como uma loja com outra fórmula. Um balanço fora da lista volta ao do GDD.
+        /// Troca o cálculo (o DBG → Cálculos, E3b-3) e grava a escolha no aparelho, se veio pelo <c>GameBootstrap</c>. O
+        /// progresso fica, como uma loja com outra fórmula.
         /// </summary>
         public void UseCalculation(CalculationChoice choice)
         {
-            bool restart = choice.Balance != _calculation.Balance;
             ApplyCalculation(choice);
             try
             {
@@ -275,8 +266,7 @@ namespace MinersIdle.Game
             {
                 Debug.LogException(e, this);
             }
-            if (restart) RestartRun();
-            else Begin(Seed, Simulation?.State ?? new GameState());
+            Begin(Seed, Simulation?.State ?? new GameState());
         }
 
         /// <summary>
@@ -308,15 +298,9 @@ namespace MinersIdle.Game
 
         ulong RunSeed() => useFixedSeed ? (ulong)fixedSeed : NewSeed();
 
-        void ApplyCalculation(CalculationChoice choice)
-        {
-            if (choice.Balance < 0 || choice.Balance >= balances.Length || balances[choice.Balance] == null)
-                choice = choice.WithBalance(0);
-            _calculation = choice;
-            if (choice.Balance < balances.Length && balances[choice.Balance] != null) rules = balances[choice.Balance];
-        }
+        void ApplyCalculation(CalculationChoice choice) => _calculation = choice;
 
-        MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth, _calculation.PickaxeByCave);
+        MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth);
         EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep, _calculation.PickaxeCaveGrowth);
 
         /// <summary>

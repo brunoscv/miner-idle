@@ -8,8 +8,8 @@ namespace MinersIdle.Core
     /// quebra, soma lascas e corre para o próximo; sem cristal, continua correndo (D-55). Cristais nascem a cada
     /// intervalo no fim da fila, até o máximo (D-54, D-60). Desde o M3, dano, intervalo, corrida e lascas vêm dos
     /// atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram. Desde o M5: o toque do
-    /// jogador (<see cref="Tap"/>), o crítico e o combo (<see cref="StrikeRules"/>). Desde o M8: as cavernas e a parede da
-    /// passagem (<see cref="PassCave"/>). Desde o M7: o estagiário, que bate no mesmo cristal do anão com o relógio dele e
+    /// jogador (<see cref="Tap"/>), o crítico e o combo (<see cref="StrikeRules"/>). Desde o M8: os andares (no v8, M9c:
+    /// o Próximo Andar, <see cref="AdvanceFloor"/>). Desde o M7: o estagiário, que bate no mesmo cristal do anão com o relógio dele e
     /// avança junto (<see cref="InternHitLanded"/>). (Até o M5, o anão andava num mapa aberto; esse código está na tag
     /// <c>v0.5-campo-aberto</c>.)
     ///
@@ -92,6 +92,7 @@ namespace MinersIdle.Core
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
             _permanents = permanents ?? Permanents.None();
+            _permanents.State.ReachFloor(_state.Cave); // uma partida aberta num andar já conta para o recorde
             _stats = ComputeStats();
             _internStats = ComputeInternStats();
             ArrivalStrike = rules.ArrivalStrike;
@@ -106,18 +107,15 @@ namespace MinersIdle.Core
         const ulong RareFallbackSeed = 0x5241_5245UL;
 
         /// <summary>
-        /// Um cristal nasceu. Os do início já existem ao construir: quem desenha lê <see cref="Crystals"/> primeiro. A parede
-        /// da passagem (M8) também avisa por aqui (<see cref="Crystal.IsWall"/>).
+        /// Um cristal nasceu. Os do início já existem ao construir: quem desenha lê <see cref="Crystals"/> primeiro. A fila
+        /// nova de um andar (M9c) também avisa por aqui, cristal por cristal, depois de a antiga sair.
         /// </summary>
         public event Action<Crystal> CrystalSpawned;
         /// <summary>O alvo do anão mudou (<c>null</c> = ficou sem alvo).</summary>
         public event Action<Crystal> TargetChanged;
         /// <summary>Golpe no cristal: automático ou toque, com o dano e se foi crítico.</summary>
         public event Action<MiningHit> HitLanded;
-        /// <summary>
-        /// O cristal quebrou e saiu do mapa; a recompensa já foi somada. A parede (M8) também: sem recompensa, e a caverna
-        /// muda logo depois (<see cref="CaveChanged"/>).
-        /// </summary>
+        /// <summary>O cristal quebrou e saiu do mapa; a recompensa já foi somada.</summary>
         public event Action<Crystal> CrystalBroken;
         /// <summary>O total de lascas mudou.</summary>
         public event Action<double> ShardsChanged;
@@ -147,13 +145,13 @@ namespace MinersIdle.Core
         /// </summary>
         public event Action BonusesChanged;
         /// <summary>
-        /// A caverna ou o progresso da trava do Letrado mudou fora de uma quebra (M8): passagem de caverna e atalhos do
-        /// debug. A quebra comum já avisa por <see cref="CrystalBroken"/>.
+        /// O andar ou a barra dele mudou fora de uma quebra: o Próximo Andar e os atalhos do debug. A quebra comum já avisa
+        /// por <see cref="CrystalBroken"/>.
         /// </summary>
         public event Action<int> CaveChanged;
         /// <summary>
-        /// A última parede caiu (M8, E3; D-112): o coração da montanha. Sai uma vez por partida; o jogo segue na última
-        /// caverna, sem passagem.
+        /// O coração da montanha (D-112): no v8, o Próximo Andar com a barra cheia no último andar (D-258). Sai uma vez por
+        /// partida; o jogo segue no último andar, sem passagem.
         /// </summary>
         public event Action HeartReached;
         /// <summary>
@@ -278,11 +276,8 @@ namespace MinersIdle.Core
         public GameState State => _state;
         public Miner Miner => _miner;
 
-        /// <summary>Cristais inteiros na fila, do primeiro (o alvo) ao último; a parede de pé, se houver, é o último.</summary>
+        /// <summary>Cristais inteiros na fila, do primeiro (o alvo) ao último.</summary>
         public IReadOnlyList<Crystal> Crystals => _track.Crystals;
-
-        /// <summary>A parede da passagem de pé (M8, E2), ou <c>null</c>.</summary>
-        public Crystal Wall => _track.Wall;
 
         /// <summary>Segundos de jogo simulados.</summary>
         public double Elapsed { get; private set; }
@@ -358,13 +353,9 @@ namespace MinersIdle.Core
             return crystal;
         }
 
-        /// <summary>
-        /// Atalho do debug: um cristal agora, no fim da fila, sem esperar o relógio e ignorando o máximo. Com a parede de pé,
-        /// nada nasce (<c>null</c>): o cristal ficaria depois dela.
-        /// </summary>
+        /// <summary>Atalho do debug: um cristal agora, no fim da fila, sem esperar o relógio e ignorando o máximo.</summary>
         public Crystal SpawnCrystalNow()
         {
-            if (_track.Wall != null) return null;
             var crystal = _track.TrySpawn(_miner.Distance, ignoreMax: true);
             CrystalSpawned?.Invoke(crystal);
             return crystal;
@@ -477,7 +468,7 @@ namespace MinersIdle.Core
             if (target == null || target.Distance - _miner.Distance > _rules.TapReach + Epsilon) return true;
 
             bool critical = RollCritical(isTap: true);
-            double damage = _stats.Damage * _strike.TapFraction * (critical ? _strike.CritMultiplier : 1);
+            double damage = _stats.Damage * _strike.TapFraction * (critical ? CritMultiplier(isTap: true) : 1);
             bool broke = target.ApplyDamage(damage);
             HitLanded?.Invoke(new MiningHit(target, damage, isTap: true, isCritical: critical));
             if (broke) Break(target, byTap: true);
@@ -502,40 +493,50 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// Se o botão de passar de caverna vale agora (M8, D-110): o Letrado da caverna atual comprado e nenhuma parede de
-        /// pé. Na última caverna, o último Letrado leva à última parede, a do coração da montanha (D-112); depois dela, não
-        /// há mais passagem.
+        /// Os cristais que o andar atual pede para o Próximo Andar (GDD v8, D-239): <c>andar × 10</c> menos a Memória, no
+        /// mínimo 0.
         /// </summary>
-        public bool CanPassCave =>
-            _economy.Get(UpgradeId.Letrado).IsEnabled && _state.LevelOf(UpgradeId.Letrado) >= _state.Cave
-            && !_state.ReachedHeart && _track.Wall == null;
+        public long RequiredBreaks => _permanents.FloorRequirement(_rules, _state.Cave);
+
+        /// <summary>A barra do Próximo Andar, de 0 a 1: cristais quebrados no andar ÷ o requisito; cheia, fica em 1 (D-259).</summary>
+        public double FloorProgress
+        {
+            get
+            {
+                long required = RequiredBreaks;
+                return required <= 0 ? 1 : Math.Min(1, (double)_state.CaveBreaks / required);
+            }
+        }
 
         /// <summary>
-        /// Começa a passagem para a próxima caverna (M8, E2): põe a parede no fim da fila, a
-        /// <see cref="MiningRules.SpawnDistance"/> à frente do anão, onde os cristais nascem (D-107). Os cristais até ela o
-        /// anão quebra normalmente; os de depois somem; nada nasce enquanto ela está de pé. A vida dela é a da D-98; ela não
-        /// paga lascas nem conta nos 100 cristais (D-108). A caverna só muda quando ela quebra. A última parede (D-112) leva
-        /// a vida da mesma fórmula, como se houvesse uma caverna a mais. <c>false</c> se não pode passar.
+        /// Se o Próximo Andar vale agora: a barra cheia, fora de uma transição e antes do coração da montanha. No último
+        /// andar ele leva ao coração (D-258).
         /// </summary>
-        public bool PassCave()
-        {
-            if (!CanPassCave) return false;
+        public bool CanAdvance =>
+            !_state.ReachedHeart && _floorTransitionLeft <= 0 && _state.CaveBreaks >= RequiredBreaks;
 
-            var target = _miner.Target;
-            double at = _miner.Distance + _rules.SpawnDistance;
-            if (target != null) at = Math.Max(at, target.Distance + _rules.MinCrystalSpacing); // o alvo fica antes dela
-            var wall = _track.PlaceWall(at, _rules.WallHealthIn(_state.Cave + 1), target);
-            CrystalSpawned?.Invoke(wall);
+        /// <summary>
+        /// O Próximo Andar (M9c, GDD v8): abre a transição (D-266), muda de andar, zera a barra (D-259) e refaz a fila com
+        /// a vida e as lascas do andar novo. No último andar, leva ao coração da montanha (D-258). <c>false</c> se a barra
+        /// não está cheia.
+        /// </summary>
+        public bool AdvanceFloor()
+        {
+            if (!CanAdvance) return false;
+            if (_state.Cave >= _rules.CaveCount)
+            {
+                _state.ReachHeart();
+                HeartReached?.Invoke();
+                return true;
+            }
+            EnterCave(_state.Cave + 1);
             return true;
         }
 
-        /// <summary>Os cristais que a trava do Mapa pede agora: os das regras, menos os da Memória (Marco 8b).</summary>
-        public long MapLock => Purchases.MapLock(_rules, _permanents);
-
-        /// <summary>Atalho do debug: a trava do Letrado cumprida (os cristais da caverna, sem quebrar).</summary>
-        public void FillCaveBreaks()
+        /// <summary>Atalho do debug (DBG → Andar → Encher a barra): os cristais do andar contados, sem quebrar.</summary>
+        public void FillFloorBar()
         {
-            long goal = MapLock;
+            long goal = RequiredBreaks;
             if (_state.CaveBreaks >= goal) return;
             _state.SetCaveBreaks(goal);
             CaveChanged?.Invoke(_state.Cave);
@@ -917,60 +918,83 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// Atalho do debug: a próxima caverna agora, sem parede, como se tivesse comprado o Letrado (de graça) e passado.
-        /// Uma parede de pé sai junto. Na última caverna, nada muda. <c>false</c> se não há caverna depois.
+        /// Atalho do debug: o próximo andar agora, como o Próximo Andar, mas sem a barra cheia. No último andar, nada muda.
+        /// <c>false</c> se não há andar depois.
         /// </summary>
         public bool SkipToNextCave() => SkipToCave(_state.Cave + 1);
 
         /// <summary>
-        /// Atalho do debug (M8, E3): direto para a caverna <paramref name="cave"/> (no máximo a última), com os Letrados das
-        /// cavernas de antes de graça, sem parede. <c>false</c> se ela não fica mais abaixo.
+        /// Atalho do debug: direto para o andar <paramref name="cave"/> (no máximo o último), como o Próximo Andar.
+        /// <c>false</c> se ele não fica mais abaixo.
         /// </summary>
         public bool SkipToCave(int cave)
         {
             cave = Math.Min(cave, _rules.CaveCount);
             if (cave <= _state.Cave) return false;
-            while (_state.LevelOf(UpgradeId.Letrado) < cave - 1) _state.RaiseLevel(UpgradeId.Letrado);
-
-            var wall = _track.Wall;
-            if (wall != null)
-            {
-                _track.Remove(wall);
-                if (_miner.Target == wall)
-                {
-                    _miner.Target = null;
-                    _miner.State = MinerState.Running;
-                    _recoveryLeft = 0;
-                    TargetChanged?.Invoke(null);
-                }
-            }
             EnterCave(cave);
             return true;
         }
 
-        void EnterCave(int cave)
+        /// <summary>
+        /// Atalho do debug (DBG → Andar → Ir ao andar…, M9c E1): qualquer andar de 1 ao último, acima ou abaixo do atual,
+        /// como o Próximo Andar (transição, barra zerada, fila nova). Subir deixa o coração para trás. <c>false</c> se já
+        /// está nele.
+        /// </summary>
+        public bool GoToFloor(int floor)
         {
-            _state.EnterCave(cave);
-            _track.SetCrystalValues(_rules.CrystalHealthIn(cave), _rules.CrystalRewardIn(cave));
-            _stats = ComputeStats();
-            StatsChanged?.Invoke(_stats);
-            if (_floorTransitionSeconds > 0) BeginFloorTransition(cave);
-            CaveChanged?.Invoke(cave);
+            floor = Math.Max(1, Math.Min(floor, _rules.CaveCount));
+            if (floor == _state.Cave) return false;
+            if (floor < _rules.CaveCount) _state.LeaveHeart();
+            EnterCave(floor);
+            return true;
         }
 
         /// <summary>
-        /// Abre a transição de andar (M9c E0, D-266): a fila do andar novo nasce já (até o mínimo, D-80), para a câmera
-        /// mostrá-la na chegada, e o jogo para até o tempo acabar. Uma transição correndo recomeça (atalho do debug no
-        /// meio de outra).
+        /// Entra no andar <paramref name="cave"/>: a transição abre primeiro (quem desenha ainda vê a fila antiga, para
+        /// trocá-la no escuro), o andar muda, a barra zera, o recorde sobe, e a fila do andar novo nasce na tela, com a
+        /// vida e as lascas de lá (o anão fica onde está e corre até o primeiro quando a transição acaba).
         /// </summary>
-        void BeginFloorTransition(int cave)
+        void EnterCave(int cave)
         {
-            while (_track.Wall == null && _track.IsBelowMinimum)
+            if (_floorTransitionSeconds > 0) BeginFloorTransition(cave);
+            _state.EnterCave(cave);
+            _permanents.State.ReachFloor(cave);
+            _track.SetCrystalValues(_rules.CrystalHealthIn(cave), _rules.CrystalRewardIn(cave));
+            RefreshQueue();
+            _stats = ComputeStats();
+            StatsChanged?.Invoke(_stats);
+            CaveChanged?.Invoke(cave);
+        }
+
+        /// <summary>A fila do andar velho sai; a do novo nasce como a do começo da partida, na tela (D-60).</summary>
+        void RefreshQueue()
+        {
+            if (_miner.Target != null)
+            {
+                _miner.Target = null;
+                _miner.State = MinerState.Running;
+                _recoveryLeft = 0;
+                _swungAtTarget = false;
+                TargetChanged?.Invoke(null);
+            }
+            _track.Clear();
+            _spawnTimer = 0;
+            _track.SpawnInitial(_miner.Distance);
+            for (int i = 0; i < _track.Crystals.Count; i++) CrystalSpawned?.Invoke(_track.Crystals[i]);
+            while (_track.IsBelowMinimum)
             {
                 var crystal = _track.TrySpawn(_miner.Distance);
                 if (crystal == null) break;
                 CrystalSpawned?.Invoke(crystal);
             }
+        }
+
+        /// <summary>
+        /// Abre a transição de andar (M9c E0, D-266): o jogo para até o tempo acabar. Uma transição correndo recomeça
+        /// (atalho do debug no meio de outra).
+        /// </summary>
+        void BeginFloorTransition(int cave)
+        {
             _floorTransitionLength = _floorTransitionSeconds;
             _floorTransitionLeft = _floorTransitionSeconds;
             FloorTransitionStarted?.Invoke(cave);
@@ -990,9 +1014,19 @@ namespace MinersIdle.Core
         bool RollCritical(bool isTap)
         {
             if (ForceCritical || _state.Bonuses.GuaranteedCritical) return true; // o ×50 do combo (D-178)
-            double chance = (isTap ? _strike.TapCritChance : _strike.CritChance) + _stats.CritBonus;
+            double chance = CritChance(isTap);
+            if (chance >= 1) return true; // 100% ou mais: sempre, sem sortear
             return chance > 0 && _critRandom.NextDouble() < chance;
         }
+
+        /// <summary>A chance de crítico do golpe ou do toque: a base (<see cref="StrikeRules"/>) mais a das linhas e cartas.</summary>
+        double CritChance(bool isTap) => (isTap ? _strike.TapCritChance : _strike.CritChance) + _stats.CritBonus;
+
+        /// <summary>
+        /// O multiplicador do crítico: o das regras (GDD v8: ×1,5) e, acima de 100% de chance, +1 ponto por 1% a mais
+        /// (D-249: 140% de chance → ×1,9).
+        /// </summary>
+        double CritMultiplier(bool isTap) => _strike.CritMultiplier + Math.Max(0, CritChance(isTap) - 1);
 
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id, _permanents);
@@ -1021,15 +1055,14 @@ namespace MinersIdle.Core
                     changed = true;
                 }
 
-                bool canSpawn = _track.Wall == null; // parede de pé (D-107): nada nasce até ela cair
-                if (canSpawn && _track.IsBelowMinimum)
+                if (_track.IsBelowMinimum)
                 {
                     // Fila no mínimo (D-80): repõe na hora, sem mexer no relógio de nascimento.
                     var crystal = _track.TrySpawn(_miner.Distance);
                     CrystalSpawned?.Invoke(crystal);
                     changed = true;
                 }
-                else if (canSpawn && !_track.IsFull && _spawnTimer >= _rules.SpawnInterval - Epsilon)
+                else if (!_track.IsFull && _spawnTimer >= _rules.SpawnInterval - Epsilon)
                 {
                     _spawnTimer = Math.Max(0, _spawnTimer - _rules.SpawnInterval);
                     // Nasce antes de avisar: com "?.Invoke(TrySpawn())", sem ninguém escutando, o nascimento seria pulado.
@@ -1190,8 +1223,8 @@ namespace MinersIdle.Core
                 _internTimer = Math.Min(_internTimer + step, _internStats.HitInterval);
         }
 
-        /// <summary>O relógio de nascimento espera: fila cheia ou parede de pé.</summary>
-        bool SpawnWaits => _track.IsFull || _track.Wall != null;
+        /// <summary>O relógio de nascimento espera: fila cheia.</summary>
+        bool SpawnWaits => _track.IsFull;
 
         /// <summary>Quanto falta correr até parar no alcance do alvo (negativo: já passou do ponto).</summary>
         double ToGo() => _miner.Target.Distance - _rules.MiningRange - _miner.Distance;
@@ -1246,7 +1279,7 @@ namespace MinersIdle.Core
         {
             var target = _miner.Target;
             bool critical = RollCritical(isTap: false);
-            double damage = _stats.Damage * (critical ? _strike.CritMultiplier : 1);
+            double damage = _stats.Damage * (critical ? CritMultiplier(isTap: false) : 1);
 
             _state.RegisterHit();
             _swungAtTarget = true;
@@ -1271,8 +1304,7 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// A quebra de um cristal paga e conta; a da parede (M8) não, e leva à caverna seguinte ou, na última, ao coração
-        /// da montanha (D-112). Quebrado pelo toque no meio da picaretada, o anão termina o golpe antes de correr (D-126);
+        /// A quebra de um cristal paga e conta na barra do andar. Quebrado pelo toque no meio da picaretada, o anão termina o golpe antes de correr (D-126);
         /// quebrado pela picareta, ou antes de ela descer nele, corre na hora.
         /// </summary>
         void Break(Crystal target, bool byTap = false)
@@ -1281,7 +1313,7 @@ namespace MinersIdle.Core
             bool finishSwing = byTap && _miner.State == MinerState.Mining && _swungAtTarget && recovery > Epsilon;
 
             _track.Remove(target);
-            if (!target.IsWall) _state.RegisterBreak(target.Reward * _stats.RewardMultiplier);
+            _state.RegisterBreak(target.Reward * _stats.RewardMultiplier);
             _miner.Target = null;
             if (finishSwing)
             {
@@ -1294,17 +1326,9 @@ namespace MinersIdle.Core
             }
 
             CrystalBroken?.Invoke(target);
-            if (!target.IsWall) ShardsChanged?.Invoke(_state.Shards);
+            ShardsChanged?.Invoke(_state.Shards);
             TargetChanged?.Invoke(null);
             if (target.IsRare) OpenRareWindow(); // D-184: a janela abre, sem pausar
-            if (!target.IsWall) return;
-            if (_state.Cave < _rules.CaveCount)
-            {
-                EnterCave(_state.Cave + 1);
-                return;
-            }
-            _state.ReachHeart();
-            HeartReached?.Invoke();
         }
     }
 }

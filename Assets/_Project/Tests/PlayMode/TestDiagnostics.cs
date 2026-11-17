@@ -25,8 +25,9 @@ namespace MinersIdle.Tests
         {
             var rare = Object.FindAnyObjectByType<RareWindowView>();
             var target = simulation.Miner.Target;
-            return $"(nível {simulation.State.Cave}, transição {simulation.IsInFloorTransition}, parede {simulation.Wall != null}, " +
-                   $"alvo {(target == null ? "nenhum" : target == simulation.Wall ? "parede" : target.IsRare ? "raro" : "cristal")}, " +
+            return $"(andar {simulation.State.Cave}, transição {simulation.IsInFloorTransition}, " +
+                   $"barra {simulation.State.CaveBreaks}/{simulation.RequiredBreaks}, " +
+                   $"alvo {(target == null ? "nenhum" : target.IsRare ? "raro" : "cristal")}, " +
                    $"janela do raro {(rare != null && rare.IsOpen)}, combo {simulation.Combo}, tempo {simulation.Elapsed:0.00})";
         }
     }

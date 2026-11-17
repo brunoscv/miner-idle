@@ -23,7 +23,10 @@ namespace MinersIdle.Core
         /// <summary>A caverna em que o anão está (M8; 1 = a primeira).</summary>
         public int Cave { get; private set; } = 1;
 
-        /// <summary>Cristais quebrados na caverna atual (M8): a trava do Letrado (D-93); toda quebra conta (D-95).</summary>
+        /// <summary>
+        /// Cristais quebrados no andar atual: a barra do Próximo Andar (GDD v8, D-239); toda quebra conta (D-95) e volta a 0
+        /// no andar seguinte (D-259).
+        /// </summary>
         public long CaveBreaks { get; private set; }
 
         /// <summary>Segundos de jogo simulados desde o começo (M8, E3): a tela do coração da montanha mostra (D-112).</summary>
@@ -32,7 +35,10 @@ namespace MinersIdle.Core
         /// <summary>Lascas ganhas nas quebras desde o começo (M8, E3; D-112). As do debug e as gastas não mudam a conta.</summary>
         public double ShardsEarned { get; private set; }
 
-        /// <summary>A última parede caiu: o anão chegou ao coração da montanha (M8, D-112). O jogo segue na última caverna.</summary>
+        /// <summary>
+        /// O anão chegou ao coração da montanha (M8, D-112): no v8, a barra cheia do último andar (D-258). O jogo segue no
+        /// último andar.
+        /// </summary>
         public bool ReachedHeart { get; private set; }
 
         /// <summary>A volta do offline esperando o COLETAR (M9, E2, D-197); vazia quando não há.</summary>
@@ -57,12 +63,8 @@ namespace MinersIdle.Core
         /// Recria o estado a partir de um save (Marco 4; a descida desde o M8). Corrige o que estiver fora do lugar em vez
         /// de falhar: lascas negativas ou inválidas viram 0, contadores negativos viram 0, níveis ficam entre 0 e o limite
         /// da linha em <paramref name="economy"/> (um asset novo pode ter limite menor que o do save), a caverna fica entre
-        /// 1 e <paramref name="caveCount"/>.
-        ///
-        /// O Letrado acompanha a caverna (M8, E3): o nível <i>n</i> leva à caverna <i>n+1</i>, então na caverna <i>c</i>
-        /// ele está em <i>c−1</i> (ainda não comprado) ou <i>c</i> (comprado, a parede ainda por quebrar; uma parede de pé
-        /// não é salva, e o botão de passar volta). Um nível fora disso vai para o mais perto. O coração da montanha só vale
-        /// na última caverna, com o último Letrado. A árvore do estagiário fica no zero sem ele contratado (M7).
+        /// 1 e <paramref name="caveCount"/>. O coração da montanha só vale no último andar. A árvore do estagiário fica no
+        /// zero sem ele contratado (M7).
         /// </summary>
         public static GameState Restore(double shards, long hits, long breaks,
                                         Func<UpgradeId, int> levelOf, EconomyRules economy,
@@ -95,10 +97,7 @@ namespace MinersIdle.Core
                 foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
                     if (EconomyRules.IsInternTree(id)) state._levels[(int)id] = 0;
 
-            int letrado = (int)UpgradeId.Letrado;
-            int letradoMax = economy.Get(UpgradeId.Letrado).MaxLevel;
-            state._levels[letrado] = Math.Max(Math.Min(state._levels[letrado], state.Cave), Math.Min(state.Cave - 1, letradoMax));
-            state.ReachedHeart = reachedHeart && state.Cave == caveCount && state._levels[letrado] >= state.Cave;
+            state.ReachedHeart = reachedHeart && state.Cave == caveCount;
             return state;
         }
 
@@ -128,7 +127,7 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// As lascas do offline (M9): entram no saldo e nas lascas ganhas do dia (D-197), mas não são quebras do jogador:
-        /// não contam na trava do Mapa nem nas quebras (D-189).
+        /// não contam na barra do andar nem nas quebras (D-189; a barra no offline é a E4 do M9c, D-246).
         /// </summary>
         internal void AddOfflineShards(double amount)
         {
@@ -150,14 +149,17 @@ namespace MinersIdle.Core
 
         internal void ReachHeart() => ReachedHeart = true;
 
-        /// <summary>Entra na caverna: a contagem da trava do Letrado recomeça.</summary>
+        /// <summary>Atalho do debug que sobe de andar: o coração fica para trás.</summary>
+        internal void LeaveHeart() => ReachedHeart = false;
+
+        /// <summary>Entra no andar: a barra recomeça do zero (D-259).</summary>
         internal void EnterCave(int cave)
         {
             Cave = cave;
             CaveBreaks = 0;
         }
 
-        /// <summary>Atalho do debug: quebras da caverna sem quebrar cristal.</summary>
+        /// <summary>Atalho do debug: quebras do andar sem quebrar cristal.</summary>
         internal void SetCaveBreaks(long breaks) => CaveBreaks = Math.Max(0, breaks);
     }
 }

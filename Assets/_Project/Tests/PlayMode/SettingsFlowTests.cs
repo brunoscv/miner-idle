@@ -186,17 +186,16 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// D-199: o toque comum não vibra; o crítico vibra curto; a quebra da parede vibra longo; desligada, nada. A partida
-        /// é avançada à mão (o runner parado), e entre um pulso e outro passa o intervalo mínimo em tempo real.
+        /// D-199: o toque comum não vibra; o crítico vibra curto; descer de andar vibra longo (era a parede, que saiu no v8,
+        /// D-256); desligada, nada. A partida é avançada à mão (o runner parado), e entre um pulso e outro passa o
+        /// intervalo mínimo em tempo real.
         /// </summary>
         [UnityTest]
-        public IEnumerator Vibration_ShortOnCritical_LongOnTheWall_NothingOnANormalTap()
+        public IEnumerator Vibration_ShortOnCritical_LongOnANewFloor_NothingOnANormalTap()
         {
             yield return Load(withFiles: false);
             var haptics = Object.FindAnyObjectByType<Haptics>();
             var simulation = _runner.Simulation;
-            if (!simulation.Economy.Get(UpgradeId.Letrado).IsEnabled)
-                Assert.Ignore("O balanço ativo não tem o Letrado (rode o setup do projeto).");
             _runner.enabled = false;
             MiningHit? tapHit = null;
             simulation.HitLanded += hit => { if (hit.IsTap) tapHit = hit; };
@@ -229,21 +228,14 @@ namespace MinersIdle.Tests
             Assert.That(haptics.PulseCount, Is.EqualTo(beforeCritical + 1), "o crítico vibra");
             Assert.That(haptics.LastPulseMilliseconds, Is.EqualTo(haptics.CriticalMilliseconds));
 
-            // A parede da passagem.
-            simulation.AddShards(1e12);
-            simulation.FillCaveBreaks();
-            Assert.That(simulation.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased));
-            Assert.That(simulation.PassCave(), Is.True);
-            int beforeWall = haptics.PulseCount;
-            for (int i = 0; i < 30 && simulation.State.Cave == 1; i++)
-            {
-                simulation.Tick(0);
-                simulation.BreakTarget();
-            }
-            Assert.That(simulation.State.Cave, Is.EqualTo(2), "a parede quebrou");
-            Assert.That(haptics.PulseCount, Is.EqualTo(beforeWall + 1), "a parede vibra, os cristais antes dela não");
-            Assert.That(haptics.LastPulseMilliseconds, Is.EqualTo(haptics.WallMilliseconds));
-            Assert.That(haptics.WallMilliseconds, Is.GreaterThan(haptics.CriticalMilliseconds), "a da parede é mais longa");
+            // Descer de andar (a parede saiu no v8, D-256; o pulso longo passou para a descida).
+            simulation.FillFloorBar();
+            int beforeFloor = haptics.PulseCount;
+            Assert.That(simulation.AdvanceFloor(), Is.True);
+            Assert.That(simulation.State.Cave, Is.EqualTo(2));
+            Assert.That(haptics.PulseCount, Is.EqualTo(beforeFloor + 1), "descer de andar vibra uma vez");
+            Assert.That(haptics.LastPulseMilliseconds, Is.EqualTo(haptics.FloorMilliseconds));
+            Assert.That(haptics.FloorMilliseconds, Is.GreaterThan(haptics.CriticalMilliseconds), "a do andar é mais longa");
 
             // Desligada nos AJUSTES: nada.
             _settings.Vibration = false;

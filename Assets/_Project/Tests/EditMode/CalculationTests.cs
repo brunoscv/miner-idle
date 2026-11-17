@@ -12,11 +12,13 @@ namespace MinersIdle.Tests
 {
     /// <summary>
     /// M8 E3b-3 (D-143): a taxa e o incremento da Picareta trocados no DBG → Cálculos entram nas regras montadas a partir
-    /// do asset (o núcleo não muda), o custo continua "2 × Dano Base" (D-133), e a escolha vai e volta do arquivo.
+    /// do asset (o núcleo não muda), o custo segue o dano da Picareta (D-202; no v8, 7 × o dano, P5), e a escolha vai e
+    /// volta do arquivo. Desde o v8 (M9c E1, D-256) o balanço é um só, o <c>Balance_GDD_v8</c>, e a Picareta pela caverna
+    /// saiu: um arquivo antigo com essas escolhas abre só com o resto.
     /// </summary>
     public class CalculationTests
     {
-        const string GddV7Path = "Assets/_Project/Data/Balance_GDD_v7.asset";
+        const string GddV8Path = "Assets/_Project/Data/Balance_GDD_v8.asset";
         const string GddV5Path = "Assets/_Project/Data/Balance_GDD_v5.asset";
 
         string _dir;
@@ -40,41 +42,41 @@ namespace MinersIdle.Tests
         [Test]
         public void WithoutChoice_TheRulesAreTheAssetOnes()
         {
-            var v7 = Load(GddV7Path);
-            Assert.That(v7.ToRules().PickaxeCaveGrowth, Is.EqualTo(1.2), "taxa do GDD v7 (D-133)");
-            Assert.That(v7.PickaxeStep, Is.EqualTo(0), "incremento do GDD v7: o Dano Base não sobe (D-202)");
-            var pickaxe = v7.ToEconomy().Get(UpgradeId.Pickaxe);
-            Assert.That(pickaxe.CostAt(0), Is.EqualTo(4.2).Within(1e-9), "2,1 × (1 + 1,2^0)");
-            Assert.That(pickaxe.CostAt(1), Is.EqualTo(4.62).Within(1e-9), "2,1 × (1 + 1,2^1)");
+            var v8 = Load(GddV8Path);
+            Assert.That(v8.ToRules().PickaxeCaveGrowth, Is.EqualTo(1.2), "taxa do GDD v8");
+            Assert.That(v8.PickaxeStep, Is.EqualTo(0), "incremento: o Dano Base não sobe (D-202)");
+            var pickaxe = v8.ToEconomy().Get(UpgradeId.Pickaxe);
+            Assert.That(pickaxe.CostAt(0), Is.EqualTo(14).Within(1e-9), "7 × (1 + 1,2^0)");
+            Assert.That(pickaxe.CostAt(1), Is.EqualTo(15.4).Within(1e-9), "7 × (1 + 1,2^1)");
         }
 
         [Test]
         public void Growth_ChangesThePickaxeOnly()
         {
-            var v7 = Load(GddV7Path);
-            var rules = v7.ToRules(pickaxeCaveGrowth: 1.25);
+            var v8 = Load(GddV8Path);
+            var rules = v8.ToRules(pickaxeCaveGrowth: 1.25);
             Assert.That(rules.PickaxeCaveGrowth, Is.EqualTo(1.25));
-            Assert.That(rules.CaveCount, Is.EqualTo(v7.ToRules().CaveCount));
-            Assert.That(rules.CrystalHealth, Is.EqualTo(v7.ToRules().CrystalHealth), "a vida do cristal fica");
+            Assert.That(rules.CaveCount, Is.EqualTo(v8.ToRules().CaveCount));
+            Assert.That(rules.CrystalHealth, Is.EqualTo(v8.ToRules().CrystalHealth), "a vida do cristal fica");
         }
 
         [Test]
         public void Growth_AlsoChangesThePickaxeCost()
         {
-            var v7 = Load(GddV7Path);
-            var pickaxe = v7.ToEconomy(pickaxeCaveGrowth: 1.25).Get(UpgradeId.Pickaxe);
-            Assert.That(pickaxe.CostAt(2), Is.EqualTo(2.1 * (1 + 1.25 * 1.25)).Within(1e-9), "2,1 × o dano com a taxa nova (D-202)");
+            var v8 = Load(GddV8Path);
+            var pickaxe = v8.ToEconomy(pickaxeCaveGrowth: 1.25).Get(UpgradeId.Pickaxe);
+            Assert.That(pickaxe.CostAt(2), Is.EqualTo(7 * (1 + 1.25 * 1.25)).Within(1e-9), "7 × o dano com a taxa nova (D-202)");
         }
 
         [Test]
         public void Step_ChangesTheBaseDamagePerBuy_AndTheCostFollowsTheDamage()
         {
-            var v7 = Load(GddV7Path);
-            var pickaxe = v7.ToEconomy(pickaxeStep: 3).Get(UpgradeId.Pickaxe);
+            var v8 = Load(GddV8Path);
+            var pickaxe = v8.ToEconomy(pickaxeStep: 3).Get(UpgradeId.Pickaxe);
             Assert.That(pickaxe.Effect, Is.EqualTo(3));
-            Assert.That(pickaxe.CostAt(0), Is.EqualTo(4.2).Within(1e-9), "Dano Base 1 + 1,2^0 = 2 → custo 4,20");
-            Assert.That(pickaxe.CostAt(1), Is.EqualTo(2.1 * (1 + 3 + 1.2)).Within(1e-9), "Dano Base 4 + 1,2^1 → 2,1 × 5,2");
-            Assert.That(pickaxe.MaxLevel, Is.EqualTo(v7.ToEconomy().Get(UpgradeId.Pickaxe).MaxLevel));
+            Assert.That(pickaxe.CostAt(0), Is.EqualTo(14).Within(1e-9), "Dano Base 1 + 1,2^0 = 2 → custo 14");
+            Assert.That(pickaxe.CostAt(1), Is.EqualTo(7 * (1 + 3 + 1.2)).Within(1e-9), "Dano Base 4 + 1,2^1 → 7 × 5,2");
+            Assert.That(pickaxe.MaxLevel, Is.EqualTo(v8.ToEconomy().Get(UpgradeId.Pickaxe).MaxLevel));
         }
 
         [Test]
@@ -92,12 +94,10 @@ namespace MinersIdle.Tests
         public void Choice_IsDefaultOnlyWhenEverythingIsTheGdd()
         {
             Assert.That(default(CalculationChoice).IsDefault, Is.True);
-            Assert.That(new CalculationChoice(1).IsDefault, Is.False);
             Assert.That(default(CalculationChoice).WithPickaxeCaveGrowth(1.21).IsDefault, Is.False);
             Assert.That(default(CalculationChoice).WithPickaxeStep(2).IsDefault, Is.False);
             Assert.That(default(CalculationChoice).WithPickaxeStep(2).WithPickaxeStep(null).IsDefault, Is.True);
-            Assert.That(default(CalculationChoice).WithPickaxeByCave(true).IsDefault, Is.False, "Picareta pela caverna (D-201)");
-            Assert.That(default(CalculationChoice).WithPickaxeByCave(true).WithPickaxeByCave(false).IsDefault, Is.True);
+            Assert.That(default(CalculationChoice).WithPickaxeCaveGrowth(1.3).WithPickaxeCaveGrowth(null).IsDefault, Is.True);
             Assert.That(default(CalculationChoice).WithComboStacking(ComboStacking.HighestOnly).IsDefault, Is.False,
                         "só o maior marco (D-217)");
             Assert.That(default(CalculationChoice).ComboStacking, Is.EqualTo(ComboStacking.Cumulative), "o GDD soma (D-183)");
@@ -111,7 +111,7 @@ namespace MinersIdle.Tests
             store.Save(choice.ToData());
             var back = CalculationChoice.FromData(store.Load());
             Assert.That(back, Is.EqualTo(choice));
-            Assert.That(back.WithBalance(1).ComboStacking, Is.EqualTo(ComboStacking.HighestOnly), "trocar outra coisa não volta o acúmulo");
+            Assert.That(back.WithPickaxeStep(5).ComboStacking, Is.EqualTo(ComboStacking.HighestOnly), "trocar outra coisa não volta o acúmulo");
 
             Directory.CreateDirectory(_dir);
             File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"pickaxeByCave\": true }");
@@ -131,7 +131,7 @@ namespace MinersIdle.Tests
             store.Save(choice.ToData());
             var back = CalculationChoice.FromData(store.Load());
             Assert.That(back, Is.EqualTo(choice));
-            Assert.That(back.WithBalance(1).RareRhythm, Is.EqualTo(RareRhythm.Slow), "trocar outra coisa não volta o ritmo");
+            Assert.That(back.WithPickaxeStep(5).RareRhythm, Is.EqualTo(RareRhythm.Slow), "trocar outra coisa não volta o ritmo");
 
             Directory.CreateDirectory(_dir);
             File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"comboHighestOnly\": true }");
@@ -139,31 +139,26 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void ByCave_SwitchesTheV7PickaxeToTheCave_AndTheV5IgnoresIt()
+        public void ThePickaxe_IsAlwaysByPurchase_AndTheGrowthStillTunes()
         {
-            var v7 = Load(GddV7Path);
-            Assert.That(v7.ToRules().PickaxeFormula, Is.EqualTo(PickaxeFormula.LevelScaled), "o GDD: pela compra (D-201)");
-            var byCave = v7.ToRules(pickaxeCaveGrowth: 1.3, pickaxeByCave: true);
-            Assert.That(byCave.PickaxeFormula, Is.EqualTo(PickaxeFormula.CaveScaled), "a leitura da D-133");
-            Assert.That(byCave.PickaxeCaveGrowth, Is.EqualTo(1.3), "a taxa do DBG vale nas duas");
-
-            var v5 = Load(GddV5Path);
-            Assert.That(v5.ToRules(pickaxeByCave: true).PickaxeFormula, Is.EqualTo(PickaxeFormula.Multiply));
+            var v8 = Load(GddV8Path);
+            Assert.That(v8.ToRules().PickaxeFormula, Is.EqualTo(PickaxeFormula.LevelScaled), "pela compra (D-201; a pela caverna saiu, D-256)");
+            var tuned = v8.ToRules(pickaxeCaveGrowth: 1.3);
+            Assert.That(tuned.PickaxeFormula, Is.EqualTo(PickaxeFormula.LevelScaled));
+            Assert.That(tuned.PickaxeCaveGrowth, Is.EqualTo(1.3), "a taxa do DBG vale");
         }
 
         [Test]
-        public void Store_KeepsThePickaxeByCave_AndAnOldFileIsByLevel()
+        public void Store_AnOldFileWithTheRetiredChoices_KeepsTheRest()
         {
             var store = new CalculationStore(new FileSaveStore(_dir, CalculationStore.FileName));
-            var choice = default(CalculationChoice).WithPickaxeByCave(true);
-            store.Save(choice.ToData());
-            Assert.That(CalculationChoice.FromData(store.Load()), Is.EqualTo(choice));
-
             Directory.CreateDirectory(_dir);
-            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"hasPickaxeStep\": true, \"pickaxeStep\": 3 }");
+            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName),
+                              "{ \"balance\": 1, \"pickaxeByCave\": true, \"hasPickaxeStep\": true, \"pickaxeStep\": 3 }");
             var old = CalculationChoice.FromData(store.Load());
-            Assert.That(old.PickaxeByCave, Is.False, "arquivo de antes da D-201: a do GDD");
-            Assert.That(old.PickaxeStep, Is.EqualTo(3));
+            Assert.That(old.PickaxeStep, Is.EqualTo(3), "o que ainda existe volta");
+            Assert.That(old, Is.EqualTo(default(CalculationChoice).WithPickaxeStep(3)),
+                        "o seletor de balanço e a Picareta pela caverna ficam de fora (D-256)");
         }
 
         [Test]
@@ -172,7 +167,7 @@ namespace MinersIdle.Tests
             var store = new CalculationStore(new FileSaveStore(_dir, CalculationStore.FileName));
             Assert.That(store.Load(), Is.Null, "sem arquivo, nenhuma escolha");
 
-            var choice = new CalculationChoice(1, 1.22, null);
+            var choice = new CalculationChoice(1.22, null);
             store.Save(choice.ToData());
             Assert.That(File.Exists(Path.Combine(_dir, CalculationStore.FileName)), Is.True);
             Assert.That(File.Exists(Path.Combine(_dir, FileSaveStore.FileName)), Is.False, "não mexe no save");

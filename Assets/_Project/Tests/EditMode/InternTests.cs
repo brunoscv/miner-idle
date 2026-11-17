@@ -24,7 +24,7 @@ namespace MinersIdle.Tests
             new MiningRules(
                 initialCrystals: 0, firstCrystalDistance: 3, maxCrystals: 12, spawnInterval: 1e9, minCrystalSpacing: 2,
                 spawnDistance: 12, crystalHealth: health, crystalReward: 3, damage: 1, hitInterval: 2, walkSpeed: 4,
-                miningRange: 1, caveCount: caves, letradoBreaks: 0, arrivalStrike: arrival);
+                miningRange: 1, caveCount: caves, floorBreaks: 0, arrivalStrike: arrival);
 
         /// <summary>A economia do v7 que importa aqui: Mineração e Velocidade do anão e o estagiário inteiro.</summary>
         static EconomyRules V7(bool intern = true) => new EconomyRules(
@@ -34,7 +34,6 @@ namespace MinersIdle.Tests
             doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
             boots: new UpgradeDefinition(0, 1, 0, 0),
             minHitInterval: 0.1,
-            letrado: new UpgradeDefinition(0, 1, 100, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05),
             intern: intern ? new UpgradeDefinition(500, 1, 1, 1) : null,
             internPickaxe: intern ? new UpgradeDefinition(50, 4, 19, 5) : null,
@@ -288,24 +287,26 @@ namespace MinersIdle.Tests
 
             Assert.That(brokenBy, Is.Not.Null, "o golpe dele deu a quebra");
             Assert.That(sim.State.Breaks, Is.EqualTo(1));
-            Assert.That(sim.State.CaveBreaks, Is.EqualTo(1), "conta na trava do Mapa (D-95)");
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(1), "conta na barra do andar (D-95)");
             Assert.That(sim.State.Shards, Is.EqualTo(3));
             Assert.That(sim.Miner.State, Is.EqualTo(MinerState.Running), "e os dois correm juntos");
         }
 
         [Test]
-        public void HitsTheWall_Too()
+        public void KeepsHitting_OnTheNextFloor()
         {
+            // M9c E1: a parede saiu (D-256); o que importa é o estagiário seguir junto para o andar novo.
             var sim = Sim(Rules(caves: 3), With((UpgradeId.Intern, 1)));
-            sim.FillCaveBreaks();
-            Assert.That(sim.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased));
-            Assert.That(sim.PassCave(), Is.True);
-            bool hitWall = false;
-            sim.InternHitLanded += hit => hitWall |= hit.Crystal.IsWall;
+            sim.FillFloorBar();
+            Assert.That(sim.AdvanceFloor(), Is.True);
+            var crystal = sim.SpawnCrystalAt(sim.Miner.Distance + 1);
+            bool hit = false;
+            sim.InternHitLanded += h => hit |= h.Crystal == crystal;
 
             sim.Tick(10);
 
-            Assert.That(hitWall, Is.True);
+            Assert.That(sim.State.Cave, Is.EqualTo(2));
+            Assert.That(hit, Is.True, "o estagiário bate no cristal do andar 2");
         }
 
         /// <summary>
@@ -487,14 +488,15 @@ namespace MinersIdle.Tests
                 Assert.That(loaded.LevelOf(UpgradeId.InternSpeed), Is.EqualTo(2));
                 Assert.That(loadedPermanent.LevelOf(PermanentId.InternTraining), Is.EqualTo(4));
 
-                // Um save de antes do M7 (versão 4, sem as linhas do estagiário): abre com ele não contratado.
+                // Um save de antes do M7 (versão 4, sem as linhas do estagiário): abre com ele não contratado. Desde o v8
+                // (D-263) um save de antes dele abre numa run nova: as lascas e a Picareta zeram, os permanentes ficam.
                 File.WriteAllText(store.FilePath,
                     "{ \"version\": 4, \"shards\": 600.0, \"levels\": [ { \"upgrade\": \"Pickaxe\", \"level\": 2 } ], " +
                     "\"permanent\": { \"redShards\": 12.0, \"day\": 2, \"levels\": [ { \"upgrade\": \"Memory\", \"level\": 1 } ] } }");
                 var old = save.Load(V7(), V7Permanents(), out var oldPermanent, out status);
                 Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
-                Assert.That(old.Shards, Is.EqualTo(600));
-                Assert.That(old.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(2));
+                Assert.That(old.Shards, Is.EqualTo(0), "run nova (D-263)");
+                Assert.That(old.LevelOf(UpgradeId.Pickaxe), Is.EqualTo(0), "run nova (D-263)");
                 Assert.That(old.LevelOf(UpgradeId.Intern), Is.EqualTo(0));
                 Assert.That(oldPermanent.LevelOf(PermanentId.Memory), Is.EqualTo(1));
                 Assert.That(oldPermanent.LevelOf(PermanentId.InternTraining), Is.EqualTo(0));

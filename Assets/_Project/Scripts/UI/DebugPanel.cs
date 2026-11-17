@@ -15,7 +15,8 @@ namespace MinersIdle.UI
     /// (<see cref="FrameStats"/>, E5), que só conta com o painel fechado. Desde o M6 (E3): "Câmera" abre os controles da
     /// câmera da descida (<see cref="DescentCameraPanel"/>) no lugar do "Mostrar ordem" do mapa. Os atalhos chamam os mesmos comandos das regras.
     /// Desde 2026-11-05 (D-147) os atalhos ficam em menus que abrem em cima, como a câmera: Loja (lascas, cristais, compras,
-    /// níveis), Efeitos (toques, crítico, tremor, som) e Caverna (quebrar, próxima, salvar, reiniciar, apagar, medição); no
+    /// níveis), Efeitos (toques, crítico, tremor, som) e Andar (desde o M9c: encher a barra, próximo andar, +10, andar 100,
+    /// ir ao andar…; quebrar, salvar, reiniciar, apagar, medição); no
     /// DBG ficam o tempo, as estatísticas e os botões dos menus. Um menu aberto fecha os outros e a câmera. Desde a E3b-3 do
     /// M8 (D-143), o menu Cálculos (<see cref="CalculationsPanel"/>).
     /// Só existe no Editor e em Development Build: no release o objeto se destrói ao acordar.
@@ -70,14 +71,18 @@ namespace MinersIdle.UI
         [SerializeField] Button shake;
         [SerializeField] Button sound;
         [SerializeField] Button resetStats;
-        [Tooltip("M8: a trava do Letrado cumprida (os 100 cristais da caverna).")]
+        [Tooltip("M9c E1: a barra do Próximo Andar cheia (os cristais do andar contados, sem quebrar).")]
         [SerializeField] Button fillCaveBreaks;
-        [Tooltip("M8: a próxima caverna agora, com o Letrado dela de graça.")]
+        [Tooltip("M9c E1: o próximo andar agora, sem encher a barra.")]
         [SerializeField] Button nextCave;
-        [Tooltip("M8 (E3): a última caverna, com os 100 cristais e as lascas do último Letrado (para testar o fim).")]
+        [Tooltip("M9c E1: o andar 100 com a barra cheia: o Próximo Andar leva ao coração da montanha (para testar o fim).")]
         [SerializeField] Button lastCave;
-        [Tooltip("M8 (E3b-2): dez níveis abaixo de uma vez, com os Mapas de graça (para ver a troca de bioma).")]
+        [Tooltip("Dez andares abaixo de uma vez (para ver a troca de bioma).")]
         [SerializeField] Button tenLevels;
+        [Tooltip("M9c E1: vai ao próximo destes andares depois do atual: 1, 5, 10, 20, 50, 100 (do último volta ao 1).")]
+        [SerializeField] Button goToFloor;
+        [Tooltip("O rótulo do \"Ir ao andar\". {0} = o andar para onde vai.")]
+        [SerializeField] string goToFloorFormat;
         [SerializeField] DescentCameraPanel cameraPanel;
 
         [Header("Menus (D-147)")]
@@ -151,6 +156,7 @@ namespace MinersIdle.UI
             if (nextCave != null) nextCave.onClick.AddListener(NextCave);
             if (lastCave != null) lastCave.onClick.AddListener(GoToLastCave);
             if (tenLevels != null) tenLevels.onClick.AddListener(SkipTenLevels);
+            if (goToFloor != null) goToFloor.onClick.AddListener(GoToFloor);
             if (shopButton != null) shopButton.onClick.AddListener(ToggleShop);
             if (effectsButton != null) effectsButton.onClick.AddListener(ToggleEffects);
             if (caveButton != null) caveButton.onClick.AddListener(ToggleCave);
@@ -188,6 +194,7 @@ namespace MinersIdle.UI
             if (nextCave != null) nextCave.onClick.RemoveListener(NextCave);
             if (lastCave != null) lastCave.onClick.RemoveListener(GoToLastCave);
             if (tenLevels != null) tenLevels.onClick.RemoveListener(SkipTenLevels);
+            if (goToFloor != null) goToFloor.onClick.RemoveListener(GoToFloor);
             if (shopButton != null) shopButton.onClick.RemoveListener(ToggleShop);
             if (effectsButton != null) effectsButton.onClick.RemoveListener(ToggleEffects);
             if (caveButton != null) caveButton.onClick.RemoveListener(ToggleCave);
@@ -200,6 +207,8 @@ namespace MinersIdle.UI
 
         void Update()
         {
+            if (IsMenuOpen(caveMenu)) RefreshGoToFloorLabel();
+
             // A Loja mostra nível e custo das melhorias, e fica aberta com o DBG fechado.
             if (!content.activeSelf && !IsMenuOpen(shopMenu)) return;
 
@@ -256,20 +265,49 @@ namespace MinersIdle.UI
         void SpawnCrystal() => runner.Simulation?.SpawnCrystalNow();
         void BreakTarget() => runner.Simulation?.BreakTarget();
         void AddShards() => runner.Simulation?.AddShards(ShardsToAdd);
-        void FillCaveBreaks() => runner.Simulation?.FillCaveBreaks();
+        void FillCaveBreaks() => runner.Simulation?.FillFloorBar();
         void NextCave() => runner.Simulation?.SkipToNextCave();
         void SkipTenLevels() => runner.Simulation?.SkipToCave(runner.Simulation.State.Cave + 10);
 
-        /// <summary>A última caverna, a trava cumprida e lascas para o último Letrado: falta comprar, DESCER e quebrar.</summary>
+        /// <summary>O último andar com a barra cheia: falta só o Próximo Andar, que leva ao coração da montanha.</summary>
         void GoToLastCave()
         {
             var simulation = runner.Simulation;
             if (simulation == null) return;
 
-            simulation.SkipToCave(simulation.Rules.CaveCount);
-            simulation.FillCaveBreaks();
-            double? cost = simulation.Preview(UpgradeId.Letrado).NextCost;
-            if (cost != null && simulation.State.Shards < cost.Value) simulation.AddShards(cost.Value - simulation.State.Shards);
+            simulation.GoToFloor(simulation.Rules.CaveCount);
+            simulation.FillFloorBar();
+        }
+
+        /// <summary>Os andares do "Ir ao andar…" (M9c E1), na ordem.</summary>
+        static readonly int[] FloorMarks = { 1, 5, 10, 20, 50, 100 };
+
+        /// <summary>O próximo andar da lista depois do atual (do último, volta ao primeiro), dentro dos andares do balanço.</summary>
+        public static int NextFloorMark(int floor, int floorCount)
+        {
+            foreach (int mark in FloorMarks)
+                if (mark > floor && mark <= floorCount) return mark;
+            return 1;
+        }
+
+        void GoToFloor()
+        {
+            var simulation = runner.Simulation;
+            if (simulation == null) return;
+            simulation.GoToFloor(NextFloorMark(simulation.State.Cave, simulation.Rules.CaveCount));
+            RefreshGoToFloorLabel();
+        }
+
+        TMP_Text _goToFloorLabel;
+
+        /// <summary>O rótulo diz para onde o botão leva ("Ir ao andar 20").</summary>
+        void RefreshGoToFloorLabel()
+        {
+            var simulation = runner.Simulation;
+            if (goToFloor == null || simulation == null || string.IsNullOrEmpty(goToFloorFormat)) return;
+            if (_goToFloorLabel == null) _goToFloorLabel = goToFloor.GetComponentInChildren<TMP_Text>();
+            if (_goToFloorLabel != null)
+                _goToFloorLabel.text = string.Format(goToFloorFormat, NextFloorMark(simulation.State.Cave, simulation.Rules.CaveCount));
         }
         void RestartSameSeed() => runner.StartNew(runner.Seed);
         void RestartNewSeed() => runner.StartNew(MiningRunner.NewSeed());

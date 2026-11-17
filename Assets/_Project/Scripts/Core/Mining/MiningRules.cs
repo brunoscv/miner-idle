@@ -8,16 +8,23 @@ namespace MinersIdle.Core
         /// <summary>Até o GDD v5: <c>dano base × Picareta.efeito^nível</c>.</summary>
         Multiply,
         /// <summary>
-        /// A leitura da D-133 (desde a D-201, alternativa no DBG → Caverna): <c>Dano Base + Picareta.efeito × nível +
-        /// taxa^(caverna − 1)</c>. O Dano Base é o dano base das regras; cada compra soma o efeito nele; a taxa é
-        /// <see cref="MiningRules.PickaxeCaveGrowth"/>.
+        /// GDD v7 e v8 (D-201, D-202): <c>Dano Base + Picareta.efeito × compras + taxa^(nível da Picareta − 1)</c>, com
+        /// nível = 1 + compras; o andar não entra. Sem compra, 1 + 0 + taxa^0 = 2. (A leitura pela caverna da D-133 saiu
+        /// no v8, D-256.)
         /// </summary>
-        CaveScaled,
+        LevelScaled = 2,
+    }
+
+    /// <summary>Como as lascas do cristal crescem de um andar para o outro.</summary>
+    public enum RewardFormula
+    {
+        /// <summary>Até o GDD v7: <c>lascas base × crescimento^(andar − 1)</c> (<see cref="MiningRules.CaveRewardGrowth"/>).</summary>
+        Growth,
         /// <summary>
-        /// GDD v7 (D-201): <c>Dano Base + Picareta.efeito × compras + taxa^(nível da Picareta − 1)</c>, com nível = 1 +
-        /// compras; a caverna não entra. Sem compra, 1 + 0 + taxa^0 = 2, como no <see cref="CaveScaled"/> na caverna 1.
+        /// GDD v8 (D-238): <c>vida do andar × fator × max(1, andar − 1)</c>, com o fator nas lascas base (0,2): andar 1 e 2,
+        /// vida × 0,2; andar 3, vida × 0,4; andar 10, vida × 1,8.
         /// </summary>
-        LevelScaled,
+        FloorScaled,
     }
 
     /// <summary>
@@ -34,13 +41,13 @@ namespace MinersIdle.Core
             double damage, double hitInterval,
             double walkSpeed, double miningRange,
             int minCrystals = 0,
-            int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int letradoBreaks = 100,
-            double wallHealthFactor = 2,
+            int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int floorBreaks = 100,
             double tapReach = double.PositiveInfinity,
             ArrivalStrike arrivalStrike = ArrivalStrike.Wait,
             double swingRecovery = 0,
             PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply, double pickaxeCaveGrowth = 1.2,
-            int levelsPerBiome = 1, double offlineMaxSeconds = 6 * 3600)
+            int levelsPerBiome = 1, double offlineMaxSeconds = 6 * 3600,
+            RewardFormula rewardFormula = RewardFormula.Growth, double offlineDeepMaxSeconds = 0, int offlineDeepFloor = 0)
         {
             if (initialCrystals < 0) throw new ArgumentOutOfRangeException(nameof(initialCrystals));
             if (firstCrystalDistance < 0) throw new ArgumentOutOfRangeException(nameof(firstCrystalDistance));
@@ -58,14 +65,16 @@ namespace MinersIdle.Core
             if (caveCount < 1) throw new ArgumentOutOfRangeException(nameof(caveCount));
             if (caveHealthGrowth <= 0 || double.IsNaN(caveHealthGrowth)) throw new ArgumentOutOfRangeException(nameof(caveHealthGrowth));
             if (caveRewardGrowth <= 0 || double.IsNaN(caveRewardGrowth)) throw new ArgumentOutOfRangeException(nameof(caveRewardGrowth));
-            if (letradoBreaks < 0) throw new ArgumentOutOfRangeException(nameof(letradoBreaks));
-            if (wallHealthFactor <= 0 || double.IsNaN(wallHealthFactor)) throw new ArgumentOutOfRangeException(nameof(wallHealthFactor));
+            if (floorBreaks < 0) throw new ArgumentOutOfRangeException(nameof(floorBreaks));
             if (tapReach < 0 || double.IsNaN(tapReach)) throw new ArgumentOutOfRangeException(nameof(tapReach));
             if (swingRecovery < 0 || double.IsNaN(swingRecovery)) throw new ArgumentOutOfRangeException(nameof(swingRecovery));
             if (!Enum.IsDefined(typeof(PickaxeFormula), pickaxeFormula)) throw new ArgumentOutOfRangeException(nameof(pickaxeFormula));
             if (levelsPerBiome < 1) throw new ArgumentOutOfRangeException(nameof(levelsPerBiome));
             if (offlineMaxSeconds < 0 || double.IsNaN(offlineMaxSeconds)) throw new ArgumentOutOfRangeException(nameof(offlineMaxSeconds));
             if (pickaxeCaveGrowth <= 0 || double.IsNaN(pickaxeCaveGrowth)) throw new ArgumentOutOfRangeException(nameof(pickaxeCaveGrowth));
+            if (!Enum.IsDefined(typeof(RewardFormula), rewardFormula)) throw new ArgumentOutOfRangeException(nameof(rewardFormula));
+            if (offlineDeepMaxSeconds < 0 || double.IsNaN(offlineDeepMaxSeconds)) throw new ArgumentOutOfRangeException(nameof(offlineDeepMaxSeconds));
+            if (offlineDeepFloor < 0) throw new ArgumentOutOfRangeException(nameof(offlineDeepFloor));
 
             InitialCrystals = initialCrystals;
             FirstCrystalDistance = firstCrystalDistance;
@@ -83,8 +92,10 @@ namespace MinersIdle.Core
             CaveCount = caveCount;
             CaveHealthGrowth = caveHealthGrowth;
             CaveRewardGrowth = caveRewardGrowth;
-            LetradoBreaks = letradoBreaks;
-            WallHealthFactor = wallHealthFactor;
+            FloorBreaks = floorBreaks;
+            RewardFormula = rewardFormula;
+            OfflineDeepMaxSeconds = offlineDeepMaxSeconds;
+            OfflineDeepFloor = offlineDeepFloor;
             TapReach = tapReach;
             ArrivalStrike = arrivalStrike;
             SwingRecovery = swingRecovery;
@@ -123,16 +134,19 @@ namespace MinersIdle.Core
         /// <summary>O anão para a esta distância do cristal e começa a bater.</summary>
         public double MiningRange { get; }
 
-        /// <summary>Número de cavernas (M8; GDD v5: 10). Com 1, o jogo não passa de caverna.</summary>
+        /// <summary>Número de andares (M8: cavernas; GDD v8: 100). Com 1, o jogo não passa de andar.</summary>
         public int CaveCount { get; }
         /// <summary>A vida do cristal multiplica por isto a cada caverna (D-92: 8).</summary>
         public double CaveHealthGrowth { get; }
-        /// <summary>As lascas do cristal multiplicam por isto a cada caverna (D-92: 3).</summary>
+        /// <summary>As lascas do cristal multiplicam por isto a cada caverna (D-92: 3) na <see cref="Core.RewardFormula.Growth"/>.</summary>
         public double CaveRewardGrowth { get; }
-        /// <summary>Cristais a quebrar na caverna para liberar o Letrado dela (D-93: 100).</summary>
-        public int LetradoBreaks { get; }
-        /// <summary>A vida da parede é isto × a vida do cristal da caverna nova (D-98: 2).</summary>
-        public double WallHealthFactor { get; }
+        /// <summary>Como as lascas crescem por andar: a do crescimento (até o v7) ou a do v8 (D-238).</summary>
+        public RewardFormula RewardFormula { get; }
+        /// <summary>
+        /// Cristais por andar para o Próximo Andar (GDD v8, D-239: 10): o andar <i>n</i> pede <c>n × isto</c>, menos a
+        /// Memória (<see cref="Permanents.FloorRequirement"/>).
+        /// </summary>
+        public int FloorBreaks { get; }
 
         /// <summary>
         /// O toque só tira vida de um alvo a até esta distância do anão: o alvo que já está na tela (D-121). Mais longe, o
@@ -164,8 +178,22 @@ namespace MinersIdle.Core
         /// </summary>
         public int LevelsPerBiome { get; }
 
-        /// <summary>Teto do tempo offline que conta (M9, GDD v7 §1.1, D-189: 6 h); o que passar disso se perde.</summary>
+        /// <summary>Teto do tempo offline que conta (M9, D-189: 6 h; GDD v8: 4 h); o que passar disso se perde.</summary>
         public double OfflineMaxSeconds { get; }
+        /// <summary>O teto do offline depois do andar <see cref="OfflineDeepFloor"/> (GDD v8: 6 h). 0 = o mesmo de sempre.</summary>
+        public double OfflineDeepMaxSeconds { get; }
+        /// <summary>O andar que, alcançado uma vez, sobe o teto do offline (GDD v8: 20, D-253). 0 = nunca.</summary>
+        public int OfflineDeepFloor { get; }
+
+        /// <summary>O teto do offline para quem já chegou ao andar <paramref name="deepestFloor"/> (GDD v8: 4 h; 6 h do 20 em diante).</summary>
+        public double OfflineMaxSecondsFor(int deepestFloor) =>
+            OfflineDeepFloor > 0 && OfflineDeepMaxSeconds > 0 && deepestFloor >= OfflineDeepFloor ? OfflineDeepMaxSeconds : OfflineMaxSeconds;
+
+        /// <summary>
+        /// Cristais que o andar <paramref name="floor"/> pede para o Próximo Andar, antes da Memória: <c>andar × </c>
+        /// <see cref="FloorBreaks"/> (GDD v8: o andar 1 pede 10, o 100 pede 1.000).
+        /// </summary>
+        public long FloorBreaksIn(int floor) => (long)Math.Max(1, floor) * FloorBreaks;
 
         /// <summary>O bioma do nível <paramref name="level"/>, a partir de 0: (nível − 1) ÷ <see cref="LevelsPerBiome"/>.</summary>
         public int BiomeOf(int level) => (Math.Max(1, level) - 1) / LevelsPerBiome;
@@ -173,10 +201,12 @@ namespace MinersIdle.Core
         /// <summary>Vida do cristal na caverna <paramref name="cave"/> (1 = a primeira): base × crescimento^(c−1).</summary>
         public double CrystalHealthIn(int cave) => CrystalHealth * Math.Pow(CaveHealthGrowth, cave - 1);
 
-        /// <summary>Lascas do cristal na caverna <paramref name="cave"/>: base × crescimento^(c−1).</summary>
-        public double CrystalRewardIn(int cave) => CrystalReward * Math.Pow(CaveRewardGrowth, cave - 1);
-
-        /// <summary>Vida da parede que leva à caverna <paramref name="cave"/> (D-98): fator × a vida do cristal dela.</summary>
-        public double WallHealthIn(int cave) => WallHealthFactor * CrystalHealthIn(cave);
+        /// <summary>
+        /// Lascas do cristal no andar <paramref name="cave"/>: base × crescimento^(c−1) até o v7; no v8 (D-238), vida do
+        /// andar × base × max(1, andar − 1).
+        /// </summary>
+        public double CrystalRewardIn(int cave) => RewardFormula == RewardFormula.FloorScaled
+            ? CrystalHealthIn(cave) * CrystalReward * Math.Max(1, cave - 1)
+            : CrystalReward * Math.Pow(CaveRewardGrowth, cave - 1);
     }
 }

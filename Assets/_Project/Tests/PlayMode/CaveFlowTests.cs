@@ -14,17 +14,17 @@ using UnityEngine.UI;
 namespace MinersIdle.Tests
 {
     /// <summary>
-    /// Marco 8: a passagem de caverna na cena Game. O Letrado mostra o progresso dos 100 cristais (D-109), o botão DESCER
-    /// aparece com ele comprado (D-110). E2: DESCER põe a parede no corredor (D-107); quebrada, a descida escurece, o bioma
-    /// troca no escuro, a faixa "Caverna 2 · nome" aparece (D-111) e a CAVERNA do HUD muda. E3b-2 (GDD v7, D-129): 100
-    /// níveis, o bioma troca a cada 10 (só aí escurece) e a faixa diz "Nível 2 · nome" em todo nível.
+    /// A passagem de andar na cena Game. Marco 8 tinha o Letrado/Mapa e a parede (D-107/D-109); o GDD v8 (M9c E1, D-256)
+    /// trocou os dois pela barra do andar: cheia, o botão aparece (provisório até o Próximo Andar da E2), e tocar nele
+    /// abre a transição (D-266), muda o andar e refaz a fila. E3b-2 (GDD v7, D-129): 100 andares, o bioma troca a cada 10
+    /// e a faixa diz "Nível N · nome".
     /// </summary>
     public class CaveFlowTests
     {
         const string GameScenePath = "Assets/_Project/Scenes/Game.unity";
 
         [UnityTest]
-        public IEnumerator BuyTheLetrado_BreakTheWall_HudBiomeAndBannerFollow()
+        public IEnumerator FillTheBar_AdvanceTheFloor_HudQueueAndBannerFollow()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
@@ -32,96 +32,51 @@ namespace MinersIdle.Tests
 
             var runner = Object.FindAnyObjectByType<MiningRunner>();
             var simulation = runner.Simulation;
-            if (!simulation.Economy.Get(UpgradeId.Letrado).IsEnabled)
-                Assert.Ignore("O balanço ativo não tem o Letrado (rode o setup do projeto).");
-
             var hud = Object.FindAnyObjectByType<HudView>();
-            var shop = Object.FindAnyObjectByType<ShopView>();
             var pass = Object.FindAnyObjectByType<CavePassButton>();
             var stage = Object.FindAnyObjectByType<DescentStage>();
             var banner = Object.FindAnyObjectByType<CaveBanner>();
             var panel = Object.FindAnyObjectByType<DebugPanel>();
-            Assert.That(pass, Is.Not.Null, "a cena precisa do botão DESCER (rode o setup do projeto)");
-            Assert.That(banner, Is.Not.Null, "a cena precisa da faixa da caverna (rode o setup do projeto)");
+            Assert.That(pass, Is.Not.Null, "a cena precisa do botão da passagem (rode o setup do projeto)");
+            Assert.That(banner, Is.Not.Null, "a cena precisa da faixa do andar (rode o setup do projeto)");
+            Assert.That(simulation.Economy.Get(UpgradeId.Letrado).IsEnabled, Is.False, "o Mapa saiu (D-256)");
 
             Assert.That(simulation.State.Cave, Is.EqualTo(1));
             Assert.That(hud.CaveText, Is.EqualTo("1"));
-            Assert.That(pass.IsShown, Is.False, "sem Letrado, sem botão");
+            Assert.That(simulation.CanAdvance, Is.False);
+            Assert.That(pass.IsShown, Is.False, "barra vazia, sem botão");
 
-            shop.Open(); // as linhas só se atualizam com a loja aberta
-            var letrado = shop.Rows.First(r => !r.IsLocked && r.Upgrade == UpgradeId.Letrado);
-            Assert.That(letrado.CanBuy, Is.False);
-            Assert.That(letrado.EffectText, Does.Contain($"{simulation.State.CaveBreaks}/100"), "o progresso dos 100 cristais");
+            // DBG → Andar → Encher a barra.
+            var fill = panel.transform.Find("CaveMenu/Content/Buttons/FillCaveBreaks");
+            Assert.That(fill, Is.Not.Null, "o atalho Encher a barra no DBG → Andar (rode o setup do projeto)");
+            fill.GetComponent<Button>().onClick.Invoke();
+            Assert.That(simulation.FloorProgress, Is.EqualTo(1));
+            Assert.That(pass.IsShown, Is.True, "barra cheia, o botão aparece");
 
-            // DBG: os 100 cristais e lascas para pagar.
-            panel.transform.Find("ShopMenu/Content/Buttons/FillCaveBreaks").GetComponent<Button>().onClick.Invoke();
-            simulation.AddShards(1000);
-            Assert.That(letrado.CanBuy, Is.True, "com os 100 cristais, o preço acende");
-            if (simulation.Preview(UpgradeId.Letrado).NextCost == 0)
-                Assert.That(letrado.ButtonText, Is.EqualTo("COMPRAR"), "o Mapa de graça (GDD v7) não mostra 0 (D-175)");
-
-            letrado.GetComponentInChildren<Button>().onClick.Invoke();
-            Assert.That(simulation.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(1));
-            Assert.That(pass.IsShown, Is.True, "com o Letrado, aparece DESCER");
-            Assert.That(letrado.CanBuy, Is.False, "o 2º só na caverna 2");
-            shop.Close();
-
-            // DESCER: a parede no fim da fila; a caverna ainda é a 1.
+            // A passagem: o andar muda na hora; com a transição, o palco segura a fila velha até o escuro.
+            var oldQueue = simulation.Crystals.ToArray();
             var biome1 = stage.Biome;
             pass.GetComponentInChildren<Button>(includeInactive: true).onClick.Invoke();
-            Assert.That(simulation.Wall, Is.Not.Null, "a parede na fila");
-            Assert.That(pass.IsShown, Is.False, "some ao passar");
-            Assert.That(simulation.State.Cave, Is.EqualTo(1));
-
-            // Os cristais antes dela pelo debug; o anão corre até ela (×20) e ela aparece no corredor.
-            for (int i = 0; i < 20 && simulation.Miner.Target != simulation.Wall; i++)
-            {
-                simulation.Tick(0);
-                if (simulation.Miner.Target != simulation.Wall) simulation.BreakTarget();
-            }
-            Assert.That(simulation.Miner.Target, Is.SameAs(simulation.Wall), "a parede é o alvo");
-            runner.TimeScale = 20f;
-            for (float t = 0; t < 3f && simulation.Miner.State != MinerState.Mining; t += Time.unscaledDeltaTime) yield return null;
-            runner.TimeScale = 0f;
-            yield return null;
-            Assume.That(simulation.Wall, Is.Not.Null, "a parede ainda de pé");
-            Assert.That(stage.IsWallShown, Is.True, "a parede no corredor");
-
-            // A quebra: o nível muda na hora. No v7 o nível 2 fica no bioma do 1 (D-129): não escurece, a faixa vem igual.
-            bool newBiome = simulation.Rules.BiomeOf(2) != simulation.Rules.BiomeOf(1);
-            simulation.BreakTarget();
-            Assert.That(simulation.Wall, Is.Null);
             Assert.That(simulation.State.Cave, Is.EqualTo(2));
             Assert.That(hud.CaveText, Is.EqualTo("2"));
-            Assert.That(stage.IsChangingCave, Is.EqualTo(newBiome), "só escurece na troca de bioma");
-            yield return null;
-            Assert.That(stage.IsWallShown, Is.False);
+            Assert.That(simulation.State.CaveBreaks, Is.EqualTo(0), "a barra recomeça");
+            Assert.That(simulation.Crystals.Intersect(oldQueue), Is.Empty, "a fila é a do andar novo");
+            Assert.That(pass.IsShown, Is.False, "some ao passar");
+            if (simulation.IsInFloorTransition)
+                Assert.That(stage.IsHoldingOldQueue, Is.True, "os cristais novos só aparecem no escuro");
 
-            float darkest = 0f;
-            for (float t = 0; t < DescentStage.CaveFadeSeconds * 0.5f; t += Time.unscaledDeltaTime)
-            {
-                darkest = Mathf.Max(darkest, stage.Darkness);
-                if (biome1 != null && !newBiome) Assert.That(banner.IsShown, Is.True, "a faixa do nível novo");
-                yield return null;
-            }
-            if (newBiome) Assert.That(darkest, Is.GreaterThan(0.3f), "escureceu");
-            else Assert.That(darkest, Is.EqualTo(0f), "mesmo bioma: não escurece");
-            for (float t = 0; t < DescentStage.CaveFadeSeconds * 0.5f + 0.3f; t += Time.unscaledDeltaTime) yield return null;
-            Assert.That(stage.IsChangingCave, Is.False);
-            Assert.That(stage.Darkness, Is.EqualTo(0f), "clareou de novo");
+            for (float t = 0; t < 6f && simulation.IsInFloorTransition; t += Time.unscaledDeltaTime) yield return null;
+            Assert.That(simulation.IsInFloorTransition, Is.False, "a transição acaba sozinha");
+            yield return null;
+            Assert.That(stage.IsHoldingOldQueue, Is.False, "a fila nova na tela");
+            Assert.That(pass.IsShown, Is.False, "a barra do andar 2 está vazia");
             if (biome1 != null)
             {
-                if (newBiome) Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o bioma da caverna 2");
-                else Assert.That(stage.Biome, Is.SameAs(biome1), "o nível 2 no bioma do 1");
-                Assert.That(banner.IsShown, Is.True, "a faixa do nível novo");
+                Assert.That(stage.Biome, Is.SameAs(biome1), "o andar 2 no bioma do 1");
                 Assert.That(banner.Text, Does.StartWith("Nível 2").And.Contain(stage.Biome.DisplayName));
             }
 
-            shop.Open();
-            Assert.That(letrado.EffectText, Does.Contain("0/100"), "a trava recomeça");
-            shop.Close();
-
-            // DBG: Próxima caverna (sem comprar e sem parede).
+            // DBG → Andar → Próximo andar (sem a barra).
             panel.transform.Find("CaveMenu/Content/Buttons/NextCave").GetComponent<Button>().onClick.Invoke();
             Assert.That(simulation.State.Cave, Is.EqualTo(3));
             Assert.That(hud.CaveText, Is.EqualTo("3"));
@@ -145,12 +100,12 @@ namespace MinersIdle.Tests
             if (stage.Biome == null) Assert.Ignore("Sem os biomas na cena (rode o setup).");
             var biome1 = stage.Biome;
 
-            var button = panel.transform.Find("ShopMenu/Content/Buttons/TenLevels");
-            Assert.That(button, Is.Not.Null, "o atalho +10 níveis no DBG (rode o setup do projeto)");
+            var button = panel.transform.Find("CaveMenu/Content/Buttons/TenLevels");
+            Assert.That(button, Is.Not.Null, "o atalho +10 andares no DBG → Andar (rode o setup do projeto)");
             button.GetComponent<Button>().onClick.Invoke();
             Assert.That(simulation.State.Cave, Is.EqualTo(11));
             Assert.That(hud.CaveText, Is.EqualTo("11"));
-            Assert.That(simulation.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(10), "os Mapas de antes, de graça");
+            Assert.That(simulation.State.CaveBreaks, Is.EqualTo(0), "a barra do andar 11 começa vazia");
             // M9c E0 (D-266): o andar novo abre a transição; quem escurece é ela, e o bioma troca no escuro, lá dentro.
             Assert.That(simulation.IsInFloorTransition, Is.True, "bioma novo: a transição de andar");
             Assert.That(stage.Biome, Is.SameAs(biome1), "o bioma só troca no escuro");
@@ -195,7 +150,7 @@ namespace MinersIdle.Tests
             }
             Assert.That(transition.Style, Is.EqualTo(FloorTransitionStyle.None));
 
-            panel.transform.Find("ShopMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
+            panel.transform.Find("CaveMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
             Assert.That(simulation.State.Cave, Is.EqualTo(11));
             Assert.That(simulation.IsInFloorTransition, Is.False, "sem transição o jogo não para");
             Assert.That(stage.IsChangingCave, Is.True, "bioma novo: escurece, como antes");
@@ -228,7 +183,7 @@ namespace MinersIdle.Tests
             var home = camera.transform.localPosition;
 
             transition.Style = FloorTransitionStyle.CameraDrop;
-            panel.transform.Find("ShopMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
+            panel.transform.Find("CaveMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
             Assert.That(simulation.IsInFloorTransition, Is.True);
             Assert.That(simulation.FloorTransitionLength, Is.EqualTo(transition.DurationOf(FloorTransitionStyle.CameraDrop)).Within(1e-6));
 
@@ -274,7 +229,7 @@ namespace MinersIdle.Tests
             var home = camera.transform.localPosition;
 
             transition.Style = FloorTransitionStyle.BlurCard;
-            panel.transform.Find("ShopMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
+            panel.transform.Find("CaveMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
             Assert.That(simulation.IsInFloorTransition, Is.True);
             Assert.That(simulation.FloorTransitionLength, Is.EqualTo(transition.DurationOf(FloorTransitionStyle.BlurCard)).Within(1e-6));
 
@@ -298,9 +253,12 @@ namespace MinersIdle.Tests
             Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o bioma novo");
         }
 
-        /// <summary>E3 (D-112): DBG → Caverna 10, o Letrado 10, a última parede e a tela do coração da montanha, uma vez só.</summary>
+        /// <summary>
+        /// E3 (D-112) no v8 (D-258): DBG → Andar 100 (fim) enche a barra; o Próximo Andar do último andar leva à tela do
+        /// coração da montanha, uma vez só.
+        /// </summary>
         [UnityTest]
-        public IEnumerator LastCave_TheLastWall_ShowsTheHeartOnce()
+        public IEnumerator LastFloor_TheFullBar_ShowsTheHeartOnce()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
@@ -308,46 +266,28 @@ namespace MinersIdle.Tests
 
             var runner = Object.FindAnyObjectByType<MiningRunner>();
             var simulation = runner.Simulation;
-            if (!simulation.Economy.Get(UpgradeId.Letrado).IsEnabled)
-                Assert.Ignore("O balanço ativo não tem o Letrado (rode o setup do projeto).");
-
             var hud = Object.FindAnyObjectByType<HudView>();
-            var shop = Object.FindAnyObjectByType<ShopView>();
             var pass = Object.FindAnyObjectByType<CavePassButton>();
             var heart = Object.FindAnyObjectByType<HeartScreen>();
             var panel = Object.FindAnyObjectByType<DebugPanel>();
             Assert.That(heart, Is.Not.Null, "a cena precisa da tela do coração (rode o setup do projeto)");
             Assert.That(heart.IsOpen, Is.False);
 
-            // DBG: a última caverna, com a trava cumprida e as lascas do último Letrado.
-            panel.transform.Find("ShopMenu/Content/Buttons/LastCave").GetComponent<Button>().onClick.Invoke();
+            // DBG: o último andar, com a barra cheia.
+            panel.transform.Find("CaveMenu/Content/Buttons/LastCave").GetComponent<Button>().onClick.Invoke();
             int last = simulation.Rules.CaveCount;
             Assert.That(simulation.State.Cave, Is.EqualTo(last));
             Assert.That(hud.CaveText, Is.EqualTo(last.ToString()));
+            Assert.That(simulation.FloorProgress, Is.EqualTo(1), "o atalho enche a barra");
             // M9c E0: o andar novo abre a transição (o anão parado); o teste não espera por ela, pula o tempo dela.
             if (simulation.IsInFloorTransition) simulation.Tick(simulation.FloorTransitionLeft);
             Assert.That(simulation.IsInFloorTransition, Is.False);
-
-            shop.Open();
-            var letrado = shop.Rows.First(r => !r.IsLocked && r.Upgrade == UpgradeId.Letrado);
-            Assert.That(letrado.CanBuy, Is.True, "o Letrado 10 à venda");
-            letrado.GetComponentInChildren<Button>().onClick.Invoke();
-            shop.Close();
-            Assert.That(pass.IsShown, Is.True, "DESCER para a última parede");
+            Assert.That(pass.IsShown, Is.True, "no último andar o botão leva ao coração");
 
             pass.GetComponentInChildren<Button>(includeInactive: true).onClick.Invoke();
-            Assert.That(simulation.Wall, Is.Not.Null);
-            for (int i = 0; i < 20 && simulation.Miner.Target != simulation.Wall; i++)
-            {
-                simulation.Tick(0);
-                if (simulation.Miner.Target != simulation.Wall) simulation.BreakTarget();
-            }
-            Assert.That(simulation.Miner.Target, Is.SameAs(simulation.Wall));
-
-            simulation.BreakTarget();
             Assert.That(simulation.State.ReachedHeart, Is.True);
-            Assert.That(simulation.State.Cave, Is.EqualTo(last), "o jogo segue na última caverna");
-            Assert.That(heart.IsPending, Is.True, "a tela vem depois dos estilhaços");
+            Assert.That(simulation.State.Cave, Is.EqualTo(last), "o jogo segue no último andar");
+            Assert.That(heart.IsPending, Is.True, "a tela vem logo depois");
             Assert.That(heart.IsOpen, Is.False);
 
             for (float t = 0; t < 3f && !heart.IsOpen; t += Time.unscaledDeltaTime) yield return null;

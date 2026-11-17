@@ -104,7 +104,7 @@ namespace MinersIdle.Core
             cost = double.PositiveInfinity;
             foreach (var id in Lines)
             {
-                if (id == UpgradeId.Letrado) continue; // a descida entra no relatório na E4 do M8
+                if (id == UpgradeId.Letrado) continue; // fora do jogo desde o v8 (D-256)
                 double? next = Purchases.NextCost(simulation.State, simulation.Economy, id);
                 if (next.HasValue && next.Value < cost)
                 {

@@ -19,8 +19,6 @@ MonoBehaviour:
   boughtLabel: comprada
   lockedLabel: Em breve
   bonusPercentFormat: +{0}%
-  progressFormat: 'Quebre {1} cristais: {0}/{1}'
-  passFirstLabel: DESCER
   freeLabel: COMPRAR
   entries:
   - locked: 0
@@ -93,23 +91,13 @@ MonoBehaviour:
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     boughtLabel: contratado
     levelFromOne: 0
-  - locked: 0
-    upgrade: 5
-    title: Mapa
-    effectFormat: "N\xEDvel {0} \xBB {1}"
-    style: 0
-    iconColor: {r: 0.61960787, g: 0.61960787, b: 0.61960787, a: 1}
-    icon: {fileID: 21300000, guid: fe688fc9d091eda49b7a7c28a7db035e, type: 3}
-    frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
-    boughtLabel: 
-    levelFromOne: 0
   runTabLabel: MELHORIAS
   permanentsTabLabel: PERMANENTES
   permanentEntries:
   - permanent: 0
     title: "Mem\xF3ria"
-    effectFormat: "Mapa \u2212{0} \xBB \u2212{1} cristais"
-    maxedFormat: "Mapa \u2212{0} cristais"
+    effectFormat: "Andar \u2212{0} \xBB \u2212{1} cristais"
+    maxedFormat: "Andar \u2212{0} cristais"
     style: 0
     icon: {fileID: 21300000, guid: 237b1a7699d54f140999f67067e97c42, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}

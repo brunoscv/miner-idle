@@ -31,7 +31,6 @@ namespace MinersIdle.Tests
             doublePickaxe: new UpgradeDefinition(5000, 1, 0, 2),
             boots: new UpgradeDefinition(0, 1, 0, 0),
             minHitInterval: 0.1,
-            letrado: new UpgradeDefinition(0, 1, 100, 1),
             critical: new UpgradeDefinition(50, 2, 10, 0.05));
 
         static UpgradeDefinition Line(int max, double effect) => new UpgradeDefinition(10, 2, max, effect, CostFormula.OffsetExponential);
@@ -232,16 +231,18 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void Memory_LowersTheMapLock_AndAtTenRemovesIt()
+        public void Memory_LowersTheFloorRequirement_AndAtTenRemovesIt()
         {
-            Assert.That(Sim().MapLock, Is.EqualTo(100));
+            // Com a Memória do v7 (−10 por nível) e a barra de 100 por andar; no v8 a trava do Mapa virou a barra (D-239).
+            Assert.That(Sim().RequiredBreaks, Is.EqualTo(100));
             var sim = Sim(WithLevel(PermanentId.Memory, 3));
-            Assert.That(sim.MapLock, Is.EqualTo(70));
-            Assert.That(sim.Preview(UpgradeId.Letrado).ProgressGoal, Is.EqualTo(70), "a loja mostra a trava nova");
+            Assert.That(sim.RequiredBreaks, Is.EqualTo(70));
+            Assert.That(sim.CanAdvance, Is.False);
 
             var free = Sim(WithLevel(PermanentId.Memory, 10));
-            Assert.That(free.MapLock, Is.EqualTo(0));
-            Assert.That(free.Purchase(UpgradeId.Letrado), Is.EqualTo(PurchaseResult.Purchased), "sem quebrar nenhum cristal");
+            Assert.That(free.RequiredBreaks, Is.EqualTo(0));
+            Assert.That(free.FloorProgress, Is.EqualTo(1), "a barra já nasce cheia");
+            Assert.That(free.CanAdvance, Is.True, "sem quebrar nenhum cristal");
         }
 
         [Test]

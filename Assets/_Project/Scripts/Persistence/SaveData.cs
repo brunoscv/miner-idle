@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace MinersIdle.Persistence
 {
     /// <summary>
-    /// O arquivo de save, versão 7 (a janela do cristal raro desde a E4 do M9b, D-222; os bônus com tempo desde a E1 do M9b, D-181; a hora da gravação desde a E1 do M9, para o offline; Marco 4, D-43; a descida desde o M8; os 100 níveis do GDD v7 desde a E3b-2; o dia e
+    /// O arquivo de save, versão 8 (o andar mais fundo e a migração para o GDD v8 desde a E1 do M9c, D-263; a janela do cristal raro desde a E4 do M9b, D-222; os bônus com tempo desde a E1 do M9b, D-181; a hora da gravação desde a E1 do M9, para o offline; Marco 4, D-43; a descida desde o M8; os 100 níveis do GDD v7 desde a E3b-2; o dia e
     /// as melhorias permanentes desde a E2 do Marco 8b): duas partes, a <b>run</b> (os campos soltos, como até a versão 3)
     /// e a <b>permanente</b> (<see cref="permanent"/>), que fica de um dia para o outro. Campos públicos porque o
     /// <c>JsonUtility</c> do Unity serializa assim. Os níveis vão pelo nome da linha (<c>"Pickaxe"</c>…), não pela
@@ -16,11 +16,19 @@ namespace MinersIdle.Persistence
     /// (a caverna 10) não vale mais: ele passou para o nível 100. Até a 3 não há a parte permanente: abre com as
     /// permanentes zeradas, no dia 1, e a run como estava. Até a 5 não há bônus com tempo: abre sem nenhum. Até a 6 não há
     /// janela do raro: abre fechada.
+    ///
+    /// Versão 8 (M9c E1, GDD v8): os números do jogo mudaram (a vida cresce 1,5× por andar), então um save até a 7 abre
+    /// numa <b>run nova no andar 1</b> (D-263): ficam as lascas vermelhas, as permanentes e o dia, e o andar a que a run
+    /// antiga chegou vira o andar mais fundo (<see cref="SavedPermanent.deepestFloor"/>). A run (lascas, melhorias, bônus,
+    /// janela do raro, volta do offline pendente) recomeça.
     /// </summary>
     [Serializable]
     public sealed class SaveData
     {
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
+
+        /// <summary>A primeira versão com os números do GDD v8 (M9c E1): as de antes abrem numa run nova (D-263).</summary>
+        public const int FirstV8Version = 8;
 
         /// <summary>A versão mais antiga que ainda abre (migrada ao carregar).</summary>
         public const int OldestVersion = 1;
@@ -103,6 +111,12 @@ namespace MinersIdle.Persistence
         public double redShards;
         public int day = 1;
         public List<SavedLevel> levels = new List<SavedLevel>();
+
+        /// <summary>
+        /// Versão 8 (M9c E1): o andar mais fundo já alcançado, em qualquer run (o offline de 6 h a partir do andar 20,
+        /// D-253). Num save até a 7, o andar da run antiga (D-263).
+        /// </summary>
+        public int deepestFloor = 1;
     }
 
     [Serializable]

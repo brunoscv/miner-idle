@@ -47,7 +47,7 @@ namespace MinersIdle.EditorTools
         {
             if (File.Exists(CatalogPath))
             {
-                EnsureLetrado();
+                RemoveMap();
                 EnsureCritical();
                 EnsureFreeLabel();
                 return;
@@ -63,8 +63,6 @@ namespace MinersIdle.EditorTools
             so.FindProperty("boughtLabel").stringValue = "comprada";
             so.FindProperty("lockedLabel").stringValue = "Em breve";
             so.FindProperty("bonusPercentFormat").stringValue = "+{0}%";
-            so.FindProperty("progressFormat").stringValue = ProgressFormat;
-            so.FindProperty("passFirstLabel").stringValue = PassFirstLabel;
             so.FindProperty("freeLabel").stringValue = FreeLabel;
 
             var entries = so.FindProperty("entries");
@@ -76,20 +74,13 @@ namespace MinersIdle.EditorTools
             AddEntry(entries, false, UpgradeId.DoublePickaxe, "Picareta Dupla", "Dano {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0xF2, 0xA9, 0x00, 0xFF));
             AddEntry(entries, false, UpgradeId.Boots, "Botas", "Caminhada {0} » {1}", ShopCatalog.EffectStyle.Number, new Color32(0x8D, 0x6E, 0x63, 0xFF));
             AddEntry(entries, true, UpgradeId.Pickaxe, "Estagiário", "Um ajudante que minera junto", ShopCatalog.EffectStyle.Number, new Color32(0x9E, 0x9E, 0x9E, 0xFF));
-            AddEntry(entries, false, UpgradeId.Letrado, MapTitle, LetradoEffect, ShopCatalog.EffectStyle.Number, new Color32(0x4F, 0x7C, 0xF7, 0xFF));
             so.ApplyModifiedPropertiesWithoutUndo();
 
             AssetDatabase.CreateAsset(catalog, CatalogPath);
             Debug.Log($"[Setup] Catálogo da loja criado em {CatalogPath}.");
         }
 
-        const string LetradoEffect = "Nível {0} » {1}";
-        const string OldLetradoEffect = "Caverna {0} » {1}";
-        /// <summary>GDD v7 (D-128): o Letrado vira o Mapa (o id interno continua <c>Letrado</c>, para o save).</summary>
-        const string MapTitle = "Mapa";
-        const string ProgressFormat = "Quebre {1} cristais: {0}/{1}";
-        const string PassFirstLabel = "DESCER";
-        /// <summary>D-175: o Mapa do GDD v7 custa 0; o botão diz isto no lugar do preço.</summary>
+        /// <summary>D-175: uma compra de custo 0 diz isto no lugar do preço.</summary>
         const string FreeLabel = "COMPRAR";
 
         /// <summary>D-175: o catálogo de antes ganha o texto da compra de graça (só se estiver vazio).</summary>
@@ -106,52 +97,25 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>
-        /// M8 (D-109): no catálogo de antes, o Letrado era uma linha "Em breve"; vira a linha de verdade, com o progresso
-        /// dos cristais e a moldura trocada pela do <see cref="ShopSkinSetup"/> (a de bloqueada sai).
+        /// M9c E1 (GDD v8, D-256): o Mapa (o Letrado, desde o M8) sai da loja; o andar passa pela barra do Próximo Andar.
         /// </summary>
-        static void EnsureLetrado()
+        static void RemoveMap()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
             var so = new SerializedObject(catalog);
-            bool changed = false;
-            if (string.IsNullOrEmpty(so.FindProperty("progressFormat").stringValue))
-            {
-                so.FindProperty("progressFormat").stringValue = ProgressFormat;
-                so.FindProperty("passFirstLabel").stringValue = PassFirstLabel;
-                changed = true;
-            }
-
             var entries = so.FindProperty("entries");
-            for (int i = 0; i < entries.arraySize; i++)
+            bool changed = false;
+            for (int i = entries.arraySize - 1; i >= 0; i--)
             {
                 var entry = entries.GetArrayElementAtIndex(i);
-                if (entry.FindPropertyRelative("title").stringValue != "Letrado" || !entry.FindPropertyRelative("locked").boolValue)
-                    continue;
-                entry.FindPropertyRelative("locked").boolValue = false;
-                entry.FindPropertyRelative("upgrade").enumValueIndex = (int)UpgradeId.Letrado;
-                entry.FindPropertyRelative("effectFormat").stringValue = LetradoEffect;
-                entry.FindPropertyRelative("frame").objectReferenceValue = null;
+                if (entry.FindPropertyRelative("upgrade").enumValueIndex != (int)UpgradeId.Letrado) continue;
+                entries.DeleteArrayElementAtIndex(i);
                 changed = true;
             }
-
-            // E3b-2 do M8 (D-128): o Letrado de verdade vira o Mapa, com o nível no efeito.
-            for (int i = 0; i < entries.arraySize; i++)
-            {
-                var entry = entries.GetArrayElementAtIndex(i);
-                if (entry.FindPropertyRelative("locked").boolValue
-                    || entry.FindPropertyRelative("upgrade").enumValueIndex != (int)UpgradeId.Letrado
-                    || entry.FindPropertyRelative("title").stringValue != "Letrado") continue;
-                entry.FindPropertyRelative("title").stringValue = MapTitle;
-                if (entry.FindPropertyRelative("effectFormat").stringValue == OldLetradoEffect)
-                    entry.FindPropertyRelative("effectFormat").stringValue = LetradoEffect;
-                Debug.Log("[Setup] O Letrado da loja vira o Mapa (D-128).");
-                changed = true;
-            }
-
             if (!changed) return;
             so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.SaveAssets();
-            Debug.Log("[Setup] Letrado na loja de verdade (M8, D-109).");
+            Debug.Log("[Setup] O Mapa sai da loja (M9c E1, D-256).");
         }
 
         const string CriticalTitle = "Crítico";

@@ -50,11 +50,17 @@ namespace MinersIdle.EditorTools
         /// <summary>Os números do GDD v5 (D-87, D-92; toque de 33%, D-86), para comparação. Não é o asset ativo.</summary>
         public const string GddV5BalancePath = "Assets/_Project/Data/Balance_GDD_v5.asset";
 
-        /// <summary>Os números do GDD v7 (D-130, D-133…D-136): o balanço do jogo desde a E3b do M8.</summary>
+        /// <summary>Os números do GDD v7 (D-130, D-133…D-136): o balanço do jogo da E3b do M8 ao M9b. Fica para comparação.</summary>
         public const string GddV7BalancePath = "Assets/_Project/Data/Balance_GDD_v7.asset";
 
-        /// <summary>O balanço que o jogo usa: o GDD v7 desde a D-130 (antes, o v5 pela D-103 e o protótipo).</summary>
-        public const string ActiveBalancePath = GddV7BalancePath;
+        /// <summary>Os números do GDD v8 (M9c E1, D-236…D-256): o balanço do jogo.</summary>
+        public const string GddV8BalancePath = "Assets/_Project/Data/Balance_GDD_v8.asset";
+
+        /// <summary>
+        /// O balanço que o jogo usa: o GDD v8 desde o M9c (antes, o v7 pela D-130, o v5 pela D-103 e o protótipo). O seletor
+        /// de balanço do DBG saiu no v8 (D-256): os assets de antes ficam só para comparação.
+        /// </summary>
+        public const string ActiveBalancePath = GddV8BalancePath;
 
         public const string PackageId = "com.brunocarvalho.minersidle";
         public const string VersionName = "0.1.0";
@@ -96,6 +102,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV7ComboBonuses();
             EnsureGddV7RareCrystal();
             EnsureGddV7AdBoost();
+            EnsureGddV8Balance();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -398,8 +405,7 @@ namespace MinersIdle.EditorTools
             serialized.FindProperty("caveCount").intValue = 10;
             serialized.FindProperty("caveHealthGrowth").doubleValue = 8;
             serialized.FindProperty("caveRewardGrowth").doubleValue = 3;
-            serialized.FindProperty("letradoBreaks").intValue = 100;
-            SetLine(serialized, "letrado", 100, 10, 10, 2);
+            serialized.FindProperty("floorBreaks").intValue = 100; // o Letrado (a linha) saiu no v8 (D-256)
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
@@ -466,7 +472,6 @@ namespace MinersIdle.EditorTools
             SetLine(serialized, "mining", 20, 5, 10, 1);
             SetLine(serialized, "doublePickaxe", 5000, 1, 0, 2);
             SetLine(serialized, "boots", 0, 1, 0, 0);
-            SetLine(serialized, "letrado", 0, 1, 10, 1);
             SetLine(serialized, "critical", 50, 2, 10, 0.05);
             serialized.FindProperty("minHitInterval").doubleValue = 0.1;
             serialized.FindProperty("critChance").doubleValue = 0;
@@ -490,7 +495,6 @@ namespace MinersIdle.EditorTools
 
             serialized.FindProperty("caveCount").intValue = 100;
             serialized.FindProperty("levelsPerBiome").intValue = 10;
-            SetLine(serialized, "letrado", 0, 1, 100, 1);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
@@ -639,6 +643,47 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v7: cristal raro com 15% por cristal (2% no ritmo lento), 30 s para escolher e as 4 cartas de 60 s (M9b E4).");
+        }
+
+        /// <summary>
+        /// Cria o <c>Balance_GDD_v8</c> (M9c E1) a partir do v7 (velocidade, mineração, crítico, estagiário, permanentes,
+        /// combo, raro e AD iguais), com os números do GDD v8: 100 andares, um bioma a cada 10 (D-237); vida
+        /// <c>1 × 1,5^(n−1)</c> (D-237); lascas = vida × 0,2 × max(1, andar − 1) (D-238); crítico ×1,5, e acima de 100% de
+        /// chance +1 ponto por 1% (D-249); Picareta a 7 × o dano dela (P5, D-245); o Próximo Andar pede andar × 10 cristais
+        /// (D-239), e a Memória tira 5 por nível, até o nível 100, custo <c>10 + 2^(n−1)</c> (D-239); offline 4 h, e 6 h a
+        /// partir do andar 20 (D-253). Só cria se não existe: um ajuste feito à mão no Inspector fica.
+        /// </summary>
+        static void EnsureGddV8Balance()
+        {
+            if (File.Exists(GddV8BalancePath)) return;
+            if (!AssetDatabase.CopyAsset(GddV7BalancePath, GddV8BalancePath))
+            {
+                Debug.LogError($"[Setup] Não consegui copiar {GddV7BalancePath} para {GddV8BalancePath}.");
+                return;
+            }
+
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8BalancePath);
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("caveCount").intValue = 100;
+            serialized.FindProperty("levelsPerBiome").intValue = 10;
+            serialized.FindProperty("crystalHealth").doubleValue = 1;
+            serialized.FindProperty("caveHealthGrowth").doubleValue = 1.5;
+            serialized.FindProperty("rewardFormula").enumValueIndex = (int)RewardFormula.FloorScaled;
+            serialized.FindProperty("crystalReward").doubleValue = 0.2;
+            serialized.FindProperty("caveRewardGrowth").doubleValue = 1; // não entra na fórmula do v8
+            serialized.FindProperty("critMultiplier").doubleValue = 1.5;
+            serialized.FindProperty("pickaxeFormula").enumValueIndex = (int)PickaxeFormula.LevelScaled;
+            serialized.FindProperty("pickaxeCaveGrowth").doubleValue = 1.2;
+            SetLine(serialized, "pickaxe", 7, 1.2, 49, 0, CostFormula.DamageScaled);
+            serialized.FindProperty("floorBreaks").intValue = 10;
+            SetLine(serialized, "memory", 10, 2, 100, 5, CostFormula.OffsetExponential);
+            serialized.FindProperty("offlineMaxHours").doubleValue = 4;
+            serialized.FindProperty("offlineDeepHours").doubleValue = 6;
+            serialized.FindProperty("offlineDeepFloor").intValue = 20;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Setup] Valores do GDD v8 criados em {GddV8BalancePath} (M9c E1).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

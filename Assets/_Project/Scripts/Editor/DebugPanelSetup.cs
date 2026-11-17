@@ -32,7 +32,7 @@ namespace MinersIdle.EditorTools
         /// <remarks>A Dupla e as Botas saíram no GDD v7 (D-136): os índices {6}–{9} ficam sem uso.</remarks>
         const string UpgradesFormat =
             "Picareta nv {0} (próx. {1}) · Velocidade nv {2} (próx. {3})\nMineração nv {4} (próx. {5}) · " +
-            "Crítico nv {12} (próx. {13})\nMapa nv {10} (próx. {11})";
+            "Crítico nv {12} (próx. {13})";
         const string MaxedLabel = "máx.";
 
         /// <summary>Medição do M5 E5 (ver o Tooltip de <c>BuildInfoLabel.statsFormat</c>).</summary>
@@ -180,8 +180,8 @@ namespace MinersIdle.EditorTools
                 ("shake", CreateButton(grid.transform, "Shake", "Tremor on/off")),
                 ("sound", CreateButton(grid.transform, "Sound", "Som on/off")),
                 ("resetStats", CreateButton(grid.transform, "ResetStats", "Zerar medição")),
-                ("fillCaveBreaks", CreateButton(grid.transform, "FillCaveBreaks", "Encher 100 cristais")),
-                ("nextCave", CreateButton(grid.transform, "NextCave", "Próxima caverna")),
+                ("fillCaveBreaks", CreateButton(grid.transform, "FillCaveBreaks", FillFloorLabel)),
+                ("nextCave", CreateButton(grid.transform, "NextCave", NextFloorLabel)),
                 ("lastCave", CreateButton(grid.transform, "LastCave", LastCaveLabel)),
                 ("tenLevels", CreateButton(grid.transform, TenLevelsName, TenLevelsLabel)),
                 ("cameraPanel", Object.FindAnyObjectByType<DescentCameraPanel>()),
@@ -214,13 +214,14 @@ namespace MinersIdle.EditorTools
         {
             ("ShopMenu", "Shop", "Loja", 128f, new[]
             {
-                "SpawnCrystal", "AddShards", "FillCaveBreaks", "BuyPickaxe", "BuySpeed", "BuyMining", BuyCriticalName,
-                TenLevelsName, "LastCave",
+                "SpawnCrystal", "AddShards", "BuyPickaxe", "BuySpeed", "BuyMining", BuyCriticalName,
             }),
             ("EffectsMenu", "Effects", "Efeitos", 48f, new[] { "AutoTap", "ForceCritical", "Shake", "Sound" }),
-            ("CaveMenu", "Cave", "Caverna", 68f, new[]
+            // M9c E1: o menu do andar (o objeto continua "CaveMenu"), com os atalhos do Próximo Andar.
+            ("CaveMenu", "Cave", FloorMenuLabel, 87f, new[]
             {
-                "BreakTarget", "NextCave", "SaveNow", "RestartSameSeed", "RestartNewSeed", "DeleteSave", "ResetStats",
+                "FillCaveBreaks", "NextCave", TenLevelsName, "LastCave", GoToFloorName, "BreakTarget", "SaveNow",
+                "RestartSameSeed", "RestartNewSeed", "DeleteSave", "ResetStats",
             }),
             // Os botões dos Cálculos (E3b-3) nascem no próprio menu (CalculationsSetup), não vêm da grade do DBG.
             (CalcMenuName, "Calc", "Cálculos", CalcMenuHeight, System.Array.Empty<string>()),
@@ -452,8 +453,8 @@ namespace MinersIdle.EditorTools
             if (FindButton(panel, "FillCaveBreaks") == null)
             {
                 GrayboxSetup.SetReferences(panel.GetComponent<DebugPanel>(),
-                    ("fillCaveBreaks", CreateButton(grid, "FillCaveBreaks", "Encher 100 cristais")),
-                    ("nextCave", CreateButton(grid, "NextCave", "Próxima caverna")));
+                    ("fillCaveBreaks", CreateButton(grid, "FillCaveBreaks", FillFloorLabel)),
+                    ("nextCave", CreateButton(grid, "NextCave", NextFloorLabel)));
                 Debug.Log("[Setup] Painel de debug: atalhos das cavernas (M8).");
                 changed = true;
             }
@@ -492,12 +493,80 @@ namespace MinersIdle.EditorTools
                 Debug.Log("[Setup] Painel de debug: \"Nível 100 (fim)\" e \"+10 níveis\" (E3b-2 do M8).");
                 changed = true;
             }
+            return EnsureFloorButtons(panel) || changed;
+        }
+
+        /// <summary>
+        /// M9c E1 (GDD v8): os atalhos do andar moram no menu Andar (o "Caverna" de antes, D-147): Encher a barra, Próximo
+        /// andar, +10 andares, Andar 100 e o "Ir ao andar…" novo. Vêm da Loja (onde estavam) e trocam de rótulo; a ordem
+        /// fica com o <see cref="EnsureMenus"/>, que roda depois.
+        /// </summary>
+        static bool EnsureFloorButtons(Transform panel)
+        {
+            bool changed = false;
+            var debugPanel = panel.GetComponent<DebugPanel>();
+            var floorButtons = panel.Find("CaveMenu/Content/Buttons");
+            if (floorButtons == null) return false;
+
+            foreach (var name in new[] { "FillCaveBreaks", TenLevelsName, "LastCave" })
+            {
+                var button = panel.Find("ShopMenu/Content/Buttons/" + name);
+                if (button == null) continue;
+                button.SetParent(floorButtons, false);
+                changed = true;
+            }
+
+            if (FindButton(panel, GoToFloorName) == null)
+            {
+                GrayboxSetup.SetReferences(debugPanel, ("goToFloor", CreateButton(floorButtons, GoToFloorName, "Ir ao andar 5")));
+                changed = true;
+            }
+            var so = new SerializedObject(debugPanel);
+            var format = so.FindProperty("goToFloorFormat");
+            if (format.stringValue != GoToFloorFormat)
+            {
+                format.stringValue = GoToFloorFormat;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+
+            foreach (var (name, label) in new[] { ("FillCaveBreaks", FillFloorLabel), ("NextCave", NextFloorLabel),
+                                                  (TenLevelsName, TenLevelsLabel), ("LastCave", LastCaveLabel) })
+            {
+                var text = FindButton(panel, name)?.GetComponentInChildren<TMP_Text>();
+                if (text == null || text.text == label) continue;
+                text.text = label;
+                changed = true;
+            }
+
+            var open = panel.Find("Content/Buttons/Cave")?.GetComponentInChildren<TMP_Text>();
+            if (open != null && open.text != FloorMenuLabel)
+            {
+                open.text = FloorMenuLabel;
+                changed = true;
+            }
+            var content = (RectTransform)panel.Find("CaveMenu/Content");
+            if (content != null && !Mathf.Approximately(content.sizeDelta.y, FloorMenuHeight))
+            {
+                content.sizeDelta = new Vector2(content.sizeDelta.x, FloorMenuHeight);
+                changed = true;
+            }
+
+            if (changed) Debug.Log("[Setup] Painel de debug: menu Andar com Encher a barra, Próximo andar, +10 andares, Andar 100 " +
+                                   "e Ir ao andar… (M9c E1).");
             return changed;
         }
 
-        const string LastCaveLabel = "Nível 100 (fim)";
+        const string FloorMenuLabel = "Andar";
+        /// <summary>O menu Andar: 4 fileiras de botões (12 com o Fechar).</summary>
+        const float FloorMenuHeight = 87f;
+        const string FillFloorLabel = "Encher a barra";
+        const string NextFloorLabel = "Próximo andar";
+        const string GoToFloorName = "GoToFloor";
+        const string GoToFloorFormat = "Ir ao andar {0}";
+        const string LastCaveLabel = "Andar 100 (fim)";
         const string TenLevelsName = "TenLevels";
-        const string TenLevelsLabel = "+10 níveis";
+        const string TenLevelsLabel = "+10 andares";
         const string BuyCriticalName = "BuyCritical";
         const string BuyCriticalLabel = "Comprar Crítico";
 

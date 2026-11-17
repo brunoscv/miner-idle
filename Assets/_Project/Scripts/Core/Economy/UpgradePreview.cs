@@ -10,10 +10,8 @@ namespace MinersIdle.Core
         NotEnoughShards,
         /// <summary>No limite ("máx."), ou compra única já feita ("comprada"), ou linha desligada.</summary>
         Maxed,
-        /// <summary>Letrado (M8, D-109): apagado, com o progresso dos cristais da caverna no lugar do efeito.</summary>
+        /// <summary>Travada: as linhas do estagiário antes de contratá-lo (M7).</summary>
         Locked,
-        /// <summary>Letrado (M8): o desta caverna já foi comprado; falta passar de caverna.</summary>
-        PassFirst,
     }
 
     /// <summary>
@@ -24,10 +22,8 @@ namespace MinersIdle.Core
     public readonly struct UpgradePreview
     {
         UpgradePreview(UpgradeId id, int level, int maxLevel, double? nextCost, UpgradeButtonState state,
-                       double currentValue, double nextValue, long progress, long progressGoal)
+                       double currentValue, double nextValue)
         {
-            Progress = progress;
-            ProgressGoal = progressGoal;
             Id = id;
             Level = level;
             MaxLevel = maxLevel;
@@ -53,17 +49,13 @@ namespace MinersIdle.Core
         /// <summary>O mesmo atributo depois da próxima compra (igual a <see cref="CurrentValue"/> no limite).</summary>
         public double NextValue { get; }
 
-        /// <summary>Letrado: cristais quebrados na caverna atual, no máximo <see cref="ProgressGoal"/> (D-109).</summary>
-        public long Progress { get; }
-        /// <summary>Letrado: quantos cristais a trava pede; 0 nas outras linhas.</summary>
-        public long ProgressGoal { get; }
 
         /// <summary>Linha que só se compra uma vez (Picareta Dupla): no limite, a loja mostra "comprada".</summary>
         public bool IsSinglePurchase => MaxLevel == 1;
         /// <summary>Linha desligada no asset (limite 0), como as Botas no GDD v1.</summary>
         public bool IsEnabled => MaxLevel > 0;
 
-        /// <param name="permanents">As melhorias permanentes (Marco 8b): entram nos atributos e na trava do Mapa.</param>
+        /// <param name="permanents">As melhorias permanentes (Marco 8b): entram nos atributos.</param>
         public static UpgradePreview For(MiningRules rules, EconomyRules economy, GameState state, UpgradeId id,
                                          Permanents permanents = null)
         {
@@ -75,30 +67,22 @@ namespace MinersIdle.Core
 
             var blocked = cost == null ? null : Purchases.Blocked(state, rules, id, permanents);
             var buttonState = cost == null ? UpgradeButtonState.Maxed
-                : blocked == PurchaseResult.PassFirst ? UpgradeButtonState.PassFirst
                 : blocked == PurchaseResult.Locked ? UpgradeButtonState.Locked
                 : Purchases.CanAfford(state.Shards, cost.Value) ? UpgradeButtonState.Purchasable
                 : UpgradeButtonState.NotEnoughShards;
 
-            if (id == UpgradeId.Letrado)
-            {
-                // "Caverna 1 » 2": a caverna em que está e a que o Letrado abre.
-                long goal = Purchases.MapLock(rules, permanents);
-                return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, state.Cave, state.Cave + 1,
-                                          Math.Min(state.CaveBreaks, goal), goal);
-            }
 
             if (id == UpgradeId.Intern || EconomyRules.IsInternTree(id))
             {
                 double now = InternValueOf(id, InternStats.Compute(rules, economy, state, permanents));
                 double then = cost == null ? now : InternValueOf(id, InternStats.Compute(rules, economy, state, id, permanents));
-                return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, now, then, 0, 0);
+                return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, now, then);
             }
 
             double current = ValueOf(id, MinerStats.Compute(rules, economy, state, permanents));
             double next = cost == null ? current : ValueOf(id, MinerStats.Compute(rules, economy, state, id, permanents));
 
-            return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, current, next, 0, 0);
+            return new UpgradePreview(id, level, line.MaxLevel, cost, buttonState, current, next);
         }
 
         static double ValueOf(UpgradeId id, MinerStats stats)
@@ -116,6 +100,8 @@ namespace MinersIdle.Core
                     return stats.WalkSpeed;
                 case UpgradeId.Critical:
                     return stats.CritBonus;
+                case UpgradeId.Letrado: // fora do jogo desde o v8 (D-256): nada a mostrar
+                    return 0;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(id), id, null);
             }

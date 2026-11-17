@@ -105,20 +105,23 @@ namespace MinersIdle.Tests
         public IEnumerator LineAtTheLimit_GoesToTheEnd_Disabled()
         {
             yield return LoadGame();
-            Simulation.AddRedShards(2000);
+            // GDD v8 (D-239): a Memória vai ao nível 100, custo 10 + 2^(n−1); o total é 1.000 + 2^100 − 1 (os últimos níveis
+            // são impagáveis no jogo; aqui o DBG dá as lascas).
+            double total = 1000 + System.Math.Pow(2, 100) - 1;
+            Simulation.AddRedShards(total * 2);
             _shop.OpenPermanents();
             var memory = Row(PermanentId.Memory);
             Assert.That(memory.transform.GetSiblingIndex(), Is.EqualTo(0), "na ordem da tabela, a 1ª");
 
-            for (int i = 0; i < 10; i++)
-                Assert.That(Simulation.PurchasePermanent(PermanentId.Memory), Is.EqualTo(PurchaseResult.Purchased));
+            for (int i = 0; i < 100; i++)
+                Assert.That(Simulation.PurchasePermanent(PermanentId.Memory), Is.EqualTo(PurchaseResult.Purchased), $"nível {i + 1}");
 
-            Assert.That(Simulation.Permanents.State.RedShards, Is.EqualTo(2000 - 1123), "o total da Memória");
+            Assert.That(Simulation.Permanents.State.RedShards, Is.EqualTo(total).Within(total * 1e-12), "o total da Memória");
             Assert.That(memory.IsMaxed, Is.True);
             Assert.That(memory.CanBuy, Is.False);
             Assert.That(memory.ButtonText, Is.EqualTo("máx."));
-            Assert.That(memory.LevelText, Is.EqualTo("nv 10/10"));
-            Assert.That(memory.EffectText, Is.EqualTo("Mapa −100 cristais"));
+            Assert.That(memory.LevelText, Is.EqualTo("nv 100/100"));
+            Assert.That(memory.EffectText, Is.EqualTo("Andar −500 cristais"), "−5 por nível (D-239)");
             Assert.That(memory.transform.GetSiblingIndex(), Is.EqualTo(memory.transform.parent.childCount - 1), "no fim");
             Assert.That(Row(PermanentId.MountainBlood).transform.GetSiblingIndex(), Is.EqualTo(0), "as outras sobem");
             Assert.That(Row(PermanentId.DwarfSoul).transform.GetSiblingIndex(), Is.EqualTo(3));

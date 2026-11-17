@@ -79,7 +79,7 @@ namespace MinersIdle.EditorTools
             if (entries.arraySize == 0)
             {
                 // A ordem da tabela do GDD v7 §4.2 (D-158). Os valores são o que a linha soma: cristais, fração, níveis.
-                Add(entries, PermanentId.Memory, "Memória", "Mapa −{0} » −{1} cristais", "Mapa −{0} cristais",
+                Add(entries, PermanentId.Memory, "Memória", MemoryEffect, MemoryMaxed,
                     ShopCatalog.EffectStyle.Number, 298, "slot_rarity_rare");
                 Add(entries, PermanentId.MountainBlood, "Sangue da Montanha", "Dano {0} » {1}", "Dano {0}",
                     ShopCatalog.EffectStyle.ChancePercent, 302, "slot_rarity_legendary");
@@ -90,6 +90,19 @@ namespace MinersIdle.EditorTools
                 Add(entries, PermanentId.DwarfSoul, "Alma dos Anões", "Picareta começa no {0} » {1}", "Picareta começa no {0}",
                     ShopCatalog.EffectStyle.Number, 166, "slot_rarity_epic");
                 changed = true;
+            }
+
+            // M9c E1 (D-239, D-256): o Mapa saiu; a Memória tira cristais do requisito de cada andar.
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var entry = entries.GetArrayElementAtIndex(i);
+                if ((PermanentId)entry.FindPropertyRelative("permanent").enumValueIndex != PermanentId.Memory) continue;
+                var effect = entry.FindPropertyRelative("effectFormat");
+                if (!effect.stringValue.StartsWith("Mapa")) continue;
+                effect.stringValue = MemoryEffect;
+                entry.FindPropertyRelative("maxedFormat").stringValue = MemoryMaxed;
+                changed = true;
+                Debug.Log("[Setup] Memória na loja: \"Andar −N cristais\" no lugar do Mapa (M9c E1, D-239).");
             }
 
             // Os ícones do pacote (fora do git, D-65) entram quando o pacote está no projeto.
@@ -107,6 +120,9 @@ namespace MinersIdle.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Abas e linhas das permanentes no catálogo da loja (Marco 8b, E4, D-155).");
         }
+
+        const string MemoryEffect = "Andar −{0} » −{1} cristais";
+        const string MemoryMaxed = "Andar −{0} cristais";
 
         static void Add(SerializedProperty entries, PermanentId id, string title, string effect, string maxed,
                         ShopCatalog.EffectStyle style, int icon, string frame)
