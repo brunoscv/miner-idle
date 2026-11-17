@@ -496,6 +496,21 @@ namespace MinersIdle.Tests
             Assert.That(loaded.PendingOffline.Crystals, Is.EqualTo(2541));
             Assert.That(loaded.PendingOffline.Level, Is.EqualTo(15));
             Assert.That(loaded.PendingOffline.Capped, Is.True);
+            Assert.That(loaded.PendingOffline.Descended, Is.False, "um save sem o andar de partida: sem descida");
+        }
+
+        [Test]
+        public void TheReturnWaitingForCollect_KeepsTheFloorItStartedFrom()
+        {
+            var pending = new OfflineReturn(3600, 3600, 300, 1234.5, 15, fromLevel: 12);
+            var state = GameState.Restore(10, 0, 0, _ => 0, Prototype(), 20, 15, pendingOffline: pending);
+            _save.Save(state, PlayedPermanent(), new DateTime(2026, 11, 17, 18, 0, 0, DateTimeKind.Utc));
+
+            var loaded = new SaveService(_store).Load(Prototype(), V7Permanents(), out _, out var status, 20);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(loaded.PendingOffline.FromLevel, Is.EqualTo(12), "M9c E4: \"12 » 15\" sobrevive a fechar o app");
+            Assert.That(loaded.PendingOffline.Level, Is.EqualTo(15));
+            Assert.That(loaded.PendingOffline.Descended, Is.True);
         }
 
         [Test]

@@ -51,9 +51,9 @@ namespace MinersIdle.EditorTools
             var safeArea = GameObject.Find("SafeArea")?.transform;
             var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
             if (safeArea == null || texts == null || Load(Wood("panels/window")) == null) return false;
-            if (safeArea.Find(ModalName) != null) return false;
             _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
             _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
+            if (safeArea.Find(ModalName) != null) return EnsureFloorsRow(safeArea);
 
             var root = new GameObject(ModalName, typeof(RectTransform));
             root.transform.SetParent(safeArea, false);
@@ -108,6 +108,8 @@ namespace MinersIdle.EditorTools
             var (_, awayLabel, awayValue) = Row(inset.transform, "Away");
             var (countedRow, countedLabel, countedValue) = Row(inset.transform, "Counted");
             countedValue.color = MutedText;
+            var (floorsRow, floorsLabel, floorsValue) = Row(inset.transform, "Floors");
+            floorsRow.SetActive(false);
             var (_, crystalsLabel, crystalsValue) = Row(inset.transform, "Crystals");
 
             // O estagiário e as lascas que ele trouxe.
@@ -139,9 +141,32 @@ namespace MinersIdle.EditorTools
             GrayboxSetup.SetReferences(view, ("runner", Object.FindAnyObjectByType<MiningRunner>()), ("texts", texts),
                 ("screen", screen), ("title", title), ("awayLabel", awayLabel), ("awayValue", awayValue),
                 ("countedRow", countedRow), ("countedLabel", countedLabel), ("countedValue", countedValue),
+                ("floorsRow", floorsRow), ("floorsLabel", floorsLabel), ("floorsValue", floorsValue),
                 ("crystalsLabel", crystalsLabel), ("crystalsValue", crystalsValue), ("broughtLabel", broughtLabel),
                 ("shardsValue", shardsValue), ("note", note), ("collectButton", collect), ("collectLabel", collectLabel));
             Debug.Log("[Setup] Modal \"Bem-vindo de volta\" na cena Game (M9, E2, D-197).");
+            return true;
+        }
+
+        /// <summary>
+        /// M9c E4 (D-246): a linha "Andares 12 » 15" entre o "Contou" e os cristais, no modal que já existia. Só aparece
+        /// quando ele desceu sozinho.
+        /// </summary>
+        static bool EnsureFloorsRow(Transform safeArea)
+        {
+            var view = safeArea.Find(ModalName).GetComponent<OfflineReturnScreen>();
+            if (view == null) return false;
+            var serialized = new SerializedObject(view);
+            if (serialized.FindProperty("floorsRow").objectReferenceValue != null) return false;
+            var crystals = serialized.FindProperty("crystalsValue").objectReferenceValue as TMP_Text;
+            var crystalsRow = crystals != null ? crystals.transform.parent : null;
+            if (crystalsRow == null) return false;
+
+            var (row, label, value) = Row(crystalsRow.parent, "Floors");
+            row.transform.SetSiblingIndex(crystalsRow.GetSiblingIndex());
+            row.SetActive(false);
+            GrayboxSetup.SetReferences(view, ("floorsRow", row), ("floorsLabel", label), ("floorsValue", value));
+            Debug.Log("[Setup] \"Bem-vindo de volta\": a linha dos andares que ele desceu (M9c E4).");
             return true;
         }
 

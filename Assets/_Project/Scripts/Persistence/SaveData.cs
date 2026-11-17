@@ -102,6 +102,8 @@ namespace MinersIdle.Persistence
         public long crystals;
         public double shards;
         public int level;
+        /// <summary>O andar em que o jogador deixou o jogo (M9c E4; 0 nos saves de antes = sem descida).</summary>
+        public int fromLevel;
     }
 
     /// <summary>A parte permanente do save (Marco 8b): banco de lascas vermelhas, dia e níveis das permanentes, pelo nome.</summary>

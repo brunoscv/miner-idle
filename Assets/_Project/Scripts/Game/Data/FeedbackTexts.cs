@@ -85,6 +85,12 @@ namespace MinersIdle.Game
         [Tooltip("{0} = o teto (6 h).")]
         [TextArea, SerializeField] string offlineCappedNoteFormat;
         [SerializeField] string offlineCollect;
+        [Tooltip("M9c E4: a linha dos andares que ele desceu sozinho (só aparece com descida).")]
+        [SerializeField] string offlineFloorsLabel;
+        [Tooltip("{0} = o andar em que o jogador saiu; {1} = o andar da volta.")]
+        [SerializeField] string offlineFloorsFormat;
+        [Tooltip("A nota com descida (sem o teto): {0} = o andar em que saiu; {1} = o da volta.")]
+        [TextArea, SerializeField] string offlineDescentNoteFormat;
 
         [Header("AJUSTES (M9, E4, D-198)")]
         [SerializeField] string settingsTitle;
@@ -154,6 +160,9 @@ namespace MinersIdle.Game
         public string OfflineNoteFormat => offlineNoteFormat;
         public string OfflineCappedNoteFormat => offlineCappedNoteFormat;
         public string OfflineCollect => offlineCollect;
+        public string OfflineFloorsLabel => offlineFloorsLabel;
+        public string OfflineFloorsFormat => offlineFloorsFormat;
+        public string OfflineDescentNoteFormat => offlineDescentNoteFormat;
 
         public string SettingsTitle => settingsTitle;
         public string SettingsVolumeLabel => settingsVolumeLabel;

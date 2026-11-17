@@ -29,6 +29,10 @@ namespace MinersIdle.UI
         [SerializeField] GameObject countedRow;
         [SerializeField] TMP_Text countedLabel;
         [SerializeField] TMP_Text countedValue;
+        [Tooltip("M9c E4: a linha dos andares descidos (\"12 » 15\"), só com descida.")]
+        [SerializeField] GameObject floorsRow;
+        [SerializeField] TMP_Text floorsLabel;
+        [SerializeField] TMP_Text floorsValue;
         [SerializeField] TMP_Text crystalsLabel;
         [SerializeField] TMP_Text crystalsValue;
         [SerializeField] TMP_Text broughtLabel;
@@ -44,6 +48,8 @@ namespace MinersIdle.UI
         public string CrystalsText => crystalsValue.text;
         public string ShardsText => shardsValue.text;
         public string NoteText => note.text;
+        public bool ShowsFloors => floorsRow != null && floorsRow.activeSelf;
+        public string FloorsText => floorsValue != null ? floorsValue.text : "";
 
         void Awake()
         {
@@ -51,6 +57,7 @@ namespace MinersIdle.UI
             awayLabel.text = texts.OfflineAwayLabel;
             countedLabel.text = texts.OfflineCountedLabel;
             crystalsLabel.text = texts.OfflineCrystalsLabel;
+            if (floorsLabel != null) floorsLabel.text = texts.OfflineFloorsLabel;
             broughtLabel.text = texts.OfflineBroughtLabel;
             collectLabel.text = texts.OfflineCollect;
             screen.SetActive(false); // o OnEnable (logo depois) abre, se a partida já tiver uma volta pendente
@@ -105,7 +112,13 @@ namespace MinersIdle.UI
                                 NumberFormatter.FormatDuration(
                                     OfflineMining.MaxSeconds(Simulation.Rules, Simulation.State, Simulation.Permanents),
                                     trimWholeHours: true))
+                : pending.Descended ? string.Format(texts.OfflineDescentNoteFormat, pending.FromLevel, pending.Level)
                 : string.Format(texts.OfflineNoteFormat, pending.Level);
+            if (floorsRow != null)
+            {
+                floorsRow.SetActive(pending.Descended);
+                floorsValue.text = string.Format(texts.OfflineFloorsFormat, pending.FromLevel, pending.Level);
+            }
             screen.SetActive(true);
             // A linha "Contou" entra ou sai: o painel se ajusta ao conteúdo já neste quadro.
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)screen.transform);

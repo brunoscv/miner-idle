@@ -56,6 +56,9 @@ MonoBehaviour:
   offlineNoteFormat: "Ele minerou no andar {0} enquanto voc\xEA esteve fora."
   offlineCappedNoteFormat: "Ele minera no m\xE1ximo {0} com o jogo fechado."
   offlineCollect: COLETAR
+  offlineFloorsLabel: Andares
+  offlineFloorsFormat: "{0} \xBB {1}"
+  offlineDescentNoteFormat: "Ele desceu do andar {0} ao {1} enquanto voc\xEA esteve fora."
   settingsTitle: AJUSTES
   settingsVolumeLabel: Efeitos
   settingsVolumeFormat: '{0}%'

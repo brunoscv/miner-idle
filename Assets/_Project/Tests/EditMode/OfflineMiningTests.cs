@@ -244,7 +244,7 @@ namespace MinersIdle.Tests
         // ── Na simulação (D-189, D-197) ──────────────────────────────────────────────────────────────────────
 
         [Test]
-        public void ApplyOffline_PaysTheShards_IntoTheDay_WithoutFillingTheFloorBar()
+        public void ApplyOffline_PaysTheShards_IntoTheDay_AndFillsTheFloorBar()
         {
             var state = At(15, (UpgradeId.Intern, 1));
             var sim = new MiningSimulation(Rules(), new SeededRandom(1), state, V7(), permanents: NoPermanents());
@@ -256,9 +256,9 @@ namespace MinersIdle.Tests
             Assert.That(report.Shards, Is.GreaterThan(0));
             Assert.That(sim.State.Shards, Is.EqualTo(report.Shards).Within(1e-6));
             Assert.That(sim.State.ShardsEarned, Is.EqualTo(report.Shards).Within(1e-6), "conta nas lascas ganhas do dia");
-            Assert.That(sim.State.CaveBreaks, Is.EqualTo(0), "não conta na barra do andar");
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(report.Crystals), "conta na barra do andar (D-246, M9c E4)");
             Assert.That(sim.State.Breaks, Is.EqualTo(0));
-            Assert.That(sim.State.Cave, Is.EqualTo(15), "não passa de nível");
+            Assert.That(sim.State.Cave, Is.EqualTo(15), "sem o avanço automático no balanço, não passa de andar");
             Assert.That(paid, Is.EqualTo(1), "o HUD fica sabendo");
         }
 

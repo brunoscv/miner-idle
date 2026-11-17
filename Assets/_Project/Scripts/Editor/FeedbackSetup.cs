@@ -103,7 +103,9 @@ namespace MinersIdle.EditorTools
                                                   ("nextFloorReady", "DESCER"), ("nextFloorTargetFormat", "ANDAR {0}"),
                                                   ("nextFloorHeart", "CORAÇÃO"), ("nextFloorAuto", "AUTO"),
                                                   ("settingsAutoAdvanceLabel", "Avanço automático"),
-                                                  ("settingsAutoAdvanceLockedFormat", "Andar {0}") })
+                                                  ("settingsAutoAdvanceLockedFormat", "Andar {0}"),
+                                                  ("offlineFloorsLabel", "Andares"), ("offlineFloorsFormat", "{0} » {1}"),
+                                                  ("offlineDescentNoteFormat", "Ele desceu do andar {0} ao {1} enquanto você esteve fora.") })
             {
                 var field = so.FindProperty(name);
                 if (!string.IsNullOrEmpty(field.stringValue)) continue;

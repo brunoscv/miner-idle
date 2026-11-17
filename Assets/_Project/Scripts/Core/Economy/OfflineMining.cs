@@ -9,8 +9,12 @@ namespace MinersIdle.Core
     public readonly struct OfflineReport
     {
         public OfflineReport(double secondsAway, double secondsCounted, bool hired, long crystals, long hitsPerCrystal,
-                             double secondsPerCrystal, double shardsPerCrystal, double shards)
+                             double secondsPerCrystal, double shardsPerCrystal, double shards,
+                             int fromFloor = 0, int toFloor = 0, long endBreaks = 0)
         {
+            FromFloor = fromFloor;
+            ToFloor = Math.Max(fromFloor, toFloor);
+            EndBreaks = Math.Max(0, endBreaks);
             SecondsAway = secondsAway;
             SecondsCounted = secondsCounted;
             Hired = hired;
@@ -27,7 +31,7 @@ namespace MinersIdle.Core
         public double SecondsCounted { get; }
         /// <summary>Havia estagiário contratado (sem ele, nada acontece offline, D-139).</summary>
         public bool Hired { get; }
-        /// <summary>Cristais que ele quebrou (não contam na trava do Mapa nem passam de nível, D-189).</summary>
+        /// <summary>Cristais que ele quebrou: contam na barra do andar e, com o automático, passam de andar (D-246, M9c E4).</summary>
         public long Crystals { get; }
         /// <summary>Golpes dele por cristal: ⌈vida ÷ dano⌉.</summary>
         public long HitsPerCrystal { get; }
@@ -37,6 +41,14 @@ namespace MinersIdle.Core
         public double ShardsPerCrystal { get; }
         /// <summary>As lascas que ele trouxe.</summary>
         public double Shards { get; }
+        /// <summary>O andar em que o jogador deixou o jogo (M9c E4).</summary>
+        public int FromFloor { get; }
+        /// <summary>O andar em que ele está na volta: o mesmo, ou mais fundo com o avanço automático (D-246).</summary>
+        public int ToFloor { get; }
+        /// <summary>Os cristais na barra do <see cref="ToFloor"/> na volta (sem o automático, a barra pode estar cheia, P4).</summary>
+        public long EndBreaks { get; }
+        /// <summary>Quantos andares ele desceu sozinho.</summary>
+        public int FloorsDescended => ToFloor - FromFloor;
 
         /// <summary>O relógio do aparelho voltou (hora de agora antes da do save): offline 0, sem erro (D-196).</summary>
         public bool ClockWentBack => SecondsAway < 0;
@@ -50,13 +62,14 @@ namespace MinersIdle.Core
     /// </summary>
     public readonly struct OfflineReturn
     {
-        public OfflineReturn(double secondsAway, double secondsCounted, long crystals, double shards, int level)
+        public OfflineReturn(double secondsAway, double secondsCounted, long crystals, double shards, int level, int fromLevel = 0)
         {
             SecondsAway = Math.Max(0, Clean(secondsAway));
             SecondsCounted = Math.Max(0, Clean(secondsCounted));
             Crystals = Math.Max(0, crystals);
             Shards = Math.Max(0, Clean(shards));
             Level = Math.Max(0, level);
+            FromLevel = fromLevel > 0 ? Math.Min(fromLevel, Level) : Level; // save de antes da E4: sem descida
         }
 
         /// <summary>O tempo fora pelo relógio.</summary>
@@ -66,18 +79,28 @@ namespace MinersIdle.Core
         public long Crystals { get; }
         /// <summary>As lascas que entram no COLETAR.</summary>
         public double Shards { get; }
-        /// <summary>O nível em que ele minerou (o da última volta).</summary>
+        /// <summary>O andar em que ele está na volta (o da última volta).</summary>
         public int Level { get; }
+        /// <summary>O andar em que o jogador deixou o jogo (a primeira volta sem COLETAR); igual ao <see cref="Level"/> sem descida.</summary>
+        public int FromLevel { get; }
+        /// <summary>Ele desceu andares sozinho (o modal mostra "12 » 15", M9c E4).</summary>
+        public bool Descended => Level > FromLevel;
 
         /// <summary>Há lascas esperando o COLETAR.</summary>
         public bool HasShards => Shards > 0;
         /// <summary>Ficou fora mais que o teto: o modal mostra o que contou ("máx. 6 h").</summary>
         public bool Capped => SecondsAway > SecondsCounted + 1e-6;
 
-        /// <summary>Esta volta mais <paramref name="report"/> (mais uma volta sem coletar), no <paramref name="level"/>.</summary>
-        public OfflineReturn Add(OfflineReport report, int level) =>
-            new OfflineReturn(SecondsAway + Math.Max(0, report.SecondsAway), SecondsCounted + report.SecondsCounted,
-                              Crystals + report.Crystals, Shards + report.Shards, level);
+        /// <summary>
+        /// Esta volta mais <paramref name="report"/> (mais uma volta sem coletar), no <paramref name="level"/>. O andar de
+        /// partida é o da primeira volta.
+        /// </summary>
+        public OfflineReturn Add(OfflineReport report, int level)
+        {
+            int from = HasShards ? FromLevel : report.FromFloor > 0 ? report.FromFloor : level;
+            return new OfflineReturn(SecondsAway + Math.Max(0, report.SecondsAway), SecondsCounted + report.SecondsCounted,
+                                     Crystals + report.Crystals, Shards + report.Shards, level, from);
+        }
 
         static double Clean(double value) => double.IsNaN(value) || double.IsInfinity(value) ? 0 : value;
     }
@@ -108,6 +131,11 @@ namespace MinersIdle.Core
     /// Em trechos (<see cref="Stretch"/>): no marco dos Bônus temporários, a carta do raro que ainda estiver ativa vale
     /// para ele até acabar (D-181, D-190); cada pedaço de tempo com outros atributos vira um trecho, e o tempo no meio de
     /// um cristal passa de um para o outro.
+    ///
+    /// Andares (M9c E4, D-246): os cristais dele contam na barra do andar. Com o avanço automático, ao encher a barra ele
+    /// passa ao andar seguinte na hora (sem transição: offline é só a conta, D-191) e continua lá, com a vida e as lascas
+    /// de lá; cada andar é mais um trecho. Sem o automático, a barra enche e fica cheia (P4). O andar 100 espera o toque
+    /// (D-270).
     /// </summary>
     public static class OfflineMining
     {
@@ -122,9 +150,12 @@ namespace MinersIdle.Core
             return rules.OfflineMaxSecondsFor(deepest);
         }
 
-        /// <summary>A conta do tempo fora, com o estado da run e as permanentes de agora.</summary>
+        /// <summary>
+        /// A conta do tempo fora, com o estado da run e as permanentes de agora. <paramref name="autoAdvance"/>: o avanço
+        /// automático vale (o marco do andar 5 e o ajuste ligado, <see cref="MiningSimulation.IsAutoAdvancing"/>).
+        /// </summary>
         public static OfflineReport Compute(MiningRules rules, EconomyRules economy, GameState state, Permanents permanents,
-                                            double secondsAway)
+                                            double secondsAway, bool autoAdvance = false)
         {
             if (rules == null) throw new ArgumentNullException(nameof(rules));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
@@ -133,46 +164,79 @@ namespace MinersIdle.Core
 
             var intern = InternStats.Compute(rules, economy, state, permanents);
             double counted = secondsAway <= 0 ? 0 : Math.Min(secondsAway, MaxSeconds(rules, state, permanents));
+            int floor = state.Cave;
+            long breaks = state.CaveBreaks;
             if (!intern.IsHired)
-                return new OfflineReport(secondsAway, counted, false, 0, 0, 0, 0, 0);
+                return new OfflineReport(secondsAway, counted, false, 0, 0, 0, 0, 0, floor, floor, breaks);
 
-            double health = rules.CrystalHealthIn(state.Cave);
-            double reward = rules.CrystalRewardIn(state.Cave) * intern.OfflineRewardMultiplier;
-            long hits = HitsPerCrystal(health, intern.Damage);
+            // O relatório mostra o ritmo do andar de partida, sem cartas.
+            double reward = rules.CrystalRewardIn(floor) * intern.OfflineRewardMultiplier;
+            long hits = HitsPerCrystal(rules.CrystalHealthIn(floor), intern.Damage);
             double perCrystal = SecondsPerCrystal(rules, hits, intern.HitInterval);
-            if (!HasInternCard(state.Bonuses, counted))
-            {
-                var stretch = Stretch(perCrystal, reward, counted);
-                return new OfflineReport(secondsAway, counted, true, stretch.Crystals, hits, perCrystal, reward, stretch.Shards);
-            }
 
-            // M9b E4 (D-181, D-190): cada carta do raro ativa vale para ele até acabar; cada pedaço de tempo com outras
-            // cartas é um trecho, e o tempo no meio de um cristal passa para o seguinte. O relatório mostra o ritmo sem cartas.
+            // Trechos: cada pedaço de tempo com as mesmas cartas do raro (M9b E4, D-181, D-190) e no mesmo andar (M9c E4).
+            // O tempo no meio de um cristal passa para o trecho seguinte.
+            bool cards = HasInternCard(state.Bonuses, counted);
+            var bonuses = state.Bonuses.All;
             long crystals = 0;
             double shards = 0, carried = 0, from = 0;
-            var bonuses = state.Bonuses.All;
-            while (from < counted)
+            while (true)
             {
-                double until = counted, damage = 1, divisor = 1, multiplier = 1;
-                for (int i = 0; i < bonuses.Count; i++)
+                // Barra cheia com o automático: o andar seguinte, sem gastar tempo (o andar 100 espera o toque, D-270).
+                if (autoAdvance && floor < rules.CaveCount && breaks >= Requirement(rules, permanents, floor))
                 {
-                    var bonus = bonuses[i];
-                    if (!IsInternCard(bonus) || bonus.SecondsLeft <= from) continue;
-                    until = Math.Min(until, bonus.SecondsLeft);
-                    if (bonus.Kind == BonusKind.DamageMultiplier) damage *= bonus.Value;
-                    else if (bonus.Kind == BonusKind.IntervalDivisor) divisor *= bonus.Value;
-                    else multiplier *= bonus.Value;
+                    floor++;
+                    breaks = 0;
+                    continue;
                 }
-                long stretchHits = HitsPerCrystal(health, intern.Damage * damage);
-                double stretchPerCrystal = SecondsPerCrystal(rules, stretchHits, intern.HitInterval / divisor);
-                var stretch = Stretch(stretchPerCrystal, reward * multiplier, until - from, carried);
+                if (from >= counted - Epsilon) break;
+
+                double until = counted, damage = 1, divisor = 1, multiplier = 1;
+                if (cards)
+                {
+                    for (int i = 0; i < bonuses.Count; i++)
+                    {
+                        var bonus = bonuses[i];
+                        if (!IsInternCard(bonus) || bonus.SecondsLeft <= from) continue;
+                        until = Math.Min(until, bonus.SecondsLeft);
+                        if (bonus.Kind == BonusKind.DamageMultiplier) damage *= bonus.Value;
+                        else if (bonus.Kind == BonusKind.IntervalDivisor) divisor *= bonus.Value;
+                        else multiplier *= bonus.Value;
+                    }
+                }
+                double floorReward = rules.CrystalRewardIn(floor) * intern.OfflineRewardMultiplier * multiplier;
+                long floorHits = HitsPerCrystal(rules.CrystalHealthIn(floor), intern.Damage * damage);
+                double floorPerCrystal = SecondsPerCrystal(rules, floorHits, intern.HitInterval / divisor);
+                var stretch = Stretch(floorPerCrystal, floorReward, until - from, carried);
+
+                long missing = autoAdvance && floor < rules.CaveCount
+                    ? Requirement(rules, permanents, floor) - breaks
+                    : long.MaxValue;
+                if (stretch.Crystals >= missing)
+                {
+                    // A barra enche neste trecho: conta só até o cristal que a enche; o resto do tempo é do andar seguinte.
+                    crystals += missing;
+                    shards += missing * floorReward;
+                    breaks += missing;
+                    from = Math.Min(until, from + Math.Max(0, missing * floorPerCrystal - carried));
+                    carried = 0;
+                    continue;
+                }
                 crystals += stretch.Crystals;
                 shards += stretch.Shards;
+                breaks += stretch.Crystals;
                 carried = stretch.LeftoverSeconds;
                 from = until;
             }
-            return new OfflineReport(secondsAway, counted, true, crystals, hits, perCrystal, reward, shards);
+            return new OfflineReport(secondsAway, counted, true, crystals, hits, perCrystal, reward, shards,
+                                     state.Cave, floor, breaks);
         }
+
+        const double Epsilon = 1e-9;
+
+        /// <summary>Os cristais que o andar pede (D-239): com a Memória, se houver permanentes.</summary>
+        static long Requirement(MiningRules rules, Permanents permanents, int floor) =>
+            permanents?.FloorRequirement(rules, floor) ?? Math.Max(0, rules.FloorBreaksIn(floor));
 
         /// <summary>Uma carta do raro que muda o estagiário: dano ×, intervalo ÷ ou lascas × (o crítico não, D-167).</summary>
         static bool IsInternCard(ActiveBonus bonus) =>

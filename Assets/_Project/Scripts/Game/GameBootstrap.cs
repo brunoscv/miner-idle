@@ -62,19 +62,20 @@ namespace MinersIdle.Game
 
         void HandOverSave()
         {
+            // Os AJUSTES num arquivo à parte (M9, E4, D-200): Apagar save não mexe neles. Antes do save (M9c E4): o offline
+            // da abertura já desce andares com o avanço automático que o jogador escolheu.
+            var settings = FindAnyObjectByType<GameSettings>();
+            if (settings != null)
+                settings.UseStore(new SettingsStore(new FileSaveStore(Application.persistentDataPath, SettingsStore.FileName)));
+            else
+                Debug.LogError("[Bootstrap] A cena Game não tem GameSettings: os ajustes não ficam gravados.");
+
             var runner = FindAnyObjectByType<MiningRunner>(); // uma vez, na troca de cena
             if (runner != null)
                 runner.UseSave(new SaveService(new FileSaveStore(Application.persistentDataPath)),
                                new CalculationStore(new FileSaveStore(Application.persistentDataPath, CalculationStore.FileName)));
             else
                 Debug.LogError("[Bootstrap] A cena Game não tem MiningRunner: o jogo vai rodar sem save.");
-
-            // Os AJUSTES num arquivo à parte (M9, E4, D-200): Apagar save não mexe neles.
-            var settings = FindAnyObjectByType<GameSettings>();
-            if (settings != null)
-                settings.UseStore(new SettingsStore(new FileSaveStore(Application.persistentDataPath, SettingsStore.FileName)));
-            else
-                Debug.LogError("[Bootstrap] A cena Game não tem GameSettings: os ajustes não ficam gravados.");
 
             Destroy(gameObject);
         }

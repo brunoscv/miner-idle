@@ -112,14 +112,40 @@ namespace MinersIdle.Tests
             Assert.That(_modal.CrystalsText, Is.EqualTo(NumberFormatter.Format(7200)));
             Assert.That(_modal.ShardsText, Is.EqualTo("+" + NumberFormatter.FormatShards(7200 * 0.2)));
             Assert.That(_modal.NoteText, Is.EqualTo("Ele minerou no andar 1 enquanto você esteve fora."));
+            Assert.That(_modal.ShowsFloors, Is.False, "antes do andar 5 não há automático: sem descida");
 
             Collect();
             Assert.That(_modal.IsOpen, Is.False);
             Assert.That(Simulation.State.Shards, Is.EqualTo(report.Shards).Within(1e-6), "entrou no COLETAR");
             Assert.That(Simulation.State.ShardsEarned, Is.EqualTo(report.Shards).Within(1e-6), "nas lascas do dia");
-            Assert.That(Simulation.State.CaveBreaks, Is.EqualTo(caveBreaks), "não conta na barra do andar (D-189)");
-            Assert.That(Simulation.State.Cave, Is.EqualTo(cave), "não passa de nível");
+            Assert.That(Simulation.State.CaveBreaks, Is.EqualTo(caveBreaks + 7200), "conta na barra do andar (D-246, M9c E4)");
+            Assert.That(Simulation.State.Cave, Is.EqualTo(cave), "sem o automático, não passa de andar: a barra fica cheia");
+            Assert.That(Simulation.CanAdvance, Is.True);
             Assert.That(Summary, Does.Contain(NumberFormatter.Format(7200) + " cristais"));
+        }
+
+        [UnityTest]
+        public IEnumerator WithTheAuto_OneHourAway_ComesBackDeeper_AndTheModalSaysFromWhere()
+        {
+            yield return Load();
+            Assert.That(Simulation.HireIntern(), Is.True);
+            Simulation.SetDeepestFloor(5); // o automático existe (M9c E3); a partida segue no andar 1
+            Assert.That(Simulation.IsAutoAdvancing, Is.True);
+
+            Click("Away1H");
+
+            var report = _runner.LastOffline.Value;
+            Assert.That(report.FromFloor, Is.EqualTo(1));
+            Assert.That(report.FloorsDescended, Is.GreaterThan(0), "desceu sozinho (D-246)");
+            Assert.That(Simulation.State.Cave, Is.EqualTo(report.ToFloor), "a volta já é no andar novo");
+            Assert.That(Simulation.IsInFloorTransition, Is.False, "sem transição: offline é só a conta");
+
+            Assert.That(_modal.IsOpen, Is.True);
+            Assert.That(_modal.ShowsFloors, Is.True);
+            Assert.That(_modal.FloorsText, Is.EqualTo($"1 » {report.ToFloor}"));
+            Assert.That(_modal.NoteText, Is.EqualTo($"Ele desceu do andar 1 ao {report.ToFloor} enquanto você esteve fora."));
+            Collect();
+            Assert.That(_modal.IsOpen, Is.False);
         }
 
         [UnityTest]

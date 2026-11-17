@@ -190,7 +190,8 @@ namespace MinersIdle.Persistence
 
             var pending = data.version >= 5 && data.pendingOffline != null
                 ? new OfflineReturn(data.pendingOffline.secondsAway, data.pendingOffline.secondsCounted,
-                                    data.pendingOffline.crystals, data.pendingOffline.shards, data.pendingOffline.level)
+                                    data.pendingOffline.crystals, data.pendingOffline.shards, data.pendingOffline.level,
+                                    data.pendingOffline.fromLevel)
                 : default;
             return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
                                      data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart,
@@ -257,6 +258,7 @@ namespace MinersIdle.Persistence
                     secondsAway = state.PendingOffline.SecondsAway, secondsCounted = state.PendingOffline.SecondsCounted,
                     crystals = state.PendingOffline.Crystals, shards = state.PendingOffline.Shards,
                     level = state.PendingOffline.Level,
+                    fromLevel = state.PendingOffline.FromLevel,
                 },
             };
             foreach (var id in Lines)

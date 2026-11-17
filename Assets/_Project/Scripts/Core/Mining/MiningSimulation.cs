@@ -440,10 +440,11 @@ namespace MinersIdle.Core
         {
             // A conta antes de o tempo dos bônus correr: a carta do raro que estava ativa vale para o estagiário até acabar
             // (D-181, D-190). A janela do raro não anda: espera o jogador (D-222).
-            var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway);
+            var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway, IsAutoAdvancing);
 
             // Os bônus com tempo correm com o app fechado (D-181, D-214), sem o teto do offline; relógio voltado não devolve tempo.
             if (secondsAway > 0 && !double.IsInfinity(secondsAway)) AdvanceBonuses(secondsAway);
+            ApplyOfflineFloor(report);
             if (report.Shards <= 0) return report;
             if (noticeSeconds > 0 && report.SecondsCounted >= noticeSeconds)
             {
@@ -993,13 +994,27 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
+        /// A barra e o andar da volta (M9c E4, D-246): os cristais do estagiário contam na barra e, com o automático, ele
+        /// chega mais fundo. Offline não tem transição (D-191): o andar novo já está lá, com a fila de lá.
+        /// </summary>
+        void ApplyOfflineFloor(OfflineReport report)
+        {
+            if (!report.Hired || report.ToFloor < _state.Cave) return;
+            bool moved = report.ToFloor > _state.Cave;
+            if (!moved && report.EndBreaks == _state.CaveBreaks) return;
+            if (moved) EnterCave(report.ToFloor, transition: false);
+            _state.SetCaveBreaks(report.EndBreaks);
+            CaveChanged?.Invoke(_state.Cave);
+        }
+
+        /// <summary>
         /// Entra no andar <paramref name="cave"/>: a transição abre primeiro (quem desenha ainda vê a fila antiga, para
         /// trocá-la no escuro), o andar muda, a barra zera, o recorde sobe, e a fila do andar novo nasce na tela, com a
         /// vida e as lascas de lá (o anão fica onde está e corre até o primeiro quando a transição acaba).
         /// </summary>
-        void EnterCave(int cave)
+        void EnterCave(int cave, bool transition = true)
         {
-            if (_floorTransitionSeconds > 0) BeginFloorTransition(cave);
+            if (transition && _floorTransitionSeconds > 0) BeginFloorTransition(cave);
             _state.EnterCave(cave);
             _permanents.State.ReachFloor(cave);
             _track.SetCrystalValues(_rules.CrystalHealthIn(cave), _rules.CrystalRewardIn(cave));
