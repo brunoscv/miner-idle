@@ -33,7 +33,7 @@ namespace MinersIdle.Tests
             var runner = Object.FindAnyObjectByType<MiningRunner>();
             var simulation = runner.Simulation;
             var hud = Object.FindAnyObjectByType<HudView>();
-            var pass = Object.FindAnyObjectByType<CavePassButton>();
+            var pass = Object.FindAnyObjectByType<NextFloorButton>();
             var stage = Object.FindAnyObjectByType<DescentStage>();
             var banner = Object.FindAnyObjectByType<CaveBanner>();
             var panel = Object.FindAnyObjectByType<DebugPanel>();
@@ -44,14 +44,15 @@ namespace MinersIdle.Tests
             Assert.That(simulation.State.Cave, Is.EqualTo(1));
             Assert.That(hud.CaveText, Is.EqualTo("1"));
             Assert.That(simulation.CanAdvance, Is.False);
-            Assert.That(pass.IsShown, Is.False, "barra vazia, sem botão");
+            Assert.That(pass.IsShown, Is.True, "o Próximo Andar fica na tela, enchendo (D-269)");
+            Assert.That(pass.IsReady, Is.False, "barra vazia");
 
             // DBG → Andar → Encher a barra.
             var fill = panel.transform.Find("CaveMenu/Content/Buttons/FillCaveBreaks");
             Assert.That(fill, Is.Not.Null, "o atalho Encher a barra no DBG → Andar (rode o setup do projeto)");
             fill.GetComponent<Button>().onClick.Invoke();
             Assert.That(simulation.FloorProgress, Is.EqualTo(1));
-            Assert.That(pass.IsShown, Is.True, "barra cheia, o botão aparece");
+            Assert.That(pass.IsReady, Is.True, "barra cheia: DESCER · ANDAR 2");
 
             // A passagem: o andar muda na hora; com a transição, o palco segura a fila velha até o escuro.
             var oldQueue = simulation.Crystals.ToArray();
@@ -61,7 +62,7 @@ namespace MinersIdle.Tests
             Assert.That(hud.CaveText, Is.EqualTo("2"));
             Assert.That(simulation.State.CaveBreaks, Is.EqualTo(0), "a barra recomeça");
             Assert.That(simulation.Crystals.Intersect(oldQueue), Is.Empty, "a fila é a do andar novo");
-            Assert.That(pass.IsShown, Is.False, "some ao passar");
+            Assert.That(pass.IsReady, Is.False, "volta a encher ao passar");
             if (simulation.IsInFloorTransition)
                 Assert.That(stage.IsHoldingOldQueue, Is.True, "os cristais novos só aparecem no escuro");
 
@@ -69,11 +70,12 @@ namespace MinersIdle.Tests
             Assert.That(simulation.IsInFloorTransition, Is.False, "a transição acaba sozinha");
             yield return null;
             Assert.That(stage.IsHoldingOldQueue, Is.False, "a fila nova na tela");
-            Assert.That(pass.IsShown, Is.False, "a barra do andar 2 está vazia");
+            Assert.That(pass.IsReady, Is.False, "a barra do andar 2 está vazia");
+            Assert.That(pass.CountText, Is.EqualTo("0/20"));
             if (biome1 != null)
             {
                 Assert.That(stage.Biome, Is.SameAs(biome1), "o andar 2 no bioma do 1");
-                Assert.That(banner.Text, Does.StartWith("Nível 2").And.Contain(stage.Biome.DisplayName));
+                Assert.That(banner.Text, Does.StartWith("ANDAR 2").And.Contain(stage.Biome.DisplayName));
             }
 
             // DBG → Andar → Próximo andar (sem a barra).
@@ -115,7 +117,7 @@ namespace MinersIdle.Tests
             yield return null;
             Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o 2º bioma");
             Assert.That(stage.FloorTexture.name, Does.EndWith("02"));
-            Assert.That(banner.Text, Does.StartWith("Nível 11").And.Contain(stage.Biome.DisplayName));
+            Assert.That(banner.Text, Does.StartWith("ANDAR 11").And.Contain(stage.Biome.DisplayName));
         }
 
         /// <summary>
@@ -267,7 +269,7 @@ namespace MinersIdle.Tests
             var runner = Object.FindAnyObjectByType<MiningRunner>();
             var simulation = runner.Simulation;
             var hud = Object.FindAnyObjectByType<HudView>();
-            var pass = Object.FindAnyObjectByType<CavePassButton>();
+            var pass = Object.FindAnyObjectByType<NextFloorButton>();
             var heart = Object.FindAnyObjectByType<HeartScreen>();
             var panel = Object.FindAnyObjectByType<DebugPanel>();
             Assert.That(heart, Is.Not.Null, "a cena precisa da tela do coração (rode o setup do projeto)");
@@ -282,7 +284,8 @@ namespace MinersIdle.Tests
             // M9c E0: o andar novo abre a transição (o anão parado); o teste não espera por ela, pula o tempo dela.
             if (simulation.IsInFloorTransition) simulation.Tick(simulation.FloorTransitionLeft);
             Assert.That(simulation.IsInFloorTransition, Is.False);
-            Assert.That(pass.IsShown, Is.True, "no último andar o botão leva ao coração");
+            Assert.That(pass.IsReady, Is.True, "no último andar o botão leva ao coração");
+            Assert.That(pass.TargetText, Is.EqualTo("CORAÇÃO"));
 
             pass.GetComponentInChildren<Button>(includeInactive: true).onClick.Invoke();
             Assert.That(simulation.State.ReachedHeart, Is.True);

@@ -131,6 +131,16 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
 - Textos "CAVERNA" → "ANDAR" (P9) no HUD, no Descansar, no coração e no DBG.
 - **Testes PlayMode:** quebrar até encher, tocar, ver o andar subir e a barra zerar; o botão não responde antes de encher.
 
+**Como ficou (2026-11-17, D-269):**
+
+- O Bruno escolheu a **opção c** do mockup: **o botão é a barra**. Enchendo, a madeira apagada acende da esquerda para a direita com os cristais quebrados, com "PRÓXIMO ANDAR" e "x/y"; o toque não faz nada. **Cheio**, o conteúdo vira o da opção b: a **setinha para baixo**, "DESCER" e "ANDAR n", com uma **borda que pulsa**; o toque desce e a barra zera. No último andar o alvo diz "CORAÇÃO"; depois do coração o botão some.
+- `CavePassButton` virou `NextFloorButton` (o mesmo `.meta`); a cena se monta no `NextFloorSetup`, que também tira o PASSAR provisório da E1. A setinha é `Art/UI/icon_floor_down.png` (9×10).
+- O **Descansar** ficou mais estreito (94 de largura, como o Próximo Andar), e o **centro fica livre** para a Bomba (Bloco E); um teste mede o vão.
+- O **"AUTO"** não entrou: o avanço automático só existe na E3, e o selo entra junto com ele.
+- Os **quadros da transição** não viraram mockup: a B já tinha sido escolhida vendo no jogo (E0, D-268). O cartão diz **"ANDAR n"** com o bioma embaixo, menor.
+- Textos (P9): HUD "ANDAR"; Descansar, resumo do dia, offline e DBG → Dia dizem "andar"; o coração diz "Você desceu os 100 andares.". Os textos novos estão no `FeedbackTexts`; o setup migra os antigos.
+- **DBG → Andar → Transição curta: sim/não** (0,3 s), para passar muitos andares sem esperar.
+
 ### E3 — Marcos de andar
 
 - **Andar mais fundo** nas permanentes, no save: sobrevive ao descanso; o "Apagar save" dos AJUSTES zera, como tudo.
@@ -164,7 +174,13 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
   6. **LOJA**: sem o Mapa; a Picareta custa **14**. **PERMANENTES**: a Memória diz "Andar −0 » −5 cristais".
   7. DBG → **Cálculos**: sem o botão de balanço; o aviso diz "Cálculo: GDD v8".
   8. DBG → Estagiário → Contratar, DBG → Offline → **Fora 8 h**: conta **4 h**. Depois de DBG → Andar → Ir ao andar 20, Fora 8 h conta **6 h**.
-- **E2:** cena `Bootstrap`, Play. O botão Próximo Andar embaixo à direita, apagado, com "0/10". Quebrar 10 cristais: a barra enche e o botão acende. Tocar: o anão para, a câmera sobe e a tela desfoca, aparece "ANDAR 2", a câmera desce até o anão, o HUD mostra ANDAR 2 e o botão "0/20"; só então o anão corre. DBG → Andar → **Transição curta**: a mesma coisa em 0,3 s. A LOJA não tem mais o Mapa.
+- **E2:** cena `Bootstrap`, Play:
+  1. Embaixo à direita, a barra **PRÓXIMO ANDAR** apagada, com **0/10**; à esquerda o Descansar, mais estreito; o centro vazio. O HUD diz **ANDAR 1**.
+  2. A cada cristal quebrado a madeira acende um pedaço e o número sobe; tocar antes de encher não faz nada.
+  3. Com 10/10: a setinha, **DESCER · ANDAR 2** e a borda pulsando. Tocar: a transição B, o cartão **ANDAR 2** com o bioma, e a barra volta a **0/20**.
+  4. DBG → Andar → **Transição curta: sim**: a próxima descida leva 0,3 s (Encher a barra e tocar). Tocar de novo volta para "não".
+  5. DBG → Andar → **Andar 100 (fim)**: o botão diz **DESCER · CORAÇÃO**; tocar abre o coração ("Você desceu os 100 andares."), e o botão some.
+  6. Descansar: a tela diz "andar" no lugar de "nível".
 - **E3:** DBG → Andar → **Ir para o andar 5**: os AJUSTES mostram "Avanço automático" ligado; a barra enche e o jogo desce sozinho. Desligar nos AJUSTES: a barra fica cheia e o botão espera o toque. A LOJA mostra o Estagiário destravado. DBG → Andar → **Recorde 1** e reabrir a LOJA: travado com "Andar 5". Recorde 10: aparecem raros; Recorde 20: DBG → Offline → Fora 8 h conta 6 h.
 - **E4:** DBG → Estagiário → Contratar, DBG → Andar → Ir para o andar 5 (automático ligado), DBG → Offline → **Fora 1 h**: o "Bem-vindo de volta" mostra os andares descidos; COLETAR e o HUD está no andar novo. Repetir com o automático desligado: o andar não muda e a barra está cheia.
 - **E5:** a sessão longa é automática; no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)` e o roteiro abaixo.
@@ -225,7 +241,7 @@ Total: **~29–40 h**.
 | Plano | ✅ aprovado em 2026-11-16: P1…P9 (D-256…D-264); P10 → as três transições no DBG, C primeiro (D-266, D-267) | — |
 | E0 Transições no DBG | ✅ aprovada em 2026-11-17: fica a **B** (D-268), a padrão da cena; C, B mosaico e A seguem no DBG | Testes: EditMode 438/438 (6 em `FloorTransitionTests`); PlayMode 152/153, com um teste por transição (`TenLevels_ChangeTheBiome_InTheDark` para a C, `CameraDrop_RisesBlursAndComesBackInFocus`, `BlurCard_BlursInPlace_AndComesBackInFocus`) e o do botão, que percorre a lista. Instáveis por tempo real, fora da transição, cada um falhou uma vez: `AllocationTests` (às vezes, quando uma quebra de cristal cai dentro da medição: 7 e 9 alocações num run, 1 no seguinte com a mesma quebra) e `TapInputTests.TappingBreaksCrystalsFaster_AndAutoTapRuns` |
 | E1 Núcleo do v8 | ✅ aprovada pelo Bruno em 2026-11-17 | Testes: EditMode 463/463 (novo `GddV8RulesTests`; `CaveTests` reescrito para a barra; os do Mapa e da parede corrigidos para a passagem nova); PlayMode 153/153 (`CaveFlowTests` mede encher a barra → PASSAR → transição → andar 2 e o andar 100 → coração; `AllocationTests` mede a transição com a fila velha na tela; a vibração longa mede a descida de andar). Ver "Como ficou" na E1 |
-| E2 Próximo Andar na tela | 🔄 mockup em 2026-11-17 (`tools/ci/out/m9c-e2-mockup.png` e `m9c-e2-mockup-estados.png`), aguardando a escolha do Bruno | Três opções do botão (a barra dentro, a barra em cima, o botão é a barra), cada uma enchendo, cheia e AUTO; o centro livre para a Bomba; "ANDAR" no HUD e o cartão "ANDAR 13" com o bioma. Os quadros das transições não entram: a B já foi escolhida na E0 (D-268) |
+| E2 Próximo Andar na tela | 🔄 implementada em 2026-11-17 (opção c com o cheio da b, D-269), aguardando a validação do Bruno | Testes: EditMode 463/463; PlayMode 156/156 (novo `NextFloorFlowTests`: enche com os cristais, não responde antes, desce e zera, HUD "ANDAR", transição curta; `CaveFlowTests` e `RestFlowTests` corrigidos para o botão novo e o centro livre). Ver "Como ficou" na E2 |
 | E3 Marcos de andar | ⏳ | — |
 | E4 Offline que desce andares | ⏳ | — |
 | E5 Sessão longa e celular | ⏳ | — |

@@ -111,8 +111,11 @@ namespace MinersIdle.Presentation
         [SerializeField, Range(0f, 1f)] float cardHeight = 0.58f;
         [Tooltip("Quanto o cartão leva para aparecer no escuro.")]
         [SerializeField, Min(0.01f)] float cardFadeInSeconds = 0.2f;
+        [Tooltip("DBG → Andar → Transição curta (M9c E2): a duração da transição comprimida.")]
+        [SerializeField, Min(0.05f)] float shortSeconds = 0.3f;
 
         bool _playing;
+        bool _short;
         bool _biomeSwapped;
         bool _cardBeatDone;
         FloorTransitionStyle _playingStyle;
@@ -127,6 +130,23 @@ namespace MinersIdle.Presentation
                 ApplyDuration();
             }
         }
+
+        /// <summary>
+        /// DBG → Andar → Transição curta (M9c E2): a mesma transição comprimida em <see cref="ShortSeconds"/> (a animação
+        /// estica para caber no tempo do núcleo). Para repetir a passagem sem esperar; não fica salvo.
+        /// </summary>
+        public bool IsShort
+        {
+            get => _short;
+            set
+            {
+                _short = value;
+                ApplyDuration();
+            }
+        }
+
+        /// <summary>A duração da transição curta, em segundos de jogo.</summary>
+        public float ShortSeconds => shortSeconds;
 
         /// <summary>Se a transição está tocando agora (para testes).</summary>
         public bool IsPlaying => _playing;
@@ -166,7 +186,9 @@ namespace MinersIdle.Presentation
 
         void ApplyDuration()
         {
-            if (Simulation != null) Simulation.FloorTransitionSeconds = DurationOf(style);
+            if (Simulation == null) return;
+            float full = DurationOf(style);
+            Simulation.FloorTransitionSeconds = _short && full > 0f ? Mathf.Min(shortSeconds, full) : full;
         }
 
         void OnStarted(int cave)

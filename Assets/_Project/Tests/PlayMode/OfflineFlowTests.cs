@@ -111,7 +111,7 @@ namespace MinersIdle.Tests
             Assert.That(_modal.ShowsCounted, Is.False, "não passou do teto");
             Assert.That(_modal.CrystalsText, Is.EqualTo(NumberFormatter.Format(7200)));
             Assert.That(_modal.ShardsText, Is.EqualTo("+" + NumberFormatter.FormatShards(7200 * 0.2)));
-            Assert.That(_modal.NoteText, Is.EqualTo("Ele minerou no nível 1 enquanto você esteve fora."));
+            Assert.That(_modal.NoteText, Is.EqualTo("Ele minerou no andar 1 enquanto você esteve fora."));
 
             Collect();
             Assert.That(_modal.IsOpen, Is.False);

@@ -27,23 +27,40 @@ namespace MinersIdle.UI
         [SerializeField] string cameraDropMosaicName = "B mosaico";
         [SerializeField] string blurCardName = "A";
         [SerializeField] string noneName = "nenhuma";
+        [Header("Transição curta (M9c E2)")]
+        [SerializeField] Button shortToggle;
+        [Tooltip("{0} = sim ou não.")]
+        [SerializeField] string shortFormat = "Transição curta: {0}";
+        [SerializeField] string yesName = "sim";
+        [SerializeField] string noName = "não";
 
-        TMP_Text _label;
+        TMP_Text _label, _shortLabel;
 
         void Awake()
         {
             if (toggle != null) _label = toggle.GetComponentInChildren<TMP_Text>();
+            if (shortToggle != null) _shortLabel = shortToggle.GetComponentInChildren<TMP_Text>();
         }
 
         void OnEnable()
         {
             if (toggle != null) toggle.onClick.AddListener(Next);
+            if (shortToggle != null) shortToggle.onClick.AddListener(ToggleShort);
             Refresh();
         }
 
         void OnDisable()
         {
             if (toggle != null) toggle.onClick.RemoveListener(Next);
+            if (shortToggle != null) shortToggle.onClick.RemoveListener(ToggleShort);
+        }
+
+        /// <summary>Liga e desliga a transição curta (0,3 s).</summary>
+        public void ToggleShort()
+        {
+            if (transition == null) return;
+            transition.IsShort = !transition.IsShort;
+            Refresh();
         }
 
         /// <summary>A próxima transição da lista (C → B → B mosaico → A → nenhuma → C…).</summary>
@@ -57,8 +74,9 @@ namespace MinersIdle.UI
 
         void Refresh()
         {
-            if (_label == null || transition == null) return;
-            _label.text = string.Format(labelFormat, NameOf(transition.Style));
+            if (transition == null) return;
+            if (_label != null) _label.text = string.Format(labelFormat, NameOf(transition.Style));
+            if (_shortLabel != null) _shortLabel.text = string.Format(shortFormat, transition.IsShort ? yesName : noName);
         }
 
         string NameOf(FloorTransitionStyle style)

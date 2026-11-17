@@ -125,6 +125,7 @@ namespace MinersIdle.EditorTools
             changed |= HeartScreenSetup.EnsureInScene();
             changed |= UiSkinSetup.EnsureInScene();
             changed |= RestSetup.EnsureInScene(); // depois da pele: usa a barra de baixo e as fontes
+            changed |= NextFloorSetup.EnsureInScene(); // o Próximo Andar à direita da barra de baixo (M9c E2)
             changed |= PermanentShopSetup.EnsureInScene(); // depois do resumo do dia: o PERMANENTES entra nele
             changed |= InternShopSetup.EnsureInScene(); // depois das abas da loja (M7, E3)
             changed |= OfflineReturnSetup.EnsureInScene(); // por cima de tudo (M9, E2)
@@ -196,7 +197,7 @@ namespace MinersIdle.EditorTools
 
             var shards = CreateHudPanel(hudObject.transform, "Lascas", "LASCAS");
             var damage = CreateHudPanel(hudObject.transform, "Dano", "DANO");
-            var cave = CreateHudPanel(hudObject.transform, "Caverna", "CAVERNA");
+            var cave = CreateHudPanel(hudObject.transform, "Caverna", "ANDAR"); // P9 (M9c E2)
             var speed = CreateHudPanel(hudObject.transform, "Velocidade", "VELOCIDADE");
 
             var hud = hudObject.AddComponent<HudView>();

@@ -22,7 +22,7 @@ namespace MinersIdle.Tests
 
         MiningRunner _runner;
         RestButton _rest;
-        CavePassButton _pass;
+        NextFloorButton _pass;
         RestScreen _modal;
         DaySummaryScreen _summary;
 
@@ -37,7 +37,7 @@ namespace MinersIdle.Tests
 
             _runner = Object.FindAnyObjectByType<MiningRunner>();
             _rest = Object.FindAnyObjectByType<RestButton>();
-            _pass = Object.FindAnyObjectByType<CavePassButton>();
+            _pass = Object.FindAnyObjectByType<NextFloorButton>();
             _modal = Object.FindAnyObjectByType<RestScreen>();
             _summary = Object.FindAnyObjectByType<DaySummaryScreen>();
             Assert.That(_rest, Is.Not.Null, "a cena precisa do botão Descansar (rode o setup do projeto)");
@@ -86,17 +86,21 @@ namespace MinersIdle.Tests
             yield return LoadGame();
             Simulation.SkipToCave(12);
             if (Simulation.IsInFloorTransition) Simulation.Tick(Simulation.FloorTransitionLeft);
-            Assert.That(_pass.IsShown, Is.False, "barra vazia, sem PASSAR");
+            Assert.That(_pass.IsReady, Is.False, "barra vazia: enchendo");
             Assert.That(_rest.IsShown, Is.True);
 
             FillTheBar();
-            Assert.That(_pass.IsShown, Is.True, "barra cheia, o PASSAR");
+            Assert.That(_pass.IsReady, Is.True, "barra cheia: DESCER");
             yield return null;
 
             var restRect = (RectTransform)_rest.transform.Find("RestButton");
-            var passRect = (RectTransform)_pass.transform.Find("PassCaveButton");
+            var passRect = (RectTransform)_pass.transform.Find("Bar");
             Assert.That(ScreenCenterOf(restRect).x, Is.LessThan(Screen.width * 0.5f), "Descansar à esquerda");
-            Assert.That(ScreenCenterOf(passRect).x, Is.GreaterThan(Screen.width * 0.5f), "PASSAR à direita");
+            Assert.That(ScreenCenterOf(passRect).x, Is.GreaterThan(Screen.width * 0.5f), "Próximo Andar à direita");
+            // D-269: o centro fica livre para a Bomba (Bloco E).
+            var restRight = RectTransformUtility.WorldToScreenPoint(null, restRect.TransformPoint(new Vector3(restRect.rect.xMax, 0f)));
+            var passLeft = RectTransformUtility.WorldToScreenPoint(null, passRect.TransformPoint(new Vector3(passRect.rect.xMin, 0f)));
+            Assert.That(passLeft.x - restRight.x, Is.GreaterThan(Screen.width * 0.18f), "o centro livre para a Bomba");
             Assert.That(restRect.rect.size, Is.EqualTo(passRect.rect.size), "do mesmo tamanho");
         }
 
@@ -172,15 +176,15 @@ namespace MinersIdle.Tests
             if (Simulation.IsInFloorTransition)
                 Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.False, "na transição, não");
             FillTheBar();
-            Assert.That(_pass.IsShown, Is.True);
-            yield return null; // um quadro de layout para o botão que acabou de aparecer
+            Assert.That(_pass.IsReady, Is.True);
+            yield return null; // um quadro de layout
 
             int combo = Simulation.Combo;
             Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.True, "o meio da tela");
             Assert.That(Simulation.Combo, Is.EqualTo(combo + 1));
 
             foreach (var rect in new[] { (RectTransform)_rest.transform.Find("RestButton"),
-                                         (RectTransform)_pass.transform.Find("PassCaveButton") })
+                                         (RectTransform)_pass.transform.Find("Bar") })
                 Assert.That(input.TapAt(ScreenCenterOf(rect)), Is.False, rect.name + " é interface");
         }
 

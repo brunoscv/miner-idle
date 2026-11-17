@@ -54,7 +54,8 @@ namespace MinersIdle.EditorTools
             var debugPanel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
             var menu = debugPanel != null ? debugPanel.transform.Find("CaveMenu") : null;
             var grid = menu != null ? menu.Find("Content/Buttons") : null;
-            if (grid == null || menu.GetComponent<FloorTransitionDebug>() != null) return changed;
+            if (grid == null) return changed;
+            if (menu.GetComponent<FloorTransitionDebug>() != null) return changed | EnsureShortButton(menu, grid);
 
             var existing = grid.Find(ButtonName);
             var button = existing != null ? existing.GetComponent<UnityEngine.UI.Button>()
@@ -64,6 +65,26 @@ namespace MinersIdle.EditorTools
             var debug = menu.gameObject.AddComponent<FloorTransitionDebug>();
             GrayboxSetup.SetReferences(debug, ("toggle", button), ("transition", transition));
             Debug.Log("[Setup] Painel de debug: \"Transição\" no menu Caverna (M9c E0).");
+            EnsureShortButton(menu, grid);
+            return true;
+        }
+
+        const string ShortButtonName = "ShortTransition";
+
+        /// <summary>M9c E2: DBG → Andar → "Transição curta: não", ao lado da escolha da transição.</summary>
+        static bool EnsureShortButton(Transform menu, Transform grid)
+        {
+            var debug = menu.GetComponent<FloorTransitionDebug>();
+            var so = new SerializedObject(debug);
+            var field = so.FindProperty("shortToggle");
+            if (field.objectReferenceValue != null) return false;
+            var existing = grid.Find(ShortButtonName);
+            var button = existing != null ? existing.GetComponent<UnityEngine.UI.Button>()
+                                          : DebugPanelSetup.CreateButton(grid, ShortButtonName, "Transição curta: não");
+            grid.Find("Close")?.SetAsLastSibling();
+            field.objectReferenceValue = button;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] Painel de debug: \"Transição curta\" no menu Andar (M9c E2).");
             return true;
         }
     }

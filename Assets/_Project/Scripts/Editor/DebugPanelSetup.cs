@@ -218,7 +218,7 @@ namespace MinersIdle.EditorTools
             }),
             ("EffectsMenu", "Effects", "Efeitos", 48f, new[] { "AutoTap", "ForceCritical", "Shake", "Sound" }),
             // M9c E1: o menu do andar (o objeto continua "CaveMenu"), com os atalhos do Próximo Andar.
-            ("CaveMenu", "Cave", FloorMenuLabel, 87f, new[]
+            ("CaveMenu", "Cave", FloorMenuLabel, FloorMenuHeight, new[]
             {
                 "FillCaveBreaks", "NextCave", TenLevelsName, "LastCave", GoToFloorName, "BreakTarget", "SaveNow",
                 "RestartSameSeed", "RestartNewSeed", "DeleteSave", "ResetStats",
@@ -558,8 +558,8 @@ namespace MinersIdle.EditorTools
         }
 
         const string FloorMenuLabel = "Andar";
-        /// <summary>O menu Andar: 4 fileiras de botões (12 com o Fechar).</summary>
-        const float FloorMenuHeight = 87f;
+        /// <summary>O menu Andar: 5 fileiras de botões (com a Transição e a Transição curta, M9c E2, e o Fechar).</summary>
+        const float FloorMenuHeight = 109f;
         const string FillFloorLabel = "Encher a barra";
         const string NextFloorLabel = "Próximo andar";
         const string GoToFloorName = "GoToFloor";

@@ -17,8 +17,20 @@ namespace MinersIdle.Game
         [SerializeField] string comboFormat;
         [Tooltip("{0} = combo no marco (10, 20…).")]
         [SerializeField] string milestoneFormat;
-        [Tooltip("A faixa da caverna nova (M8, D-111). {0} = número da caverna; {1} = nome do bioma.")]
+        [Tooltip("O cartão do andar novo (M8, D-111; M9c E2, D-269). {0} = número do andar; {1} = nome do bioma.")]
         [SerializeField] string caveBannerFormat;
+
+        [Header("Próximo Andar (M9c E2, D-269)")]
+        [Tooltip("Enchendo: o nome no botão.")]
+        [SerializeField] string nextFloorTitle;
+        [Tooltip("Enchendo: {0} = cristais quebrados no andar; {1} = o requisito. Formato do TextMeshPro (sem casas decimais).")]
+        [SerializeField] string nextFloorCountFormat;
+        [Tooltip("Cheio: a palavra grande, ao lado da seta.")]
+        [SerializeField] string nextFloorReady;
+        [Tooltip("Cheio: {0} = o andar para onde vai. Formato do TextMeshPro.")]
+        [SerializeField] string nextFloorTargetFormat;
+        [Tooltip("Cheio, no último andar: no lugar do \"ANDAR n\", aonde ele leva.")]
+        [SerializeField] string nextFloorHeart;
 
         [Header("Coração da montanha (M8, E3, D-112)")]
         [SerializeField] string heartTitle;
@@ -95,6 +107,11 @@ namespace MinersIdle.Game
         public string ComboFormat => comboFormat;
         public string MilestoneFormat => milestoneFormat;
         public string CaveBannerFormat => caveBannerFormat;
+        public string NextFloorTitle => nextFloorTitle;
+        public string NextFloorCountFormat => nextFloorCountFormat;
+        public string NextFloorReady => nextFloorReady;
+        public string NextFloorTargetFormat => nextFloorTargetFormat;
+        public string NextFloorHeart => nextFloorHeart;
         public string HeartTitle => heartTitle;
         public string HeartBodyFormat => heartBodyFormat;
         public string HeartContinue => heartContinue;

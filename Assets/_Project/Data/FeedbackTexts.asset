@@ -15,23 +15,30 @@ MonoBehaviour:
   criticalLabel: "CR\xCDTICO!"
   comboFormat: x{0}
   milestoneFormat: x{0}!
-  caveBannerFormat: "N\xEDvel {0} \xB7 {1}"
+  caveBannerFormat: 'ANDAR {0}
+
+    <size=50%>{1}</size>'
+  nextFloorTitle: "PR\xD3XIMO ANDAR"
+  nextFloorCountFormat: '{0}/{1}'
+  nextFloorReady: DESCER
+  nextFloorTargetFormat: ANDAR {0}
+  nextFloorHeart: "CORA\xC7\xC3O"
   heartTitle: "Cora\xE7\xE3o da montanha"
-  heartBodyFormat: "Voc\xEA desceu as dez cavernas.\n\nTempo de jogo: {0}\nLascas coletadas: {1}"
+  heartBodyFormat: "Voc\xEA desceu os 100 andares.\n\nTempo de jogo: {0}\nLascas coletadas: {1}"
   heartContinue: CONTINUAR
   restLabel: DESCANSAR
   restTitle: DESCANSAR
   dayFormat: DIA {0}
-  restLevelLabel: "N\xEDvel alcan\xE7ado"
+  restLevelLabel: "Andar alcan\xE7ado"
   restTimeLabel: Tempo do dia
   restShardsLabel: Lascas da run
   restTakeLabel: "Voc\xEA leva"
-  restNextFormat: "No pr\xF3ximo n\xEDvel: +{0}"
-  restNoNext: "Voc\xEA chegou ao \xFAltimo n\xEDvel."
-  restNote: "Amanh\xE3 voc\xEA recome\xE7a do n\xEDvel 1, sem as lascas e as melhorias desta run. As permanentes ficam."
+  restNextFormat: "No pr\xF3ximo andar: +{0}"
+  restNoNext: "Voc\xEA chegou ao \xFAltimo andar."
+  restNote: "Amanh\xE3 voc\xEA recome\xE7a do andar 1, sem as lascas e as melhorias desta run. As permanentes ficam."
   restContinue: CONTINUAR
   summaryTitleFormat: DIA {0} ENCERRADO
-  summaryLevelLabel: "Chegou ao n\xEDvel"
+  summaryLevelLabel: Chegou ao andar
   summaryTimeLabel: Tempo do dia
   summaryGainedLabel: Lascas vermelhas
   summaryGainedFormat: +{0}
@@ -45,7 +52,7 @@ MonoBehaviour:
   offlineCrystalsLabel: Cristais quebrados
   offlineBroughtLabel: "O estagi\xE1rio trouxe"
   offlineShardsFormat: +{0}
-  offlineNoteFormat: "Ele minerou no n\xEDvel {0} enquanto voc\xEA esteve fora."
+  offlineNoteFormat: "Ele minerou no andar {0} enquanto voc\xEA esteve fora."
   offlineCappedNoteFormat: "Ele minera no m\xE1ximo {0} com o jogo fechado."
   offlineCollect: COLETAR
   settingsTitle: AJUSTES

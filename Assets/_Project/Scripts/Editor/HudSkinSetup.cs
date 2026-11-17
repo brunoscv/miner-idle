@@ -46,18 +46,9 @@ namespace MinersIdle.EditorTools
         internal static readonly Color DisabledLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
-        /// <summary>
-        /// O nome do botão de passar de caverna, o do GDD (D-115; no quadrado da coluna era "DESCER"). Em duas linhas desde
-        /// a barra de baixo do Marco 8b (D-152), para caber na metade da tela.
-        /// </summary>
-        const string PassCaveTitle = "PASSAR\nDE CAVERNA";
-        // Embaixo, no meio (D-115): acima do DBG (4 a 20 px), longe do anão (os pés ficam a ~60% da tela, de cima).
-        const float PassCaveBottom = 12f;
-        const float PassCaveHeight = 30f;
-        const int PassCavePadding = 8;
-        // A barra de baixo (Marco 8b, D-152, mockup da E3 aprovado em 2026-11-05): Descansar à esquerda, PASSAR à direita,
-        // cada um sempre no seu lado, do mesmo tamanho. O RestSetup usa as mesmas medidas.
-        internal const float BarButtonWidth = 126f;
+        // A barra de baixo (Marco 8b, D-152; M9c E2, D-269): Descansar à esquerda, Próximo Andar à direita, cada um sempre
+        // no seu lado, do mesmo tamanho, e o centro livre para a Bomba. O RestSetup e o NextFloorSetup usam estas medidas.
+        internal const float BarButtonWidth = 94f; // M9c E2 (D-269): o centro fica para a Bomba
         internal const float BarButtonHeight = 36f;
         internal const float BarMargin = 6f;
         internal const float BarBottom = 12f;
@@ -110,9 +101,6 @@ namespace MinersIdle.EditorTools
                                         Load(Wood("buttons/button_square_normal")),
                                         Load(Wood("buttons/button_square_pressed")), LabelColor);
             if (changed) Debug.Log("[Setup] HUD e botões da direita com a pele de madeira (M1b E2).");
-            changed |= EnsurePassCaveButton(safeArea.transform);
-            changed |= PlacePassCaveAtBottom(safeArea.transform);
-            changed |= PlacePassCaveOnTheRight(safeArea.transform);
             changed |= PlaceSideIcons(safeArea.transform);
             return ApplyArtButtons(safeArea.transform) | changed;
         }
@@ -429,118 +417,6 @@ namespace MinersIdle.EditorTools
         }
 
         static Sprite SettingsIcon() => Load(SettingsIconPath) ?? Load(Wood("icons/icon_settings"));
-
-        /// <summary>
-        /// M8 (D-110): o botão de passar de caverna, em madeira tingida de âmbar com o livro do Letrado. O objeto "PassCave"
-        /// (sempre ativo) leva a view; o botão dentro dele só aparece quando dá para passar. O lugar e o desenho são do
-        /// <see cref="PlacePassCaveAtBottom"/> (D-115).
-        /// </summary>
-        static bool EnsurePassCaveButton(Transform safeArea)
-        {
-            var normal = Load(Wood("buttons/button_large_normal"));
-            if (safeArea.Find("PassCave") != null || normal == null) return false;
-
-            var container = new GameObject("PassCave", typeof(RectTransform));
-            container.transform.SetParent(safeArea, false);
-            var containerRect = (RectTransform)container.transform;
-            containerRect.anchorMin = Vector2.zero;
-            containerRect.anchorMax = Vector2.one;
-            containerRect.offsetMin = containerRect.offsetMax = Vector2.zero;
-            // Antes da loja na hierarquia: a loja aberta fica por cima.
-            var shop = safeArea.Find("Shop");
-            if (shop != null) container.transform.SetSiblingIndex(shop.GetSiblingIndex());
-
-            var go = new GameObject("PassCaveButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(container.transform, false);
-            var book = Load(UiSkinSetup.IconsFolder + "/Icon299.png");
-            if (book != null) Icon(go.transform, book, SideIconSize, layout: true);
-            GrayboxSetup.CreateHudText(go.transform, "Label", PassCaveTitle, ValueSize, LabelColor, Vector2.zero, Vector2.one);
-
-            var view = container.AddComponent<CavePassButton>();
-            GrayboxSetup.SetReferences(view, ("runner", Object.FindAnyObjectByType<MiningRunner>()),
-                                       ("button", go.GetComponent<Button>()), ("visual", go));
-            go.SetActive(false);
-            Debug.Log("[Setup] Botão PASSAR DE CAVERNA (M8).");
-            return true;
-        }
-
-        /// <summary>
-        /// D-115 (pedido do Bruno em 2026-10-31, supera o lugar da D-110): o botão sai da coluna e fica embaixo, no meio,
-        /// com o nome do GDD ("PASSAR DE CAVERNA") e o livro à esquerda, os dois centralizados juntos; a largura acompanha o
-        /// nome. Converte também o quadrado "DESCER" das cenas de antes. Devolve se mudou algo.
-        /// </summary>
-        static bool PlacePassCaveAtBottom(Transform safeArea)
-        {
-            var rect = safeArea.Find("PassCave/PassCaveButton") as RectTransform;
-            var normal = Load(Wood("buttons/button_large_normal"));
-            if (rect == null || normal == null || rect.GetComponent<HorizontalLayoutGroup>() != null) return false;
-
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0f);
-            rect.anchoredPosition = new Vector2(0f, PassCaveBottom);
-            rect.sizeDelta = new Vector2(0f, PassCaveHeight);
-
-            var image = rect.GetComponent<Image>();
-            image.sprite = normal;
-            image.type = Image.Type.Sliced;
-            image.color = AmberTint;
-            var button = rect.GetComponent<Button>();
-            button.targetGraphic = image;
-            button.transition = Selectable.Transition.SpriteSwap;
-            button.spriteState = new SpriteState { pressedSprite = Load(Wood("buttons/button_large_pressed")) };
-
-            var row = rect.gameObject.AddComponent<HorizontalLayoutGroup>();
-            row.padding = new RectOffset(PassCavePadding, PassCavePadding, 0, 0);
-            row.spacing = 4f;
-            row.childAlignment = TextAnchor.MiddleCenter;
-            row.childControlWidth = row.childControlHeight = true;
-            row.childForceExpandWidth = row.childForceExpandHeight = false;
-            rect.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            // O ícone da coluna (sem LayoutElement) vira o primeiro da linha, no tamanho dele.
-            if (rect.Find("Icon") is Transform icon)
-            {
-                if (!icon.TryGetComponent(out LayoutElement element)) element = icon.gameObject.AddComponent<LayoutElement>();
-                element.minWidth = element.preferredWidth = element.minHeight = element.preferredHeight = SideIconSize;
-                icon.SetAsFirstSibling();
-            }
-            if (rect.Find("Label") is Transform labelNode && labelNode.TryGetComponent(out TMP_Text label))
-            {
-                label.text = PassCaveTitle;
-                label.fontSize = ValueSize;
-                label.color = LabelColor;
-                label.alignment = TextAlignmentOptions.Center;
-                label.textWrappingMode = TextWrappingModes.NoWrap;
-                EditorUtility.SetDirty(label);
-            }
-            EditorUtility.SetDirty(rect.gameObject);
-            Debug.Log("[Setup] PASSAR DE CAVERNA embaixo, no meio, com o livro (D-115).");
-            return true;
-        }
-
-        /// <summary>
-        /// D-152 (Marco 8b, E3): o PASSAR sai do meio e fica no lado direito da barra de baixo, com a largura fixa da metade
-        /// e o nome em duas linhas. O lado esquerdo é do Descansar. Devolve se mudou algo.
-        /// </summary>
-        static bool PlacePassCaveOnTheRight(Transform safeArea)
-        {
-            var rect = safeArea.Find("PassCave/PassCaveButton") as RectTransform;
-            if (rect == null || rect.GetComponent<HorizontalLayoutGroup>() == null) return false;
-            var fitter = rect.GetComponent<ContentSizeFitter>();
-            if (fitter == null && rect.anchorMin == Vector2.right) return false;
-
-            if (fitter != null) Object.DestroyImmediate(fitter);
-            PlaceOnTheBar(rect, right: true);
-            if (rect.Find("Label") is Transform labelNode && labelNode.TryGetComponent(out TMP_Text label))
-            {
-                label.text = PassCaveTitle;
-                label.fontSize = BarLabelSize;
-                label.lineSpacing = BarLineSpacing;
-                EditorUtility.SetDirty(label);
-            }
-            EditorUtility.SetDirty(rect.gameObject);
-            Debug.Log("[Setup] PASSAR DE CAVERNA no lado direito da barra de baixo (D-152).");
-            return true;
-        }
 
         /// <summary>Um botão da barra de baixo no seu lado (D-152).</summary>
         internal static void PlaceOnTheBar(RectTransform rect, bool right)

@@ -23,7 +23,7 @@ namespace MinersIdle.EditorTools
             ("ResetPermanents", "resetPermanents", "Zerar permanentes"),
         };
 
-        const string SummaryFormat = "Dia {0} · banco {1} · leva agora {2} (nível {3})\n" +
+        const string SummaryFormat = "Dia {0} · banco {1} · leva agora {2} (andar {3})\n" +
                                      "Memória {4} · Sangue {5} · Coração {6}\nDedos {7} · Alma {8}";
 
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
@@ -32,7 +32,8 @@ namespace MinersIdle.EditorTools
         {
             var debugPanel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.DayMenuName) : null;
-            if (menu == null || menu.GetComponent<DayDebugPanel>() != null) return false;
+            if (menu == null) return false;
+            if (menu.GetComponent<DayDebugPanel>() is DayDebugPanel existing) return EnsureFloorWord(existing);
 
             var grid = menu.Find("Content/Buttons");
             var references = new System.Collections.Generic.List<(string, Object)>
@@ -65,6 +66,18 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[Setup] Painel de debug: menu \"Dia\" com lascas vermelhas, Descansar agora e as permanentes (Marco 8b, D-159).");
+            return true;
+        }
+
+        /// <summary>P9 (M9c E2): o resumo do DBG → Dia diz "andar" no lugar de "nível".</summary>
+        static bool EnsureFloorWord(DayDebugPanel panel)
+        {
+            var so = new UnityEditor.SerializedObject(panel);
+            var format = so.FindProperty("summaryFormat");
+            if (!format.stringValue.Contains("(nível {3})")) return false;
+            format.stringValue = format.stringValue.Replace("(nível {3})", "(andar {3})");
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] DBG → Dia: \"andar\" no lugar de \"nível\" (M9c E2, P9).");
             return true;
         }
     }

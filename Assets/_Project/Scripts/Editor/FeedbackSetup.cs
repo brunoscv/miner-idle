@@ -38,6 +38,7 @@ namespace MinersIdle.EditorTools
                 EnsurePermanentsText();
                 EnsureOfflineTexts();
                 EnsureSettingsTexts();
+                EnsureFloorTexts();
                 return;
             }
 
@@ -56,6 +57,62 @@ namespace MinersIdle.EditorTools
             EnsurePermanentsText();
             EnsureOfflineTexts();
             EnsureSettingsTexts();
+            EnsureFloorTexts();
+        }
+
+        // ── M9c E2 (P9, D-269): "caverna" e "nível" viram "andar"; os textos do Próximo Andar ─────────────────────────
+
+        const string FloorCardFormat = "ANDAR {0}\n<size=50%>{1}</size>";
+        const string OldHeartBody = "Você desceu as dez cavernas.";
+        const string HeartBody = "Você desceu os 100 andares.";
+
+        /// <summary>
+        /// O cartão da transição diz "ANDAR 13" com o bioma embaixo; o coração, o Descansar, o resumo do dia e o "Bem-vindo
+        /// de volta" dizem "andar" no lugar de "nível" (só se o texto ainda é o de antes: o que o Bruno editou fica). E os
+        /// textos do botão Próximo Andar, quando vazios.
+        /// </summary>
+        static void EnsureFloorTexts()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null) return;
+            var so = new SerializedObject(texts);
+            bool changed = false;
+
+            var card = so.FindProperty("caveBannerFormat");
+            if (card.stringValue == CaveBannerFormat || card.stringValue == OldCaveBannerFormat || card.stringValue == "")
+            {
+                card.stringValue = FloorCardFormat;
+                changed = true;
+            }
+            var heart = so.FindProperty("heartBodyFormat");
+            if (heart.stringValue.Contains(OldHeartBody))
+            {
+                heart.stringValue = heart.stringValue.Replace(OldHeartBody, HeartBody);
+                changed = true;
+            }
+            foreach (var name in new[] { "restLevelLabel", "restNextFormat", "restNoNext", "restNote", "summaryLevelLabel",
+                                         "offlineNoteFormat" })
+            {
+                var field = so.FindProperty(name);
+                string floor = field.stringValue.Replace("Nível", "Andar").Replace("nível", "andar");
+                if (floor == field.stringValue) continue;
+                field.stringValue = floor;
+                changed = true;
+            }
+            foreach (var (name, value) in new[] { ("nextFloorTitle", "PRÓXIMO ANDAR"), ("nextFloorCountFormat", "{0}/{1}"),
+                                                  ("nextFloorReady", "DESCER"), ("nextFloorTargetFormat", "ANDAR {0}"),
+                                                  ("nextFloorHeart", "CORAÇÃO") })
+            {
+                var field = so.FindProperty(name);
+                if (!string.IsNullOrEmpty(field.stringValue)) continue;
+                field.stringValue = value;
+                changed = true;
+            }
+            if (!changed) return;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Textos: \"andar\" no lugar de \"nível\"/\"caverna\" e os do Próximo Andar (M9c E2, P9, D-269).");
         }
 
         const string CaveBannerFormat = "Nível {0} · {1}";

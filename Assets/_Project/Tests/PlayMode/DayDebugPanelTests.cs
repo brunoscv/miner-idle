@@ -51,7 +51,7 @@ namespace MinersIdle.Tests
             _runner.Simulation.SkipToCave(12);
             yield return new WaitForSecondsRealtime(0.6f); // aberto, o menu atualiza a cada 0,5 s
             var summary = _panel.transform.Find("DayMenu/Content/Summary").GetComponent<TMP_Text>();
-            Assert.That(summary.text, Does.StartWith("Dia 1 · banco 0 · leva agora 7 (nível 12)"));
+            Assert.That(summary.text, Does.StartWith("Dia 1 · banco 0 · leva agora 7 (andar 12)"));
         }
 
         [UnityTest]
