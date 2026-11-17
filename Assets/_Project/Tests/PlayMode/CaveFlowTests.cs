@@ -151,12 +151,151 @@ namespace MinersIdle.Tests
             Assert.That(simulation.State.Cave, Is.EqualTo(11));
             Assert.That(hud.CaveText, Is.EqualTo("11"));
             Assert.That(simulation.State.LevelOf(UpgradeId.Letrado), Is.EqualTo(10), "os Mapas de antes, de graça");
-            Assert.That(stage.IsChangingCave, Is.True, "bioma novo: escurece");
+            // M9c E0 (D-266): o andar novo abre a transição; quem escurece é ela, e o bioma troca no escuro, lá dentro.
+            Assert.That(simulation.IsInFloorTransition, Is.True, "bioma novo: a transição de andar");
+            Assert.That(stage.Biome, Is.SameAs(biome1), "o bioma só troca no escuro");
 
-            for (float t = 0; t < DescentStage.CaveFadeSeconds + 0.3f; t += Time.unscaledDeltaTime) yield return null;
+            for (float t = 0; t < 6f && simulation.IsInFloorTransition; t += Time.unscaledDeltaTime) yield return null;
+            Assert.That(simulation.IsInFloorTransition, Is.False, "a transição acaba sozinha");
+            yield return null;
             Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o 2º bioma");
             Assert.That(stage.FloorTexture.name, Does.EndWith("02"));
             Assert.That(banner.Text, Does.StartWith("Nível 11").And.Contain(stage.Biome.DisplayName));
+        }
+
+        /// <summary>
+        /// M9c E0 (D-267): DBG → Caverna → "Transição: B" até "nenhuma"; aí a troca de bioma volta a ser a de antes (a
+        /// descida escurece sozinha, o jogo não para).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TenLevels_WithoutTransition_FadeLikeBefore()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var simulation = Object.FindAnyObjectByType<MiningRunner>().Simulation;
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var transition = Object.FindAnyObjectByType<FloorTransition>();
+            var panel = Object.FindAnyObjectByType<DebugPanel>();
+            if (simulation.Rules.CaveCount < 11 || simulation.Rules.LevelsPerBiome != 10)
+                Assert.Ignore("O balanço ativo não tem os 100 níveis do GDD v7 (rode o setup do projeto).");
+            if (stage.Biome == null) Assert.Ignore("Sem os biomas na cena (rode o setup).");
+            Assert.That(transition, Is.Not.Null, "a cena precisa da transição de andar (rode o setup do projeto)");
+            var toggle = panel.transform.Find("CaveMenu/Content/Buttons/FloorTransition");
+            Assert.That(toggle, Is.Not.Null, "o botão da transição no DBG → Caverna (rode o setup do projeto)");
+            var biome1 = stage.Biome;
+
+            Assert.That(transition.Style, Is.EqualTo(FloorTransitionStyle.CameraDrop), "a B é a da cena (D-268)");
+            var label = toggle.GetComponentInChildren<TMPro.TMP_Text>();
+            foreach (var expected in new[] { "B mosaico", "A", "nenhuma" })
+            {
+                toggle.GetComponent<Button>().onClick.Invoke();
+                Assert.That(label.text, Is.EqualTo("Transição: " + expected));
+            }
+            Assert.That(transition.Style, Is.EqualTo(FloorTransitionStyle.None));
+
+            panel.transform.Find("ShopMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
+            Assert.That(simulation.State.Cave, Is.EqualTo(11));
+            Assert.That(simulation.IsInFloorTransition, Is.False, "sem transição o jogo não para");
+            Assert.That(stage.IsChangingCave, Is.True, "bioma novo: escurece, como antes");
+
+            for (float t = 0; t < DescentStage.CaveFadeSeconds + 0.3f; t += Time.unscaledDeltaTime) yield return null;
+            Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o 2º bioma");
+        }
+
+        /// <summary>
+        /// M9c E0 (P10, B): a câmera desce. Na saída ela sobe e a descida desfoca; no fim, a câmera está no lugar de jogo,
+        /// sem escuro nem desfoque, e o bioma é o novo.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CameraDrop_RisesBlursAndComesBackInFocus()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var simulation = Object.FindAnyObjectByType<MiningRunner>().Simulation;
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var transition = Object.FindAnyObjectByType<FloorTransition>();
+            var panel = Object.FindAnyObjectByType<DebugPanel>();
+            if (simulation.Rules.CaveCount < 11 || simulation.Rules.LevelsPerBiome != 10)
+                Assert.Ignore("O balanço ativo não tem os 100 níveis do GDD v7 (rode o setup do projeto).");
+            if (stage.Biome == null) Assert.Ignore("Sem os biomas na cena (rode o setup).");
+            Assert.That(transition, Is.Not.Null, "a cena precisa da transição de andar (rode o setup do projeto)");
+            var biome1 = stage.Biome;
+            var camera = stage.SceneCamera;
+            var home = camera.transform.localPosition;
+
+            transition.Style = FloorTransitionStyle.CameraDrop;
+            panel.transform.Find("ShopMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
+            Assert.That(simulation.IsInFloorTransition, Is.True);
+            Assert.That(simulation.FloorTransitionLength, Is.EqualTo(transition.DurationOf(FloorTransitionStyle.CameraDrop)).Within(1e-6));
+
+            bool blurred = false, rose = false;
+            for (float t = 0; t < 6f && simulation.IsInFloorTransition; t += Time.unscaledDeltaTime)
+            {
+                yield return null;
+                blurred |= stage.IsBlurred;
+                rose |= camera.transform.localPosition.y > home.y + 0.5f;
+            }
+            Assert.That(simulation.IsInFloorTransition, Is.False, "a transição acaba sozinha");
+            Assert.That(blurred, Is.True, "a descida desfocou");
+            Assert.That(rose, Is.True, "a câmera saiu do lugar, para cima");
+
+            yield return null;
+            Assert.That(stage.IsBlurred, Is.False, "de volta ao foco");
+            Assert.That(stage.Darkness, Is.EqualTo(0f), "sem escuro");
+            Assert.That(Vector3.Distance(camera.transform.localPosition, home), Is.LessThan(1e-3f), "a câmera de jogo");
+            Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o bioma novo");
+        }
+
+        /// <summary>
+        /// M9c E0 (P10, A): desfoque e cartão. A câmera não sai do lugar; a descida desfoca e escurece sem chegar ao
+        /// preto; no fim, foco e luz de volta e o bioma novo.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator BlurCard_BlursInPlace_AndComesBackInFocus()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var simulation = Object.FindAnyObjectByType<MiningRunner>().Simulation;
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var transition = Object.FindAnyObjectByType<FloorTransition>();
+            var panel = Object.FindAnyObjectByType<DebugPanel>();
+            if (simulation.Rules.CaveCount < 11 || simulation.Rules.LevelsPerBiome != 10)
+                Assert.Ignore("O balanço ativo não tem os 100 níveis do GDD v7 (rode o setup do projeto).");
+            if (stage.Biome == null) Assert.Ignore("Sem os biomas na cena (rode o setup).");
+            Assert.That(transition, Is.Not.Null, "a cena precisa da transição de andar (rode o setup do projeto)");
+            var biome1 = stage.Biome;
+            var camera = stage.SceneCamera;
+            var home = camera.transform.localPosition;
+
+            transition.Style = FloorTransitionStyle.BlurCard;
+            panel.transform.Find("ShopMenu/Content/Buttons/TenLevels").GetComponent<Button>().onClick.Invoke();
+            Assert.That(simulation.IsInFloorTransition, Is.True);
+            Assert.That(simulation.FloorTransitionLength, Is.EqualTo(transition.DurationOf(FloorTransitionStyle.BlurCard)).Within(1e-6));
+
+            bool blurred = false, moved = false;
+            float darkest = 0f;
+            for (float t = 0; t < 6f && simulation.IsInFloorTransition; t += Time.unscaledDeltaTime)
+            {
+                yield return null;
+                blurred |= stage.IsBlurred;
+                moved |= Vector3.Distance(camera.transform.localPosition, home) > 1e-3f;
+                darkest = Mathf.Max(darkest, stage.Darkness);
+            }
+            Assert.That(simulation.IsInFloorTransition, Is.False, "a transição acaba sozinha");
+            Assert.That(blurred, Is.True, "a descida desfocou");
+            Assert.That(moved, Is.False, "a câmera fica no lugar");
+            Assert.That(darkest, Is.GreaterThan(0.3f).And.LessThan(1f), "escurece, sem chegar ao preto");
+
+            yield return null;
+            Assert.That(stage.IsBlurred, Is.False, "de volta ao foco");
+            Assert.That(stage.Darkness, Is.EqualTo(0f), "sem escuro");
+            Assert.That(stage.Biome, Is.Not.SameAs(biome1), "o bioma novo");
         }
 
         /// <summary>E3 (D-112): DBG → Caverna 10, o Letrado 10, a última parede e a tela do coração da montanha, uma vez só.</summary>
@@ -185,6 +324,9 @@ namespace MinersIdle.Tests
             int last = simulation.Rules.CaveCount;
             Assert.That(simulation.State.Cave, Is.EqualTo(last));
             Assert.That(hud.CaveText, Is.EqualTo(last.ToString()));
+            // M9c E0: o andar novo abre a transição (o anão parado); o teste não espera por ela, pula o tempo dela.
+            if (simulation.IsInFloorTransition) simulation.Tick(simulation.FloorTransitionLeft);
+            Assert.That(simulation.IsInFloorTransition, Is.False);
 
             shop.Open();
             var letrado = shop.Rows.First(r => !r.IsLocked && r.Upgrade == UpgradeId.Letrado);

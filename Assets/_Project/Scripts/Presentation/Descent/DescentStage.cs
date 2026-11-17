@@ -18,7 +18,12 @@ namespace MinersIdle.Presentation
     public sealed class DescentStage : MiningViewBase
     {
         public const float WallHeight = 3.2f;
-        const float CorridorNear = -1f;
+        /// <summary>
+        /// Até onde o corredor vai à frente da câmera (m, para trás dela no eixo z). Era −1; desde o M9c E0 vai a −13 para o
+        /// voo da transição C (D-267), que nasce 12 m à frente: chão, paredes, esteios e pedras também ali. Atrás da câmera
+        /// nada aparece; só custa as peças a mais na conta do quadro.
+        /// </summary>
+        const float CorridorNear = -13f;
         const float CorridorFar = 36f;
 
         /// <summary>A textura rola em módulo disto (múltiplo da repetição de 2 m), para o uv não perder precisão.</summary>
@@ -28,10 +33,10 @@ namespace MinersIdle.Presentation
         const float PostWidth = 0.22f;
         const float BeamHeight = 0.28f;
         const float LanternHeight = 1.5f;
-        const int PostSlots = 11;
+        const int PostSlots = 15;
 
         /// <summary>Pedras da beira do caminho desenhadas ao mesmo tempo (os dois lados, ao longo de todo o corredor).</summary>
-        const int EdgeRockSlots = 120;
+        const int EdgeRockSlots = 170;
 
         /// <summary>
         /// Folha da beira (M1b E11): grade de 4 × 4 quadros de 64 px (1 m), cada peça com o pé no fundo do quadro. Pedras
@@ -46,7 +51,7 @@ namespace MinersIdle.Presentation
         const float EdgeFrameMeters = 1f;
 
         /// <summary>Cascalho desenhado ao mesmo tempo, nos dois lados.</summary>
-        const int PebbleSlots = 200;
+        const int PebbleSlots = 270;
 
         /// <summary>Quantas beiras a prévia tem (A–D).</summary>
         public const int EdgeLooks = 4;
@@ -317,6 +322,8 @@ namespace MinersIdle.Presentation
         readonly DescentPiece[] _wallBlocks = new DescentPiece[WallBlockHeights.Length];
 
         RenderTexture _target;
+        RenderTexture[] _blurTargets; // a descida desenhada menor, por divisor (a transição de andar)
+        int _blurFactor = 1;
         bool _hitThisTarget;
         // M7 (E2): o instante do último golpe do estagiário (InternHitLanded); a picaretada dele sai daqui.
         double _lastInternHitAt = double.NegativeInfinity;
@@ -677,6 +684,7 @@ namespace MinersIdle.Presentation
 
         void OnDestroy()
         {
+            ReleaseBlurTargets();
             if (sceneCamera != null) sceneCamera.targetTexture = null;
             if (_target != null)
             {
@@ -730,7 +738,8 @@ namespace MinersIdle.Presentation
             _holdingRun = false;
             _lag = _lagPeak = 0;
             _arrivedAt = double.NegativeInfinity;
-            _wasRunning = simulation.Miner.State == MinerState.Running;
+            _wasRunning = simulation.Miner.State == MinerState.Running && !simulation.IsInFloorTransition;
+            if (!_wasRunning) _arrivedAt = simulation.Elapsed; // abriu parado: o respirar parte de agora
             ShowsStrikeWhileRunning = false;
 
             // Ao abrir (ou trocar de partida) o bioma vem na hora, sem a troca escurecida.
@@ -751,6 +760,12 @@ namespace MinersIdle.Presentation
             int biome = BiomeIndexOf(cave);
             if (biome == (_pendingBiome >= 0 ? _pendingBiome : _biome)) return; // os 100 cristais do debug: mesma caverna
             _pendingBiome = biome;
+            // Com a transição de andar (M9c E0), quem escurece é ela; o bioma troca quando ela pedir (ApplyPendingBiome).
+            if (Simulation != null && Simulation.IsInFloorTransition)
+            {
+                _caveFade = -1f;
+                return;
+            }
             if (_caveFade < 0f || _caveFade >= CaveFadeSeconds * 0.5f) _caveFade = 0f; // já escurecendo: segue
         }
 
@@ -775,6 +790,83 @@ namespace MinersIdle.Presentation
             }
             float dark = _caveFade < half ? _caveFade / half : 1f - (_caveFade - half) / half;
             SetDarkness(Mathf.Clamp01(dark) * CaveFadeDarkness);
+        }
+
+        /// <summary>
+        /// A transição de andar (M9c E0): troca agora o bioma que a caverna nova pediu, se ainda não trocou. Chamada no
+        /// escuro, para a troca não aparecer.
+        /// </summary>
+        public void ApplyPendingBiome()
+        {
+            if (_pendingBiome < 0) return;
+            ApplyBiome(_pendingBiome);
+            _pendingBiome = -1;
+        }
+
+        /// <summary>A transição de andar escurece a descida (0 = normal, 1 = preto), como a troca de bioma.</summary>
+        public void SetTransitionDarkness(float darkness) => SetDarkness(Mathf.Clamp01(darkness));
+
+        /// <summary>
+        /// A transição de andar põe a câmera da descida noutro lugar (coordenadas locais do palco; a de jogo fica em
+        /// (0, altura, 0), olhando para +z). Vale até <see cref="ResetCameraPose"/>.
+        /// </summary>
+        public void SetCameraPose(Vector3 localPosition, float tilt)
+        {
+            if (sceneCamera == null) return;
+            sceneCamera.transform.localPosition = localPosition;
+            sceneCamera.transform.localRotation = Quaternion.Euler(tilt, 0f, 0f);
+        }
+
+        /// <summary>A câmera volta ao enquadramento de jogo.</summary>
+        public void ResetCameraPose() => ApplyFraming();
+
+        /// <summary>
+        /// O desfoque da transição de andar (M9c E0, B): a descida passa a ser desenhada numa textura menor (o tamanho de
+        /// sempre dividido por até <paramref name="maxFactor"/>) e esticada no quadro. Com filtro suave parece desfocada; com
+        /// <paramref name="mosaic"/>, vira mosaico de pixels. 0 = a textura de sempre. Sem shader nem pós-processamento: o
+        /// custo cai, em vez de subir.
+        /// </summary>
+        public void SetTransitionBlur(float amount, int maxFactor, bool mosaic)
+        {
+            if (sceneCamera == null || _target == null || _screenMaterial == null) return;
+            int factor = Mathf.Clamp(Mathf.RoundToInt(Mathf.Lerp(1f, Mathf.Max(1, maxFactor), Mathf.Clamp01(amount))), 1, 32);
+            var texture = factor == 1 ? _target : BlurTarget(factor);
+            if (factor > 1) texture.filterMode = mosaic ? FilterMode.Point : FilterMode.Bilinear;
+            if (factor == _blurFactor && sceneCamera.targetTexture == texture) return;
+            _blurFactor = factor;
+            sceneCamera.targetTexture = texture;
+            _screenMaterial.SetTexture(BaseMapId, texture);
+        }
+
+        /// <summary>Se a descida está desfocada agora (para testes).</summary>
+        public bool IsBlurred => _blurFactor > 1;
+
+        RenderTexture BlurTarget(int factor)
+        {
+            if (_blurTargets == null || _blurTargets.Length < factor + 1) System.Array.Resize(ref _blurTargets, factor + 1);
+            int width = Mathf.Max(1, _target.width / factor);
+            int height = Mathf.Max(1, _target.height / factor);
+            var texture = _blurTargets[factor];
+            if (texture != null && texture.width == width && texture.height == height) return texture;
+            if (texture != null) ReleaseTexture(texture);
+            texture = new RenderTexture(width, height, 24) { name = "DescentBlur" + factor };
+            texture.Create();
+            return _blurTargets[factor] = texture;
+        }
+
+        void ReleaseBlurTargets()
+        {
+            if (_blurTargets == null) return;
+            for (int i = 0; i < _blurTargets.Length; i++)
+                if (_blurTargets[i] != null) ReleaseTexture(_blurTargets[i]);
+            _blurTargets = null;
+        }
+
+        void ReleaseTexture(RenderTexture texture)
+        {
+            if (sceneCamera != null && sceneCamera.targetTexture == texture) sceneCamera.targetTexture = _target;
+            texture.Release();
+            Destroy(texture);
         }
 
         /// <summary>Escurece só a descida (o quadro do corredor); faíscas, estilhaços e a faixa ficam por cima, claros.</summary>
@@ -867,7 +959,8 @@ namespace MinersIdle.Presentation
             double boost = strikeFeel && _lagPeak > 0 ? launchRunBoost * _lag / _lagPeak : 0;
             _runClock += dt * Mathf.Max(1f, runAnimationFps) * (1 + boost);
 
-            bool running = simulation.Miner.State == MinerState.Running;
+            // Parado na transição de andar conta como chegada (o respirar e o assentar partem dela), como no Layout.
+            bool running = simulation.Miner.State == MinerState.Running && !simulation.IsInFloorTransition;
             if (_wasRunning && !running) _arrivedAt = now;
             _wasRunning = running;
         }
@@ -1072,6 +1165,7 @@ namespace MinersIdle.Presentation
             _target = new RenderTexture(width, height, 24) { name = "DescentTarget", filterMode = FilterMode.Point };
             _target.Create();
             sceneCamera.targetTexture = _target;
+            _blurFactor = 1; // o desfoque, se houver, recomeça do tamanho novo no próximo quadro
             sceneCamera.fieldOfView = RenderFieldOfView();
             _screenMaterial.SetTexture(BaseMapId, _target);
         }
@@ -1104,7 +1198,8 @@ namespace MinersIdle.Presentation
             UpdateStrikeFeel(simulation);
             float distance = framing.distance;
             double run = ShownDistance * metersPerUnit;
-            bool running = miner.State == MinerState.Running;
+            // Na transição de andar (D-266) o anão espera parado: a regra não anda, e ele não corre no lugar.
+            bool running = miner.State == MinerState.Running && !simulation.IsInFloorTransition;
             double front = run + distance; // posição na trilha (em metros) que está em z = 0, a câmera
             Shader.SetGlobalFloat(ScrollId, (float)(front % ScrollPeriod));
 
@@ -1123,7 +1218,7 @@ namespace MinersIdle.Presentation
                 if (running) mine = dwarfMineRest;
                 else if (miner.State == MinerState.Recovering)
                     mine = FollowThroughFrame(simulation, simulation.Elapsed - _lastSwingAt); // termina o golpe (D-126)
-                else mine = MineFrame(simulation);
+                else mine = simulation.IsInFloorTransition ? dwarfMineRest : MineFrame(simulation); // parado na transição
                 bool finishing = IsFinishing && (running || mine == dwarfMineRest);
                 if (finishing) mine = FinisherFrame(simulation.Elapsed - _finisherStart);
                 else if (holdingBreak)

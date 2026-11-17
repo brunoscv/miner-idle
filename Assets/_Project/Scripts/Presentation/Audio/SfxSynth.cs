@@ -11,6 +11,8 @@ namespace MinersIdle.Presentation
         Break,
         Purchase,
         Milestone,
+        /// <summary>A descida de um andar (M9c E0, transição B): um "vum" grave caindo.</summary>
+        FloorDown,
     }
 
     /// <summary>
@@ -103,6 +105,13 @@ namespace MinersIdle.Presentation
                         new Note(0.05f, 0.08f, Wave.Square, 659f, 659f, 0.12f),
                         new Note(0.1f, 0.08f, Wave.Square, 784f, 784f, 0.12f),
                         new Note(0.15f, 0.2f, Wave.Square, 1047f, 1047f, 0.12f),
+                    };
+                case Sfx.FloorDown: // "vum" grave descendo, com um pouco de terra
+                    return new[]
+                    {
+                        new Note(0f, 0.45f, Wave.Triangle, 170f, 55f, 0.45f),
+                        new Note(0f, 0.3f, Wave.Square, 85f, 42f, 0.07f),
+                        new Note(0.02f, 0.12f, Wave.Noise, 0f, 0f, 0.08f),
                     };
                 default:
                     throw new ArgumentOutOfRangeException(nameof(sfx), sfx, null);

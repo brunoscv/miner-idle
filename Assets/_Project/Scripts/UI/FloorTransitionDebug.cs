@@ -1,0 +1,76 @@
+using MinersIdle.Presentation;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace MinersIdle.UI
+{
+    /// <summary>
+    /// DBG → Caverna → "Transição: B" (M9c E0, D-267; a B é a escolhida, D-268): troca a transição de andar entre as três (C, B, B com mosaico, A)
+    /// e "nenhuma", para o Bruno escolher vendo. Vale para a próxima descida e não fica salvo. Para ver: DBG → Caverna →
+    /// Próxima caverna. Está dentro do painel de debug: no release some junto com ele (fica a transição da cena).
+    /// </summary>
+    public sealed class FloorTransitionDebug : MonoBehaviour
+    {
+        static readonly FloorTransitionStyle[] Order =
+        {
+            FloorTransitionStyle.CaveFlight, FloorTransitionStyle.CameraDrop, FloorTransitionStyle.CameraDropMosaic,
+            FloorTransitionStyle.BlurCard, FloorTransitionStyle.None,
+        };
+
+        [SerializeField] Button toggle;
+        [SerializeField] FloorTransition transition;
+        [Tooltip("{0} = a transição em uso.")]
+        [SerializeField] string labelFormat = "Transição: {0}";
+        [SerializeField] string caveFlightName = "C";
+        [SerializeField] string cameraDropName = "B";
+        [SerializeField] string cameraDropMosaicName = "B mosaico";
+        [SerializeField] string blurCardName = "A";
+        [SerializeField] string noneName = "nenhuma";
+
+        TMP_Text _label;
+
+        void Awake()
+        {
+            if (toggle != null) _label = toggle.GetComponentInChildren<TMP_Text>();
+        }
+
+        void OnEnable()
+        {
+            if (toggle != null) toggle.onClick.AddListener(Next);
+            Refresh();
+        }
+
+        void OnDisable()
+        {
+            if (toggle != null) toggle.onClick.RemoveListener(Next);
+        }
+
+        /// <summary>A próxima transição da lista (C → B → B mosaico → A → nenhuma → C…).</summary>
+        public void Next()
+        {
+            if (transition == null) return;
+            int index = System.Array.IndexOf(Order, transition.Style);
+            transition.Style = Order[(index + 1) % Order.Length];
+            Refresh();
+        }
+
+        void Refresh()
+        {
+            if (_label == null || transition == null) return;
+            _label.text = string.Format(labelFormat, NameOf(transition.Style));
+        }
+
+        string NameOf(FloorTransitionStyle style)
+        {
+            switch (style)
+            {
+                case FloorTransitionStyle.CaveFlight: return caveFlightName;
+                case FloorTransitionStyle.CameraDrop: return cameraDropName;
+                case FloorTransitionStyle.CameraDropMosaic: return cameraDropMosaicName;
+                case FloorTransitionStyle.BlurCard: return blurCardName;
+                default: return noneName;
+            }
+        }
+    }
+}

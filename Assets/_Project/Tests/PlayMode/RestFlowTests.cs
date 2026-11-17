@@ -165,6 +165,12 @@ namespace MinersIdle.Tests
             BuyTheMap();
             yield return null;
             var input = Object.FindAnyObjectByType<TapInput>();
+            // M9c E0 (D-266): na transição do andar novo o toque não vale; passada ela, vale.
+            if (Simulation.IsInFloorTransition)
+            {
+                Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.False, "na transição, não");
+                Simulation.Tick(Simulation.FloorTransitionLeft);
+            }
 
             int combo = Simulation.Combo;
             Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.True, "o meio da tela");

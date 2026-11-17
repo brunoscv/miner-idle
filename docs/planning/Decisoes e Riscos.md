@@ -348,6 +348,24 @@ Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o 
 | **D-254** | **Horas extras de offline (Q6):** contam os anúncios **ativos na hora em que o app fecha** (+1, +2, +4 h), teto de 8 h (D-244). | GDD v8 |
 | **D-255** | **Compras da Bomba (Q7, detalha a D-240):** a Pequena vem **de graça** desde o início; **7 compras** até o Barril, a `10 + 2^(n−1)` lascas vermelhas (11, 12, 14, 18, 26, 42, 74). A bomba **não pega crítico nem bônus**: tira a % fixa da vida máxima. | GDD v8 |
 
+### 1.17 Plano do M9c (Andares e números do v8), decidido pelo Bruno em 2026-11-16 (aprovou as recomendações P1…P9)
+
+| # | Decisão | Marco |
+|---|---|---|
+| **D-256** | **Só o balanço do v8 (P1):** o v8 é o único balanço do jogo; saem do código o Mapa, o Letrado, a parede, a Picareta pela caverna (D-133) e os balanços v1/v5/v7 do seletor (revê a D-150). Ficam no DBG → Cálculos a taxa e o incremento da Picareta. | M9c |
+| **D-257** | **Ao descer (P2):** escurecer rápido, a fila nova nasce na tela, som de marco. *(Substituída pela **D-266** no mesmo dia.)* | M9c |
+| **D-258** | **Andar 100 (P3):** a barra cheia leva ao coração da montanha (a tela de hoje). | M9c |
+| **D-259** | **Barra cheia (P4):** fica em 100%; as quebras a mais não passam para o andar seguinte, que começa em 0%. | M9c |
+| **D-260** | **Custo da Picareta (P5):** 7 × o dano da Picareta no nível atual (14; 15,4; 17,08…), a leitura da D-202 com 7 no lugar de 2,1. | M9c |
+| **D-261** | **Avanço automático com o jogo aberto (P6):** desce quando a barra enche (com a transição da D-266); o botão mostra "AUTO". Linha "Avanço automático" nos AJUSTES, travada com "Andar 5" até liberar, no `settings.json` (D-200). | M9c |
+| **D-262** | **Estagiário antes do andar 5 (P7):** a linha dele na LOJA aparece travada, com "Andar 5" no lugar do preço; a Promoção dá ele desde o andar 1. | M9c |
+| **D-263** | **Save v7 → v8 (P8):** run nova no andar 1, mantendo lascas vermelhas, permanentes (a Memória passa a valer −5 por nível) e o dia; o andar mais fundo começa no andar a que a run antiga chegou. | M9c |
+| **D-264** | **"Caverna" no código (P9):** os textos viram "ANDAR" já; os nomes no código (`Cave`…) ficam e mudam depois, numa limpeza separada, se o Bruno quiser. | M9c |
+| **D-265** | **Toda compra de permanentes é uma pausa (pedido do Bruno):** ao confirmar o descanso, o jogo **para**: o anão parado, nenhum golpe, nada correndo. Atrás, a tela preta do §4.2 ou, se ficar feio, o jogo **desfocado**; na frente, a loja das permanentes aberta, com um botão **INICIAR** no fim da lista. A run nova **só começa no INICIAR**, comprando algo ou nada. Vale para toda parada em que o jogador compra permanentes. Hoje a run nova já começa por trás do resumo do dia (D-154): isso muda. Detalhes no plano do Bloco C. | Bloco C |
+| **D-266** | **Descer de andar tem uma transição (pedido do Bruno; revê a D-257):** passar de andar não pode ser abrupto, com o anão já batendo no cristal seguinte. Tem que ter um efeito de recomeço (desfoque que volta a focar, a câmera chegando de novo até o anão, ou parecido). O formato é a P10 do plano do M9c. | M9c |
+| **D-267** | **As três transições no DBG (P10):** o Bruno decide vendo. As três (A desfoque e cartão, B a câmera desce, C a câmera vem pela caverna) ficam escolhíveis num botão do DBG, feitas nesta ordem: **C primeiro**, depois B, depois A. Entram já, na passagem de caverna de hoje (parede do v7 e os atalhos do DBG), antes da E1 do M9c; a E1 só troca o gatilho para o Próximo Andar. | M9c |
+| **D-268** | **A transição de andar é a B, por enquanto (2026-11-17):** o Bruno viu as três no jogo e ficou com a **B — a câmera desce** (sobe, cartão no escuro com tremor e "vum", desce do alto focando; 2,5 s, desfoque suave). É a da cena; a C, a B mosaico e a A continuam no DBG → Caverna → Transição para rever. | M9c |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.

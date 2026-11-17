@@ -184,6 +184,7 @@ namespace MinersIdle.Presentation
         {
             var simulation = runner != null ? runner.Simulation : null;
             if (simulation == null || IsOverUi(screenPosition)) return false;
+            if (simulation.IsInFloorTransition) return false; // M9c E0: na transição de andar o toque não existe (nem efeito)
 
             bool counted = simulation.Tap();
             if (counted) _counting.Counted++;

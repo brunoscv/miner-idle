@@ -149,9 +149,9 @@ O jeito mais seguro: **não** aplicar o v8 de uma vez. Pela regra "jogável ante
 
 | Bloco | O que entra | Depende de | Tamanho |
 |---|---|---|---|
-| **A. Números e passagem** | vida 1,5ⁿ, lascas, crítico ×1,5, custo da Picareta, **Próximo Andar com barra** (cristais por andar), sai o Mapa/parede, Memória nova, andar 5/10/20, estagiário no andar 5 | D-236…D-239, D-248, D-249, D-253 | médio |
+| **A. Números e passagem** → [Marco 9c](Marco%209c%20-%20Andares%20e%20numeros%20do%20v8.md) | vida 1,5ⁿ, lascas, crítico ×1,5, custo da Picareta, **Próximo Andar com barra** (cristais por andar), sai o Mapa/parede, Memória nova, andar 5/10/20, estagiário no andar 5 | D-236…D-239, D-248, D-249, D-253 | médio |
 | **B. Cristal rachando** | estados de rachadura no lugar da barra de vida | arte (PixelLab/Aseprite) | médio |
-| **C. Descansar e loja** | permanentes só no Descansar, tela preta + ZZZ, novas (Dedo Fogoso, Atalho) | D-252 | pequeno |
+| **C. Descansar e loja** | permanentes só no Descansar, tela preta + ZZZ, **o jogo parado até o INICIAR (D-265)**, novas (Dedo Fogoso, Atalho) | D-252 | pequeno |
 | **D. Raro e anúncios** | contador de 60 s no andar 10, tier 2, 3 anúncios, horas extras de offline | D-243, D-244, D-246, D-250, D-251, D-254 | médio |
 | **E. Bomba** | sistema novo: carga de 5 s, swipe up, 8 bombas, permanente (D-240) | D-255 | médio |
 | **F. Toque e combo** | **tirar** o dano do toque, o combo e os bônus dele (D-237) | — | pequeno/médio |

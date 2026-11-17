@@ -46,6 +46,10 @@ namespace MinersIdle.Core
         double _internTimer;
         long _internHits;
         double _spawnTimer;
+        // A transição de andar (M9c E0, D-266): a duração escolhida e quanto falta da que está correndo.
+        double _floorTransitionSeconds;
+        double _floorTransitionLeft;
+        double _floorTransitionLength;
         int _combo;
         double _lastTapTime;
         // Os marcos que o último combo deu (M9b), reaproveitada para não alocar a cada combo.
@@ -179,6 +183,15 @@ namespace MinersIdle.Core
         /// </summary>
         public event Action AdBoostGranted;
 
+        /// <summary>
+        /// A transição de andar começou (M9c E0, D-266): a caverna já é a nova (sai antes do <see cref="CaveChanged"/>) e,
+        /// até <see cref="FloorTransitionEnded"/>, nada corre. O número é a caverna nova.
+        /// </summary>
+        public event Action<int> FloorTransitionStarted;
+
+        /// <summary>A transição de andar acabou: o jogo volta a correr.</summary>
+        public event Action FloorTransitionEnded;
+
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
         public StrikeRules Strike => _strike;
@@ -274,6 +287,32 @@ namespace MinersIdle.Core
         /// <summary>Segundos de jogo simulados.</summary>
         public double Elapsed { get; private set; }
 
+        /// <summary>
+        /// Quanto dura a transição de andar, em segundos de jogo (M9c E0, D-266/D-267). 0 = sem transição (o jogo até o
+        /// M9c): a caverna nova começa na hora. Quem escolhe é a apresentação (a transição do DBG); vale para a próxima troca.
+        /// </summary>
+        public double FloorTransitionSeconds
+        {
+            get => _floorTransitionSeconds;
+            set
+            {
+                if (double.IsNaN(value) || value < 0) throw new ArgumentOutOfRangeException(nameof(value));
+                _floorTransitionSeconds = value;
+            }
+        }
+
+        /// <summary>
+        /// Se a transição de andar está correndo: o tempo de jogo anda, mas nada mais (golpe, estagiário, nascimento pelo
+        /// relógio, tempo dos bônus e da janela do raro, toque).
+        /// </summary>
+        public bool IsInFloorTransition => _floorTransitionLeft > 0;
+
+        /// <summary>Segundos de jogo que faltam da transição de andar (0 fora dela). A animação lê daqui.</summary>
+        public double FloorTransitionLeft => _floorTransitionLeft;
+
+        /// <summary>A duração da transição que está correndo (a de quando ela começou; 0 fora dela).</summary>
+        public double FloorTransitionLength => _floorTransitionLength;
+
         /// <summary>Avança <paramref name="dt"/> segundos de jogo.</summary>
         public void Tick(double dt)
         {
@@ -283,6 +322,19 @@ namespace MinersIdle.Core
             int steps = 0;
             while (true)
             {
+                if (_floorTransitionLeft > 0 && remaining > 0)
+                {
+                    // A transição de andar (D-266): só o relógio do jogo anda.
+                    double pause = Math.Min(remaining, _floorTransitionLeft);
+                    Elapsed += pause;
+                    _state.AddPlayTime(pause);
+                    remaining -= pause;
+                    _floorTransitionLeft -= pause;
+                    if (_floorTransitionLeft <= Epsilon) EndFloorTransition();
+                    continue;
+                }
+                if (_floorTransitionLeft > 0) break; // sem tempo sobrando, ainda na transição
+
                 ProcessDueEvents();
                 if (remaining <= 0) break;
 
@@ -413,6 +465,7 @@ namespace MinersIdle.Core
         /// </summary>
         public bool Tap()
         {
+            if (_floorTransitionLeft > 0) return false; // descendo de andar (D-266): o toque não vale nem conta no combo
             if (!TakeTapSlot()) return false;
 
             _combo++;
@@ -901,7 +954,33 @@ namespace MinersIdle.Core
             _track.SetCrystalValues(_rules.CrystalHealthIn(cave), _rules.CrystalRewardIn(cave));
             _stats = ComputeStats();
             StatsChanged?.Invoke(_stats);
+            if (_floorTransitionSeconds > 0) BeginFloorTransition(cave);
             CaveChanged?.Invoke(cave);
+        }
+
+        /// <summary>
+        /// Abre a transição de andar (M9c E0, D-266): a fila do andar novo nasce já (até o mínimo, D-80), para a câmera
+        /// mostrá-la na chegada, e o jogo para até o tempo acabar. Uma transição correndo recomeça (atalho do debug no
+        /// meio de outra).
+        /// </summary>
+        void BeginFloorTransition(int cave)
+        {
+            while (_track.Wall == null && _track.IsBelowMinimum)
+            {
+                var crystal = _track.TrySpawn(_miner.Distance);
+                if (crystal == null) break;
+                CrystalSpawned?.Invoke(crystal);
+            }
+            _floorTransitionLength = _floorTransitionSeconds;
+            _floorTransitionLeft = _floorTransitionSeconds;
+            FloorTransitionStarted?.Invoke(cave);
+        }
+
+        void EndFloorTransition()
+        {
+            _floorTransitionLeft = 0;
+            _floorTransitionLength = 0;
+            FloorTransitionEnded?.Invoke();
         }
 
         /// <summary>
@@ -928,6 +1007,7 @@ namespace MinersIdle.Core
             do
             {
                 changed = false;
+                if (_floorTransitionLeft > 0) return; // descendo de andar (D-266): nada vence até ela acabar
 
                 if (_combo > 0 && Elapsed >= _lastTapTime + _strike.ComboWindow - Epsilon)
                     EndCombo(); // o jogador parou de tocar: os marcos alcançados viram bônus (D-96)
@@ -978,6 +1058,7 @@ namespace MinersIdle.Core
                     _miner.HitTimer = Math.Max(0, _miner.HitTimer - _stats.HitInterval);
                     Hit();
                     changed = true;
+                    if (_floorTransitionLeft > 0) return; // o golpe quebrou a parede: o estagiário espera a transição
                 }
 
                 // O estagiário depois do anão (no mesmo instante, o anão primeiro): se o golpe do anão quebrou o cristal, o

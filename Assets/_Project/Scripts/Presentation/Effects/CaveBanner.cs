@@ -26,6 +26,9 @@ namespace MinersIdle.Presentation
 
         int _cave;
         float _age = float.PositiveInfinity;
+        // A transição de andar (M9c E0) segura a faixa: ela decide a transparência e a altura até soltar.
+        bool _held;
+        float _heldHeight;
 
         /// <summary>Se a faixa está na tela agora (para testes).</summary>
         public bool IsShown => label.gameObject.activeSelf;
@@ -43,6 +46,7 @@ namespace MinersIdle.Presentation
         {
             _cave = simulation.State.Cave;
             _age = float.PositiveInfinity;
+            _held = false;
             label.gameObject.SetActive(false);
         }
 
@@ -60,9 +64,49 @@ namespace MinersIdle.Presentation
             label.alpha = 0f;
         }
 
+        /// <summary>
+        /// A transição de andar (M9c E0) mostra a faixa da caverna nova como o cartão dela: transparência e altura na tela
+        /// (0 = base, 1 = topo) vêm de quem segura, a cada quadro, até <see cref="Release"/>.
+        /// </summary>
+        public void Hold(float alpha, float height)
+        {
+            if (!label.gameObject.activeSelf) label.gameObject.SetActive(true);
+            _held = true;
+            _heldHeight = height;
+            label.alpha = Mathf.Clamp01(alpha);
+            Place(height);
+        }
+
+        /// <summary>Solta a faixa segura pela transição: ela some sozinha a partir da transparência em que ficou.</summary>
+        public void Release()
+        {
+            if (!_held) return;
+            _held = false;
+            if (label.alpha <= 0.001f)
+            {
+                label.gameObject.SetActive(false);
+                return;
+            }
+            // Segue do ponto do sumiço que corresponde à transparência de agora.
+            _age = FadeInSeconds + HoldSeconds + (1f - label.alpha) * FadeOutSeconds;
+        }
+
+        void Place(float height)
+        {
+            // Presa à tela: acompanha a câmera (e o tremor).
+            float depth = -worldCamera.transform.position.z;
+            var at = worldCamera.ViewportToWorldPoint(new Vector3(0.5f, height, depth));
+            label.transform.position = new Vector3(at.x, at.y, 0f);
+        }
+
         void LateUpdate()
         {
             if (!label.gameObject.activeSelf) return;
+            if (_held)
+            {
+                Place(_heldHeight);
+                return;
+            }
 
             _age += Time.unscaledDeltaTime;
             if (_age >= FadeInSeconds + HoldSeconds + FadeOutSeconds)
@@ -76,11 +120,7 @@ namespace MinersIdle.Presentation
                 : _age < FadeInSeconds + HoldSeconds ? 1f
                 : 1f - (_age - FadeInSeconds - HoldSeconds) / FadeOutSeconds;
             label.alpha = alpha;
-
-            // Presa à tela: acompanha a câmera (e o tremor).
-            float depth = -worldCamera.transform.position.z;
-            var at = worldCamera.ViewportToWorldPoint(new Vector3(0.5f, screenHeight, depth));
-            label.transform.position = new Vector3(at.x, at.y, 0f);
+            Place(screenHeight);
         }
     }
 }
