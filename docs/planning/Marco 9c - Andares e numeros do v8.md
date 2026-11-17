@@ -183,6 +183,13 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
 - `LongSessionTests` adaptado: sobe de andar pelo botão, liga o automático no 5, descansa, compra Memória, simula offlines.
 - **Moto G75** com o roteiro abaixo.
 
+**Como ficou (2026-11-17):**
+
+- A sessão longa (2 h de jogo em ×20 na cena Game, ~1 min real) agora joga o v8: quando a barra enche, o robô **toca no botão do Próximo Andar** (o mesmo `Button` da tela) e confere que desceu um andar e a barra zerou. Até o recorde 5, **só o toque** pode mudar o andar: se o andar mudar no tempo sem o toque, o teste reprova. Do 5 em diante, o avanço automático (ligado, o de fábrica) desce sozinho, também no offline (a modal mostra a linha dos andares).
+- O estagiário entra **pela compra na LOJA**, que respeita o andar 5 (antes o robô usava o atalho do DBG, que contrata de graça em qualquer andar, e o teste pegou isso). A cada descanso ele confere que o recorde sobreviveu e que a **Memória** encurta a barra do andar do recorde. A foto da reabertura agora inclui o recorde.
+- Numa rodada: 11 andares pelo botão, 65 pelo automático e 35 no offline (recorde 38), estagiário contratado no recorde 7, 4 descansos, Memória 5, 4 reaberturas sem perder nada. O número exato varia um pouco entre rodadas (o tempo real entra no limite de toques), mas os mínimos do teste ficam bem abaixo.
+- **Critério de pronto, conferido:** o Mapa, o Letrado e a parede saíram (E1); os números do v8 têm testes (`GddV8RulesTests`); os marcos 5/10/20 valem para sempre e o automático liga nos AJUSTES (E3); o offline conta na barra e desce (E4); o save v7 abre numa run nova no andar 1 (E1, P8); DBG → Andar funciona. Falta só o **Moto G75**.
+
 ## Como testar (Bruno) — ao fim de cada etapa
 
 - **E1:** sem tela nova ainda; os testes cobrem (`bash tools/ci/run-tests.sh`, com o Editor fechado). Para ver, cena `Bootstrap`, Play:
@@ -216,18 +223,18 @@ O Bruno escolhe a transição **vendo as três no jogo**. Elas entram já, na pa
   4. DBG → Andar → **Auto: desligado** e de novo **Fora 1 h**: o andar não muda, a modal não tem a linha dos andares e a barra fica **cheia**, esperando o toque.
   5. DBG → Offline → **Fora 8 h**: conta 4 h (ou 6 h com Recorde 20) e desce mais andares.
   6. Fechar o jogo com a modal aberta e abrir de novo: ela volta com o mesmo "1 » n".
-- **E5:** a sessão longa é automática; no Moto G75, `Tools → Miners Idle → Build → Rodar no celular (Android)` e o roteiro abaixo.
+- **E5:** a sessão longa é automática (`bash tools/ci/run-tests.sh PlayMode`, com o Editor fechado; a linha `[Sessão longa]` no `tools/ci/out/PlayMode.xml` conta os andares pelo botão, pelo automático e no offline). No Moto G75, com o celular no USB: `Tools → Miners Idle → Build → Rodar no celular (Android)` (ou, com o Editor fechado, `bash tools/build/run-android.sh` no Terminal do app) e o roteiro abaixo.
 
 ### Roteiro do Moto G75 (E5)
 
 Anote ✅/❌ em cada passo.
 
-1. **Save antigo:** instalar por cima do APK de hoje (sem desinstalar). Abrir: andar 1, lascas vermelhas e permanentes de antes, nada travado.
-2. **Primeiros andares:** jogar até o andar 3 sem DBG: a barra enche (10, 20, 30 cristais), o toque no botão desce, a barra zera.
-3. **Automático:** DBG → Andar → Ir para o andar 5: desce sozinho a cada barra cheia. AJUSTES → desligar: para. Fechar e abrir: continua desligado.
-4. **Offline:** contratar o estagiário, ligar o automático, fechar pelo multitarefa, esperar 5 min, abrir: o modal mostra lascas e, se deu, andares descidos.
-5. **Descansar e voltar:** descansar no andar 10 ou mais; na run nova, o estagiário está travado até o 5 (sem Promoção), e os raros aparecem desde o andar 1 (recorde 10).
-6. **Sessão curta:** 10 min em ×20 com compras: sem travar nem tela preta.
+1. **Save antigo:** instalar por cima do APK que está no celular (sem desinstalar). Abrir: andar 1 (ou o andar em que o save do v8 parou), lascas vermelhas e permanentes de antes, nada travado.
+2. **Primeiros andares:** para ver do zero, DBG → Andar → **Recorde** até "Recorde: 1"; depois, sem outros atalhos, jogar até o andar 3: a madeira do botão acende a cada cristal (0/10, depois 0/20…), com a barra cheia aparece **DESCER · ANDAR n**, o toque desce com a transição e a barra zera. Antes de encher, o toque não faz nada.
+3. **Automático:** DBG → Andar → **Recorde: 5**: o selo verde **AUTO** aparece no botão e o jogo desce sozinho a cada barra cheia. AJUSTES → "Avanço automático" desligado: o AUTO some e a barra cheia espera o toque. Fechar o jogo pelo multitarefa e abrir: continua desligado. Ligar de novo.
+4. **Offline:** LOJA → comprar o **Estagiário** (com o recorde 5 ele tem preço), automático ligado, fechar pelo multitarefa, esperar 5 min, abrir: o "Bem-vindo de volta" mostra as lascas e, se deu, **Andares n » m**; atrás dele o HUD já está no andar novo. COLETAR.
+5. **Descansar e voltar:** chegar ao andar 10 (DBG → Andar → Recorde: 10 e jogar, ou o atalho de andar) e descansar; na run nova, no andar 1: o AUTO continua, o Estagiário tem preço na LOJA (o recorde é 10), e os raros aparecem desde o andar 1.
+6. **Sessão curta:** 10 min em ×20 (DBG) com compras: sem travar, sem tela preta, sem engasgo na transição de andar.
 
 ## Critério de pronto
 
@@ -276,5 +283,5 @@ Total: **~29–40 h**.
 | E1 Núcleo do v8 | ✅ aprovada pelo Bruno em 2026-11-17 | Testes: EditMode 463/463 (novo `GddV8RulesTests`; `CaveTests` reescrito para a barra; os do Mapa e da parede corrigidos para a passagem nova); PlayMode 153/153 (`CaveFlowTests` mede encher a barra → PASSAR → transição → andar 2 e o andar 100 → coração; `AllocationTests` mede a transição com a fila velha na tela; a vibração longa mede a descida de andar). Ver "Como ficou" na E1 |
 | E2 Próximo Andar na tela | ✅ aprovada pelo Bruno em 2026-11-17 (opção c com o cheio da b, D-269) | Testes: EditMode 463/463; PlayMode 156/156 (novo `NextFloorFlowTests`: enche com os cristais, não responde antes, desce e zera, HUD "ANDAR", transição curta; `CaveFlowTests` e `RestFlowTests` corrigidos para o botão novo e o centro livre). Ver "Como ficou" na E2 |
 | E3 Marcos de andar | ✅ aprovada pelo Bruno em 2026-11-17 (com a D-270) | Testes: EditMode 475/475 (novo `FloorMilestoneTests`: automático antes e depois do 5, ligado/desligado, com a transição, o andar 100 espera; Estagiário com "Andar 5"; raro só no 10; marcos depois do descanso; DBG Recorde); PlayMode 159/159 (`NextFloorFlowTests`: AUTO e descida sozinha, AJUSTES travado/liberado, LOJA). Ver "Como ficou" na E3 |
-| E4 Offline que desce andares | 🔄 implementada em 2026-11-17, aguardando a validação do Bruno | Testes: EditMode 490/490 (novo `OfflineFloorsTests`: sem estagiário, automático desligado enche e para, ligado desce conferindo de cristal em cristal, barra pela metade e Memória, andar 100 espera, teto 4 h/6 h, carta do raro, a volta pendente lembra o andar de partida; `OfflineMiningTests` corrigido: os cristais contam na barra; `SaveServiceTests`: o andar de partida no save); PlayMode 160/160 (`OfflineFlowTests`: Fora 1 h com o automático mostra "1 » n"). Ver "Como ficou" na E4 |
-| E5 Sessão longa e celular | ⏳ | — |
+| E4 Offline que desce andares | ✅ aprovada pelo Bruno em 2026-11-17 | Testes: EditMode 490/490 (novo `OfflineFloorsTests`: sem estagiário, automático desligado enche e para, ligado desce conferindo de cristal em cristal, barra pela metade e Memória, andar 100 espera, teto 4 h/6 h, carta do raro, a volta pendente lembra o andar de partida; `OfflineMiningTests` corrigido: os cristais contam na barra; `SaveServiceTests`: o andar de partida no save); PlayMode 160/160 (`OfflineFlowTests`: Fora 1 h com o automático mostra "1 » n"). Ver "Como ficou" na E4 |
+| E5 Sessão longa e celular | 🔄 sessão longa adaptada em 2026-11-17; aguardando o Moto G75 (roteiro acima) e a validação do Bruno | Testes: EditMode 490/490; PlayMode 160/160 (`LongSessionTests` do v8: o botão até o 5, o automático depois, o estagiário pela LOJA só no 5, a Memória encurta a barra, o recorde sobrevive ao descanso e à reabertura). Ver "Como ficou" na E5 |

@@ -2,7 +2,7 @@
 
 > Análise de 2026-11-16. Compara o [GDD v8.2](../GDD_Idle_Miner%20v82.pdf) (versão 8.2, 12 de novembro de 2026) com o [GDD v7](../gdd%20v7.pdf) e com o que o jogo faz hoje (M9 e M9b E1…E5 prontos).
 >
-> **Estado:** **o v8.2 é a referência desde 2026-11-16 (D-248).** As P1…P22 foram respondidas (com as respostas do Apellon) e viraram as **D-236…D-247**; as Q1…Q8 da §4.1 foram aprovadas como recomendadas (**D-248…D-255**). O código ainda é o do v7: muda pelos blocos da §5, cada um com plano de marco antes.
+> **Estado:** **o v8.2 é a referência desde 2026-11-16 (D-248).** As P1…P22 foram respondidas (com as respostas do Apellon) e viraram as **D-236…D-247**; as Q1…Q8 da §4.1 foram aprovadas como recomendadas (**D-248…D-255**). O código muda pelos blocos da §5, cada um com plano de marco antes. **Bloco A (Marco 9c) implementado em 2026-11-17** (números do v8, Próximo Andar com barra, marcos 5/10/20, offline que desce andares), aguardando só o Moto G75; os outros blocos ainda são o v7.
 >
 > O PDF foi lido pelo texto (sem as páginas renderizadas); tabelas remontadas pelo texto e conferidas pelas fórmulas. Termos: o v8 troca "caverna/nível" por **"andar da caverna"** em quase todo lugar, mas mantém "Caverna (nível)" na tabela das lascas vermelhas e nos biomas (ver P1).
 
