@@ -37,6 +37,8 @@ namespace MinersIdle.UI
         [SerializeField] BuffCatalog catalog;
         [Tooltip("O fundo que escurece (bloqueia os toques no mapa) e o painel: ligado só com a janela aberta.")]
         [SerializeField] GameObject screen;
+        /// <summary>O fundo e o painel da janela (o "Esconder HUD" do DBG os esconde).</summary>
+        public GameObject Screen => screen;
         [SerializeField] TMP_Text title;
         [SerializeField] TMP_Text queue;
         [SerializeField] TMP_Text subtitle;
