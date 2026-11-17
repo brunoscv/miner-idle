@@ -89,6 +89,24 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
+        /// O alvo da medida não pode ser um cristal raro (a semente muda a cada run): a quebra dele abre a janela das cartas
+        /// (D-223), que monta textos e aloca de propósito. Quebra os raros que estiverem na frente, fecha a janela com a
+        /// primeira carta e tira o bônus dela (o fim dele redesenharia o HUD no meio das medidas).
+        /// </summary>
+        IEnumerator AvoidRareTarget()
+        {
+            var simulation = _runner.Simulation;
+            for (int i = 0; i < 20 && simulation.Miner.Target != null && simulation.Miner.Target.IsRare; i++)
+            {
+                simulation.BreakTarget();
+                if (simulation.RareWindow.IsChoosing) simulation.ChooseRareCard(0);
+                if (simulation.RareWindow.IsOpen) simulation.CloseRareWindow();
+                simulation.ClearBonuses();
+                yield return Settle();
+            }
+        }
+
+        /// <summary>
         /// Alocações de <paramref name="action"/> e quantas quebras e nascimentos aconteceram nela. Com o toque do GDD v5
         /// (33% do golpe, D-86/D-103) um toque pode quebrar o cristal; a quebra e o nascimento alocam de propósito
         /// (<see cref="MaxAllocsPerEvent"/>), então o teto de cada medida desconta esses eventos.
@@ -117,14 +135,17 @@ namespace MinersIdle.Tests
             var simulation = _runner.Simulation;
             Assume.That(simulation.Miner.Target, Is.Not.Null);
 
+            yield return AvoidRareTarget();
             int tap = AllocationsAndEvents(() => simulation.Tap(), out int tapEvents);
             yield return Settle();
 
+            yield return AvoidRareTarget();
             _runner.ForceCritical = true;
             int critical = AllocationsAndEvents(() => simulation.Tap(), out int criticalEvents);
             _runner.ForceCritical = false;
             yield return Settle();
 
+            yield return AvoidRareTarget();
             // O toque de verdade: passa pela checagem "caiu na interface?" (raycast de UI) antes de virar Tap().
             int screenTap = AllocationsAndEvents(
                 () => _tapInput.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), out int screenEvents);
@@ -141,6 +162,7 @@ namespace MinersIdle.Tests
         {
             yield return LoadAndWarmUp();
             var simulation = _runner.Simulation;
+            yield return AvoidRareTarget();
             simulation.Tap(); // combo 1: o "xN" ainda não aparece
 
             yield return null;

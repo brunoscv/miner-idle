@@ -42,6 +42,8 @@ namespace MinersIdle.Tests
             // O jogo parado: o anão não quebra cristal sozinho, e nenhum cristal raro abre a janela (D-223) por cima do
             // mapa no meio do teste, o que engolia toques de vez em quando (a semente muda a cada run).
             _runner.TimeScale = 0f;
+            // E um raro quebrado pelo próprio toque também não deixa a janela aberta.
+            TestDiagnostics.ChooseRareCardsAtOnce(_runner.Simulation);
             // Em batch o jogo nunca tem foco: sem isto, o Input System desliga a tela de toque virtual.
             _settings = InputSystem.settings;
             var settings = Object.Instantiate(_settings);
@@ -152,7 +154,7 @@ namespace MinersIdle.Tests
                     yield return LiftAll(finger);
                 }
 
-            Assert.That(_tapped, Is.EqualTo(6));
+            Assert.That(_tapped, Is.EqualTo(6), TestDiagnostics.Of(_runner.Simulation));
         }
 
         [UnityTest]

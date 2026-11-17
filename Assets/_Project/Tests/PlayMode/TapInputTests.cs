@@ -30,6 +30,8 @@ namespace MinersIdle.Tests
             // O jogo parado: o anão não quebra cristal sozinho, e nenhum cristal raro abre a janela (D-223) por cima do
             // mapa no meio do teste, o que engolia toques de vez em quando (a semente muda a cada run).
             _runner.TimeScale = 0f;
+            // E um raro quebrado pelo próprio toque também não deixa a janela aberta.
+            TestDiagnostics.ChooseRareCardsAtOnce(_runner.Simulation);
         }
 
         /// <summary>O centro de um elemento de UI em coordenadas de tela (Canvas em Screen Space – Overlay).</summary>
@@ -77,7 +79,7 @@ namespace MinersIdle.Tests
             yield return new WaitForSecondsRealtime(1.2f); // ~6 toques
             _input.AutoTap = false;
 
-            Assert.That(simulation.Combo, Is.GreaterThanOrEqualTo(4), "toques automáticos sobem o combo");
+            Assert.That(simulation.Combo, Is.GreaterThanOrEqualTo(4), "toques automáticos sobem o combo " + TestDiagnostics.Of(simulation));
         }
 
         [UnityTest]
