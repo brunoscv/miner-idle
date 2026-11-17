@@ -2,7 +2,7 @@
 
 > Análise de 2026-11-16. Compara o [GDD v8.2](../GDD_Idle_Miner%20v82.pdf) (versão 8.2, 12 de novembro de 2026) com o [GDD v7](../gdd%20v7.pdf) e com o que o jogo faz hoje (M9 e M9b E1…E5 prontos).
 >
-> **Estado:** **o v8.2 é a referência desde 2026-11-16 (D-248).** As P1…P22 foram respondidas (com as respostas do Apellon) e viraram as **D-236…D-247**; as Q1…Q8 da §4.1 foram aprovadas como recomendadas (**D-248…D-255**). O código muda pelos blocos da §5, cada um com plano de marco antes. **Bloco A (Marco 9c) aprovado em 2026-11-17** (números do v8, Próximo Andar com barra, marcos 5/10/20, offline que desce andares); os outros blocos ainda são o v7. Próximo: Bloco C.
+> **Estado:** **o v8.2 é a referência desde 2026-11-16 (D-248).** As P1…P22 foram respondidas (com as respostas do Apellon) e viraram as **D-236…D-247**; as Q1…Q8 da §4.1 foram aprovadas como recomendadas (**D-248…D-255**). O código muda pelos blocos da §5, cada um com plano de marco antes. **Bloco A (Marco 9c) aprovado em 2026-11-17** (números do v8, Próximo Andar com barra, marcos 5/10/20, offline que desce andares); os outros blocos ainda são o v7. Próximo: Bloco C ([Marco 9d](Marco%209d%20-%20Descansar%20e%20loja%20do%20v8.md), plano aguardando o Bruno).
 >
 > O PDF foi lido pelo texto (sem as páginas renderizadas); tabelas remontadas pelo texto e conferidas pelas fórmulas. Termos: o v8 troca "caverna/nível" por **"andar da caverna"** em quase todo lugar, mas mantém "Caverna (nível)" na tabela das lascas vermelhas e nos biomas (ver P1).
 
@@ -151,7 +151,7 @@ O jeito mais seguro: **não** aplicar o v8 de uma vez. Pela regra "jogável ante
 |---|---|---|---|
 | **A. Números e passagem** → [Marco 9c](Marco%209c%20-%20Andares%20e%20numeros%20do%20v8.md) | vida 1,5ⁿ, lascas, crítico ×1,5, custo da Picareta, **Próximo Andar com barra** (cristais por andar), sai o Mapa/parede, Memória nova, andar 5/10/20, estagiário no andar 5 | D-236…D-239, D-248, D-249, D-253 | médio |
 | **B. Cristal rachando** | estados de rachadura no lugar da barra de vida | arte (PixelLab/Aseprite) | médio |
-| **C. Descansar e loja** | permanentes só no Descansar, tela preta + ZZZ, **o jogo parado até o INICIAR (D-265)**, novas (Dedo Fogoso, Atalho) | D-252 | pequeno |
+| **C. Descansar e loja** → [Marco 9d](Marco%209d%20-%20Descansar%20e%20loja%20do%20v8.md) | permanentes só no Descansar, tela preta + ZZZ, **o jogo parado até o INICIAR (D-265)**, novas (Dedo Fogoso, Atalho) | D-252 | pequeno |
 | **D. Raro e anúncios** | contador de 60 s no andar 10, tier 2, 3 anúncios, horas extras de offline | D-243, D-244, D-246, D-250, D-251, D-254 | médio |
 | **E. Bomba** | sistema novo: carga de 5 s, swipe up, 8 bombas, permanente (D-240) | D-255 | médio |
 | **F. Toque e combo** | **tirar** o dano do toque, o combo e os bônus dele (D-237) | — | pequeno/médio |
