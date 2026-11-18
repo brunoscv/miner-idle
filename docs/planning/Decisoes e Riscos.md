@@ -402,6 +402,7 @@ Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o 
 | **D-303** | **O efeito da rachadura (M9f P5):** a cada estágio novo, um brilho branco de ~0,08 s e 3 a 4 lascas na cor do cristal; sem som novo (um "crac" próprio vai para a lista de ajustes, se o Bruno quiser). | M9f |
 | **D-304** | **A folha v8 em todos os biomas (M9f P6),** no v8 e no v7; os cristais antigos (D-70, D-77) ficam no projeto sem uso até o marco de ajustes; o `crystalTexture` do bioma é a reserva de um bioma sem linha. | M9f |
 | **D-305** | **A sessão longa do M9f vai para os testes longos do fim (M9f P7),** como a D-282 e a D-291; o marco fecha com a E2. | M9f |
+| **D-306** | **O M9f aprovado (2026-11-18, Bruno: "Aprovo, segue"):** E0 a E2 aprovadas como estão; a E3 (sessão longa e celular) fica nos testes longos do fim (D-305). O próximo bloco é a Bomba com a saída do toque e do combo (Blocos E e F, Marco 9g). | M9f |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 

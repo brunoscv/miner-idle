@@ -191,5 +191,6 @@ O tremor e a parada do golpe continuam como hoje. **Sem som novo:** o som do gol
 | Plano | ✅ aprovado em 2026-11-18: P1…P7 com as recomendações (D-299…D-305) | — |
 | E0 A folha no jogo e a prévia | ✅ 2026-11-18 | folha tirada da imagem enviada; ver "Como ficou" na E0 |
 | E1 Rachar na tela | ✅ 2026-11-18 (Bruno: "Testei, pode seguir") | ver "Como ficou" na E1 |
-| E2 O efeito | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | ver "Como ficou" na E2 |
+| E2 O efeito | ✅ 2026-11-18 | ver "Como ficou" na E2 |
+| **Marco** | ✅ **aprovado em 2026-11-18 (D-306)** | a E3 nos testes longos do fim |
 | E3 Sessão longa e celular | ⏭️ testes longos do fim (P7) | — |
