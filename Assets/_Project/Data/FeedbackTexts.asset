@@ -46,6 +46,8 @@ MonoBehaviour:
   summaryBankLabel: No banco
   summaryStart: "COME\xC7AR"
   summaryPermanents: PERMANENTES
+  restShopNote: "Compre com o jogo parado. A run come\xE7a no INICIAR."
+  restShopStart: INICIAR
   offlineTitle: BEM-VINDO DE VOLTA
   offlineAwayLabel: Tempo fora
   offlineCountedLabel: Contou

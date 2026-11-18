@@ -24,7 +24,7 @@ namespace MinersIdle.Tests
         RestButton _rest;
         NextFloorButton _pass;
         RestScreen _modal;
-        DaySummaryScreen _summary;
+        RestShopScreen _summary; // a tela do descanso (M9d E2), no lugar do resumo do dia
 
         MiningSimulation Simulation => _runner.Simulation;
 
@@ -39,10 +39,10 @@ namespace MinersIdle.Tests
             _rest = Object.FindAnyObjectByType<RestButton>();
             _pass = Object.FindAnyObjectByType<NextFloorButton>();
             _modal = Object.FindAnyObjectByType<RestScreen>();
-            _summary = Object.FindAnyObjectByType<DaySummaryScreen>();
+            _summary = Object.FindAnyObjectByType<RestShopScreen>();
             Assert.That(_rest, Is.Not.Null, "a cena precisa do botão Descansar (rode o setup do projeto)");
             Assert.That(_modal, Is.Not.Null, "a cena precisa do modal de Descansar (rode o setup do projeto)");
-            Assert.That(_summary, Is.Not.Null, "a cena precisa do resumo do dia (rode o setup do projeto)");
+            Assert.That(_summary, Is.Not.Null, "a cena precisa da tela do descanso (rode o setup do projeto)");
             if (!Simulation.Permanents.Rules.IsRestEnabled)
                 Assert.Ignore("O balanço ativo não tem descanso (rode o setup do projeto: GDD v7).");
         }
@@ -131,7 +131,7 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
-        public IEnumerator Confirm_StartsTheNewRun_AndShowsTheDaySummary()
+        public IEnumerator Confirm_ShowsTheZzz_ThenTheRestScreen_AndStartBeginsTheRun()
         {
             yield return LoadGame();
             Simulation.SkipToCave(12);
@@ -148,29 +148,36 @@ namespace MinersIdle.Tests
             Simulation.Tick(5);
             Assert.That(Simulation.State.PlaySeconds, Is.EqualTo(0), "parada: o tempo do dia não anda");
 
-            Assert.That(_summary.IsOpen, Is.True, "o resumo do dia");
+            Assert.That(_summary.IsOpen, Is.True, "a tela do descanso");
+            Assert.That(_summary.IsZzzShown, Is.True, "primeiro o ZZZ");
+            Assert.That(_summary.IsPanelShown, Is.False);
+            ButtonAt(_summary, "Screen/Zzz").onClick.Invoke();
+            Assert.That(_summary.IsZzzShown, Is.False, "um toque pula o ZZZ");
+            Assert.That(_summary.IsPanelShown, Is.True);
             Assert.That(_summary.TitleText, Is.EqualTo("DIA 1 ENCERRADO"));
             Assert.That(_summary.LevelText, Is.EqualTo("12"));
             Assert.That(_summary.GainedText, Is.EqualTo("+7"));
             Assert.That(_summary.BankText, Is.EqualTo("7"));
 
             ButtonAt(_summary, "Screen/Panel/Start").onClick.Invoke();
-            Assert.That(_summary.IsOpen, Is.False, "COMEÇAR fecha");
+            Assert.That(_summary.IsOpen, Is.False, "INICIAR fecha");
             Assert.That(_runner.IsResting, Is.False, "e a run começa");
             Assert.That(Simulation.State.Cave, Is.EqualTo(1));
             Simulation.Tick(1);
             Assert.That(Simulation.State.PlaySeconds, Is.GreaterThan(0), "agora o tempo anda");
         }
 
-        /// <summary>M9d (D-265): o atalho do DBG pula o modal, mas para no resumo, com a run parada.</summary>
+        /// <summary>M9d (D-265): o atalho do DBG pula o modal e o ZZZ, mas para na tela do descanso, com a run parada.</summary>
         [UnityTest]
-        public IEnumerator DebugRestNow_SkipsTheModal_AndStopsOnTheSummary()
+        public IEnumerator DebugRestNow_SkipsTheModalAndTheZzz_AndStopsOnTheRestScreen()
         {
             yield return LoadGame();
             Simulation.SkipToCave(12);
             Assert.That(_runner.Rest(force: true), Is.Not.Null);
             Assert.That(_modal.IsOpen, Is.False);
-            Assert.That(_summary.IsOpen, Is.True, "a run nova espera o COMEÇAR");
+            Assert.That(_summary.IsOpen, Is.True, "a run nova espera o INICIAR");
+            Assert.That(_summary.IsZzzShown, Is.False, "sem o ZZZ");
+            Assert.That(_summary.IsPanelShown, Is.True);
             Assert.That(_runner.IsResting, Is.True);
             Assert.That(_runner.StartRun(), Is.True);
             Assert.That(_summary.IsOpen, Is.False);

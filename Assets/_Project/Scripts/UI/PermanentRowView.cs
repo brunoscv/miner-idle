@@ -45,6 +45,15 @@ namespace MinersIdle.UI
         public string LevelText => level.text;
         public string EffectText => effect.text;
         public string ButtonText => buyLabel.text;
+        /// <summary>Só consulta (D-276, fora do descanso): o efeito de agora, sem preço nem botão.</summary>
+        public bool IsConsult { get; private set; }
+        public bool IsBuyShown => buyButton.gameObject.activeSelf;
+
+        public void SetConsult(bool consult)
+        {
+            IsConsult = consult;
+            if (buyButton.gameObject.activeSelf == consult) buyButton.gameObject.SetActive(!consult);
+        }
 
         /// <summary>Monta a linha uma vez (textos fixos e o clique); depois só <see cref="Refresh"/>.</summary>
         public void Bind(ShopCatalog catalog, ShopCatalog.PermanentEntry entry, Action<PermanentId> buy)
@@ -97,6 +106,13 @@ namespace MinersIdle.UI
             if (preview.State == UpgradeButtonState.Locked && !string.IsNullOrEmpty(_entry.LockedFormat))
             {
                 effect.text = string.Format(_entry.LockedFormat, preview.RequiredLevel);
+                buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
+                return;
+            }
+
+            if (IsConsult)
+            {
+                effect.text = string.Format(_entry.MaxedFormat, Format(preview.CurrentValue));
                 buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
                 return;
             }

@@ -45,7 +45,7 @@ namespace MinersIdle.Tests
         OfflineReturnScreen _offline;
         RestButton _restButton;
         RestScreen _restModal;
-        DaySummaryScreen _summary;
+        RestShopScreen _summary; // a tela do descanso (M9d E2)
         NextFloorButton _next;
 
         MiningSimulation Simulation => _runner.Simulation;
@@ -72,7 +72,7 @@ namespace MinersIdle.Tests
             _offline = Object.FindAnyObjectByType<OfflineReturnScreen>();
             _restButton = Object.FindAnyObjectByType<RestButton>();
             _restModal = Object.FindAnyObjectByType<RestScreen>();
-            _summary = Object.FindAnyObjectByType<DaySummaryScreen>();
+            _summary = Object.FindAnyObjectByType<RestShopScreen>();
             _next = Object.FindAnyObjectByType<NextFloorButton>();
             Assert.That(_offline, Is.Not.Null, "rode o setup do projeto");
             Assert.That(_next, Is.Not.Null, "a cena precisa do Próximo Andar (rode o setup do projeto)");
@@ -283,20 +283,22 @@ namespace MinersIdle.Tests
                         "o COLETAR paga o que mostrou, uma vez");
         }
 
-        /// <summary>Descansar como o jogador: o botão, CONFIRMAR no modal e COMEÇAR no resumo do dia.</summary>
+        /// <summary>Descansar como o jogador: o botão, CONFIRMAR no modal, o ZZZ e a tela do descanso.</summary>
         void RestByTheButton()
         {
             int day = Simulation.Permanents.State.Day;
             _restButton.transform.Find("RestButton").GetComponent<Button>().onClick.Invoke();
             Assert.That(_restModal.IsOpen, Is.True, "o Descansar abre o modal");
             _restModal.transform.Find("Screen/Panel/Confirm").GetComponent<Button>().onClick.Invoke();
-            Assert.That(_summary.IsOpen, Is.True, "o resumo do dia");
-            Assert.That(_runner.IsResting, Is.True, "M9d: a run nova espera o COMEÇAR");
+            Assert.That(_summary.IsOpen, Is.True, "a tela do descanso");
+            Assert.That(_summary.IsZzzShown, Is.True, "com o ZZZ antes");
+            _summary.SkipZzz();
+            Assert.That(_runner.IsResting, Is.True, "M9d: a run nova espera o INICIAR");
             Assert.That(Simulation.Permanents.State.Day, Is.EqualTo(day + 1));
             Assert.That(Simulation.State.Cave, Is.EqualTo(1), "a run nova");
         }
 
-        /// <summary>O COMEÇAR do resumo do dia (o INICIAR do M9d): a run nova, com as permanentes compradas.</summary>
+        /// <summary>O INICIAR da tela do descanso (M9d): a run nova, com as permanentes compradas.</summary>
         void StartByTheButton()
         {
             _summary.transform.Find("Screen/Panel/Start").GetComponent<Button>().onClick.Invoke();

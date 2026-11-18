@@ -94,6 +94,7 @@ MonoBehaviour:
     levelFromOne: 0
   runTabLabel: MELHORIAS
   permanentsTabLabel: PERMANENTES
+  permanentsConsultNote: Compre ao Descansar
   permanentEntries:
   - permanent: 0
     title: "Mem\xF3ria"

@@ -29,6 +29,11 @@ namespace MinersIdle.UI
         [SerializeField] Button shortcut;
         [Tooltip("Rótulo do botão do Atalho. {0} = nível, {1} = limite.")]
         [SerializeField] string shortcutFormat;
+        [Tooltip("M9d E2 (D-279): o fundo da tela do descanso, preta ⇄ desfocada.")]
+        [SerializeField] Button restBackground;
+        [SerializeField] RestShopScreen restShop;
+        [SerializeField] string backgroundBlackLabel;
+        [SerializeField] string backgroundBlurredLabel;
 
         [SerializeField] TMP_Text summary;
         [Tooltip("{0} dia · {1} banco · {2} leva se descansar agora · {3} nível da run · {4}…{8} níveis de Memória, Sangue " +
@@ -37,11 +42,12 @@ namespace MinersIdle.UI
 
         readonly object[] _args = new object[11];
         float _refresh;
-        TMP_Text _shortcutLabel;
+        TMP_Text _shortcutLabel, _backgroundLabel;
 
         void Awake()
         {
             if (shortcut != null) _shortcutLabel = shortcut.GetComponentInChildren<TMP_Text>();
+            if (restBackground != null) _backgroundLabel = restBackground.GetComponentInChildren<TMP_Text>();
         }
 
         void OnEnable()
@@ -52,6 +58,7 @@ namespace MinersIdle.UI
             grantLevels.onClick.AddListener(GrantLevels);
             resetPermanents.onClick.AddListener(ResetPermanents);
             if (shortcut != null) shortcut.onClick.AddListener(CycleShortcut);
+            if (restBackground != null) restBackground.onClick.AddListener(ToggleRestBackground);
             runner.SimulationStarted += OnSimulationStarted;
             Refresh();
         }
@@ -64,6 +71,7 @@ namespace MinersIdle.UI
             grantLevels.onClick.RemoveListener(GrantLevels);
             resetPermanents.onClick.RemoveListener(ResetPermanents);
             if (shortcut != null) shortcut.onClick.RemoveListener(CycleShortcut);
+            if (restBackground != null) restBackground.onClick.RemoveListener(ToggleRestBackground);
             runner.SimulationStarted -= OnSimulationStarted;
         }
 
@@ -97,7 +105,14 @@ namespace MinersIdle.UI
             Refresh();
         }
 
-        /// <summary>Descansa agora, em qualquer nível e sem modal: o dia avança e o resumo abre, com a run parada (M9d).</summary>
+        /// <summary>O fundo da tela do descanso (D-279): preta ⇄ desfocada; com a tela aberta, troca na hora.</summary>
+        public void ToggleRestBackground()
+        {
+            if (restShop != null) restShop.ToggleBackground();
+            Refresh();
+        }
+
+        /// <summary>Descansa agora, em qualquer nível, sem modal e sem o ZZZ: a tela do descanso, com a run parada (M9d).</summary>
         public void RestNow()
         {
             runner.Rest(force: true);
@@ -135,6 +150,9 @@ namespace MinersIdle.UI
             _args[9] = permanents.State.LevelOf(PermanentId.FieryFinger);
             _args[10] = permanents.State.LevelOf(PermanentId.Shortcut);
             summary.text = string.Format(summaryFormat, _args);
+            if (_backgroundLabel != null && restShop != null)
+                _backgroundLabel.text = restShop.BackgroundMode == RestShopScreen.Background.Black
+                    ? backgroundBlackLabel : backgroundBlurredLabel;
             if (_shortcutLabel != null && !string.IsNullOrEmpty(shortcutFormat))
                 _shortcutLabel.text = string.Format(shortcutFormat, _args[10], permanents.Rules.Get(PermanentId.Shortcut).MaxLevel);
         }

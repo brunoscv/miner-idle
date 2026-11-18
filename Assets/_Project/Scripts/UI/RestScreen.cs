@@ -109,8 +109,8 @@ namespace MinersIdle.UI
         public void Close() => screen.SetActive(false);
 
         /// <summary>
-        /// DESCANSAR: o descanso de verdade (a run nova fica parada por trás, M9d). O resumo do dia abre pelo evento
-        /// <see cref="MiningRunner.Rested"/>.
+        /// DESCANSAR: o descanso de verdade (a run nova fica parada por trás, M9d). O ZZZ e a tela do descanso abrem pelo
+        /// evento <see cref="MiningRunner.Rested"/> (<see cref="RestShopScreen"/>).
         /// </summary>
         public void Confirm()
         {

@@ -151,37 +151,41 @@ namespace MinersIdle.Tests
             Assert.That(_shop.IsPermanentsTabBadgeShown, Is.False, "a aba aberta não precisa do \"!\"");
         }
 
+        /// <summary>M9d E2 (D-265): na tela do descanso, as permanentes se compram, o banco desce e INICIAR começa a run.</summary>
         [UnityTest]
-        public IEnumerator DaySummary_PermanentsOpensTheShopOnThePermanentsTab()
+        public IEnumerator RestScreen_BuysPermanents_AndStartBeginsTheRun()
         {
             yield return LoadGame();
-            var summary = Object.FindAnyObjectByType<DaySummaryScreen>();
+            var rest = Object.FindAnyObjectByType<RestShopScreen>();
             Simulation.SkipToCave(12);
             var modal = Object.FindAnyObjectByType<RestScreen>();
             modal.Open();
             modal.transform.Find("Screen/Panel/Confirm").GetComponent<Button>().onClick.Invoke();
-            Assert.That(summary.IsOpen, Is.True);
+            rest.SkipZzz();
+            Assert.That(rest.IsPanelShown, Is.True);
+            Assert.That(rest.BankText, Is.EqualTo("7"), "o banco depois do descanso");
+            Assert.That(rest.Rows.Count, Is.EqualTo(9), "as 9 permanentes");
 
-            summary.transform.Find("Screen/Panel/Permanents").GetComponent<Button>().onClick.Invoke();
-            Assert.That(summary.IsOpen, Is.False);
-            Assert.That(_shop.IsOpen, Is.True);
-            Assert.That(_shop.ActiveTab, Is.EqualTo(ShopView.Tab.Permanents));
-            Assert.That(_shop.RedBalanceText, Is.EqualTo("7"), "o banco depois do descanso");
-            Assert.That(Row(PermanentId.Memory).CanBuy, Is.False, "7 não paga 11");
-
-            // M9d: comprar e fechar a loja volta ao resumo, com o banco de agora; COMEÇAR inicia a run.
+            PermanentRowView RestRow(PermanentId id) => rest.Rows.First(r => r.Permanent == id);
+            var memory = RestRow(PermanentId.Memory);
+            Assert.That(memory.CanBuy, Is.False, "7 não paga 11");
+            Assert.That(memory.IsBuyShown, Is.True, "com preço e botão");
             Simulation.AddRedShards(4);
-            Assert.That(Row(PermanentId.Memory).CanBuy, Is.True, "11 paga 11, descansando");
-            BuyButton(Row(PermanentId.Memory)).onClick.Invoke();
-            _shop.Close();
-            Assert.That(summary.IsOpen, Is.True, "fechar a loja volta ao resumo");
-            Assert.That(summary.BankText, Is.EqualTo("0"), "7 + 4 − 11");
-            summary.transform.Find("Screen/Panel/Start").GetComponent<Button>().onClick.Invoke();
+            Assert.That(memory.CanBuy, Is.True, "11 paga 11");
+            BuyButton(memory).onClick.Invoke();
+            Assert.That(rest.BankText, Is.EqualTo("0"), "7 + 4 − 11");
+            Assert.That(memory.LevelText, Is.EqualTo("nv 1/100"));
+
+            rest.transform.Find("Screen/Panel/Start").GetComponent<Button>().onClick.Invoke();
+            Assert.That(rest.IsOpen, Is.False);
             Assert.That(_runner.IsResting, Is.False);
             Assert.That(Simulation.Permanents.State.LevelOf(PermanentId.Memory), Is.EqualTo(1), "a compra vale na run nova");
         }
 
-        /// <summary>M9d (§4.2, D-265): fora do descanso, as permanentes aparecem na LOJA, mas não se compram.</summary>
+        /// <summary>
+        /// M9d (§4.2, D-265, D-276): fora do descanso, as permanentes aparecem na LOJA só para consulta: o nível e o efeito
+        /// de agora, sem preço nem botão, e "Compre ao Descansar" no alto.
+        /// </summary>
         [UnityTest]
         public IEnumerator OutsideTheRest_ThePermanentsShow_ButDontBuy()
         {
@@ -190,8 +194,14 @@ namespace MinersIdle.Tests
             _shop.OpenPermanents();
             var blood = Row(PermanentId.MountainBlood);
             Assert.That(blood.CanBuy, Is.False, "só no descanso");
+            Assert.That(blood.IsConsult, Is.True);
+            Assert.That(blood.IsBuyShown, Is.False, "sem preço nem botão (D-276)");
+            Assert.That(blood.EffectText, Is.EqualTo("Dano +0%"), "o efeito de agora");
+            Assert.That(_shop.IsConsultNoteShown, Is.True, "\"Compre ao Descansar\" no alto");
             BuyButton(blood).onClick.Invoke();
             Assert.That(Simulation.Permanents.State.RedShards, Is.EqualTo(100), "nada comprado");
+            _shop.SelectTab(ShopView.Tab.Run);
+            Assert.That(_shop.IsConsultNoteShown, Is.False, "o aviso é só da aba das permanentes");
             Assert.That(Row(PermanentId.FieryFinger), Is.Not.Null, "o Dedo Fogoso na lista");
             Assert.That(Row(PermanentId.Shortcut), Is.Not.Null, "o Atalho na lista");
         }

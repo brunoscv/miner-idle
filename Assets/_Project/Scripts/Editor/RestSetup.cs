@@ -24,7 +24,6 @@ namespace MinersIdle.EditorTools
 
         const float ModalWidth = 236f;
         const float ModalHeight = 190f;
-        const float SummaryHeight = 150f;
         const float ModalRaise = 12f;          // um pouco acima do meio: longe da barra de baixo
         const float TitleBarTop = 6f;
         const float TitleBarHeight = 8f;
@@ -63,54 +62,210 @@ namespace MinersIdle.EditorTools
             _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
             _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
 
-            bool changed = EnsureSummary(safeArea, texts);
-            changed |= EnsureSummaryRunner(safeArea);
-            changed |= EnsureModal(safeArea, texts); // logo depois da tela do coração; o resumo fica logo acima dele
+            bool changed = EnsureModal(safeArea, texts); // logo depois da tela do coração
             changed |= EnsureBarButton(safeArea, texts);
             changed |= EnsureHeartRest(safeArea);
             changed |= DebugPanelSetup.LiftAboveTheBar(safeArea);
             return changed;
         }
 
-        // ── O resumo do dia (D-154) ─────────────────────────────────────────────────────────────────────────────
+        // ── A tela do descanso (M9d E2, D-265, D-279) ───────────────────────────────────────────────────────────
 
-        /// <summary>M9d E1 (D-265): o resumo abre pelo descanso do runner e o COMEÇAR inicia a run parada.</summary>
-        static bool EnsureSummaryRunner(Transform safeArea)
+        const string RestShopName = "RestShop";
+        const string CatalogPath = "Assets/_Project/Data/ShopCatalog.asset";
+        const string PermanentRowPrefabPath = "Assets/_Project/Prefabs/UI/PermanentRow.prefab";
+        const float RestShopMargin = 14f;        // do alto e de baixo da tela
+        const float RestHeaderHeight = 52f;      // o quadro do resumo
+        const float RestNoteTop = 56f;
+        const float RestListTop = 74f;
+        static readonly Color BlurTint = new Color(0.42f, 0.42f, 0.42f, 1f);
+        static readonly (string text, float size, Vector2 at)[] ZzzLetters =
         {
-            var view = safeArea.Find(SummaryName)?.GetComponent<DaySummaryScreen>();
-            if (view == null) return false;
+            ("Z", 12f, new Vector2(-26f, -24f)), ("Z", 18f, new Vector2(2f, 2f)), ("Z", 26f, new Vector2(34f, 34f)),
+        };
+
+        /// <summary>
+        /// M9d E2: a tela do descanso, no lugar do resumo do dia (que sai, com o COMEÇAR e o PERMANENTES). Fundo preto
+        /// (ou o jogo desfocado, D-279), o ZZZ e o painel da largura da LOJA: o dia e o banco na barra de título, o quadro
+        /// do resumo, o aviso, a lista das permanentes com rolagem e INICIAR. Por cima de tudo do jogo, abaixo do DBG.
+        /// Depois da LOJA e da rolagem dela (usa a linha das permanentes e copia o layout da lista).
+        /// </summary>
+        public static bool EnsureRestShop()
+        {
+            var safeArea = GameObject.Find("SafeArea")?.transform;
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
+            var rowPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PermanentRowPrefabPath)?.GetComponent<PermanentRowView>();
+            var shopPanel = safeArea != null ? safeArea.Find("Shop/Screen/Panel") as RectTransform : null;
+            var shopRows = shopPanel != null ? shopPanel.Find("PermanentScroll/PermanentRows") : null;
+            if (texts == null || catalog == null || rowPrefab == null || shopRows == null) return false;
+
+            bool changed = RemoveOldSummary(safeArea);
+            var existing = safeArea.Find(RestShopName);
+            if (existing != null)
+                return DayDebugSetup.EnsureRestBackground(existing.GetComponent<RestShopScreen>()) | ZzzInGameFont(existing) |
+                       changed;
+
+            _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
+            _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
+
+            var root = new GameObject(RestShopName, typeof(RectTransform));
+            root.transform.SetParent(safeArea, false);
+            root.transform.SetAsLastSibling();
+            Stretch((RectTransform)root.transform);
+
+            // O fundo preto bloqueia o jogo todo; o desfocado fica por cima dele, desligado até ser escolhido.
+            var screen = new GameObject("Screen", typeof(RectTransform), typeof(Image));
+            screen.transform.SetParent(root.transform, false);
+            Stretch((RectTransform)screen.transform);
+            screen.GetComponent<Image>().color = Color.black;
+
+            var blurredGo = new GameObject("Blurred", typeof(RectTransform), typeof(RawImage));
+            blurredGo.transform.SetParent(screen.transform, false);
+            Stretch((RectTransform)blurredGo.transform);
+            var blurred = blurredGo.GetComponent<RawImage>();
+            blurred.color = BlurTint;
+            blurred.raycastTarget = false;
+            blurredGo.SetActive(false);
+
+            // O ZZZ: a tela toda é o botão que pula.
+            var zzz = new GameObject("Zzz", typeof(RectTransform), typeof(Image), typeof(Button));
+            zzz.transform.SetParent(screen.transform, false);
+            Stretch((RectTransform)zzz.transform);
+            zzz.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
+            var skip = zzz.GetComponent<Button>();
+            skip.transition = Selectable.Transition.None;
+            var letters = new TMP_Text[ZzzLetters.Length];
+            for (int i = 0; i < ZzzLetters.Length; i++)
+            {
+                var (letter, size, at) = ZzzLetters[i];
+                var text = Text(zzz.transform, "Z" + (i + 1), letter, size, AmberText, TextAlignmentOptions.Center, _font);
+                var rect = text.rectTransform;
+                rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(40f, 40f);
+                rect.anchoredPosition = at;
+                text.raycastTarget = false;
+                letters[i] = text;
+            }
+            zzz.SetActive(false);
+
+            // O painel da largura da LOJA, da altura da tela.
+            var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(screen.transform, false);
+            var panelRect = (RectTransform)panel.transform;
+            panelRect.anchorMin = new Vector2(shopPanel.anchorMin.x, 0f);
+            panelRect.anchorMax = new Vector2(shopPanel.anchorMax.x, 1f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.offsetMin = new Vector2(shopPanel.offsetMin.x, RestShopMargin);
+            panelRect.offsetMax = new Vector2(shopPanel.offsetMax.x, -RestShopMargin);
+            var image = panel.GetComponent<Image>();
+            image.sprite = Load(Wood("panels/window"));
+            image.type = Image.Type.Sliced;
+
+            var title = Text(panel.transform, "Title", "", SmallText, TextColor, TextAlignmentOptions.MidlineLeft, _font);
+            TitleBar(title.rectTransform, 10f, 0f);
+            var bank = RedValue(panel.transform, "Bank", 0f, RowNumber);
+            TitleBar((RectTransform)bank.transform.parent, 0f, 4f);
+
+            var body = new GameObject("Body", typeof(RectTransform));
+            body.transform.SetParent(panel.transform, false);
+            var bodyRect = (RectTransform)body.transform;
+            bodyRect.anchorMin = Vector2.zero;
+            bodyRect.anchorMax = Vector2.one;
+            bodyRect.offsetMin = new Vector2(7f, 42f);
+            bodyRect.offsetMax = new Vector2(-7f, -22f);
+
+            Inset(body.transform, 0f, RestHeaderHeight);
+            var (levelLabel, levelValue) = Row(body.transform, 4f);
+            var (timeLabel, timeValue) = Row(body.transform, 18f);
+            var gainedLabel = Line(body.transform, "GainedLabel", 34f, SmallText, TextColor, TextAlignmentOptions.Left);
+            var gainedValue = RedValue(body.transform, "Gained", 32f, RowNumber);
+            var note = Line(body.transform, "Note", RestNoteTop, SmallText, MutedText, TextAlignmentOptions.Center);
+
+            // A lista com rolagem, com o layout da lista da LOJA.
+            var scrollGo = new GameObject("Scroll", typeof(RectTransform), typeof(RectMask2D), typeof(ScrollRect));
+            scrollGo.transform.SetParent(body.transform, false);
+            var viewport = (RectTransform)scrollGo.transform;
+            viewport.anchorMin = Vector2.zero;
+            viewport.anchorMax = Vector2.one;
+            viewport.offsetMin = Vector2.zero;
+            viewport.offsetMax = new Vector2(0f, -RestListTop);
+            var rows = new GameObject("Rows", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            rows.transform.SetParent(viewport, false);
+            var rowsRect = (RectTransform)rows.transform;
+            rowsRect.anchorMin = new Vector2(0f, 1f);
+            rowsRect.anchorMax = Vector2.one;
+            rowsRect.pivot = new Vector2(0.5f, 1f);
+            rowsRect.offsetMin = rowsRect.offsetMax = Vector2.zero;
+            var shopLayout = shopRows.GetComponent<VerticalLayoutGroup>();
+            var layout = rows.GetComponent<VerticalLayoutGroup>();
+            layout.spacing = shopLayout.spacing;
+            layout.padding = new RectOffset(shopLayout.padding.left, shopLayout.padding.right, shopLayout.padding.top,
+                                            shopLayout.padding.bottom);
+            layout.childAlignment = shopLayout.childAlignment;
+            layout.childControlWidth = shopLayout.childControlWidth;
+            layout.childControlHeight = shopLayout.childControlHeight;
+            layout.childForceExpandWidth = shopLayout.childForceExpandWidth;
+            layout.childForceExpandHeight = false;
+            rows.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var scroll = scrollGo.GetComponent<ScrollRect>();
+            scroll.content = rowsRect;
+            scroll.viewport = viewport;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 20f;
+
+            var (start, startLabel) = ModalButton(panel.transform, "Start", 0f, ruby: true);
+
+            screen.SetActive(false);
+            var view = root.AddComponent<RestShopScreen>();
+            GrayboxSetup.SetReferences(view, ("runner", Object.FindAnyObjectByType<MiningRunner>()), ("texts", texts),
+                ("catalog", catalog), ("rowPrefab", rowPrefab), ("rowsParent", rows.transform), ("screen", screen),
+                ("blurred", blurred), ("worldCamera", Camera.main), ("zzz", zzz), ("zzzSkip", skip), ("panel", panel),
+                ("title", title), ("bankValue", bank), ("levelLabel", levelLabel), ("levelValue", levelValue),
+                ("timeLabel", timeLabel), ("timeValue", timeValue), ("gainedLabel", gainedLabel),
+                ("gainedValue", gainedValue), ("note", note), ("startButton", start), ("startLabel", startLabel),
+                ("scroll", scroll));
             var so = new SerializedObject(view);
-            var property = so.FindProperty("runner");
-            var runner = Object.FindAnyObjectByType<MiningRunner>();
-            if (property.objectReferenceValue == runner) return false;
-            property.objectReferenceValue = runner;
+            var array = so.FindProperty("zzzLetters");
+            array.arraySize = letters.Length;
+            for (int i = 0; i < letters.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = letters[i];
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log("[Setup] Resumo do dia ligado ao descanso parado (M9d E1, D-265).");
+
+            // O DBG continua por cima (o botão do fundo troca com a tela aberta).
+            safeArea.Find("DebugPanel")?.SetAsLastSibling();
+            DayDebugSetup.EnsureRestBackground(view);
+            Debug.Log("[Setup] Tela do descanso: ZZZ, fundo preto ou desfocado, resumo, permanentes e INICIAR (M9d E2).");
             return true;
         }
 
-        static bool EnsureSummary(Transform safeArea, FeedbackTexts texts)
+        /// <summary>Os Z do ZZZ na fonte do jogo (não são números): a primeira montagem usou a dos números.</summary>
+        static bool ZzzInGameFont(Transform restShop)
         {
-            if (safeArea.Find(SummaryName) != null) return false;
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
+            var zzz = restShop.Find("Screen/Zzz");
+            if (font == null || zzz == null) return false;
+            bool changed = false;
+            foreach (var text in zzz.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.font == font) continue;
+                text.font = font;
+                text.fontSharedMaterial = font.material;
+                EditorUtility.SetDirty(text);
+                changed = true;
+            }
+            if (changed) Debug.Log("[Setup] ZZZ na fonte do jogo (M9d E2).");
+            return changed;
+        }
 
-            var (root, screen, panel, title, _, body) = Window(safeArea, SummaryName, SummaryHeight);
-            Inset(body, 0f, 44f);
-            var (levelLabel, levelValue) = Row(body, 4f);
-            var (timeLabel, timeValue) = Row(body, 18f);
-            var gainedLabel = Line(body, "GainedLabel", 52f, BigText, TextColor, TextAlignmentOptions.Left);
-            var gainedValue = RedValue(body, "Gained", 52f, SummaryNumber);
-            var bankLabel = Line(body, "BankLabel", 70f, BigText, TextColor, TextAlignmentOptions.Left);
-            var bankValue = RedValue(body, "Bank", 70f, SummaryNumber);
-            // O PERMANENTES (à esquerda do COMEÇAR) chega com a aba das permanentes (E4).
-            var (start, startLabel) = ModalButton(panel, "Start", 0f, ruby: true);
-
-            screen.SetActive(false);
-            var view = root.AddComponent<DaySummaryScreen>();
-            GrayboxSetup.SetReferences(view, ("texts", texts), ("screen", screen), ("title", title),
-                ("levelLabel", levelLabel), ("levelValue", levelValue), ("timeLabel", timeLabel), ("timeValue", timeValue),
-                ("gainedLabel", gainedLabel), ("gainedValue", gainedValue), ("bankLabel", bankLabel),
-                ("bankValue", bankValue), ("startButton", start), ("startLabel", startLabel));
-            Debug.Log("[Setup] Resumo do dia na cena Game (Marco 8b, E3, D-154).");
+        /// <summary>M9d E2: o resumo do dia sai (a tela do descanso faz o papel dele, com o COMEÇAR e o PERMANENTES).</summary>
+        static bool RemoveOldSummary(Transform safeArea)
+        {
+            var summary = safeArea.Find(SummaryName);
+            if (summary == null) return false;
+            Object.DestroyImmediate(summary.gameObject);
+            Debug.Log("[Setup] Resumo do dia antigo removido (M9d E2).");
             return true;
         }
 

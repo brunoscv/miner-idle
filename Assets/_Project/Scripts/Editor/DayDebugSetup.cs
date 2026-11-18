@@ -121,6 +121,54 @@ namespace MinersIdle.EditorTools
             return changed;
         }
 
+        const string RestBackgroundName = "RestBackground";
+
+        /// <summary>
+        /// M9d E2 (D-279): o botão "Fundo" na grade do DBG → Dia (antes do Fechar), preta ⇄ desfocada, ligado à tela do
+        /// descanso. Chamado pelo <see cref="RestSetup"/> depois de criar a tela.
+        /// </summary>
+        internal static bool EnsureRestBackground(RestShopScreen restShop)
+        {
+            var debugPanel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
+            var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.DayMenuName) : null;
+            var panel = menu != null ? menu.GetComponent<DayDebugPanel>() : null;
+            var grid = menu != null ? menu.Find("Content/Buttons") : null;
+            if (panel == null || grid == null || restShop == null) return false;
+            bool changed = false;
+
+            var button = grid.Find(RestBackgroundName);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(grid, RestBackgroundName, "Fundo: preta").transform;
+                var close = grid.Find("Close");
+                if (close != null) button.SetSiblingIndex(close.GetSiblingIndex());
+                changed = true;
+            }
+
+            var so = new UnityEditor.SerializedObject(panel);
+            changed |= Set(so.FindProperty("restBackground"), button.GetComponent<Button>());
+            changed |= Set(so.FindProperty("restShop"), restShop);
+            changed |= SetText(so.FindProperty("backgroundBlackLabel"), "Fundo: preta");
+            changed |= SetText(so.FindProperty("backgroundBlurredLabel"), "Fundo: desfocada");
+            so.ApplyModifiedPropertiesWithoutUndo();
+            if (changed) Debug.Log("[Setup] DBG → Dia: botão \"Fundo\" da tela do descanso, preta ⇄ desfocada (M9d E2, D-279).");
+            return changed;
+        }
+
+        static bool Set(UnityEditor.SerializedProperty property, Object value)
+        {
+            if (property.objectReferenceValue == value) return false;
+            property.objectReferenceValue = value;
+            return true;
+        }
+
+        static bool SetText(UnityEditor.SerializedProperty property, string value)
+        {
+            if (!string.IsNullOrEmpty(property.stringValue)) return false;
+            property.stringValue = value;
+            return true;
+        }
+
         /// <summary>P9 (M9c E2): o resumo do DBG → Dia diz "andar" no lugar de "nível".</summary>
         static bool EnsureFloorWord(DayDebugPanel panel)
         {

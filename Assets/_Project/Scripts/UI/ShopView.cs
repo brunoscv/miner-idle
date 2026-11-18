@@ -58,6 +58,11 @@ namespace MinersIdle.UI
         [Tooltip("O banco de lascas vermelhas na barra de título (o cristal vermelho e o número), no lugar das lascas.")]
         [SerializeField] GameObject redBalance;
         [SerializeField] TMP_Text redBalanceValue;
+        [Tooltip("M9d E2 (D-276): \"Compre ao Descansar\" no alto da aba, durante a run.")]
+        [SerializeField] TMP_Text consultNote;
+        [Tooltip("A rolagem da lista: desce para dar lugar ao aviso.")]
+        [SerializeField] RectTransform permanentsScroll;
+        [SerializeField] float consultNoteHeight = 14f;
 
         [Header("Aba do estagiário (M7, E3, D-170)")]
         [SerializeField] Button internTabButton;
@@ -84,6 +89,8 @@ namespace MinersIdle.UI
         public bool IsInternTabBadgeShown => internTabBadge.activeSelf;
         public bool IsInternListShown => internRowsParent.gameObject.activeInHierarchy;
         public string RedBalanceText => redBalanceValue.text;
+        public bool IsConsultNoteShown => consultNote != null && consultNote.gameObject.activeInHierarchy;
+        float _scrollTop;
 
         void Awake()
         {
@@ -106,6 +113,8 @@ namespace MinersIdle.UI
                 row.Bind(catalog, entry, Buy);
                 _internRows.Add(row);
             }
+            if (consultNote != null) consultNote.text = catalog.PermanentsConsultNote;
+            if (permanentsScroll != null) _scrollTop = permanentsScroll.offsetMax.y;
             runTabLabel.text = catalog.RunTabLabel;
             permanentsTabLabel.text = catalog.PermanentsTabLabel;
             internTabLabel.text = catalog.InternTabLabel;
@@ -166,15 +175,7 @@ namespace MinersIdle.UI
             Refresh();
         }
 
-        public void Close()
-        {
-            if (!screen.activeSelf) return;
-            screen.SetActive(false);
-            Closed?.Invoke();
-        }
-
-        /// <summary>A loja fechou (M9d: aberta do descanso, o resumo volta por cima).</summary>
-        public event System.Action Closed;
+        public void Close() => screen.SetActive(false);
 
         public void SelectTab(Tab tab)
         {
@@ -196,6 +197,7 @@ namespace MinersIdle.UI
             SetActive(internRowsParent.gameObject, tab == Tab.Intern);
             SetActive(balance.gameObject, !permanents);
             SetActive(redBalance, permanents);
+            if (!permanents) ShowConsultNote(false);
             PaintTab(runTabButton, runTabLabel, tab == Tab.Run);
             PaintTab(permanentsTabButton, permanentsTabLabel, permanents);
             PaintTab(internTabButton, internTabLabel, tab == Tab.Intern);
@@ -260,8 +262,25 @@ namespace MinersIdle.UI
             }
 
             redBalanceValue.text = NumberFormatter.FormatShards(simulation.Permanents.State.RedShards);
-            foreach (var row in _permanentRows) row.Refresh(simulation.PreviewPermanent(row.Permanent));
+            // D-276: na run, a aba é só consulta (compra-se na tela do descanso), com o aviso no alto.
+            bool consult = !simulation.IsResting;
+            ShowConsultNote(consult);
+            foreach (var row in _permanentRows)
+            {
+                row.SetConsult(consult);
+                row.Refresh(simulation.PreviewPermanent(row.Permanent));
+            }
             SortPermanentRows();
+        }
+
+        void ShowConsultNote(bool shown)
+        {
+            if (consultNote == null) return;
+            SetActive(consultNote.gameObject, shown);
+            if (permanentsScroll == null) return;
+            float top = _scrollTop - (shown ? consultNoteHeight : 0f);
+            if (!Mathf.Approximately(permanentsScroll.offsetMax.y, top))
+                permanentsScroll.offsetMax = new Vector2(permanentsScroll.offsetMax.x, top);
         }
 
         static bool AnyPurchasable(MiningSimulation simulation, List<UpgradeRowView> rows)

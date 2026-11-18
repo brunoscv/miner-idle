@@ -129,6 +129,8 @@ namespace MinersIdle.EditorTools
             changed |= PermanentShopSetup.EnsureInScene(); // depois do resumo do dia: o PERMANENTES entra nele
             changed |= InternShopSetup.EnsureInScene(); // depois das abas da loja (M7, E3)
             changed |= PermanentShopSetup.EnsurePermanentScroll(); // depois da cópia da lista para o estagiário (M9d E1)
+            changed |= PermanentShopSetup.EnsureConsultNote(); // o aviso da consulta, no alto da rolagem (M9d E2)
+            changed |= RestSetup.EnsureRestShop(); // a tela do descanso: usa a linha e o layout da LOJA (M9d E2)
             changed |= OfflineReturnSetup.EnsureInScene(); // por cima de tudo (M9, E2)
             changed |= SettingsSetup.EnsureInScene(); // abaixo do "Bem-vindo de volta" (M9, E4)
             changed |= BuffColumnSetup.EnsureInScene(); // logo depois do HUD, atrás das janelas (M9b, E2)

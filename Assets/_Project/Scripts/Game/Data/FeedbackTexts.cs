@@ -70,6 +70,12 @@ namespace MinersIdle.Game
         [Tooltip("O botão que abre a loja na aba das permanentes (E4, D-154).")]
         [SerializeField] string summaryPermanents;
 
+        [Header("Tela do descanso (M9d E2, D-265)")]
+        [Tooltip("A linha acima das permanentes.")]
+        [SerializeField] string restShopNote;
+        [Tooltip("O botão que começa a run nova.")]
+        [SerializeField] string restShopStart;
+
         [Header("Bem-vindo de volta (M9, E2, D-197)")]
         [SerializeField] string offlineTitle;
         [SerializeField] string offlineAwayLabel;
@@ -149,6 +155,8 @@ namespace MinersIdle.Game
         public string SummaryBankLabel => summaryBankLabel;
         public string SummaryStart => summaryStart;
         public string SummaryPermanents => summaryPermanents;
+        public string RestShopNote => restShopNote;
+        public string RestShopStart => restShopStart;
 
         public string OfflineTitle => offlineTitle;
         public string OfflineAwayLabel => offlineAwayLabel;

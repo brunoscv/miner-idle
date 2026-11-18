@@ -109,6 +109,8 @@ namespace MinersIdle.Game
         [Header("Abas (Marco 8b, E4, D-155)")]
         [SerializeField] string runTabLabel;
         [SerializeField] string permanentsTabLabel;
+        [Tooltip("No alto da aba das permanentes durante a run (M9d E2, D-276): só consulta.")]
+        [SerializeField] string permanentsConsultNote;
         [Tooltip("As linhas da aba das permanentes, na ordem da tabela do GDD (as que chegam ao limite descem para o fim).")]
         [SerializeField] PermanentEntry[] permanentEntries = Array.Empty<PermanentEntry>();
 
@@ -121,6 +123,7 @@ namespace MinersIdle.Game
         public string BalanceFormat => balanceFormat;
         public string LevelFormat => levelFormat;
         public string MaxedLabel => maxedLabel;
+        public string PermanentsConsultNote => permanentsConsultNote;
         public string BoughtLabel => boughtLabel;
         public string LockedLabel => lockedLabel;
         public string BonusPercentFormat => bonusPercentFormat;

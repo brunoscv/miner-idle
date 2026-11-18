@@ -39,6 +39,7 @@ namespace MinersIdle.EditorTools
                 EnsureOfflineTexts();
                 EnsureSettingsTexts();
                 EnsureFloorTexts();
+                EnsureRestShopTexts();
                 return;
             }
 
@@ -184,6 +185,23 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(texts);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] Textos do descanso e do resumo do dia nos textos do feedback (Marco 8b, E3).");
+        }
+
+        /// <summary>M9d E2 (D-265): a tela do descanso; o resumo diz "andar" (D-236).</summary>
+        static void EnsureRestShopTexts()
+        {
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts == null || !string.IsNullOrEmpty(texts.RestShopStart)) return;
+
+            var so = new SerializedObject(texts);
+            so.FindProperty("restShopNote").stringValue = "Compre com o jogo parado. A run começa no INICIAR.";
+            so.FindProperty("restShopStart").stringValue = "INICIAR";
+            var level = so.FindProperty("summaryLevelLabel");
+            if (level.stringValue == "Chegou ao nível") level.stringValue = "Chegou ao andar";
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(texts);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Textos da tela do descanso (M9d E2).");
         }
 
         /// <summary>Marco 8b (E4): o botão PERMANENTES do resumo do dia (D-154), nos textos que já existem.</summary>

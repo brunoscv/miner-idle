@@ -204,6 +204,7 @@ namespace MinersIdle.Game
             {
                 // D-275: fechou descansando, abre descansando: a tela do descanso de novo, sem offline (o jogo estava parado).
                 _awaySinceUtc = UtcNow;
+                RestedQuietly = true;
                 NotifyRested(PendingRest.Value);
                 return;
             }
@@ -325,12 +326,19 @@ namespace MinersIdle.Game
             PendingRest = summary;
             Begin(RunSeed(), NewRun(), resting: true);
             SaveNow();
+            RestedQuietly = force;
             NotifyRested(summary.Value);
             return summary;
         }
 
         /// <summary>Descansando (M9d, D-265): a run nova está parada, esperando o INICIAR.</summary>
         public bool IsResting => Simulation != null && Simulation.IsResting;
+
+        /// <summary>
+        /// O último <see cref="Rested"/> veio do atalho do DBG ou do jogo reaberto descansando (M9d E2): a tela do descanso
+        /// abre direto, sem o ZZZ.
+        /// </summary>
+        public bool RestedQuietly { get; private set; }
 
         /// <summary>O resumo do dia do descanso na tela (M9d); <c>null</c> numa run em andamento.</summary>
         public RestSummary? PendingRest { get; private set; }

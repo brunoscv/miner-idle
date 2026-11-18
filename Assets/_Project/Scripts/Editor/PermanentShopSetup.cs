@@ -39,7 +39,6 @@ namespace MinersIdle.EditorTools
         const float PriceIconSize = 10f;
         const float BalanceIconSize = 11f;
 
-        const float SummaryButtonOffset = 55f;
 
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         static readonly Color MutedText = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
@@ -58,7 +57,6 @@ namespace MinersIdle.EditorTools
             if (rowPrefab == null) return false;
 
             bool changed = EnsureTabs(safeArea, catalog, rowPrefab);
-            changed |= EnsureSummaryButton(safeArea);
             return changed;
         }
 
@@ -101,6 +99,56 @@ namespace MinersIdle.EditorTools
             rect.movementType = ScrollRect.MovementType.Clamped;
             rect.scrollSensitivity = 20f;
             Debug.Log("[Setup] LOJA → Permanentes com rolagem: as 9 linhas (M9d E1).");
+            return true;
+        }
+
+        const string ConsultNoteName = "ConsultNote";
+        const float ConsultNoteHeight = 14f;
+
+        /// <summary>
+        /// M9d E2 (D-276): na run, a aba das permanentes é só consulta, com "Compre ao Descansar" no alto da lista (a
+        /// rolagem desce para dar lugar a ele, pela <see cref="ShopView"/>).
+        /// </summary>
+        public static bool EnsureConsultNote()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
+            var shop = GameObject.Find("SafeArea")?.transform.Find("Shop");
+            var panel = shop != null ? shop.Find("Screen/Panel") : null;
+            var scroll = panel != null ? panel.Find("PermanentScroll") as RectTransform : null;
+            if (catalog == null || scroll == null) return false;
+
+            bool changed = false;
+            var so = new SerializedObject(catalog);
+            var noteText = so.FindProperty("permanentsConsultNote");
+            if (string.IsNullOrEmpty(noteText.stringValue))
+            {
+                noteText.stringValue = "Compre ao Descansar";
+                so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(catalog);
+                AssetDatabase.SaveAssets();
+                changed = true;
+            }
+            if (panel.Find(ConsultNoteName) != null) return changed;
+
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
+            var note = Text(panel, ConsultNoteName, 33f / 4f, MutedText, TextAlignmentOptions.Center, font);
+            note.text = catalog.PermanentsConsultNote;
+            note.raycastTarget = false;
+            var rect = note.rectTransform;
+            rect.SetSiblingIndex(scroll.GetSiblingIndex() + 1);
+            rect.anchorMin = new Vector2(scroll.anchorMin.x, 1f);
+            rect.anchorMax = new Vector2(scroll.anchorMax.x, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(scroll.offsetMin.x, scroll.offsetMax.y - ConsultNoteHeight);
+            rect.offsetMax = new Vector2(scroll.offsetMax.x, scroll.offsetMax.y);
+            note.gameObject.SetActive(false);
+
+            var view = shop.GetComponent<ShopView>();
+            GrayboxSetup.SetReferences(view, ("consultNote", note), ("permanentsScroll", scroll));
+            var viewSo = new SerializedObject(view);
+            viewSo.FindProperty("consultNoteHeight").floatValue = ConsultNoteHeight;
+            viewSo.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] LOJA → Permanentes: \"Compre ao Descansar\" no alto, durante a run (M9d E2, D-276).");
             return true;
         }
 
@@ -431,37 +479,6 @@ namespace MinersIdle.EditorTools
             badgeRect.anchoredPosition = new Vector2(TabBadgeOffset, TabBadgeOffset);
             badge.SetActive(false);
             return (button, label, badge);
-        }
-
-        // ── O PERMANENTES do resumo do dia (D-154) ──────────────────────────────────────────────────────────────
-
-        /// <summary>COMEÇAR vai para a direita e PERMANENTES (madeira, uma cópia dele) entra à esquerda.</summary>
-        static bool EnsureSummaryButton(Transform safeArea)
-        {
-            var summary = safeArea.Find("DaySummary");
-            var panel = summary != null ? summary.Find("Screen/Panel") : null;
-            var shop = safeArea.Find("Shop");
-            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
-            if (panel == null || shop == null || panel.Find("Permanents") != null) return false;
-
-            var start = (RectTransform)panel.Find("Start");
-            start.anchoredPosition = new Vector2(SummaryButtonOffset, start.anchoredPosition.y);
-
-            var go = Object.Instantiate(start.gameObject, panel, false);
-            go.name = "Permanents";
-            go.transform.SetSiblingIndex(start.GetSiblingIndex());
-            var rect = (RectTransform)go.transform;
-            rect.anchoredPosition = new Vector2(-SummaryButtonOffset, start.anchoredPosition.y);
-            go.GetComponent<Image>().sprite = Wood("buttons/button_large_normal");
-            var button = go.GetComponent<Button>();
-            button.spriteState = new SpriteState { pressedSprite = Wood("buttons/button_large_pressed") };
-            var label = go.transform.Find("Label").GetComponent<TMP_Text>();
-            label.text = texts != null ? texts.SummaryPermanents : "";
-
-            GrayboxSetup.SetReferences(summary.GetComponent<DaySummaryScreen>(),
-                ("shop", shop.GetComponent<ShopView>()), ("permanentsButton", button), ("permanentsLabel", label));
-            Debug.Log("[Setup] PERMANENTES no resumo do dia (Marco 8b, E4, D-154).");
-            return true;
         }
 
         // ── Peças ───────────────────────────────────────────────────────────────────────────────────────────────
