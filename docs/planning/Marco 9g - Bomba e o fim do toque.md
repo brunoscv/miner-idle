@@ -198,5 +198,6 @@
 | E0 Mockups e a arte | ✅ escolhido o A+C (D-318) | mockups em `tools/ci/out/m9g-e0-*.png`; `bombs.png` sai no próximo setup |
 | E1 A Bomba no núcleo (+ a faixa) | ✅ aprovada em 2026-11-18 (Bruno: "ficou muito, muito bom") | núcleo, testes EditMode (`BombTests`, não rodados: ficam para o fim), a faixa A+C/C, o voo, a explosão e o DBG → Bomba |
 | E2 O toque sai do jogo | ✅ aprovada em 2026-11-18 (Bruno: "Passou") | toque e combo fora do núcleo, da tela, do DBG e dos dados; testes ajustados e compilando (D-320, D-321) |
-| E3 Na tela | 🔍 feita, aguardando o Bruno | a linha Bomba no descanso e na LOJA, o "bum" sintetizado (D-322) e os testes PlayMode (`BombFlowTests`, não rodados: ficam para o fim) |
+| E3 Na tela | ✅ aprovada em 2026-11-18 | a linha Bomba no descanso e na LOJA, o "bum" sintetizado (D-322) e os testes PlayMode (`BombFlowTests`, não rodados: ficam para o fim) |
 | E4 Sessão longa e celular | ⏭️ testes longos do fim (D-317) | — |
+| **Marco** | ✅ **aprovado em 2026-11-18 (D-323)** | a E4 nos testes longos do fim |

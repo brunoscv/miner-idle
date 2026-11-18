@@ -104,6 +104,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 237b1a7699d54f140999f67067e97c42, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 1
     title: Sangue da Montanha
     effectFormat: "Dano {0} \xBB {1}"
@@ -112,6 +115,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: ae2c88312f58091489d4f08697b3b664, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 2
     title: "Cora\xE7\xE3o Ardente"
     effectFormat: "Lascas {0} \xBB {1}"
@@ -120,6 +126,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: dd2b93f7932092947929cb295e9c78b6, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 3
     title: Dedos Nervosos
     effectFormat: "Cr\xEDtico {0} \xBB {1}"
@@ -128,6 +137,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 1e0fda90ff6b45e48afb7256637c7845, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 7
     title: Dedo Fogoso
     effectFormat: "Dano cr\xEDtico +{0} \xBB +{1}"
@@ -136,6 +148,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: dd843817b8c3c994788784891ac7a1d3, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 4
     title: "Alma dos An\xF5es"
     effectFormat: "Picareta come\xE7a no {0} \xBB {1}"
@@ -144,6 +159,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 2227945f3ef917848a2f088cea8c49b3, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 5
     title: Treinar
     effectFormat: "Dano dele {0} \xBB {1}"
@@ -152,6 +170,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 7703db80fd87bfa40b80f32d0cd5059f, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 8
     title: Atalho
     effectFormat: "Dist\xE2ncia \u2212{0} m \xBB \u2212{1} m"
@@ -160,6 +181,28 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 589a5064e65ed0d4e8bd66cc90e349fa, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
     lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
+  - permanent: 10
+    title: Bomba
+    effectFormat: "{0} {1} \xBB {2}"
+    maxedFormat: '{0} {1}'
+    style: 4
+    icon: {fileID: 21300000, guid: df1bfc0ec197a6d4d894e667041e9211, type: 3}
+    frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    lockedFormat: 
+    levelNames:
+    - Pequena
+    - Pequena Vermelha
+    - Normal
+    - Normal Vermelha
+    - Dinamite
+    - Pacote
+    - Caixa
+    - Barril
+    levelSheet: {fileID: 2800000, guid: 32a2fb0a71a40ad4e8889e874f5c932a, type: 3}
+    levelFrames: 8
   - permanent: 6
     title: "Promo\xE7\xE3o"
     effectFormat: "Come\xE7a a run contratado"
@@ -168,6 +211,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 89c60f64307760344824574e4b010136, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
     lockedFormat: Pede o Treinar no {0}
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   - permanent: 9
     title: Raro Dourado
     effectFormat: "Cartas do raro \xD72 \xBB \xD74"
@@ -176,6 +222,9 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 668680b1b3c6dce4aa974cfa63339e74, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
     lockedFormat: Recorde no andar {0}
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   internTabLabel: "ESTAGI\xC1RIO"
   internEntries:
   - locked: 0
