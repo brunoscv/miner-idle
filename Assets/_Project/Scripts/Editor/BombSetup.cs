@@ -13,7 +13,7 @@ namespace MinersIdle.EditorTools
     /// Descansar e do Próximo Andar, nos dois estilos dos mockups da E0 (o trilho no quadrado, A+C, ligado; o destravar, C,
     /// desligado), o voo da bomba no mundo (<see cref="BombFlightView"/>) e o menu DBG → Bomba
     /// (<see cref="BombDebugPanel"/>). As peças da faixa são as PNGs de <c>Art/UI/Bomb</c> (1 px = 1 px da referência).
-    /// Só cria o que falta.
+    /// Na E3, a linha Bomba no catálogo da loja (descanso e consulta da LOJA, D-314). Só cria o que falta.
     /// </summary>
     static class BombSetup
     {
@@ -51,6 +51,14 @@ namespace MinersIdle.EditorTools
         const string AutoName = "BombAuto", AutoLabel = "Automática";
         const string StyleName = "BombStyle", StyleLabel = "Estilo";
 
+        // A linha Bomba no descanso e na LOJA (E3, D-314, mockup m9g-e0-descanso).
+        const string ShopCatalogPath = "Assets/_Project/Data/ShopCatalog.asset";
+        const string RowTitle = "Bomba";
+        const string RowEffect = "{0} {1} » {2}";
+        const string RowMaxed = "{0} {1}";
+        static readonly string[] BombNames =
+            { "Pequena", "Pequena Vermelha", "Normal", "Normal Vermelha", "Dinamite", "Pacote", "Caixa", "Barril" };
+
         static Sprite Piece(string name) => AssetDatabase.LoadAssetAtPath<Sprite>(ArtFolder + name + ".png");
 
         public static bool EnsureInScene()
@@ -60,7 +68,8 @@ namespace MinersIdle.EditorTools
             if (safeArea == null || runner == null) return false;
 
             ConfigureArt();
-            bool changed = EnsureSlider(safeArea, runner);
+            bool changed = EnsureShopRow();
+            changed |= EnsureSlider(safeArea, runner);
             changed |= EnsureFlight(safeArea, runner);
             changed |= EnsureDebugMenu(safeArea, runner);
             return changed;
@@ -74,6 +83,50 @@ namespace MinersIdle.EditorTools
                 if (System.IO.File.Exists(ArtFolder + name + ".png")) changed += UiSkinSetup.ConfigureSprite(ArtFolder + name + ".png", Vector4.zero);
             if (System.IO.File.Exists(BombArtSetup.SheetPath)) changed += UiSkinSetup.ConfigureSprite(BombArtSetup.SheetPath, Vector4.zero);
             if (changed > 0) Debug.Log($"[Setup] Bomba: peças da faixa configuradas (pixel art): {changed}.");
+        }
+
+        // ── A linha Bomba (E3) ───────────────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// A linha Bomba no catálogo das permanentes, logo depois do Atalho (antes da Promoção, como no mockup): "Pequena 10%
+        /// » 20%", o ícone da bomba comprada (da folha) e a moldura dourada. A % vem do balanço, pela simulação.
+        /// </summary>
+        static bool EnsureShopRow()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(ShopCatalogPath);
+            if (catalog == null) return false;
+            var so = new SerializedObject(catalog);
+            var entries = so.FindProperty("permanentEntries");
+            if (entries.arraySize == 0) return false;
+            int index = entries.arraySize;
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var existing = (MinersIdle.Core.PermanentId)entries.GetArrayElementAtIndex(i).FindPropertyRelative("permanent").enumValueIndex;
+                if (existing == MinersIdle.Core.PermanentId.Bomb) return false;
+                if (existing == MinersIdle.Core.PermanentId.Shortcut) index = i + 1;
+            }
+
+            entries.InsertArrayElementAtIndex(index);
+            var entry = entries.GetArrayElementAtIndex(index);
+            entry.FindPropertyRelative("permanent").enumValueIndex = (int)MinersIdle.Core.PermanentId.Bomb;
+            entry.FindPropertyRelative("title").stringValue = RowTitle;
+            entry.FindPropertyRelative("effectFormat").stringValue = RowEffect;
+            entry.FindPropertyRelative("maxedFormat").stringValue = RowMaxed;
+            entry.FindPropertyRelative("lockedFormat").stringValue = "";
+            entry.FindPropertyRelative("style").enumValueIndex = (int)ShopCatalog.EffectStyle.Percent;
+            var names = entry.FindPropertyRelative("levelNames");
+            names.arraySize = BombNames.Length;
+            for (int i = 0; i < BombNames.Length; i++) names.GetArrayElementAtIndex(i).stringValue = BombNames[i];
+            entry.FindPropertyRelative("levelSheet").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture2D>(BombArtSetup.SheetPath);
+            entry.FindPropertyRelative("levelFrames").intValue = BombNames.Length;
+            var (icon, frame) = PermanentShopSetup.ArtFor(MinersIdle.Core.PermanentId.Bomb);
+            entry.FindPropertyRelative("icon").objectReferenceValue = icon;
+            entry.FindPropertyRelative("frame").objectReferenceValue = frame;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] Descanso e LOJA: a linha Bomba depois do Atalho (M9g E3, D-314).");
+            return true;
         }
 
         // ── A faixa ──────────────────────────────────────────────────────────────────────────────────────────────────

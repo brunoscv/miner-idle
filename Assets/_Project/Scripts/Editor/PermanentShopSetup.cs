@@ -251,6 +251,8 @@ namespace MinersIdle.EditorTools
                 // M9e E3 (P4): o Raro Dourado, o cristal da carta em dourado (lendário).
                 case PermanentId.GoldenRare:
                     return (Load(BoostSetup.GoldenIconPath), Frame("slot_rarity_legendary"));
+                // M9g E3 (D-314, D-315): a Bomba, o icon_bomb do Bruno na moldura dourada (lendário), como no mockup.
+                case PermanentId.Bomb: return (Load(BombArtSetup.SourcePath), Frame("slot_rarity_legendary"));
                 default: return (null, null);
             }
         }

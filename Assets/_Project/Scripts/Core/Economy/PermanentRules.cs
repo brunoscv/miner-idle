@@ -15,7 +15,7 @@ namespace MinersIdle.Core
         MountainBlood,
         /// <summary>Coração Ardente: as lascas de cada quebra multiplicam por (1 + efeito × nível) (GDD v7: 0,5 = +50%).</summary>
         BurningHeart,
-        /// <summary>Dedos Nervosos: soma efeito × nível na chance de crítico do golpe e do toque (GDD v7: 0,05 = +5%).</summary>
+        /// <summary>Dedos Nervosos: soma efeito × nível na chance de crítico do golpe (GDD v7: 0,05 = +5%; o toque saiu no M9g).</summary>
         NervousFingers,
         /// <summary>Alma dos Anões: a run começa com a Picareta em efeito × nível níveis, como se comprada (GDD v7: 1).</summary>
         DwarfSoul,

@@ -128,6 +128,24 @@
   - deslizar para a esquerda ou para cima não lança; tocar no corredor não tira vida;
   - comprar a Pequena Vermelha no descanso e ver os 20%; a Bomba automática do DBG.
 
+**Feito (2026-11-18):**
+
+- **A linha Bomba** (D-322), no descanso e na consulta da LOJA, entre o Atalho e a Promoção, com a moldura dourada.
+  - O texto é "Pequena 10% » 20%": o nome e a % da bomba de agora, e a % da próxima.
+  - No Barril, e na LOJA durante a run, mostra só a de agora ("Pequena Vermelha 20%").
+  - O ícone é a bomba comprada, recortado do `bombs.png`.
+  - A % vem do balanço: a prévia da linha, na simulação, troca o nível pela fração da bomba (`PreviewPermanent`). Os nomes ficam no catálogo da loja (`levelNames`).
+  - O setup cria a linha no `ShopCatalog` (`BombSetup`).
+- **O "bum" da explosão** (D-316, D-322): um som novo sintetizado (`Sfx.Explosion`): um estalo, um grave descendo e um estrondo de terra que vai abafando, em 0,46 s. Sai o som da quebra tocado mais grave, que era o provisório da E1.
+- **Testes PlayMode** em `BombFlowTests`, com o dedo simulado por eventos de ponteiro na faixa:
+  - arrastar para a direita com a bomba cheia lança, e cada cristal no alcance perde 10% da vida máxima; toca o "bum";
+  - vazia não lança, e para a esquerda, para cima ou para baixo também não;
+  - 20 toques no corredor não tiram vida;
+  - no descanso, a linha mostra "Pequena 10% » 20%" e o preço 11; comprar passa para "Pequena Vermelha 20% » 30%" e 12, e a bomba seguinte tira 20%; na LOJA da run, só consulta;
+  - DBG → Bomba → Automática lança ao encher, de novo a cada carga.
+- `PermanentShopTests` passa a contar 11 permanentes (com a Bomba).
+- Tudo compila (núcleo, jogo, tela, Editor, EditMode e PlayMode). Os testes não foram rodados: ficam para o fim. A linha só entra no catálogo quando o setup rodar.
+
 ### E4 — Sessão longa e celular
 
 - Vai para os **testes longos do fim** (D-317), junto com a E6 do M9b reescrita.
@@ -137,7 +155,12 @@
 - **E0:** abrir os mockups em `tools/ci/out/m9g-e0-*.png`.
 - **E1 (com a faixa):** aplicar o setup (Tools → Miners Idle → Projeto → Aplicar configuração do projeto), dar Play na cena Game, esperar a faixa encher (5 s) e arrastar o quadrado da bomba até o fim. DBG → Bomba → **Estilo** troca A+C e C. DBG → Bomba → **Lançar** e ver a vida dos cristais da tela cair a % da bomba (com a barra de vida do DBG → Andar ligada, para ver). **Próxima bomba** até o Barril e ver tudo quebrar de uma vez.
 - **E2:** aplicar o setup e dar Play na cena Game. Tocar no cristal: não tira vida nem mostra o "xN", só a faísca do dedo. DBG → Efeitos sem "Toques auto"; DBG → Bônus sem os atalhos do combo, com o cabeçalho "Dano +x%"; DBG → Cálculos sem "Acúmulo". Lançar a bomba enquanto o anão bate: ele termina a picaretada parado antes de correr (D-320).
-- **E3:** deslizar da esquerda para a direita a cada 5 s por alguns andares; comprar a Pequena Vermelha no descanso (DBG → Dia → +100 vermelhas); DBG → Bomba → **Bomba automática** para ver o jogo andar sozinho com a bomba.
+- **E3:** aplicar o setup (Tools → Miners Idle → Projeto → Aplicar configuração do projeto) e dar Play na cena Game.
+  1. Deslizar a bomba da esquerda para a direita a cada 5 s por alguns andares e ouvir o "bum" novo na explosão.
+  2. Abrir a LOJA → PERMANENTES: a linha **Bomba** aparece entre o Atalho e a Promoção, só consulta, com "Pequena 10%".
+  3. DBG → Dia → +100 vermelhas e descansar. Na linha Bomba: "nv 0/7", "Pequena 10% » 20%" e 11. Comprar: "Pequena Vermelha 20% » 30%", 12, e o ícone fica vermelho.
+  4. INICIAR e lançar uma bomba: com a barra de vida do DBG → Andar ligada, o cristal perde 20%.
+  5. DBG → Bomba → **Automática** e ver o jogo andar sozinho com a bomba.
 
 ## Critério de pronto
 
@@ -175,5 +198,5 @@
 | E0 Mockups e a arte | ✅ escolhido o A+C (D-318) | mockups em `tools/ci/out/m9g-e0-*.png`; `bombs.png` sai no próximo setup |
 | E1 A Bomba no núcleo (+ a faixa) | ✅ aprovada em 2026-11-18 (Bruno: "ficou muito, muito bom") | núcleo, testes EditMode (`BombTests`, não rodados: ficam para o fim), a faixa A+C/C, o voo, a explosão e o DBG → Bomba |
 | E2 O toque sai do jogo | ✅ aprovada em 2026-11-18 (Bruno: "Passou") | toque e combo fora do núcleo, da tela, do DBG e dos dados; testes ajustados e compilando (D-320, D-321) |
-| E3 Na tela | ⏳ | — |
+| E3 Na tela | 🔍 feita, aguardando o Bruno | a linha Bomba no descanso e na LOJA, o "bum" sintetizado (D-322) e os testes PlayMode (`BombFlowTests`, não rodados: ficam para o fim) |
 | E4 Sessão longa e celular | ⏭️ testes longos do fim (D-317) | — |

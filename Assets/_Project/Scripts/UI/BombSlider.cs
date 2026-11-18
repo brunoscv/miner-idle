@@ -76,6 +76,10 @@ namespace MinersIdle.UI
         /// <summary>Quantas bombas o deslize lançou (para os testes).</summary>
         public int Launches { get; private set; }
 
+        /// <summary>O botão que o dedo pega e a faixa em que ele anda (para os testes acharem onde tocar).</summary>
+        public RectTransform Knob => knob;
+        public RectTransform Track => track;
+
         float HalfKnob => knob.rect.width * 0.5f;
         float MinX => track.rect.xMin + inset + HalfKnob;
         float MaxX => track.rect.xMax - inset - HalfKnob;

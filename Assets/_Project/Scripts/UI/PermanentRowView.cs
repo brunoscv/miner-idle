@@ -12,6 +12,8 @@ namespace MinersIdle.UI
     /// efeito "de » para" e o botão Comprar com o custo em lascas vermelhas (o cristal vermelho ao lado do número). No
     /// limite, a linha fica apagada, com "máx." e a moldura cinza; quem a põe no fim da lista é a <see cref="ShopView"/>.
     /// Só mostra o que a <see cref="PermanentPreview"/> diz. M7 (E3): a linha que espera outra (a Promoção) mostra o motivo.
+    /// M9g (E3, D-314): a linha com um nome por nível (a Bomba) mostra o nome e o valor ("Pequena 10% » 20%"), e o ícone
+    /// segue o nível, recortado da folha (só quando o nível muda).
     /// </summary>
     public sealed class PermanentRowView : MonoBehaviour
     {
@@ -37,6 +39,8 @@ namespace MinersIdle.UI
         ShopCatalog _catalog;
         ShopCatalog.PermanentEntry _entry;
         Action<PermanentId> _buy;
+        Sprite[] _levelIcons;
+        int _shownIconLevel = -1;
 
         public PermanentId Permanent => _entry.Permanent;
         public bool IsMaxed { get; private set; }
@@ -74,7 +78,13 @@ namespace MinersIdle.UI
             buyButton.onClick.AddListener(OnBuyClicked);
         }
 
-        void OnDestroy() => buyButton.onClick.RemoveListener(OnBuyClicked);
+        void OnDestroy()
+        {
+            buyButton.onClick.RemoveListener(OnBuyClicked);
+            if (_levelIcons == null) return;
+            foreach (var sprite in _levelIcons)
+                if (sprite != null) Destroy(sprite);
+        }
 
         void OnBuyClicked() => _buy?.Invoke(_entry.Permanent);
 
@@ -84,6 +94,7 @@ namespace MinersIdle.UI
             if (!preview.IsEnabled) return;
 
             level.text = string.Format(_catalog.LevelFormat, preview.Level, preview.MaxLevel);
+            ShowLevelIcon(preview.Level);
             bool buyable = preview.State == UpgradeButtonState.Purchasable;
             buyButton.interactable = buyable;
             buyLabel.color = buyable ? buyableLabelColor : unavailableLabelColor;
@@ -97,7 +108,7 @@ namespace MinersIdle.UI
 
             if (IsMaxed)
             {
-                effect.text = string.Format(_entry.MaxedFormat, Format(preview.CurrentValue));
+                effect.text = Effect(_entry.MaxedFormat, preview);
                 buyLabel.text = _catalog.MaxedLabel;
                 return;
             }
@@ -112,15 +123,55 @@ namespace MinersIdle.UI
 
             if (IsConsult)
             {
-                effect.text = string.Format(_entry.MaxedFormat, Format(preview.CurrentValue));
+                effect.text = Effect(_entry.MaxedFormat, preview);
                 buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
                 return;
             }
 
-            effect.text = string.Format(_entry.EffectFormat, Format(preview.CurrentValue), Format(preview.NextValue));
+            effect.text = Effect(_entry.EffectFormat, preview);
             buyLabel.text = NumberFormatter.FormatShards(preview.NextCost.Value);
         }
 
         string Format(double value) => _catalog.FormatValue(_entry.Style, value);
+
+        /// <summary>
+        /// O texto do efeito: {0} = o valor de agora e {1} = o de depois; numa linha com nomes por nível (a Bomba), {0} = o
+        /// nome de agora, {1} = o valor de agora, {2} = o de depois e {3} = o nome de depois.
+        /// </summary>
+        string Effect(string format, PermanentPreview preview)
+        {
+            if (!_entry.HasLevelNames) return string.Format(format, Format(preview.CurrentValue), Format(preview.NextValue));
+            return string.Format(format, LevelName(preview.Level), Format(preview.CurrentValue), Format(preview.NextValue),
+                                 LevelName(preview.Level + 1));
+        }
+
+        string LevelName(int index)
+        {
+            var names = _entry.LevelNames;
+            return names[Mathf.Clamp(index, 0, names.Count - 1)];
+        }
+
+        /// <summary>O ícone do nível, recortado da folha uma vez por nível (a Bomba: a bomba comprada).</summary>
+        void ShowLevelIcon(int index)
+        {
+            var sheet = _entry.LevelSheet;
+            int frames = _entry.LevelFrames;
+            if (sheet == null || frames <= 0 || index == _shownIconLevel) return;
+            _shownIconLevel = index;
+            index = Mathf.Clamp(index, 0, frames - 1);
+            _levelIcons ??= new Sprite[frames];
+            if (_levelIcons[index] == null)
+            {
+                float width = (float)sheet.width / frames;
+                _levelIcons[index] = Sprite.Create(sheet, new Rect(index * width, 0f, width, sheet.height), new Vector2(0.5f, 0.5f));
+                _levelIcons[index].name = sheet.name + "_" + index;
+            }
+            icon.sprite = _levelIcons[index];
+            icon.color = Color.white;
+            icon.preserveAspect = true;
+        }
+
+        /// <summary>O ícone que a linha mostra agora (para os testes).</summary>
+        public Sprite IconSprite => icon.sprite;
     }
 }

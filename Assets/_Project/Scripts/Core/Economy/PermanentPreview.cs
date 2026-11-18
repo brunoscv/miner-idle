@@ -42,6 +42,13 @@ namespace MinersIdle.Core
         /// <summary>Com <see cref="UpgradeButtonState.Locked"/>: o nível que a outra linha precisa ter (Treinar 10 para a Promoção).</summary>
         public int RequiredLevel { get; }
 
+        /// <summary>
+        /// A mesma prévia com outros valores de agora e de depois (M9g, D-314): a linha Bomba mostra a fração da bomba em
+        /// uso e a da próxima, que só a simulação conhece (as regras da bomba ficam no golpe, não nas permanentes).
+        /// </summary>
+        public PermanentPreview WithValues(double currentValue, double nextValue) =>
+            new PermanentPreview(Id, Level, MaxLevel, NextCost, State, currentValue, nextValue, RequiredLevel);
+
         public bool IsMaxed => State == UpgradeButtonState.Maxed;
         /// <summary>Linha desligada no balanço ativo (limite 0, o GDD v5): some da aba.</summary>
         public bool IsEnabled => MaxLevel > 0;

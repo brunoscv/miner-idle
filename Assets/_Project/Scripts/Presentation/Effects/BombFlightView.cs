@@ -7,7 +7,7 @@ namespace MinersIdle.Presentation
     /// <summary>
     /// O voo da Bomba (M9g, D-308, D-316): ao lançar, uma bomba sai da faixa e faz um arco até cada cristal no alcance,
     /// no tempo do voo da simulação (0,4 s; com o Tempo ×5 do DBG, mais rápido também). Na chegada, as bombas somem e o
-    /// estouro é do <see cref="MiningFeedbackView"/>; aqui só sai o som. Uma troca de andar no ar também as apaga. O código
+    /// estouro é do <see cref="MiningFeedbackView"/>; aqui só sai o som (o "bum" sintetizado, E3, D-316). Uma troca de andar no ar também as apaga. O código
     /// é dono do tempo: a posição vem de quanto falta do voo, não de um relógio próprio.
     /// </summary>
     public sealed class BombFlightView : MiningViewBase
@@ -28,7 +28,6 @@ namespace MinersIdle.Presentation
         [SerializeField] float arcHeight = 3f;
         [Tooltip("Voltas da bomba no ar.")]
         [SerializeField] float spins = 0.75f;
-        [SerializeField] float explosionPitch = 0.55f;
 
         readonly List<Crystal> _targets = new List<Crystal>();
         Vector3 _start;
@@ -69,7 +68,7 @@ namespace MinersIdle.Presentation
 
         void OnLanded(IReadOnlyList<Crystal> hit)
         {
-            if (hit.Count > 0 && soundBoard != null) soundBoard.Play(Sfx.Break, explosionPitch);
+            if (hit.Count > 0 && soundBoard != null) soundBoard.Play(Sfx.Explosion);
             Hide();
         }
 

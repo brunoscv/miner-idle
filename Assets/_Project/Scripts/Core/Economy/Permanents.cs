@@ -62,7 +62,7 @@ namespace MinersIdle.Core
         /// </summary>
         public double RewardBonus => Effect(PermanentId.BurningHeart);
 
-        /// <summary>Dedos Nervosos: chance de crítico a mais, no golpe e no toque (D-158).</summary>
+        /// <summary>Dedos Nervosos: chance de crítico a mais no golpe (D-158; o toque saiu no M9g, D-311).</summary>
         public double CritBonus => Effect(PermanentId.NervousFingers);
 
         /// <summary>Dedo Fogoso: o que soma no dano do crítico (M9d; GDD v8.2: +0,5 por nível).</summary>

@@ -1307,7 +1307,14 @@ namespace MinersIdle.Core
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id, _permanents);
 
         /// <summary>O que a aba das permanentes mostra da linha (Marco 8b, E4).</summary>
-        public PermanentPreview PreviewPermanent(PermanentId id) => PermanentPreview.For(_permanents, id, shopOpen: IsResting);
+        public PermanentPreview PreviewPermanent(PermanentId id)
+        {
+            var preview = PermanentPreview.For(_permanents, id, shopOpen: IsResting);
+            // A Bomba (M9g, D-314): o valor é a fração da bomba em uso e a da próxima (a Pequena: 0,1 » 0,2), não o nível.
+            if (id != PermanentId.Bomb || !HasBomb) return preview;
+            int index = BombIndex;
+            return preview.WithValues(_strike.Bombs.FractionAt(index), _strike.Bombs.FractionAt(preview.IsMaxed ? index : index + 1));
+        }
 
         /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, alvo (o primeiro da fila), golpe.</summary>
         void ProcessDueEvents()

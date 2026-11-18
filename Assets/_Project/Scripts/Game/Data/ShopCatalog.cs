@@ -22,6 +22,8 @@ namespace MinersIdle.Game
             BonusPercent,
             /// <summary>Fração mostrada em %: 0,05 → "+5%" (a chance do Crítico, D-136; os bônus das permanentes, D-158).</summary>
             ChancePercent,
+            /// <summary>Fração mostrada em % sem sinal: 0,1 → "10%" (a bomba da linha Bomba, M9g, D-314).</summary>
+            Percent,
         }
 
         [Serializable]
@@ -78,6 +80,12 @@ namespace MinersIdle.Game
             [SerializeField] Sprite frame;
             [Tooltip("Linha que espera outra (a Promoção, M7): {0} = o nível que a outra precisa ter.")]
             [SerializeField] string lockedFormat;
+            [Tooltip("Um nome por nível (a Bomba, M9g, D-314: o nível 0 é a Pequena). Com nomes, os textos recebem {0} = o " +
+                     "nome de agora, {1} = o valor de agora, {2} = o de depois, {3} = o nome de depois. Vazio = sem nomes.")]
+            [SerializeField] string[] levelNames = Array.Empty<string>();
+            [Tooltip("Uma folha com um quadro por nível, lado a lado (a Bomba: bombs.png); o ícone segue o nível. Vazio = o ícone fixo.")]
+            [SerializeField] Texture2D levelSheet;
+            [SerializeField] int levelFrames;
 
             public PermanentId Permanent => permanent;
             public string Title => title;
@@ -87,6 +95,10 @@ namespace MinersIdle.Game
             public Sprite Icon => icon;
             public Sprite Frame => frame;
             public string LockedFormat => lockedFormat;
+            public System.Collections.Generic.IReadOnlyList<string> LevelNames => levelNames ?? Array.Empty<string>();
+            public bool HasLevelNames => levelNames != null && levelNames.Length > 0;
+            public Texture2D LevelSheet => levelSheet;
+            public int LevelFrames => levelFrames;
         }
 
         [SerializeField] string shopTitle;
@@ -147,6 +159,8 @@ namespace MinersIdle.Game
                     return string.Format(bonusPercentFormat, NumberFormatter.Format((value - 1) * 100));
                 case EffectStyle.ChancePercent:
                     return string.Format(bonusPercentFormat, NumberFormatter.Format(value * 100));
+                case EffectStyle.Percent:
+                    return NumberFormatter.FormatPercent(value);
                 default:
                     return NumberFormatter.Format(value);
             }

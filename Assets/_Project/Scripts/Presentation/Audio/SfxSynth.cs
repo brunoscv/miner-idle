@@ -12,6 +12,8 @@ namespace MinersIdle.Presentation
         Milestone,
         /// <summary>A descida de um andar (M9c E0, transição B): um "vum" grave caindo.</summary>
         FloorDown,
+        /// <summary>A bomba explodindo (M9g E3, D-316): um "bum" grave com estrondo de terra e o estalo do começo.</summary>
+        Explosion,
     }
 
     /// <summary>
@@ -30,7 +32,12 @@ namespace MinersIdle.Presentation
         /// volume que cresce e some: o "shiiiu" da picareta cortando o ar (M6, pedido do Bruno: o "tum" soava como uma
         /// bolinha quicando).
         /// </summary>
-        enum Wave { Square, Triangle, Noise, Whoosh }
+        /// <see cref="Wave.Rumble"/>: ruído só com o grave, o corte descendo de <c>FromHz</c> a <c>ToHz</c>: o estrondo da
+        /// explosão (M9g, D-316), que vai abafando.
+        enum Wave { Square, Triangle, Noise, Whoosh, Rumble }
+
+        /// <summary>O ruído só com o grave perde volume; isto o devolve ao nível das outras ondas.</summary>
+        const double RumbleGain = 3.0;
 
         /// <summary>Abaixo disto o "shiiiu" fica sem grave (é o que o separa de um sopro abafado).</summary>
         const double WhooshLowCutHz = 700;
@@ -107,6 +114,14 @@ namespace MinersIdle.Presentation
                         new Note(0f, 0.3f, Wave.Square, 85f, 42f, 0.07f),
                         new Note(0.02f, 0.12f, Wave.Noise, 0f, 0f, 0.08f),
                     };
+                case Sfx.Explosion: // "bum": o estalo, o grave caindo e a terra abafando
+                    return new[]
+                    {
+                        new Note(0f, 0.05f, Wave.Noise, 0f, 0f, 0.3f),
+                        new Note(0f, 0.46f, Wave.Rumble, 1800f, 140f, 0.55f),
+                        new Note(0f, 0.4f, Wave.Triangle, 110f, 34f, 0.55f),
+                        new Note(0f, 0.22f, Wave.Square, 72f, 38f, 0.08f),
+                    };
                 default:
                     throw new ArgumentOutOfRangeException(nameof(sfx), sfx, null);
             }
@@ -124,7 +139,7 @@ namespace MinersIdle.Presentation
                 int first = (int)(note.Start * sampleRate);
                 int count = (int)(note.Duration * sampleRate);
                 double phase = 0;
-                double bright = 0, dull = 0; // filtros do Whoosh (passa-baixa de um polo)
+                double bright = 0, dull = 0; // filtros do Whoosh e do Rumble (passa-baixa de um polo)
                 double dullCoefficient = 1 - Math.Exp(-2 * Math.PI * WhooshLowCutHz / sampleRate);
                 for (int i = 0; i < count && first + i < samples.Length; i++)
                 {
@@ -148,6 +163,14 @@ namespace MinersIdle.Presentation
                             value = (float)(bright - dull);
                             samples[first + i] += value * note.Volume * Swell(t);
                             continue;
+                        }
+                        case Wave.Rumble:
+                        {
+                            noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5; // xorshift32
+                            double white = noise / (double)uint.MaxValue * 2 - 1;
+                            bright += (1 - Math.Exp(-2 * Math.PI * hz / sampleRate)) * (white - bright);
+                            value = (float)(bright * RumbleGain);
+                            break;
                         }
                         default:
                             noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5; // xorshift32
