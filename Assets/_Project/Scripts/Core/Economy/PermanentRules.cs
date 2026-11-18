@@ -41,6 +41,11 @@ namespace MinersIdle.Core
         /// +20%) para sempre. Só se compra a partir do andar do raro (<see cref="PermanentRules.GoldenRareFloor"/>: 10).
         /// </summary>
         GoldenRare,
+        /// <summary>
+        /// Bomba (GDD v8, M9g, D-240, D-255, D-314): o nível é a bomba em uso (0 = a Pequena, de graça; 7 = o Barril). Cada
+        /// compra troca pela próxima, a <c>10 + 2^(n−1)</c> lascas vermelhas. Nos fins da lista do enum, como o Atalho.
+        /// </summary>
+        Bomb,
     }
 
     /// <summary>

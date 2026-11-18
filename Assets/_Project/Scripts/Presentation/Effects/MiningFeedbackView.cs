@@ -24,6 +24,9 @@ namespace MinersIdle.Presentation
     ///
     /// M9b (E2, D-215): ao zerar o combo com bônus, o ganho sobe de onde estava o "xN" ("+25% DANO", "CRÍTICO GARANTIDO");
     /// no marco com texto grande no catálogo (o ×100), "FRENESI!" maior, com tremor leve. Sem vibração.
+    ///
+    /// M9g (D-316): a bomba estoura em cada cristal que pegou: faíscas laranja e amarelas, o cristal treme forte, o dano
+    /// sobe em laranja e a tela treme uma vez por bomba (não uma por cristal).
     /// </summary>
     public sealed class MiningFeedbackView : MiningViewBase
     {
@@ -33,6 +36,7 @@ namespace MinersIdle.Presentation
         static readonly Color MilestoneColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         static readonly Color InternColor = new Color32(0xB8, 0xBC, 0xC2, 0xFF);
         static readonly Color HeadlineColor = new Color32(0xE8, 0x4A, 0x2A, 0xFF);
+        static readonly Color BombColor = new Color32(0xFF, 0x7A, 0x1F, 0xFF);
 
         const float ComboPulseSeconds = 0.15f;
 
@@ -67,6 +71,9 @@ namespace MinersIdle.Presentation
         [Tooltip("No texto grande do ganho (o \"FRENESI!\" do ×100, D-215).")]
         [SerializeField] float headlineShake = 0.35f;
         [SerializeField] float headlineShakeSeconds = 0.35f;
+        [Tooltip("O estouro da bomba (M9g, D-316): uma vez por lançamento.")]
+        [SerializeField] float bombShake = 0.6f;
+        [SerializeField] float bombShakeSeconds = 0.3f;
         [Tooltip("Com muitos toques por segundo, os tremores caem até esta fração (1 = nunca diminuem).")]
         [SerializeField, Range(0f, 1f)] float minCalm = 0.6f;
 
@@ -119,6 +126,8 @@ namespace MinersIdle.Presentation
             simulation.ComboBonusesGranted += OnBonusesGranted;
             simulation.RareCardApplied += OnRareCardApplied;
             simulation.AdBoostGranted += OnAdBoostGranted;
+            simulation.BombHitLanded += OnBombHit;
+            simulation.BombLanded += OnBombLanded;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -131,6 +140,8 @@ namespace MinersIdle.Presentation
             simulation.ComboBonusesGranted -= OnBonusesGranted;
             simulation.RareCardApplied -= OnRareCardApplied;
             simulation.AdBoostGranted -= OnAdBoostGranted;
+            simulation.BombHitLanded -= OnBombHit;
+            simulation.BombLanded -= OnBombLanded;
         }
 
         protected override void Rebuild(MiningSimulation simulation) => OnComboChanged(simulation.Combo);
@@ -191,6 +202,30 @@ namespace MinersIdle.Presentation
             var near = at + (Vector3)(Random.insideUnitCircle * 0.4f * sizeScale) + Vector3.up * (0.4f * sizeScale);
             floatingTexts.Show(NumberFormatter.Format(hit.Damage), near, InternColor, 0.45f * sizeScale, 0.7f, 0.8f * sizeScale);
             InternNumbersShown++;
+        }
+
+        /// <summary>Quantos estouros de bomba já saíram, um por cristal atingido (para os testes).</summary>
+        public int BombBlastsShown { get; private set; }
+
+        /// <summary>O estouro da bomba num cristal (M9g, D-316): fogo e o dano em laranja, sobre o cristal.</summary>
+        void OnBombHit(MiningHit hit)
+        {
+            var at = stage.CrystalOnScreen(hit.Crystal);
+            float size = SparkBurst.DefaultSize * sizeScale;
+            stage.Shake(hit.Crystal, 0.2f * _intensity);
+            stage.FlashCrystal(hit.Crystal); // o clarão em cada cristal atingido
+            ShowCrack(hit, at);
+            sparks.Emit(at, Count(16), BombColor, 6f * sizeScale, size * 1.6f, 0.5f);
+            sparks.Emit(at, Count(10), CriticalColor, 4f * sizeScale, size * 1.1f, 0.35f);
+
+            var near = at + Vector3.up * (0.6f * sizeScale);
+            floatingTexts.Show(NumberFormatter.Format(hit.Damage), near, BombColor, 0.7f * sizeScale, 0.9f, 1f * sizeScale);
+            BombBlastsShown++;
+        }
+
+        void OnBombLanded(IReadOnlyList<Crystal> hit)
+        {
+            if (hit.Count > 0) screenShake.Shake(bombShake * _intensity, bombShakeSeconds);
         }
 
         /// <summary>Quantas rachaduras novas mostraram o brilho e as lascas (para os testes).</summary>

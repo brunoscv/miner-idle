@@ -55,6 +55,15 @@ namespace MinersIdle.Core
         // Os marcos que o último combo deu (M9b), reaproveitada para não alocar a cada combo.
         readonly List<ComboBonusRule> _granted = new List<ComboBonusRule>();
 
+        // A Bomba (M9g, D-240, D-307, D-308, D-313): segundos de carga, a bomba no ar (quanto falta e quanto ela tira) e as
+        // listas reaproveitadas dos cristais no alcance e dos que a explosão quebrou (sem alocar a cada bomba).
+        double _bombCharge;
+        bool _bombInFlight;
+        double _bombFlightLeft;
+        double _bombFlightFraction;
+        readonly List<Crystal> _bombTargets = new List<Crystal>();
+        readonly List<Crystal> _bombBroken = new List<Crystal>();
+
         // D-126: se a picareta já desceu no alvo atual, e quanto falta do golpe depois que o toque quebrou o cristal.
         bool _swungAtTarget;
         double _recoveryLeft;
@@ -87,6 +96,7 @@ namespace MinersIdle.Core
             _rareRandom = rareRandom ?? new SeededRandom(RareFallbackSeed);
             RareRhythm = rareRhythm;
             _strike = strike ?? StrikeRules.NoCritical();
+            _bombCharge = _strike.Bombs.ChargeSeconds; // D-313: a run começa com a bomba cheia
             _tapTimes = new double[_strike.MaxTapsPerSecond];
             _state = state ?? new GameState();
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
@@ -192,6 +202,22 @@ namespace MinersIdle.Core
 
         /// <summary>A transição de andar acabou: o jogo volta a correr.</summary>
         public event Action FloorTransitionEnded;
+
+        /// <summary>
+        /// A bomba saiu (M9g, D-308), com os cristais no alcance agora (para onde ela voa). A lista é reaproveitada: quem
+        /// escuta copia o que precisar.
+        /// </summary>
+        public event Action<IReadOnlyList<Crystal>> BombThrown;
+        /// <summary>
+        /// A bomba tirou vida de um cristal na chegada (M9g): a % da vida máxima, sem crítico. Sai à parte do
+        /// <see cref="HitLanded"/>, que continua do anão e do toque.
+        /// </summary>
+        public event Action<MiningHit> BombHitLanded;
+        /// <summary>
+        /// A bomba explodiu (M9g), com os cristais que ela atingiu (vazia se a fila mudou no ar, numa troca de andar). Vem
+        /// depois de cada <see cref="BombHitLanded"/> e antes das quebras. A lista é reaproveitada.
+        /// </summary>
+        public event Action<IReadOnlyList<Crystal>> BombLanded;
 
         public MiningRules Rules => _rules;
         public EconomyRules Economy => _economy;
@@ -614,6 +640,141 @@ namespace MinersIdle.Core
             _tapCursor = (_tapCursor + 1) % max;
             if (_tapCount < max) _tapCount++;
             return true;
+        }
+
+        // ── A Bomba (M9g; GDD v8 §2.1, D-240, D-255, D-307, D-308, D-309, D-313) ──────────────────────────────────
+
+        /// <summary>As regras da bomba deste balanço (<see cref="BombRules.None"/> sem bomba).</summary>
+        public BombRules Bombs => _strike.Bombs;
+
+        /// <summary>O balanço tem bomba (GDD v8).</summary>
+        public bool HasBomb => _strike.Bombs.IsEnabled;
+
+        /// <summary>A bomba em uso: 0 = a Pequena; cada compra da linha Bomba passa para a próxima (D-240).</summary>
+        public int BombIndex => Math.Max(0, Math.Min(_strike.Bombs.Count - 1, _permanents.BombLevel));
+
+        /// <summary>A fração da vida máxima que a bomba em uso tira (a Pequena: 0,1).</summary>
+        public double BombFraction => HasBomb ? _strike.Bombs.FractionAt(BombIndex) : 0;
+
+        /// <summary>A carga da bomba, de 0 a 1.</summary>
+        public double BombCharge => HasBomb ? Math.Min(1, _bombCharge / _strike.Bombs.ChargeSeconds) : 0;
+
+        /// <summary>Segundos de jogo até a bomba encher (0 cheia).</summary>
+        public double BombChargeLeft => HasBomb ? Math.Max(0, _strike.Bombs.ChargeSeconds - _bombCharge) : 0;
+
+        /// <summary>A bomba está cheia.</summary>
+        public bool IsBombCharged => HasBomb && _bombCharge >= _strike.Bombs.ChargeSeconds - Epsilon;
+
+        /// <summary>Uma bomba no ar (D-308).</summary>
+        public bool IsBombInFlight => _bombInFlight;
+
+        /// <summary>Segundos de jogo até a bomba no ar explodir (0 sem bomba no ar).</summary>
+        public double BombFlightLeft => _bombInFlight ? _bombFlightLeft : 0;
+
+        /// <summary>
+        /// Atalho do debug (DBG → Bomba → Bomba automática): lança sozinha sempre que enche e há cristal no alcance.
+        /// </summary>
+        public bool AutoBomb { get; set; }
+
+        /// <summary>
+        /// Se a bomba sai agora: cheia, sem outra no ar, fora do descanso e da transição, com algum cristal no alcance
+        /// (D-307: sem cristal, não sai).
+        /// </summary>
+        public bool CanThrowBomb =>
+            IsBombCharged && !_bombInFlight && !IsResting && _floorTransitionLeft <= 0 && HasCrystalInBombReach;
+
+        /// <summary>Algum cristal da fila está no alcance da bomba (<see cref="BombRules.Reach"/> à frente do anão).</summary>
+        public bool HasCrystalInBombReach
+        {
+            get
+            {
+                var front = _track.Front;
+                return front != null && InBombReach(front);
+            }
+        }
+
+        bool InBombReach(Crystal crystal) => crystal.Distance - _miner.Distance <= _strike.Bombs.Reach + Epsilon;
+
+        /// <summary>
+        /// Lança a bomba (D-310: o deslize da esquerda para a direita): a carga zera e a bomba voa
+        /// <see cref="BombRules.FlightSeconds"/>; o dano entra na chegada, nos cristais que estiverem no alcance (D-308).
+        /// <c>false</c> se ela não sai agora (<see cref="CanThrowBomb"/>).
+        /// </summary>
+        public bool ThrowBomb()
+        {
+            if (!CanThrowBomb) return false;
+            _bombCharge = 0;
+            _bombInFlight = true;
+            _bombFlightLeft = _strike.Bombs.FlightSeconds;
+            _bombFlightFraction = BombFraction;
+            CollectBombTargets();
+            BombThrown?.Invoke(_bombTargets);
+            if (_bombFlightLeft <= Epsilon) LandBomb();
+            return true;
+        }
+
+        /// <summary>Atalho do debug (DBG → Bomba → Encher): a bomba cheia na hora.</summary>
+        public void FillBomb()
+        {
+            if (HasBomb) _bombCharge = _strike.Bombs.ChargeSeconds;
+        }
+
+        /// <summary>Os cristais no alcance da bomba agora, do mais perto ao mais longe, na lista reaproveitada.</summary>
+        void CollectBombTargets()
+        {
+            _bombTargets.Clear();
+            var crystals = _track.Crystals;
+            for (int i = 0; i < crystals.Count && InBombReach(crystals[i]); i++) _bombTargets.Add(crystals[i]);
+        }
+
+        /// <summary>
+        /// A bomba chega (D-307, D-308): cada cristal no alcance perde a fração da vida máxima, sem crítico nem bônus
+        /// (D-255); quem zerar quebra e paga como qualquer quebra (D-309), depois de todos apanharem.
+        /// </summary>
+        void LandBomb()
+        {
+            _bombInFlight = false;
+            _bombFlightLeft = 0;
+            CollectBombTargets();
+            _bombBroken.Clear();
+            for (int i = 0; i < _bombTargets.Count; i++)
+            {
+                var crystal = _bombTargets[i];
+                double damage = crystal.MaxHealth * _bombFlightFraction;
+                bool broke = crystal.ApplyDamage(damage);
+                BombHitLanded?.Invoke(new MiningHit(crystal, damage, isTap: false, isCritical: false));
+                if (broke) _bombBroken.Add(crystal);
+            }
+            BombLanded?.Invoke(_bombTargets);
+            for (int i = 0; i < _bombBroken.Count; i++)
+            {
+                var crystal = _bombBroken[i];
+                if (crystal == _miner.Target) Break(crystal, byTap: true); // como o toque: o anão termina o golpe (D-126)
+                else BreakAhead(crystal);
+            }
+        }
+
+        /// <summary>
+        /// A bomba quebrou um cristal da fila que não é o alvo (M9g): sai da fila, paga e conta na barra como qualquer
+        /// quebra (D-309), sem mexer no anão.
+        /// </summary>
+        void BreakAhead(Crystal crystal)
+        {
+            _track.Remove(crystal);
+            _state.RegisterBreak(crystal.Reward * _stats.RewardMultiplier);
+            CrystalBroken?.Invoke(crystal);
+            ShardsChanged?.Invoke(_state.Shards);
+            if (crystal.IsRare) OpenRareWindow();
+        }
+
+        /// <summary>A troca de andar com a bomba no ar (M9g): a fila em que ela ia cair saiu, então ela some sem explodir.</summary>
+        void CancelBomb()
+        {
+            if (!_bombInFlight) return;
+            _bombInFlight = false;
+            _bombFlightLeft = 0;
+            _bombTargets.Clear();
+            BombLanded?.Invoke(_bombTargets);
         }
 
         /// <summary>
@@ -1200,6 +1361,7 @@ namespace MinersIdle.Core
         /// <summary>A fila do andar velho sai; a do novo nasce como a do começo da partida, na tela (D-60).</summary>
         void RefreshQueue()
         {
+            CancelBomb();
             if (_miner.Target != null)
             {
                 _miner.Target = null;
@@ -1296,6 +1458,19 @@ namespace MinersIdle.Core
                     changed = true;
                 }
 
+                if (_bombInFlight && _bombFlightLeft <= Epsilon)
+                {
+                    LandBomb(); // D-308: o dano na chegada
+                    changed = true;
+                    continue; // a explosão pode ter enchido a barra (avanço automático) ou trocado o alvo
+                }
+
+                if (AutoBomb && CanThrowBomb)
+                {
+                    ThrowBomb(); // DBG → Bomba automática
+                    changed = true;
+                }
+
                 if (_track.IsBelowMinimum)
                 {
                     // Fila no mínimo (D-80): repõe na hora, sem mexer no relógio de nascimento.
@@ -1358,6 +1533,8 @@ namespace MinersIdle.Core
 
             next = Math.Min(next, _state.Bonuses.NextExpiry);
             if (_state.RareWindow.IsChoosing) next = Math.Min(next, _state.RareWindow.SecondsLeft);
+            if (_bombInFlight) next = Math.Min(next, Math.Max(0, _bombFlightLeft));
+            if (AutoBomb && HasBomb && !IsBombCharged) next = Math.Min(next, BombChargeLeft); // a bomba automática sai cheia
 
             switch (_miner.State)
             {
@@ -1387,6 +1564,12 @@ namespace MinersIdle.Core
             if (_state.RareWindow.IsChoosing) _state.RareWindow = _state.RareWindow.WithSecondsLeft(_state.RareWindow.SecondsLeft - step);
             // O contador do raro (D-283) só anda aqui: parado no descanso, na transição de andar e com o app fechado.
             if (IsRareCounting) _state.AdvanceRareTimer(step, RareInterval);
+
+            // A bomba (D-313): a carga anda com a run (parada no descanso e na transição, que não passam por aqui) e a do
+            // ar chega mais perto.
+            if (HasBomb && _bombCharge < _strike.Bombs.ChargeSeconds)
+                _bombCharge = Math.Min(_strike.Bombs.ChargeSeconds, _bombCharge + step);
+            if (_bombInFlight) _bombFlightLeft = Math.Max(0, _bombFlightLeft - step);
 
             // Fila cheia ou parede de pé: o relógio de nascimento espera no limite e nasce assim que der.
             _spawnTimer = SpawnWaits ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;

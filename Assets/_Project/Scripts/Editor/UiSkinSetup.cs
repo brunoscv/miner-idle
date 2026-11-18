@@ -125,7 +125,7 @@ namespace MinersIdle.EditorTools
         }
 
         /// <summary>Sprite em pixel art para a UI. Devolve 1 se mudou algo (e reimportou), 0 se já estava certo.</summary>
-        static int ConfigureSprite(string path, Vector4 border)
+        internal static int ConfigureSprite(string path, Vector4 border)
         {
             if (AssetImporter.GetAtPath(path) == null) AssetDatabase.ImportAsset(path);
             if (!(AssetImporter.GetAtPath(path) is TextureImporter importer)) return 0;

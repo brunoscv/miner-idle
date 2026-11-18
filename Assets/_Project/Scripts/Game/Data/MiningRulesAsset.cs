@@ -173,6 +173,18 @@ namespace MinersIdle.Game
         [Tooltip("O teto do offline com as horas extras dos anúncios (D-244: 8 h).")]
         [SerializeField] double adOfflineCapHours;
 
+        [Header("Bomba (M9g; GDD v8 §2.1, D-240, D-307, D-308, D-313)")]
+        [Tooltip("A fração da vida máxima que cada bomba tira, na ordem da compra. GDD v8: Pequena 0,1, Pequena Vermelha 0,2, " +
+                 "Normal 0,3, Normal Vermelha 0,4, Dinamite 0,5, Pacote 0,6, Caixa 0,7, Barril 1. Vazio = sem bomba (até o v7).")]
+        [SerializeField] double[] bombFractions = new double[0];
+        [Tooltip("Segundos de jogo para a bomba encher (GDD v8: 5). Para no descanso e na transição; a run começa cheia (D-313).")]
+        [SerializeField] double bombChargeSeconds = 5;
+        [Tooltip("Segundos da bomba no ar; o dano entra na chegada (D-308: 0,4).")]
+        [SerializeField] double bombFlightSeconds = 0.4;
+        [Tooltip("Até onde, à frente do anão, a bomba atinge os cristais, em un (D-307: os da tela). 4 un = 2 m: uma tela 9:16 " +
+                 "mostra 1,98 m de chão à frente do anão na câmera F1; a 9:20, 2,43 m.")]
+        [SerializeField] double bombReach = 4;
+
         [Header("Dia e melhorias permanentes (Marco 8b; custo em lascas vermelhas, D-158)")]
         [Tooltip("Nível a partir do qual o Descansar aparece e as lascas vermelhas começam (D-138, D-152). GDD v7: 10. 0 desliga.")]
         [SerializeField] int restLevel;
@@ -209,6 +221,9 @@ namespace MinersIdle.Game
         [Tooltip("Raro Dourado (M9e, D-286): compra única; as cartas do raro no tier 2. GDD v8: 500, a partir do andar do raro. " +
                  "0 níveis desliga.")]
         [SerializeField] UpgradeLineValues goldenRare = new UpgradeLineValues(500, 1, 0, 1);
+        [Tooltip("Bomba (M9g, D-255, D-314): cada compra passa para a próxima bomba, a 10 + 2^(n−1) lascas vermelhas (11, 12, " +
+                 "14, 18, 26, 42, 74). GDD v8: 7 níveis. 0 níveis desliga (fica a Pequena).")]
+        [SerializeField] UpgradeLineValues bomb = new UpgradeLineValues(10, 2, 0, 1, CostFormula.OffsetExponential);
 
         /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos não valem no Multiply (v5).</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
@@ -248,7 +263,7 @@ namespace MinersIdle.Game
             return new PermanentRules(restLevel, table, internPromotionTrainingLevel, rareFloor, memory.ToDefinition(), mountainBlood.ToDefinition(),
                                       burningHeart.ToDefinition(), nervousFingers.ToDefinition(), dwarfSoul.ToDefinition(),
                                       internTraining.ToDefinition(), internPromotion.ToDefinition(), fieryFinger.ToDefinition(),
-                                      shortcut.ToDefinition(), goldenRare.ToDefinition());
+                                      shortcut.ToDefinition(), goldenRare.ToDefinition(), bomb.ToDefinition());
         }
 
         /// <summary>A chance do raro no padrão e no ritmo lento (para o rótulo do DBG → Cálculos).</summary>
@@ -260,7 +275,26 @@ namespace MinersIdle.Game
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses(),
-                            Rare(), Ad(), Ads());
+                            Rare(), Ad(), Ads(), Bombs());
+
+        /// <summary>A Bomba do asset; números inválidos desligam a bomba, com aviso.</summary>
+        BombRules Bombs()
+        {
+            if (bombFractions == null || bombFractions.Length == 0) return BombRules.None();
+            foreach (var f in bombFractions)
+                if (double.IsNaN(f) || f <= 0 || f > 1)
+                {
+                    Debug.LogWarning($"[Valores] Bomba com fração {f} fora de 0–1 em {name}: sem bomba.", this);
+                    return BombRules.None();
+                }
+            if (double.IsNaN(bombChargeSeconds) || bombChargeSeconds <= 0 || double.IsNaN(bombFlightSeconds) || bombFlightSeconds < 0
+                || double.IsNaN(bombReach) || bombReach < 0)
+            {
+                Debug.LogWarning($"[Valores] Carga, voo ou alcance da bomba inválidos em {name}: sem bomba.", this);
+                return BombRules.None();
+            }
+            return new BombRules(bombFractions, bombChargeSeconds, bombFlightSeconds, bombReach);
+        }
 
         /// <summary>Os anúncios do Boost do asset; os mal preenchidos ou repetidos ficam de fora, com aviso.</summary>
         AdOffers Ads()

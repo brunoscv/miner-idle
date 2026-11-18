@@ -41,9 +41,10 @@ namespace MinersIdle.EditorTools
 
         const float ContentHeight = 264f;
         // Marco 8b (E3, mockup aprovado): o DBG e o aviso do cálculo ficam acima da barra de baixo (Descansar e PASSAR).
-        static readonly Vector2 TogglePosition = new Vector2(6f, 54f);
-        internal static readonly Vector2 WarningPosition = new Vector2(40f, 54f);
-        const float ContentBottom = 74f;
+        // M9g (E0, mockups do deslize): sobem de novo, acima da faixa da bomba (y 52 a 97); antes, y 54 e o painel em 74.
+        static readonly Vector2 TogglePosition = new Vector2(6f, 100f);
+        internal static readonly Vector2 WarningPosition = new Vector2(40f, 100f);
+        const float ContentBottom = 120f;
         const float TopBand = 0.70f;      // estatísticas e diagnóstico acima disto
         const float ButtonsBand = 0.53f;  // botões abaixo disto (7 fileiras); melhorias no meio
 
@@ -65,7 +66,7 @@ namespace MinersIdle.EditorTools
             if (panel.Find("Content") is RectTransform content) content.anchoredPosition = new Vector2(0f, ContentBottom);
             if (panel.Find("CalcWarning") is RectTransform warning) warning.anchoredPosition = WarningPosition;
             EditorUtility.SetDirty(panel.gameObject);
-            Debug.Log("[Setup] Botão DBG e aviso do cálculo acima da barra de baixo (Marco 8b, E3).");
+            Debug.Log("[Setup] Botão DBG e aviso do cálculo acima da barra de baixo e da faixa da bomba (Marco 8b, M9g).");
             return true;
         }
 
@@ -203,11 +204,11 @@ namespace MinersIdle.EditorTools
         // ── Menus (D-147) ────────────────────────────────────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Altura do DBG só com o tempo, as estatísticas e os botões dos menus: 4 fileiras desde o M7 (o 10º botão,
-        /// Estagiário); antes, 150 px e 0,42 com 3.
+        /// Altura do DBG só com o tempo, as estatísticas e os botões dos menus: 5 fileiras desde o M9g (o 13º botão, Bomba);
+        /// 4 desde o M7 (170 px e 0,47); antes, 150 px e 0,42 com 3.
         /// </summary>
-        const float MenuContentHeight = 170f;
-        const float MenuButtonsBand = 0.47f; // 4 fileiras de botões (80 px) abaixo disto; estatísticas acima
+        const float MenuContentHeight = 190f;
+        const float MenuButtonsBand = 0.53f; // 5 fileiras de botões (100 px) abaixo disto; estatísticas acima
 
         /// <summary>Um menu: nome do objeto, nome e rótulo do botão no DBG, altura e os botões que moram nele, na ordem.</summary>
         static readonly (string name, string button, string label, float height, string[] buttons)[] Menus =
@@ -233,7 +234,11 @@ namespace MinersIdle.EditorTools
             (OfflineMenuName, "Offline", "Offline", OfflineMenuHeight, System.Array.Empty<string>()),
             // E os do Bônus (M9b E1, BonusDebugSetup): os bônus ativos no alto e 4 fileiras de botões (o raro desde a E4).
             (BonusMenuName, "Bonus", "Bônus", BonusMenuHeight, System.Array.Empty<string>()),
+            // E os da Bomba (M9g, BombSetup): 2 fileiras de botões.
+            (BombMenuName, "Bomb", "Bomba", 48f, System.Array.Empty<string>()),
         };
+
+        internal const string BombMenuName = "BombMenu";
 
         internal const string BonusMenuName = "BonusMenu";
 
@@ -264,7 +269,7 @@ namespace MinersIdle.EditorTools
 
         /// <summary>A ordem dos botões que ficam no DBG.</summary>
         static readonly string[] MainButtons =
-            { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern", "Offline", "Bonus" };
+            { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern", "Offline", "Bonus", "Bomb" };
 
         /// <summary>Altura da faixa do nível e custo das melhorias, no alto da Loja.</summary>
         const float ShopUpgradesHeight = 34f;

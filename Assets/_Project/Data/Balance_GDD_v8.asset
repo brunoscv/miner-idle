@@ -177,6 +177,18 @@ MonoBehaviour:
     offlineHours: 4
   adRareTier2Minutes: 60
   adOfflineCapHours: 8
+  bombFractions:
+  - 0.1
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
+  - 0.7
+  - 1
+  bombChargeSeconds: 5
+  bombFlightSeconds: 0.4
+  bombReach: 4
   restLevel: 10
   redShardMilestoneStep: 10
   redShardMilestone: 5
@@ -243,4 +255,10 @@ MonoBehaviour:
     baseCost: 500
     costGrowth: 1
     maxLevel: 1
+    effect: 1
+  bomb:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 7
     effect: 1

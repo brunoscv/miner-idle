@@ -81,9 +81,12 @@
   - `m9g-e0-deslize-modelos.png`: os três na tela inteira, cheios.
   - Nos três: soltar antes do fim devolve a bomba ao começo, sem lançar; chegar ao fim lança (o voo e a explosão seguem os quadros 2 e 3 acima). O vão entre o Descansar e o Próximo Andar fica vazio de novo; dá para alargar os dois botões, se o Bruno quiser. O DBG sobe para baixo do placar, para não ficar embaixo da faixa.
   - **A escolha do Bruno vira decisão** (ajusta a D-310: o deslize é na bomba, não no corredor).
+- **A escolha (2026-11-18, D-318):** o **A+C**, o trilho do A com o quadrado dourado do C em volta da vagoneta e da bomba (o quadrado é o que se arrasta), e sem o brilho amarelo atrás da bomba. Mockups em `m9g-e0-deslize-ac.png` e `m9g-e0-deslize-ac-tela.png`. O C fica no DBG → Bomba → **Estilo** para comparar no jogo.
 - `m9g-e0-descanso.png`: a linha **Bomba**, no molde das outras: o ícone da bomba atual, "nv 0/7", "Pequena 10% » 20%" e o preço (11 vermelhas na primeira compra). Fica entre o Atalho e a Promoção.
 
 ### E1 — A Bomba no núcleo (D-307, D-308, D-309, D-313, D-314)
+
+> **Ordem nova (2026-11-18):** a faixa da bomba (a parte da E3 que lança) veio junto com a E1, para o Bruno já testar os estilos no jogo. O toque continua até a E2. Ficam para a E3 a linha Bomba no descanso e na LOJA, o som próprio da explosão e os testes PlayMode.
 
 - `BombRules` no balanço do v8: as 8 bombas (nome e %), a carga de 5 s, o voo de 0,4 s e o **alcance** (`bombReach`). O alcance é medido nesta etapa: até onde a câmera de hoje mostra o corredor à frente do anão. Preenchidas pelo setup, como os anúncios.
 - Na run: a carga, `CanThrowBomb`, `ThrowBomb()`, a bomba no ar e os eventos `BombThrown` e `BombLanded` (com os cristais atingidos). O dano é a % da vida máxima de **cada cristal no alcance** na chegada, sem crítico nem bônus, e quem quebra paga como qualquer quebra.
@@ -106,9 +109,8 @@
 
 ### E3 — Na tela (D-310, D-314, D-315, D-316)
 
-- O botão da Bomba no centro da barra de baixo, com a carga, o pulsar e a setinha (pelo mockup da E0).
-- O **deslize da esquerda para a direita** (Input System), com o rastro do dedo.
-- O voo (0,4 s, da barra até os cristais), a explosão em cada cristal, o número laranja, o tremor e o som.
+- ✅ (junto com a E1) A **faixa da Bomba** acima do Descansar e do Próximo Andar (D-318), nos estilos A+C e C: carregando, a faixa enche e mostra os segundos; cheia, o quadrado acende, as setas pulsam e aparece "ARRASTE". Arrastar até o fim lança; soltar antes volta.
+- ✅ (junto com a E1) O voo (0,4 s, em arco, da faixa até cada cristal) e a explosão em cada cristal: clarão, faíscas laranja e amarelas, o número laranja e um tremor por bomba. O som, por ora, é o da quebra mais grave; o som sintetizado da D-316 fica nesta etapa.
 - A linha **Bomba** no descanso e na consulta da LOJA.
 - **Testes PlayMode:**
   - deslizar com a bomba cheia lança, e os cristais da tela perdem a %; deslizar vazia não lança;
@@ -122,7 +124,7 @@
 ## Como testar (Bruno) — ao fim de cada etapa
 
 - **E0:** abrir os mockups em `tools/ci/out/m9g-e0-*.png`.
-- **E1:** DBG → Bomba → **Lançar** e ver a vida dos cristais da tela cair a % da bomba (com a barra de vida do DBG → Andar ligada, para ver). **Próxima bomba** até o Barril e ver tudo quebrar de uma vez.
+- **E1 (com a faixa):** aplicar o setup (Tools → Miners Idle → Projeto → Aplicar configuração do projeto), dar Play na cena Game, esperar a faixa encher (5 s) e arrastar o quadrado da bomba até o fim. DBG → Bomba → **Estilo** troca A+C e C. DBG → Bomba → **Lançar** e ver a vida dos cristais da tela cair a % da bomba (com a barra de vida do DBG → Andar ligada, para ver). **Próxima bomba** até o Barril e ver tudo quebrar de uma vez.
 - **E2:** tocar no cristal e ver que não tira vida nem mostra o "xN".
 - **E3:** deslizar da esquerda para a direita a cada 5 s por alguns andares; comprar a Pequena Vermelha no descanso (DBG → Dia → +100 vermelhas); DBG → Bomba → **Bomba automática** para ver o jogo andar sozinho com a bomba.
 
@@ -159,8 +161,8 @@
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-18 (D-307…D-317) | P1, P4 e o toque mudados pelo Bruno |
-| E0 Mockups e a arte | 🔍 aguardando o Bruno | mockups em `tools/ci/out/m9g-e0-*.png`; `bombs.png` sai no próximo setup com o Editor fechado |
-| E1 A Bomba no núcleo | ⏳ | — |
+| E0 Mockups e a arte | ✅ escolhido o A+C (D-318) | mockups em `tools/ci/out/m9g-e0-*.png`; `bombs.png` sai no próximo setup |
+| E1 A Bomba no núcleo (+ a faixa) | 🔍 aguardando o Bruno | núcleo, testes EditMode (`BombTests`, não rodados: ficam para o fim), a faixa A+C/C, o voo, a explosão e o DBG → Bomba |
 | E2 O toque sai do jogo | ⏳ | — |
 | E3 Na tela | ⏳ | — |
 | E4 Sessão longa e celular | ⏭️ testes longos do fim (D-317) | — |

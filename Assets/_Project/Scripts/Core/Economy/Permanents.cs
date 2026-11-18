@@ -94,6 +94,9 @@ namespace MinersIdle.Core
         /// <summary>Promoção do Estagiário: a run nova já começa com ele contratado (M7, D-169).</summary>
         public bool StartsWithIntern => EffectiveLevel(PermanentId.InternPromotion) > 0;
 
+        /// <summary>A bomba em uso (M9g, D-240): 0 = a Pequena, de graça; cada compra da linha Bomba passa para a próxima.</summary>
+        public int BombLevel => EffectiveLevel(PermanentId.Bomb);
+
         /// <summary>Raro Dourado: as cartas do raro no tier 2 (GDD v8, D-286).</summary>
         public bool HasGoldenRare => EffectiveLevel(PermanentId.GoldenRare) > 0;
 

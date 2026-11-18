@@ -107,6 +107,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV8RestShop();
             EnsureGddV8RareCrystal();
             EnsureGddV8Ads();
+            EnsureGddV8Bomb();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -116,6 +117,7 @@ namespace MinersIdle.EditorTools
             SupportArtSetup.EnsureAssets();
             CrystalArtSetup.EnsureAssets();
             CrystalSheetSetup.EnsureAssets(); // a folha rachando do v8 nos biomas (M9f), depois dos biomas e dos cristais
+            BombArtSetup.EnsureAssets(); // as 8 bombas a partir do icon_bomb do Bruno (M9g, D-315)
             DwarfArtSetup.EnsureAssets();
             DwarfVariantsSetup.EnsureAssets();
             GrayboxSetup.Ensure();
@@ -772,6 +774,31 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v8: anúncios curto, médio e grande, o tier 2 por 1 h, teto de 8 h; sai o AD de velocidade (M9e E2, D-290).");
+        }
+
+        /// <summary>
+        /// M9g E1 (GDD v8 §2.1; D-240, D-255, D-307, D-308): as 8 bombas (10%, 20%, 30%, 40%, 50%, 60%, 70% e 100% da vida
+        /// máxima), a carga de 5 s, o voo de 0,4 s, o alcance de 4 un e a linha Bomba no descanso, 7 compras a 10 + 2^(n−1)
+        /// lascas vermelhas. Só preenche se as bombas estiverem vazias: um ajuste feito à mão fica.
+        /// </summary>
+        static void EnsureGddV8Bomb()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var list = serialized.FindProperty("bombFractions");
+            if (list == null || list.arraySize > 0) return;
+            double[] fractions = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1 };
+            list.arraySize = fractions.Length;
+            for (int i = 0; i < fractions.Length; i++) list.GetArrayElementAtIndex(i).doubleValue = fractions[i];
+            serialized.FindProperty("bombChargeSeconds").doubleValue = 5;
+            serialized.FindProperty("bombFlightSeconds").doubleValue = 0.4;
+            serialized.FindProperty("bombReach").doubleValue = 4;
+            SetLine(serialized, "bomb", 10, 2, 7, 1, CostFormula.OffsetExponential);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8: as 8 bombas, carga de 5 s, voo de 0,4 s, alcance de 4 un e a linha Bomba (M9g E1).");
         }
 
         static void SetCards(SerializedProperty list, double seconds, params (RareCard card, double value)[] cards)
