@@ -73,13 +73,19 @@ namespace MinersIdle.UI
         /// <summary>Abre o anúncio; a recompensa vai para <paramref name="onRewarded"/> no RECOMPENSA.</summary>
         public void Show(Action onRewarded)
         {
+            var ad = runner != null && runner.Simulation != null ? runner.Simulation.Strike.Ad : AdRules.None();
+            Show(onRewarded, string.Format(catalog.AdRewardFormat, NumberFormatter.Format(ad.SpeedDivisor),
+                                           NumberFormatter.Format(ad.Seconds)));
+        }
+
+        /// <summary>Abre o anúncio com a recompensa <paramref name="rewardText"/> (os do Boost, M9e E3).</summary>
+        public void Show(Action onRewarded, string rewardText)
+        {
             if (IsShowing) return;
             _onRewarded = onRewarded;
             _left = watchSeconds;
             _shownSeconds = -1;
-            var ad = runner != null && runner.Simulation != null ? runner.Simulation.Strike.Ad : AdRules.None();
-            rewardLine.text = string.Format(catalog.AdRewardFormat, NumberFormatter.Format(ad.SpeedDivisor),
-                                            NumberFormatter.Format(ad.Seconds));
+            rewardLine.text = rewardText;
             screen.SetActive(true);
             Refresh();
         }

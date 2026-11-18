@@ -35,8 +35,8 @@ namespace MinersIdle.Tests
             _runner = Object.FindAnyObjectByType<MiningRunner>();
             _shop = Object.FindAnyObjectByType<ShopView>();
             Assert.That(_shop, Is.Not.Null);
-            Assert.That(_shop.PermanentRows.Count, Is.EqualTo(9),
-                        "as 5 do anão, as 2 do estagiário (M7) e o Dedo Fogoso e o Atalho (M9d; rode o setup do projeto)");
+            Assert.That(_shop.PermanentRows.Count, Is.EqualTo(10),
+                        "as 5 do anão, as 2 do estagiário (M7) e o Dedo Fogoso e o Atalho (M9d) e o Raro Dourado (M9e; rode o setup do projeto)");
             if (!Simulation.Permanents.Rules.IsRestEnabled)
                 Assert.Ignore("O balanço ativo não tem permanentes (rode o setup do projeto: GDD v7).");
         }
@@ -164,7 +164,7 @@ namespace MinersIdle.Tests
             rest.SkipZzz();
             Assert.That(rest.IsPanelShown, Is.True);
             Assert.That(rest.BankText, Is.EqualTo("7"), "o banco depois do descanso");
-            Assert.That(rest.Rows.Count, Is.EqualTo(9), "as 9 permanentes");
+            Assert.That(rest.Rows.Count, Is.EqualTo(10), "as 10 permanentes, com o Raro Dourado (M9e)");
 
             PermanentRowView RestRow(PermanentId id) => rest.Rows.First(r => r.Permanent == id);
             var memory = RestRow(PermanentId.Memory);

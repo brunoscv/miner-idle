@@ -156,6 +156,36 @@
 - O "Bem-vindo de volta" com as horas extras.
 - **Testes PlayMode:** assistir, renovar e ver o maior; comprar o tier 2 e ver o 4º anúncio sumir; o raro nascer no andar 10 com o contador do DBG.
 
+**Como ficou (2026-11-18):** seguindo os mockups da E0. As capturas da cena de verdade estão em `tools/ci/out/m9e-e3-boost.png`, `m9e-e3-coluna.png` e `m9e-e3-raro-dourado.png`.
+
+- **O menu do Boost (P6).**
+  - No v8, o botão AD da coluna da direita abre o painel **BOOST**. Continua com a TV e "AD", como no mockup. No v7, o AD de antes segue igual.
+  - No alto, "Tipos diferentes juntos: vale o maior.". Embaixo, uma linha por anúncio: o ícone, o nome e a duração ("20 min", "1 h 20 min"), o bônus ("×2 dano, lascas e crítico") e "Crítico +10% · offline +1 h".
+  - **ASSISTIR** abre o anúncio simulado de 30 s, com a recompensa daquele anúncio ("Recompensa: ×4 em dano, lascas e crítico por 1 h 20 min"). O "Pular espera" do DBG vale para ele.
+  - Com o anúncio ativo, o botão vira **RENOVAR**, com "falta 31m" embaixo. Com um anúncio na tela, os botões apagam. O menu fica aberto embaixo do anúncio, e **VOLTAR** fecha.
+  - A 4ª linha, **Raro tier 2** (o cristal dourado, "Cartas do raro ×4 e +20%", "Some com o Raro Dourado"), aparece com o recorde no andar 10 e some com o Raro Dourado comprado.
+- **A coluna dos bônus (P7).**
+  - Cada anúncio vira **um ícone só** (o raio), com o selo do efeito no canto ("×4"), em vez de quatro ícones.
+  - O tempo fica curto: **"1h18"**, **"31m"** e, no último minuto, **"45s"**. As cartas e o combo continuam nos segundos.
+  - O toque no ícone mostra "Anúncio grande", "×4 dano, lascas e crítico" e "Anúncio · falta 1h18".
+  - O do tier 2 usa o cristal dourado, sem selo.
+- **O Raro Dourado no descanso (P4).** A linha vem depois da Promoção, com o cristal dourado na moldura lendária: "Cartas do raro ×2 » ×4", nv 0/1, 500. Antes do recorde 10 fica travada, com "Recorde no andar 10". Comprada, diz "Cartas do raro ×4". Aparece também na consulta das permanentes da LOJA.
+- **O "Bem-vindo de volta".**
+  - Ganha a linha **"Anúncios +4 h"** (as horas extras dos anúncios ativos ao fechar) e a linha **"Raros 60"** (os raros que o estagiário quebrou fora). Cada linha só aparece quando tem o que dizer.
+  - A nota do teto ("máx. 8 h") usa o teto que valeu naquela volta, não o de agora, porque os anúncios já acabaram.
+  - A volta pendente guarda isso no save, nos campos novos `maxSeconds`, `extraSeconds` e `rares`. Um save de antes abre com zero e o modal faz a conta como antes, por isso a versão continua a 10.
+- **O ícone da carta Dano de Crítico.** No lugar do ícone do Crítico (E1), vem a estrela laranja do pacote de ícones (Icon332).
+- **Formatos novos no formatador único.** `FormatTimer` dá "45s" / "19m" / "1h18". `FormatSpan` dá "20 min" / "1 h 20 min" / "1 h", sem as partes zeradas.
+- **Testes:**
+  - `BoostFlowTests` (PlayMode, 3), na cena com o balanço do v8:
+    - o AD abre o menu; ASSISTIR passa pelo anúncio e dá o curto; RENOVAR e "falta 20m";
+    - a coluna com um ícone, o selo, "20m", "1h20" e "30s", e o detalhe;
+    - o tier 2 a partir do andar 10 e sumindo com o Raro Dourado, e a linha dele no descanso;
+    - o "Bem-vindo de volta" com "+4 h" e "60" raros.
+  - Em `AdOffersTests`, mais 3 (17 casos): a volta com as horas extras e os raros pelo save, `FormatTimer` e `FormatSpan`.
+  - O `PermanentShopTests` contava 9 permanentes e agora mede 10, com o Raro Dourado.
+  - Rodados: EditMode inteiro (558, todos passando); PlayMode do Boost, AD, raro, offline, save, coluna, combo, cena, painel de debug, descanso, loja, permanentes e HUD (62: 60 passando, 2 ignorados, os do AD antigo do v7).
+
 ### E4 — Sessão longa e celular
 
 - Vai para os **testes longos do fim** (D-291).
@@ -200,5 +230,5 @@
 | E0 Mockups | 🔄 prontos em 2026-11-18, aguardando o Bruno | Ver "Como ficou" na E0 |
 | E1 O raro do v8 | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E1 |
 | E2 Os anúncios e o offline | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E2 |
-| E3 Na tela | ⏳ | — |
+| E3 Na tela | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E3 |
 | E4 Sessão longa e celular | ⏭️ nos testes longos do fim (D-291) | — |

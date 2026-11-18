@@ -168,6 +168,14 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 89c60f64307760344824574e4b010136, type: 3}
     frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
     lockedFormat: Pede o Treinar no {0}
+  - permanent: 9
+    title: Raro Dourado
+    effectFormat: "Cartas do raro \xD72 \xBB \xD74"
+    maxedFormat: "Cartas do raro \xD74"
+    style: 0
+    icon: {fileID: 21300000, guid: 668680b1b3c6dce4aa974cfa63339e74, type: 3}
+    frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    lockedFormat: Recorde no andar {0}
   internTabLabel: "ESTAGI\xC1RIO"
   internEntries:
   - locked: 0

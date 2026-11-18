@@ -248,6 +248,9 @@ namespace MinersIdle.EditorTools
                 // M9d E1 (dos mockups da E0): Dedo Fogoso a luva em chamas (épico), Atalho as botas (raro).
                 case PermanentId.FieryFinger: return (Icon(201), Frame("slot_rarity_epic"));
                 case PermanentId.Shortcut: return (Icon(235), Frame("slot_rarity_rare"));
+                // M9e E3 (P4): o Raro Dourado, o cristal da carta em dourado (lendário).
+                case PermanentId.GoldenRare:
+                    return (Load(BoostSetup.GoldenIconPath), Frame("slot_rarity_legendary"));
                 default: return (null, null);
             }
         }

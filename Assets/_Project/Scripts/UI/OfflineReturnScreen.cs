@@ -33,6 +33,14 @@ namespace MinersIdle.UI
         [SerializeField] GameObject floorsRow;
         [SerializeField] TMP_Text floorsLabel;
         [SerializeField] TMP_Text floorsValue;
+        [Tooltip("M9e E3: as horas extras dos anúncios (\"+3 h\"), só com elas.")]
+        [SerializeField] GameObject adsRow;
+        [SerializeField] TMP_Text adsLabel;
+        [SerializeField] TMP_Text adsValue;
+        [Tooltip("M9e E3: os raros que ele quebrou fora, só com eles (D-284).")]
+        [SerializeField] GameObject raresRow;
+        [SerializeField] TMP_Text raresLabel;
+        [SerializeField] TMP_Text raresValue;
         [SerializeField] TMP_Text crystalsLabel;
         [SerializeField] TMP_Text crystalsValue;
         [SerializeField] TMP_Text broughtLabel;
@@ -50,6 +58,10 @@ namespace MinersIdle.UI
         public string NoteText => note.text;
         public bool ShowsFloors => floorsRow != null && floorsRow.activeSelf;
         public string FloorsText => floorsValue != null ? floorsValue.text : "";
+        public bool ShowsAds => adsRow != null && adsRow.activeSelf;
+        public string AdsText => adsValue != null ? adsValue.text : "";
+        public bool ShowsRares => raresRow != null && raresRow.activeSelf;
+        public string RaresText => raresValue != null ? raresValue.text : "";
 
         void Awake()
         {
@@ -58,6 +70,8 @@ namespace MinersIdle.UI
             countedLabel.text = texts.OfflineCountedLabel;
             crystalsLabel.text = texts.OfflineCrystalsLabel;
             if (floorsLabel != null) floorsLabel.text = texts.OfflineFloorsLabel;
+            if (adsLabel != null) adsLabel.text = texts.OfflineAdsLabel;
+            if (raresLabel != null) raresLabel.text = texts.OfflineRaresLabel;
             broughtLabel.text = texts.OfflineBroughtLabel;
             collectLabel.text = texts.OfflineCollect;
             screen.SetActive(false); // o OnEnable (logo depois) abre, se a partida já tiver uma volta pendente
@@ -110,7 +124,9 @@ namespace MinersIdle.UI
             note.text = pending.Capped
                 ? string.Format(texts.OfflineCappedNoteFormat,
                                 NumberFormatter.FormatDuration(
-                                    OfflineMining.MaxSeconds(Simulation.Rules, Simulation.State, Simulation.Permanents),
+                                    // O teto que valeu (com as horas dos anúncios, M9e E3); os saves de antes, a conta de agora.
+                                    pending.MaxSeconds > 0 ? pending.MaxSeconds
+                                        : OfflineMining.MaxSeconds(Simulation.Rules, Simulation.State, Simulation.Permanents),
                                     trimWholeHours: true))
                 : pending.Descended ? string.Format(texts.OfflineDescentNoteFormat, pending.FromLevel, pending.Level)
                 : string.Format(texts.OfflineNoteFormat, pending.Level);
@@ -118,6 +134,17 @@ namespace MinersIdle.UI
             {
                 floorsRow.SetActive(pending.Descended);
                 floorsValue.text = string.Format(texts.OfflineFloorsFormat, pending.FromLevel, pending.Level);
+            }
+            if (adsRow != null)
+            {
+                adsRow.SetActive(pending.ExtraSeconds > 0);
+                adsValue.text = string.Format(texts.OfflineAdsFormat ?? "{0}",
+                                              NumberFormatter.FormatSpan(pending.ExtraSeconds));
+            }
+            if (raresRow != null)
+            {
+                raresRow.SetActive(pending.Rares > 0);
+                raresValue.text = NumberFormatter.Format(pending.Rares);
             }
             screen.SetActive(true);
             // A linha "Contou" entra ou sai: o painel se ajusta ao conteúdo já neste quadro.

@@ -24,6 +24,8 @@ namespace MinersIdle.UI
         [SerializeField] TMP_Text label;
         [Tooltip("Quem mostra o anúncio: um componente que implementa IRewardedAd (hoje o SimulatedAdScreen).")]
         [SerializeField] MonoBehaviour rewardedAd;
+        [Tooltip("M9e E3 (P6): com os anúncios do Boost no balanço (v8), o toque abre este menu.")]
+        [SerializeField] BoostScreen boost;
 
         [Header("Aparência")]
         [SerializeField] Sprite normalSprite;
@@ -61,9 +63,17 @@ namespace MinersIdle.UI
 
         void Update() => Refresh();
 
-        /// <summary>Tocou no AD livre: o anúncio abre; a recompensa é o boost.</summary>
+        /// <summary>O balanço tem o menu do Boost (v8): o botão abre o menu em vez do anúncio.</summary>
+        bool UsesBoost => boost != null && Simulation != null && Simulation.Strike.Ads.IsEnabled;
+
+        /// <summary>Tocou no AD livre: no v8, abre o menu do Boost; no v7, o anúncio abre e a recompensa é o boost.</summary>
         public void Watch()
         {
+            if (UsesBoost)
+            {
+                if (_ad == null || !_ad.IsShowing) boost.Open();
+                return;
+            }
             if (Simulation == null || _ad == null || _ad.IsShowing || !Simulation.CanWatchAd) return;
             _ad.Show(OnRewarded);
             Refresh();
@@ -76,6 +86,7 @@ namespace MinersIdle.UI
             var simulation = Simulation;
             var state = simulation == null || _ad == null ? ButtonState.Off
                       : _ad.IsShowing ? ButtonState.Watching
+                      : UsesBoost ? ButtonState.Free
                       : simulation.HasAdBoost ? ButtonState.Boosted
                       : simulation.CanWatchAd ? ButtonState.Free
                       : ButtonState.Off;

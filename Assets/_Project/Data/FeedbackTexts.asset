@@ -61,6 +61,9 @@ MonoBehaviour:
   offlineFloorsLabel: Andares
   offlineFloorsFormat: "{0} \xBB {1}"
   offlineDescentNoteFormat: "Ele desceu do andar {0} ao {1} enquanto voc\xEA esteve fora."
+  offlineAdsLabel: "An\xFAncios"
+  offlineAdsFormat: +{0}
+  offlineRaresLabel: Raros
   settingsTitle: AJUSTES
   settingsVolumeLabel: Efeitos
   settingsVolumeFormat: '{0}%'

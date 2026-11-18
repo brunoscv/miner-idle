@@ -113,13 +113,53 @@ MonoBehaviour:
     forIntern: 0
   - source: 1
     tier: 4
-    icon: {fileID: 21300000, guid: 50cf080a7cf7fb1479b0aca7996f35fe, type: 3}
+    icon: {fileID: 21300000, guid: 627fcb7a19ce55c4b976b8ebd64baec1, type: 3}
     title: "DANO CR\xCDT. {0}"
     description: "O dano do cr\xEDtico vale {0}"
     headline: 
     gain: "DANO CR\xCDTICO {0}"
     cardText: "O dano do\ncr\xEDtico vale\n{0}"
     cardNote: "S\xF3 o an\xE3o"
+    forIntern: 0
+  - source: 2
+    tier: 1
+    icon: {fileID: 21300000, guid: 775ff7c2f502f9a46a0883f0a386b42d, type: 3}
+    title: "An\xFAncio curto"
+    description: "{0} dano, lascas e cr\xEDtico"
+    headline: 
+    gain: "{0} em dano, lascas e cr\xEDtico"
+    cardText: 
+    cardNote: 
+    forIntern: 1
+  - source: 2
+    tier: 2
+    icon: {fileID: 21300000, guid: 775ff7c2f502f9a46a0883f0a386b42d, type: 3}
+    title: "An\xFAncio m\xE9dio"
+    description: "{0} dano, lascas e cr\xEDtico"
+    headline: 
+    gain: "{0} em dano, lascas e cr\xEDtico"
+    cardText: 
+    cardNote: 
+    forIntern: 1
+  - source: 2
+    tier: 3
+    icon: {fileID: 21300000, guid: 775ff7c2f502f9a46a0883f0a386b42d, type: 3}
+    title: "An\xFAncio grande"
+    description: "{0} dano, lascas e cr\xEDtico"
+    headline: 
+    gain: "{0} em dano, lascas e cr\xEDtico"
+    cardText: 
+    cardNote: 
+    forIntern: 1
+  - source: 2
+    tier: 4
+    icon: {fileID: 21300000, guid: 668680b1b3c6dce4aa974cfa63339e74, type: 3}
+    title: Raro tier 2
+    description: "Cartas do raro \xD74 e +20%"
+    headline: 
+    gain: cartas do raro no tier 2
+    cardText: 
+    cardNote: 
     forIntern: 0
   secondsFormat: '{0}s'
   comboFooterFormat: "Combo \xD7{0} \xB7 {1}s"
@@ -141,3 +181,13 @@ MonoBehaviour:
   adRewardFormat: "Recompensa: Velocidade \xD7{0} por {1} s"
   adReward: RECOMPENSA
   adButton: AD
+  boostTitle: BOOST
+  boostNote: 'Tipos diferentes juntos: vale o maior.'
+  boostWatch: ASSISTIR
+  boostRenew: RENOVAR
+  boostLeftFormat: falta {0}
+  boostDetailFormat: "Cr\xEDtico {0} \xB7 offline +{1}"
+  boostTier2Note: Some com o Raro Dourado
+  boostBack: VOLTAR
+  adOfferRewardFormat: 'Recompensa: {0} por {1}'
+  adOfferFooterFormat: "An\xFAncio \xB7 falta {0}"

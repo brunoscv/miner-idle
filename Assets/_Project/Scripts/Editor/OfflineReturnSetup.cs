@@ -53,7 +53,7 @@ namespace MinersIdle.EditorTools
             if (safeArea == null || texts == null || Load(Wood("panels/window")) == null) return false;
             _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
             _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
-            if (safeArea.Find(ModalName) != null) return EnsureFloorsRow(safeArea);
+            if (safeArea.Find(ModalName) != null) return EnsureFloorsRow(safeArea) | EnsureAdsRows(safeArea);
 
             var root = new GameObject(ModalName, typeof(RectTransform));
             root.transform.SetParent(safeArea, false);
@@ -145,6 +145,34 @@ namespace MinersIdle.EditorTools
                 ("crystalsLabel", crystalsLabel), ("crystalsValue", crystalsValue), ("broughtLabel", broughtLabel),
                 ("shardsValue", shardsValue), ("note", note), ("collectButton", collect), ("collectLabel", collectLabel));
             Debug.Log("[Setup] Modal \"Bem-vindo de volta\" na cena Game (M9, E2, D-197).");
+            EnsureAdsRows(safeArea);
+            return true;
+        }
+
+        /// <summary>
+        /// M9e E3: a linha "Anúncios +3 h" depois do "Contou" e a "Raros 12" depois dos cristais, no modal que já existia.
+        /// Cada uma só aparece quando tem o que dizer.
+        /// </summary>
+        static bool EnsureAdsRows(Transform safeArea)
+        {
+            var view = safeArea.Find(ModalName).GetComponent<OfflineReturnScreen>();
+            if (view == null) return false;
+            var serialized = new SerializedObject(view);
+            if (serialized.FindProperty("adsRow").objectReferenceValue != null) return false;
+            var counted = serialized.FindProperty("countedRow").objectReferenceValue as GameObject;
+            var crystals = serialized.FindProperty("crystalsValue").objectReferenceValue as TMP_Text;
+            var crystalsRow = crystals != null ? crystals.transform.parent : null;
+            if (counted == null || crystalsRow == null) return false;
+
+            var (ads, adsLabel, adsValue) = Row(crystalsRow.parent, "Ads");
+            ads.transform.SetSiblingIndex(counted.transform.GetSiblingIndex() + 1);
+            ads.SetActive(false);
+            var (rares, raresLabel, raresValue) = Row(crystalsRow.parent, "Rares");
+            rares.transform.SetSiblingIndex(crystalsRow.GetSiblingIndex() + 1);
+            rares.SetActive(false);
+            GrayboxSetup.SetReferences(view, ("adsRow", ads), ("adsLabel", adsLabel), ("adsValue", adsValue),
+                                       ("raresRow", rares), ("raresLabel", raresLabel), ("raresValue", raresValue));
+            Debug.Log("[Setup] \"Bem-vindo de volta\": as linhas das horas extras dos anúncios e dos raros (M9e E3).");
             return true;
         }
 

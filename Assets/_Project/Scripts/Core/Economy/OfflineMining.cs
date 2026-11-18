@@ -11,9 +11,11 @@ namespace MinersIdle.Core
     {
         public OfflineReport(double secondsAway, double secondsCounted, bool hired, long crystals, long hitsPerCrystal,
                              double secondsPerCrystal, double shardsPerCrystal, double shards,
-                             int fromFloor = 0, int toFloor = 0, long endBreaks = 0, double maxSeconds = 0, int rares = 0)
+                             int fromFloor = 0, int toFloor = 0, long endBreaks = 0, double maxSeconds = 0, int rares = 0,
+                             double extraSeconds = 0)
         {
             MaxSeconds = maxSeconds;
+            ExtraSeconds = Math.Max(0, extraSeconds);
             Rares = Math.Max(0, rares);
             FromFloor = fromFloor;
             ToFloor = Math.Max(fromFloor, toFloor);
@@ -52,6 +54,8 @@ namespace MinersIdle.Core
         public long EndBreaks { get; }
         /// <summary>O teto que valeu nesta volta: o do andar e, com anúncios ativos ao fechar, as horas extras (D-254).</summary>
         public double MaxSeconds { get; }
+        /// <summary>Quanto do <see cref="MaxSeconds"/> veio dos anúncios ativos ao fechar (D-244, D-254); 0 sem eles.</summary>
+        public double ExtraSeconds { get; }
         /// <summary>Raros que ele quebrou no offline, um por intervalo do contador (D-284).</summary>
         public int Rares { get; }
         /// <summary>Quantos andares ele desceu sozinho.</summary>
@@ -69,8 +73,12 @@ namespace MinersIdle.Core
     /// </summary>
     public readonly struct OfflineReturn
     {
-        public OfflineReturn(double secondsAway, double secondsCounted, long crystals, double shards, int level, int fromLevel = 0)
+        public OfflineReturn(double secondsAway, double secondsCounted, long crystals, double shards, int level, int fromLevel = 0,
+                             double maxSeconds = 0, double extraSeconds = 0, int rares = 0)
         {
+            MaxSeconds = Math.Max(0, Clean(maxSeconds));
+            ExtraSeconds = Math.Max(0, Clean(extraSeconds));
+            Rares = Math.Max(0, rares);
             SecondsAway = Math.Max(0, Clean(secondsAway));
             SecondsCounted = Math.Max(0, Clean(secondsCounted));
             Crystals = Math.Max(0, crystals);
@@ -90,6 +98,12 @@ namespace MinersIdle.Core
         public int Level { get; }
         /// <summary>O andar em que o jogador deixou o jogo (a primeira volta sem COLETAR); igual ao <see cref="Level"/> sem descida.</summary>
         public int FromLevel { get; }
+        /// <summary>O teto da última volta (M9e E3); 0 nos saves de antes (o modal faz a conta de agora).</summary>
+        public double MaxSeconds { get; }
+        /// <summary>As horas extras dos anúncios na última volta (D-244, D-254): a linha "Anúncios +3 h" do modal.</summary>
+        public double ExtraSeconds { get; }
+        /// <summary>Raros que ele quebrou fora, somando as voltas sem coletar (D-284).</summary>
+        public int Rares { get; }
         /// <summary>Ele desceu andares sozinho (o modal mostra "12 » 15", M9c E4).</summary>
         public bool Descended => Level > FromLevel;
 
@@ -106,7 +120,8 @@ namespace MinersIdle.Core
         {
             int from = HasShards ? FromLevel : report.FromFloor > 0 ? report.FromFloor : level;
             return new OfflineReturn(SecondsAway + Math.Max(0, report.SecondsAway), SecondsCounted + report.SecondsCounted,
-                                     Crystals + report.Crystals, Shards + report.Shards, level, from);
+                                     Crystals + report.Crystals, Shards + report.Shards, level, from,
+                                     report.MaxSeconds, report.ExtraSeconds, Rares + report.Rares);
         }
 
         static double Clean(double value) => double.IsNaN(value) || double.IsInfinity(value) ? 0 : value;
@@ -196,11 +211,12 @@ namespace MinersIdle.Core
 
             var intern = InternStats.Compute(rules, economy, state, permanents);
             double max = MaxSeconds(rules, state, permanents, ads);
+            double extra = Math.Max(0, max - MaxSeconds(rules, state, permanents));
             double counted = secondsAway <= 0 ? 0 : Math.Min(secondsAway, max);
             int floor = state.Cave;
             long breaks = state.CaveBreaks;
             if (!intern.IsHired)
-                return new OfflineReport(secondsAway, counted, false, 0, 0, 0, 0, 0, floor, floor, breaks, max);
+                return new OfflineReport(secondsAway, counted, false, 0, 0, 0, 0, 0, floor, floor, breaks, max, 0, extra);
 
             // O relatório mostra o ritmo do andar de partida, sem cartas.
             double reward = rules.CrystalRewardIn(floor) * intern.OfflineRewardMultiplier;
@@ -257,7 +273,7 @@ namespace MinersIdle.Core
                 from = until;
             }
             return new OfflineReport(secondsAway, counted, true, crystals, hits, perCrystal, reward, shards,
-                                     state.Cave, floor, breaks, max, rares);
+                                     state.Cave, floor, breaks, max, rares, extra);
         }
 
         const double Epsilon = 1e-9;

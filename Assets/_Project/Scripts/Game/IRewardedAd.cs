@@ -14,5 +14,8 @@ namespace MinersIdle.Game
 
         /// <summary>Mostra o anúncio; <paramref name="onRewarded"/> só é chamado se o jogador ganhou a recompensa.</summary>
         void Show(Action onRewarded);
+
+        /// <summary>Como <see cref="Show(Action)"/>, dizendo a recompensa (M9e E3: cada anúncio do Boost dá uma).</summary>
+        void Show(Action onRewarded, string rewardText);
     }
 }

@@ -344,6 +344,65 @@ namespace MinersIdle.Tests
         }
 
         [Test]
+        public void TheReturn_KeepsTheExtraHoursAndTheRares_ThroughTheSave()
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "MinersIdleAdsReturn_" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                var store = new FileSaveStore(dir);
+                var sim = Sim(floor: 12, deepest: 12);
+                sim.WatchAd(AdKind.Big);
+                var report = sim.ApplyOffline(2 * Hour, noticeSeconds: 60);
+                Assert.That(report.ExtraSeconds, Is.EqualTo(4 * Hour), "o teto de 4 h e as 4 do grande, até 8 h");
+                var pending = sim.State.PendingOffline;
+                Assert.That(pending.MaxSeconds, Is.EqualTo(8 * Hour));
+                Assert.That(pending.ExtraSeconds, Is.EqualTo(4 * Hour));
+                Assert.That(pending.Rares, Is.EqualTo(120));
+
+                new SaveService(store).Save(sim.State);
+                var loaded = new SaveService(store).Load(Economy(), out _, 100);
+                Assert.That(loaded.PendingOffline.MaxSeconds, Is.EqualTo(8 * Hour));
+                Assert.That(loaded.PendingOffline.ExtraSeconds, Is.EqualTo(4 * Hour));
+                Assert.That(loaded.PendingOffline.Rares, Is.EqualTo(120));
+
+                // Mais uma volta sem coletar: os raros somam; o teto e as horas extras são os da última.
+                var again = sim.ApplyOffline(600, noticeSeconds: 60);
+                Assert.That(again.ExtraSeconds, Is.EqualTo(0), "o grande (80 min) acabou na volta anterior");
+                Assert.That(sim.State.PendingOffline.Rares, Is.EqualTo(130));
+                Assert.That(sim.State.PendingOffline.ExtraSeconds, Is.EqualTo(0));
+            }
+            finally
+            {
+                if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+            }
+        }
+
+        [TestCase(0, "0s")]
+        [TestCase(29.2, "30s")]
+        [TestCase(59.5, "1m")]
+        [TestCase(60, "1m")]
+        [TestCase(1199.5, "20m")]
+        [TestCase(1199, "19m")]
+        [TestCase(3600, "1h00")]
+        [TestCase(4680, "1h18")]
+        [TestCase(8 * 3600 + 5 * 60, "8h05")]
+        public void TheTimer_SecondsMinutesHours(double seconds, string text)
+        {
+            Assert.That(NumberFormatter.FormatTimer(seconds), Is.EqualTo(text));
+        }
+
+        [TestCase(1200, "20 min")]
+        [TestCase(4800, "1 h 20 min")]
+        [TestCase(3600, "1 h")]
+        [TestCase(80, "1 min 20 s")]
+        [TestCase(20, "20 s")]
+        [TestCase(0, "0 s")]
+        public void TheSpan_WithoutTheZeroParts(double seconds, string text)
+        {
+            Assert.That(NumberFormatter.FormatSpan(seconds), Is.EqualTo(text));
+        }
+
+        [Test]
         public void TheV8Balance_HasTheThreeAds_TheTier2Ad_AndNoSpeedAd()
         {
             var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8Path);

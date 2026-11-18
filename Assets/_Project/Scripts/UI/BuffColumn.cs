@@ -43,6 +43,8 @@ namespace MinersIdle.UI
         [SerializeField, Range(0f, 1f)] float blinkAlpha = 0.45f;
 
         readonly List<BuffSlot> _pool = new List<BuffSlot>();
+        /// <summary>Os bônus da lista que viram ícone (M9e E3, P7: cada anúncio é um ícone só, o do dano).</summary>
+        readonly List<int> _visible = new List<int>();
         readonly List<UnityAction> _clicks = new List<UnityAction>();
         int _shown;
         int _detailIndex = -1;
@@ -99,16 +101,33 @@ namespace MinersIdle.UI
             }
         }
 
+        /// <summary>
+        /// Um anúncio do Boost dá quatro bônus (dano, lascas, dano e chance do crítico): a coluna mostra só o do dano, com
+        /// o selo do efeito (P7). O do tier 2 do raro é um bônus só.
+        /// </summary>
+        static bool Shows(ActiveBonus bonus) =>
+            !ActiveBonuses.IsAdOffer(bonus) || bonus.Kind == BonusKind.DamageMultiplier || bonus.Kind == BonusKind.RareTier2;
+
         /// <summary>Os ícones dos bônus de agora, na ordem da lista (entrou, acabou, o save trouxe, o DBG limpou).</summary>
         void Refresh()
         {
             var bonuses = Simulation?.Bonuses;
-            int count = bonuses?.Count ?? 0;
+            _visible.Clear();
+            int total = bonuses?.Count ?? 0;
+            for (int i = 0; i < total; i++)
+                if (Shows(bonuses.All[i])) _visible.Add(i);
+            int count = _visible.Count;
             EnsurePool(count);
             for (int i = 0; i < _pool.Count; i++)
             {
                 bool show = i < count;
-                if (show) _pool[i].Bind(catalog != null ? catalog.Find(bonuses.All[i].Source, bonuses.All[i].Tier)?.Icon : null);
+                if (show)
+                {
+                    var bonus = bonuses.All[_visible[i]];
+                    string badge = ActiveBonuses.IsAdOffer(bonus) && bonus.Kind == BonusKind.DamageMultiplier
+                        ? NumberFormatter.FormatEffect(bonus.Kind, bonus.Value) : null;
+                    _pool[i].Bind(catalog != null ? catalog.Find(bonus.Source, bonus.Tier)?.Icon : null, badge);
+                }
                 if (_pool[i].gameObject.activeSelf != show) _pool[i].gameObject.SetActive(show);
             }
             _shown = System.Math.Min(count, _pool.Count);
@@ -132,11 +151,12 @@ namespace MinersIdle.UI
             var bonuses = Simulation?.Bonuses;
             if (bonuses == null) return;
             bool dim = Mathf.Repeat(Time.unscaledTime, BlinkPeriod) < BlinkPeriod * 0.5f;
-            int count = Mathf.Min(_shown, bonuses.Count);
+            int count = Mathf.Min(_shown, _visible.Count);
             string format = catalog != null ? catalog.SecondsFormat : "{0}";
             for (int i = 0; i < count; i++)
             {
-                var bonus = bonuses.All[i];
+                if (_visible[i] >= bonuses.Count) return; // a lista mudou neste quadro; o BonusesChanged refaz
+                var bonus = bonuses.All[_visible[i]];
                 bool ending = bonus.SecondsLeft <= EndingSeconds;
                 _pool[i].Draw(bonus.SecondsLeft, bonus.Duration, format, ending, secondsColor, endingColor,
                               ending && dim ? blinkAlpha : 1f);
@@ -160,7 +180,7 @@ namespace MinersIdle.UI
 
         void FillDetail()
         {
-            var bonus = Simulation.Bonuses.All[_detailIndex];
+            var bonus = Simulation.Bonuses.All[_visible[_detailIndex]];
             var entry = catalog != null ? catalog.Find(bonus.Source, bonus.Tier) : null;
             // As cartas do raro dizem o efeito no texto ({0}: ×2 no tier 1, ×4 no 2; M9e E1).
             string effect = NumberFormatter.FormatEffect(bonus.Kind, bonus.Value);
@@ -178,12 +198,15 @@ namespace MinersIdle.UI
 
         void UpdateFooter()
         {
-            if (_detailIndex < 0 || _detailIndex >= Simulation.Bonuses.Count) return;
-            var bonus = Simulation.Bonuses.All[_detailIndex];
+            if (_detailIndex < 0 || _detailIndex >= _visible.Count || _visible[_detailIndex] >= Simulation.Bonuses.Count) return;
+            var bonus = Simulation.Bonuses.All[_visible[_detailIndex]];
             int seconds = (int)System.Math.Ceiling(System.Math.Max(0, bonus.SecondsLeft) - 1e-9);
             if (seconds == _detailSeconds) return;
             _detailSeconds = seconds;
-            if (bonus.Source == BonusSource.Rare)
+            if (ActiveBonuses.IsAdOffer(bonus))
+                detailFooter.text = string.Format(catalog != null ? catalog.AdOfferFooterFormat ?? "{0}" : "{0}",
+                                                  NumberFormatter.FormatTimer(bonus.SecondsLeft));
+            else if (bonus.Source == BonusSource.Rare)
                 detailFooter.SetText(catalog != null ? catalog.RareFooterFormat : "{0}", (float)seconds);
             else if (bonus.Source == BonusSource.Ad)
                 detailFooter.SetText(catalog != null ? catalog.AdFooterFormat : "{0}", (float)seconds);

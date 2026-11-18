@@ -97,6 +97,12 @@ namespace MinersIdle.Game
         [SerializeField] string offlineFloorsFormat;
         [Tooltip("A nota com descida (sem o teto): {0} = o andar em que saiu; {1} = o da volta.")]
         [TextArea, SerializeField] string offlineDescentNoteFormat;
+        [Tooltip("M9e E3: a linha das horas extras dos anúncios ativos ao fechar (só aparece com elas).")]
+        [SerializeField] string offlineAdsLabel;
+        [Tooltip("{0} = as horas extras (\"3 h\").")]
+        [SerializeField] string offlineAdsFormat;
+        [Tooltip("M9e E3: a linha dos raros que ele quebrou fora (só aparece com eles, D-284).")]
+        [SerializeField] string offlineRaresLabel;
 
         [Header("AJUSTES (M9, E4, D-198)")]
         [SerializeField] string settingsTitle;
@@ -171,6 +177,9 @@ namespace MinersIdle.Game
         public string OfflineFloorsLabel => offlineFloorsLabel;
         public string OfflineFloorsFormat => offlineFloorsFormat;
         public string OfflineDescentNoteFormat => offlineDescentNoteFormat;
+        public string OfflineAdsLabel => offlineAdsLabel;
+        public string OfflineAdsFormat => offlineAdsFormat;
+        public string OfflineRaresLabel => offlineRaresLabel;
 
         public string SettingsTitle => settingsTitle;
         public string SettingsVolumeLabel => settingsVolumeLabel;

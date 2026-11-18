@@ -10,7 +10,8 @@ namespace MinersIdle.Game
     /// nenhum texto de interface no código. O asset do jogo é <c>Data/BuffCatalog</c>. Desde a E4, as cartas do cristal
     /// raro (origem <see cref="BonusSource.Rare"/>, tier = a <see cref="RareCard"/>) com o texto da carta, para quem vale e
     /// o texto que sobe ao escolher, e os textos da janela (D-225). Desde a E5, o boost do AD (origem
-    /// <see cref="BonusSource.Ad"/>, tier 0) e os textos do anúncio simulado e do botão (D-218, D-230).
+    /// <see cref="BonusSource.Ad"/>, tier 0) e os textos do anúncio simulado e do botão (D-218, D-230). Desde o M9e E3, os
+    /// anúncios do Boost (origem Ad, tier = o <see cref="AdKind"/>) e os textos do menu.
     /// </summary>
     [CreateAssetMenu(menuName = "Miners Idle/Catálogo dos bônus", fileName = "BuffCatalog")]
     public sealed class BuffCatalog : ScriptableObject
@@ -109,6 +110,39 @@ namespace MinersIdle.Game
         [SerializeField] string adReward;
         [Tooltip("O nome do botão AD da coluna da direita, quando livre.")]
         [SerializeField] string adButton;
+
+        [Header("Boost (M9e E3, P6, P7; D-244, D-250, D-251)")]
+        [Tooltip("O título do menu do Boost.")]
+        [SerializeField] string boostTitle;
+        [Tooltip("A linha debaixo do título (D-251).")]
+        [SerializeField] string boostNote;
+        [Tooltip("O botão de um anúncio que não está ativo.")]
+        [SerializeField] string boostWatch;
+        [Tooltip("O botão de um anúncio ativo (D-244: o mesmo de novo renova).")]
+        [SerializeField] string boostRenew;
+        [Tooltip("Debaixo do botão de um anúncio ativo. {0} = o tempo que falta (\"31m\", \"1h18\").")]
+        [SerializeField] string boostLeftFormat;
+        [Tooltip("A terceira linha de um anúncio. {0} = o crítico a mais (\"+10%\") · {1} = as horas extras (\"1 h\").")]
+        [SerializeField] string boostDetailFormat;
+        [Tooltip("A terceira linha do anúncio do tier 2 (D-250).")]
+        [SerializeField] string boostTier2Note;
+        [Tooltip("O botão que fecha o menu.")]
+        [SerializeField] string boostBack;
+        [Tooltip("A recompensa no modal do anúncio. {0} = o ganho da linha do catálogo · {1} = a duração (\"20 min\").")]
+        [SerializeField] string adOfferRewardFormat;
+        [Tooltip("A terceira linha do detalhe de um anúncio na coluna. {0} = o tempo que falta.")]
+        [SerializeField] string adOfferFooterFormat;
+
+        public string BoostTitle => boostTitle;
+        public string BoostNote => boostNote;
+        public string BoostWatch => boostWatch;
+        public string BoostRenew => boostRenew;
+        public string BoostLeftFormat => boostLeftFormat;
+        public string BoostDetailFormat => boostDetailFormat;
+        public string BoostTier2Note => boostTier2Note;
+        public string BoostBack => boostBack;
+        public string AdOfferRewardFormat => adOfferRewardFormat;
+        public string AdOfferFooterFormat => adOfferFooterFormat;
 
         public string AdFooterFormat => adFooterFormat;
         public string AdTitle => adTitle;

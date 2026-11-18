@@ -136,6 +136,7 @@ namespace MinersIdle.EditorTools
             changed |= BuffColumnSetup.EnsureInScene(); // logo depois do HUD, atrás das janelas (M9b, E2)
             changed |= RareWindowSetup.EnsureInScene(); // antes da loja, depois do catálogo dos bônus (M9b, E4)
             changed |= AdSetup.EnsureInScene(); // o botão AD, o anúncio simulado e o raio (M9b, E5)
+            changed |= BoostSetup.EnsureInScene(); // o menu do Boost antes do anúncio, o selo da coluna, o Raro Dourado (M9e E3)
             changed |= BonusDebugSetup.EnsureInScene(); // de novo: o "Pular espera" precisa do anúncio já criado
             changed |= HudHiderSetup.EnsureInScene(); // DBG → Efeitos → Esconder HUD
             changed |= FloorTransitionSetup.EnsureInScene(); // a transição de andar e o DBG → Caverna → Transição (M9c E0)

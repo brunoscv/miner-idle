@@ -116,6 +116,10 @@ namespace MinersIdle.Persistence
         public int level;
         /// <summary>O andar em que o jogador deixou o jogo (M9c E4; 0 nos saves de antes = sem descida).</summary>
         public int fromLevel;
+        /// <summary>M9e E3: o teto da volta, as horas extras dos anúncios e os raros (0 nos saves de antes).</summary>
+        public double maxSeconds;
+        public double extraSeconds;
+        public int rares;
     }
 
     /// <summary>O descanso pendente (save v9, M9d): o resumo do dia que estava na tela.</summary>

@@ -119,6 +119,40 @@ namespace MinersIdle.Core
             kind == BonusKind.CritChance || kind == BonusKind.DamagePercent ? "+" + FormatPercent(value) : "×" + Format(value);
 
         /// <summary>
+        /// O tempo curto dos bônus (M9e E3, P7): "45s" no último minuto, "19m" até uma hora, "1h18" depois. Os segundos
+        /// arredondam para cima (como a coluna sempre fez); minutos e horas, para baixo.
+        /// </summary>
+        public static string FormatTimer(double seconds)
+        {
+            long total = double.IsNaN(seconds) || seconds <= 0 ? 0 : (long)Math.Min(Math.Ceiling(seconds - 1e-9), long.MaxValue);
+            if (total < 60) return total + "s";
+            if (total < 3600) return total / 60 + "m";
+            return (total / 3600).ToString("#,0", PtBr) + "h" + (total / 60 % 60).ToString("00");
+        }
+
+        /// <summary>
+        /// Uma duração redonda (M9e E3, o menu do Boost): "20 min", "1 h 20 min", "1 h", "45 s", "1 min 20 s" — sem as
+        /// partes zeradas. Arredonda para baixo, como o <see cref="FormatDuration(double)"/>.
+        /// </summary>
+        public static string FormatSpan(double seconds)
+        {
+            long total = double.IsNaN(seconds) || seconds < 0 ? 0 : (long)Math.Min(Math.Floor(seconds + 1e-9), long.MaxValue);
+            long hours = total / 3600, minutes = total / 60 % 60, rest = total % 60;
+            var parts = new System.Collections.Generic.List<string>(3);
+            if (hours > 0) parts.Add(hours.ToString("#,0", PtBr) + " h");
+            if (minutes > 0) parts.Add(minutes + " min");
+            if (rest > 0 || parts.Count == 0) parts.Add(rest + " s");
+            return string.Join(" ", parts);
+        }
+
+        /// <summary>A chave do que <see cref="FormatTimer"/> mostra: muda só quando o texto muda (sem alocar à toa).</summary>
+        public static long TimerKey(double seconds)
+        {
+            long total = double.IsNaN(seconds) || seconds <= 0 ? 0 : (long)Math.Min(Math.Ceiling(seconds - 1e-9), long.MaxValue);
+            return total < 60 ? total : -(total / 60);
+        }
+
+        /// <summary>
         /// Tempo de jogo (M8, E3): "45 s", "12 min 05 s", "3 h 07 min"; a partir de uma hora, sem os segundos. Arredonda
         /// para baixo, como as lascas.
         /// </summary>
