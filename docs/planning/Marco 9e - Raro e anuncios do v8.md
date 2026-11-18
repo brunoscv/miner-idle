@@ -1,6 +1,6 @@
 # Marco 9e — Raro e anúncios do v8
 
-> Plano de 2026-11-18, **aguardando as respostas do Bruno (P1…P9)**. É o **Bloco D** da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, depois do [Marco 9d](Marco%209d%20-%20Descansar%20e%20loja%20do%20v8.md) (aprovado em 2026-11-18, D-282). Base: GDD v8.2 §3.4–3.5 e §7.2, e as decisões D-243, D-244, D-246, D-250, D-251 e D-254.
+> Plano de 2026-11-18, **aprovado no mesmo dia: P1…P9 com as recomendações (D-283…D-291)**. É o **Bloco D** da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, depois do [Marco 9d](Marco%209d%20-%20Descansar%20e%20loja%20do%20v8.md) (aprovado em 2026-11-18, D-282). Base: GDD v8.2 §3.4–3.5 e §7.2, e as decisões D-243, D-244, D-246, D-250, D-251 e D-254.
 
 ## Objetivo
 
@@ -109,7 +109,7 @@
 
 ### E4 — Sessão longa e celular
 
-- Vai para os **testes longos do fim**, se a P9 for aprovada.
+- Vai para os **testes longos do fim** (D-291).
 
 ## Como testar (Bruno) — ao fim de cada etapa
 
@@ -147,9 +147,9 @@
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 📝 escrito em 2026-11-18, aguardando P1…P9 | — |
+| Plano | ✅ aprovado em 2026-11-18: P1…P9 com as recomendações (D-283…D-291) | — |
 | E0 Mockups | ⏳ | — |
 | E1 O raro do v8 | ⏳ | — |
 | E2 Os anúncios e o offline | ⏳ | — |
 | E3 Na tela | ⏳ | — |
-| E4 Sessão longa e celular | ⏳ | testes longos do fim, se a P9 for aprovada |
+| E4 Sessão longa e celular | ⏭️ nos testes longos do fim (D-291) | — |
