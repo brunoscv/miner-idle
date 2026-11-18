@@ -177,13 +177,56 @@ namespace MinersIdle.Tests
         public IEnumerator DebugCards_GrantEachCard_AndTheMenuListsThem()
         {
             yield return Open();
+            // M9e E1: as cartas do balanço (no v8, Dano, Lascas, Crítico e Dano de Crítico; o Rápido saiu, D-243).
+            var balance = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(Simulation.Strike.Rare.Cards, c => c.Card));
             foreach (RareCard card in Enum.GetValues(typeof(RareCard))) _panel.GrantCard(card);
-            Assert.That(ActiveCards(Simulation), Is.EquivalentTo(Enum.GetValues(typeof(RareCard))));
+            Assert.That(ActiveCards(Simulation), Is.EquivalentTo(balance), "a carta que o balanço não tem não entra");
 
             var debug = Object.FindAnyObjectByType<DebugPanel>();
             debug.transform.Find("Content/Buttons/Bonus").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
             yield return null;
-            Assert.That(_panel.SummaryText, Does.Contain("Dano ×2").And.Contain("Crítico +25%"));
+            Assert.That(_panel.SummaryText, Does.Contain("Dano ×2").And.Contain("Crítico +10%").And.Contain("Dano de crítico ×2"));
+            var speed = _panel.transform.Find("Content/Buttons/CardSpeed");
+            Assert.That(speed.gameObject.activeSelf, Is.False, "o botão da carta que o balanço não tem some");
+        }
+
+        /// <summary>
+        /// M9e E1 (D-285): DBG → Bônus → Contador 5 s (o raro a cada 5 s), Raro agora (um raro nasce já e o contador
+        /// recomeça) e Tier 2 (as cartas ×4); no alto, os segundos até o raro.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DebugCounter_RareNow_AndTier2()
+        {
+            yield return Open();
+            if (!Simulation.Strike.Rare.UsesCounter) Assert.Ignore("O balanço ativo não tem o contador do raro (GDD v8).");
+            Transform Button(string name) => _panel.transform.Find("Content/Buttons/" + name);
+            Assert.That(Button("RareCounter"), Is.Not.Null, "rode o setup do projeto (M9e E1)");
+
+            Simulation.SetDeepestFloor(10);
+            Assert.That(Simulation.IsRareCounting, Is.True, "o recorde 10 liga o contador");
+            Assert.That(_panel.CounterButtonText, Is.EqualTo("Contador: 60 s"));
+            Button("RareCounter").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+            Assert.That(_panel.CounterButtonText, Is.EqualTo("Contador: 5 s"));
+            Assert.That(Simulation.RareInterval, Is.EqualTo(5));
+            Assert.That(Simulation.RareCountdown, Is.LessThanOrEqualTo(5));
+
+            Button("RareNow").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+            Assert.That(Simulation.Crystals.Any(c => c.IsRare), Is.True, "Raro agora: nasce já");
+            Assert.That(Simulation.State.RareTimer, Is.EqualTo(0), "e o contador recomeça");
+
+            Assert.That(_panel.Tier2ButtonText, Is.EqualTo("Tier 2: não"));
+            Button("RareTier2").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+            Assert.That(_panel.Tier2ButtonText, Is.EqualTo("Tier 2: sim"));
+            _panel.GrantCard(RareCard.Damage);
+            Assert.That(Simulation.Bonuses.DamageMultiplier, Is.EqualTo(4), "tier 2: ×4");
+
+            var debug = Object.FindAnyObjectByType<DebugPanel>();
+            debug.transform.Find("Content/Buttons/Bonus").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+            yield return null;
+            Assert.That(_panel.SummaryText, Does.Contain("Raro em").And.Contain("tier 2").And.Contain("Dano ×4"));
+
+            Button("RareCounter").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+            Assert.That(Simulation.RareInterval, Is.EqualTo(60), "de novo: o das regras");
         }
     }
 }

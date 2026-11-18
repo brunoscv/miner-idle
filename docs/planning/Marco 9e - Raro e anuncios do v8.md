@@ -92,6 +92,26 @@
 - **DBG:** "Raro agora", "Contador 5 s", "Tier 2" (liga e desliga).
 - **Testes EditMode:** o contador só a partir do andar 10 e parado no descanso; um raro por vez; as cartas e os valores; tier 1 e tier 2; repetir a carta reinicia.
 
+**Como ficou (2026-11-18):**
+
+- **O contador (D-283).** O estado da run guarda os segundos desde o último raro (`RareTimer`). Ele só anda no passo normal da simulação, a partir do andar 10. Por isso fica parado no descanso, na transição de andar e com o app fechado (o offline da P2 é a E2). Cheio, espera: o **próximo cristal que nasce** é raro e o contador volta ao zero. Com um raro ainda na fila, o próximo espera ele sair. O balanço do v8 tem `rareInterval = 60`; com 0 (o v7 e os testes antigos), o raro continua pela chance. No DBG → Cálculos, o botão do ritmo do raro (15% / 2%) some com o contador, porque não vale mais.
+- **As cartas do v8 (D-243).** Dano ×2, Lascas ×2, Crítico +10% e **Dano de Crítico ×2** (bônus novo), 30 s cada. A mesma carta de novo reinicia o tempo e não soma o efeito. O Rápido sai do balanço do v8; o código fica para o v7. O **Dano de Crítico** multiplica o multiplicador inteiro do crítico: ×1,5 vira ×3. Com o Dedo Fogoso e o excedente acima de 100% (D-249), multiplica a soma deles também. Só o anão (D-167).
+- **O tier 2 (D-286).** Cartas ×4, ×4, +20% e ×4. Vem do **Raro Dourado**, uma permanente nova: compra única de 500 lascas vermelhas, travada até o recorde chegar ao andar 10. O do anúncio de 1 h entra na E2. A linha na tela do descanso é da E3; até lá, o DBG compra.
+- **Os textos das cartas.** No catálogo, o número saiu do texto e virou `{0}`: a janela, o texto que sobe do anão e o detalhe da coluna dizem o efeito no tier de agora ("DANO ×2", "DANO ×4", "CRÍTICO +10%"). A carta Dano de Crítico usa o ícone do Crítico até a E3 dar um próprio.
+- **Save v10:** o contador. Um save até a 9 abre com ele no zero. O Raro Dourado vai com as outras permanentes, pelo nome.
+- **DBG → Bônus:**
+  - **Raro agora:** um cristal nasce já, raro, e o contador recomeça.
+  - **Contador: 60 s / 5 s:** troca para 5 s e volta.
+  - **Tier 2: não / sim:** as cartas ×4 sem comprar.
+  - A carta **Dano Crít.** Os botões das cartas que o balanço não tem (o Rápido, no v8) somem.
+  - No alto, "Raro em 42,0 s (a cada 60 s) · tier 1", ou "só a partir do andar 10".
+  - O menu cresceu para 6 fileiras.
+- **Testes:**
+  - `RareCounterTests` (EditMode, 16): o contador antes e depois do andar 10; o zero e o recomeço; nunca dois raros; parado no descanso e na transição; o contador do DBG; as cartas e os 30 s; repetir reinicia; o Dano de Crítico dobrando o crítico; o tier 2 pelo DBG e pelo Raro Dourado (travado, 500, compra única, vale na run seguinte); o balanço do v8.
+  - O save v10 em `SaveServiceTests`, e a versão nova em `RareCrystalTests`.
+  - Em PlayMode, `RareCrystalFlowTests` mede as cartas do v8 e os botões novos do DBG.
+  - Rodados: EditMode inteiro (526) e PlayMode do raro, AD, combo, coluna, descanso, loja, HUD e save; todos passando.
+
 ### E2 — Os anúncios e o offline (núcleo)
 
 - Os **três anúncios** e o do tier 2, com os bônus da tabela, a **renovação** do mesmo tipo e o **maior vale** entre tipos (D-251).
@@ -155,7 +175,7 @@
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-18: P1…P9 com as recomendações (D-283…D-291) | — |
 | E0 Mockups | 🔄 prontos em 2026-11-18, aguardando o Bruno | Ver "Como ficou" na E0 |
-| E1 O raro do v8 | ⏳ | — |
+| E1 O raro do v8 | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E1 |
 | E2 Os anúncios e o offline | ⏳ | — |
 | E3 Na tela | ⏳ | — |
 | E4 Sessão longa e celular | ⏭️ nos testes longos do fim (D-291) | — |

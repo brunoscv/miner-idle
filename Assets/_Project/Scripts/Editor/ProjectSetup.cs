@@ -105,6 +105,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV8Balance();
             EnsureGddV8FloorMilestones();
             EnsureGddV8RestShop();
+            EnsureGddV8RareCrystal();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -708,6 +709,43 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v8: Dedo Fogoso e Atalho, Promoção com o Treinar 5, cristais a 3 m (M9d, D-277).");
+        }
+
+        /// <summary>
+        /// M9e E1 (GDD v8.2 §3.4, D-243, D-283, D-286): o raro do v8 — o contador de 60 s no lugar da chance; as cartas Dano
+        /// ×2, Lascas ×2, +10% de crítico e Dano de Crítico ×2, de 30 s; o tier 2 com ×4, ×4, +20% e ×4; e o Raro Dourado,
+        /// compra única de 500 lascas vermelhas. Só preenche se o contador ainda estiver em 0: um ajuste feito à mão fica.
+        /// </summary>
+        static void EnsureGddV8RareCrystal()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var interval = serialized.FindProperty("rareInterval");
+            if (interval.doubleValue != 0) return;
+            interval.doubleValue = 60;
+            SetCards(serialized.FindProperty("rareCards"), 30,
+                     (RareCard.Damage, 2), (RareCard.Shards, 2), (RareCard.Critical, 0.10), (RareCard.CritDamage, 2));
+            SetCards(serialized.FindProperty("rareTier2Cards"), 30,
+                     (RareCard.Damage, 4), (RareCard.Shards, 4), (RareCard.Critical, 0.20), (RareCard.CritDamage, 4));
+            serialized.FindProperty("rareChooseSeconds").doubleValue = 30;
+            SetLine(serialized, "goldenRare", 500, 1, 1, 1);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8: raro a cada 60 s, cartas do v8 de 30 s, tier 2 e o Raro Dourado de 500 vermelhas (M9e E1, D-283, D-286).");
+        }
+
+        static void SetCards(SerializedProperty list, double seconds, params (RareCard card, double value)[] cards)
+        {
+            list.arraySize = cards.Length;
+            for (int i = 0; i < cards.Length; i++)
+            {
+                var item = list.GetArrayElementAtIndex(i);
+                item.FindPropertyRelative("card").enumValueIndex = (int)cards[i].card;
+                item.FindPropertyRelative("value").doubleValue = cards[i].value;
+                item.FindPropertyRelative("seconds").doubleValue = seconds;
+            }
         }
 
         /// <summary>

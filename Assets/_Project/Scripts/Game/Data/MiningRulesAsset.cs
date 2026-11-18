@@ -150,8 +150,13 @@ namespace MinersIdle.Game
         [Tooltip("Segundos para escolher a carta; depois o jogo sorteia (D-186: 30). Só correm com o app aberto (D-222).")]
         [SerializeField] double rareChooseSeconds = 30;
         [Tooltip("As cartas da janela (D-190). Vazio = sem cristal raro (os balanços até o v5). GDD v7: Damage ×2, Speed ÷2, " +
-                 "Shards ×2 e Critical +0,25, 60 s cada.")]
+                 "Shards ×2 e Critical +0,25, 60 s cada. GDD v8 (D-243): Damage ×2, Shards ×2, Critical +0,10 e CritDamage ×2, 30 s.")]
         [SerializeField] RareCardValues[] rareCards = new RareCardValues[0];
+        [Tooltip("Segundos de run entre um raro e o próximo (GDD v8: 60, D-283); no zero, o próximo cristal que nasce é raro. " +
+                 "0 = pela chance acima (o v7).")]
+        [SerializeField] double rareInterval;
+        [Tooltip("As cartas no tier 2 (GDD v8, D-243): Damage ×4, Shards ×4, Critical +0,20 e CritDamage ×4, 30 s. Vazio = sem tier 2.")]
+        [SerializeField] RareCardValues[] rareTier2Cards = new RareCardValues[0];
 
         [Header("Boost do AD (M9b E5; GDD v7 §7.2, D-187, D-188)")]
         [Tooltip("O intervalo do golpe do anão ÷ este valor, depois do piso (D-180). GDD v7: 2,5. 0 = sem AD.")]
@@ -192,6 +197,9 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues fieryFinger = new UpgradeLineValues(10, 2, 0, 0.5, CostFormula.OffsetExponential);
         [Tooltip("Atalho (M9d). Efeito: metros a menos entre cristais por nível (D-252: 0,5, até o nível 5; 1 m = 2 unidades). 0 níveis desliga.")]
         [SerializeField] UpgradeLineValues shortcut = new UpgradeLineValues(50, 2, 0, 0.5, CostFormula.OffsetExponential);
+        [Tooltip("Raro Dourado (M9e, D-286): compra única; as cartas do raro no tier 2. GDD v8: 500, a partir do andar do raro. " +
+                 "0 níveis desliga.")]
+        [SerializeField] UpgradeLineValues goldenRare = new UpgradeLineValues(500, 1, 0, 1);
 
         /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos não valem no Multiply (v5).</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
@@ -228,15 +236,18 @@ namespace MinersIdle.Game
             var table = new RedShardTable(restLevel, redShardMilestoneStep, redShardMilestone, redShardBigMilestoneFrom,
                                           redShardBigMilestone, redShardPerLevel);
             // Na ordem do PermanentId.
-            return new PermanentRules(restLevel, table, internPromotionTrainingLevel, memory.ToDefinition(), mountainBlood.ToDefinition(),
+            return new PermanentRules(restLevel, table, internPromotionTrainingLevel, rareFloor, memory.ToDefinition(), mountainBlood.ToDefinition(),
                                       burningHeart.ToDefinition(), nervousFingers.ToDefinition(), dwarfSoul.ToDefinition(),
                                       internTraining.ToDefinition(), internPromotion.ToDefinition(), fieryFinger.ToDefinition(),
-                                      shortcut.ToDefinition());
+                                      shortcut.ToDefinition(), goldenRare.ToDefinition());
         }
 
         /// <summary>A chance do raro no padrão e no ritmo lento (para o rótulo do DBG → Cálculos).</summary>
         public double RareChance => rareChance;
         public double RareSlowChance => rareSlowChance;
+
+        /// <summary>O contador do raro (GDD v8: 60 s, D-283); 0 = pela chance (o v7). O DBG → Cálculos esconde o ritmo com ele.</summary>
+        public double RareInterval => rareInterval;
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses(),
@@ -257,26 +268,34 @@ namespace MinersIdle.Game
         /// <summary>O cristal raro do asset; cartas mal preenchidas ou repetidas ficam de fora, e números inválidos desligam o raro.</summary>
         RareRules Rare()
         {
-            var cards = new List<RareCardRule>();
-            if (rareCards != null)
-                foreach (var values in rareCards)
-                {
-                    if (values == null) continue;
-                    if (!values.IsValid || cards.Exists(c => c.Card == values.Card))
-                    {
-                        Debug.LogWarning($"[Valores] Carta do raro {values.Card} inválida ou repetida em {name}: ignorada.", this);
-                        continue;
-                    }
-                    cards.Add(values.ToRule());
-                }
+            var cards = Cards(rareCards, null);
             if (cards.Count == 0) return RareRules.None();
-            bool valid = rareChance >= 0 && rareChance <= 1 && rareSlowChance >= 0 && rareSlowChance <= 1 && rareChooseSeconds > 0;
+            bool valid = rareChance >= 0 && rareChance <= 1 && rareSlowChance >= 0 && rareSlowChance <= 1 && rareChooseSeconds > 0
+                         && rareInterval >= 0 && !double.IsInfinity(rareInterval);
             if (!valid)
             {
-                Debug.LogWarning($"[Valores] Chance ou tempo de escolha do raro inválidos em {name}: sem cristal raro.", this);
+                Debug.LogWarning($"[Valores] Chance, contador ou tempo de escolha do raro inválidos em {name}: sem cristal raro.", this);
                 return RareRules.None();
             }
-            return new RareRules(rareChance, rareSlowChance, rareChooseSeconds, cards);
+            return new RareRules(rareChance, rareSlowChance, rareChooseSeconds, cards, rareInterval, Cards(rareTier2Cards, cards));
+        }
+
+        /// <summary>As cartas de uma lista do asset; mal preenchidas, repetidas ou (no tier 2) fora do tier 1 ficam de fora.</summary>
+        List<RareCardRule> Cards(RareCardValues[] values, List<RareCardRule> tier1)
+        {
+            var cards = new List<RareCardRule>();
+            if (values == null) return cards;
+            foreach (var item in values)
+            {
+                if (item == null) continue;
+                if (!item.IsValid || cards.Exists(c => c.Card == item.Card) || (tier1 != null && !tier1.Exists(c => c.Card == item.Card)))
+                {
+                    Debug.LogWarning($"[Valores] Carta do raro {item.Card} inválida, repetida ou fora do tier 1 em {name}: ignorada.", this);
+                    continue;
+                }
+                cards.Add(item.ToRule());
+            }
+            return cards;
         }
 
         /// <summary>Os marcos do combo do asset; os mal preenchidos (combo &lt; 1, duração 0, repetidos) ficam de fora, com aviso.</summary>

@@ -208,7 +208,8 @@ namespace MinersIdle.Persistence
             return GameState.Restore(data.shards, data.hits, data.breaks, levelOf, economy, caveCount,
                                      data.cave, data.caveBreaks, data.playSeconds, data.shardsEarned, data.reachedHeart,
                                      pending, data.version >= 6 ? RestoreBonuses(data.bonuses) : null,
-                                     data.version >= 7 ? RestoreRareWindow(data.rareWindow) : default);
+                                     data.version >= 7 ? RestoreRareWindow(data.rareWindow) : default,
+                                     data.version >= 10 ? data.rareTimer : 0);
         }
 
         /// <summary>A janela do raro do save v7 (M9b E4). Carta desconhecida ou repetida: a janela fecha.</summary>
@@ -266,6 +267,7 @@ namespace MinersIdle.Persistence
                 shards = state.Shards, hits = state.Hits, breaks = state.Breaks,
                 cave = state.Cave, caveBreaks = state.CaveBreaks, playSeconds = state.PlaySeconds,
                 shardsEarned = state.ShardsEarned, reachedHeart = state.ReachedHeart,
+                rareTimer = state.RareTimer,
                 pendingOffline = new SavedOffline
                 {
                     secondsAway = state.PendingOffline.SecondsAway, secondsCounted = state.PendingOffline.SecondsCounted,

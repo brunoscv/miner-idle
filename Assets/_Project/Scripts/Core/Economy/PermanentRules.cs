@@ -36,6 +36,11 @@ namespace MinersIdle.Core
         /// 0,5 m no nível 5). Nos fins da lista do enum para não mudar o índice das outras.
         /// </summary>
         Shortcut,
+        /// <summary>
+        /// Raro Dourado (GDD v8, M9e, D-286): compra única (500 lascas vermelhas); as cartas do raro passam ao tier 2 (×4,
+        /// +20%) para sempre. Só se compra a partir do andar do raro (<see cref="PermanentRules.GoldenRareFloor"/>: 10).
+        /// </summary>
+        GoldenRare,
     }
 
     /// <summary>
@@ -117,8 +122,19 @@ namespace MinersIdle.Core
         /// O nível do Treinar que a Promoção pede (GDD v8.2: 5); 0 = o Treinar no limite (o GDD v7, D-169).
         /// </param>
         public PermanentRules(int restLevel, RedShardTable redShards, int promotionTrainingLevel, params UpgradeDefinition[] lines)
+            : this(restLevel, redShards, promotionTrainingLevel, 0, lines)
+        {
+        }
+
+        /// <param name="goldenRareFloor">
+        /// O andar mais fundo a partir do qual o Raro Dourado se compra (GDD v8: o do raro, 10; D-286). 0 = sem trava.
+        /// </param>
+        public PermanentRules(int restLevel, RedShardTable redShards, int promotionTrainingLevel, int goldenRareFloor,
+                              params UpgradeDefinition[] lines)
         {
             if (promotionTrainingLevel < 0) throw new ArgumentOutOfRangeException(nameof(promotionTrainingLevel));
+            if (goldenRareFloor < 0) throw new ArgumentOutOfRangeException(nameof(goldenRareFloor));
+            GoldenRareFloor = goldenRareFloor;
             PromotionTrainingLevel = promotionTrainingLevel;
             if (restLevel < 0) throw new ArgumentOutOfRangeException(nameof(restLevel));
             RestLevel = restLevel;
@@ -135,6 +151,9 @@ namespace MinersIdle.Core
 
         /// <summary>O nível do Treinar que a Promoção pede; 0 = o limite do Treinar (D-169).</summary>
         public int PromotionTrainingLevel { get; }
+
+        /// <summary>O andar mais fundo que o Raro Dourado pede (D-286: o do raro, 10); 0 = sem trava.</summary>
+        public int GoldenRareFloor { get; }
 
         public bool IsRestEnabled => RestLevel > 0;
 

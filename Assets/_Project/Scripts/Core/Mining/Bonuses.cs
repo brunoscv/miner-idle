@@ -18,6 +18,11 @@ namespace MinersIdle.Core
         ShardsMultiplier,
         /// <summary>Pontos a mais na chance de crítico do golpe e do toque (a carta "Crítico +25%", D-219): 0,25 = +25.</summary>
         CritChance,
+        /// <summary>
+        /// O multiplicador do crítico multiplica pelo valor (a carta "Dano de Crítico ×2" do v8, D-243): ×1,5 vira ×3. Só o
+        /// anão (o estagiário não tem crítico, D-167). No fim da lista: o save guarda pelo nome.
+        /// </summary>
+        CritDamageMultiplier,
     }
 
     /// <summary>De onde o bônus veio.</summary>
@@ -56,7 +61,10 @@ namespace MinersIdle.Core
         public static AdRules None() => new AdRules(0, 0);
     }
 
-    /// <summary>As 4 cartas do cristal raro (D-190). O número vai no <see cref="ActiveBonus.Tier"/>: não reordenar.</summary>
+    /// <summary>
+    /// As cartas do cristal raro (D-190; GDD v8, D-243). O número vai no <see cref="ActiveBonus.Tier"/>: não reordenar. Cada
+    /// balanço usa as suas: o v7 tem Dano, Rápido, Lascas e Crítico; o v8, Dano, Lascas, Crítico e Dano de Crítico.
+    /// </summary>
     public enum RareCard
     {
         /// <summary>Dano ×2 (anão e estagiário).</summary>
@@ -65,11 +73,16 @@ namespace MinersIdle.Core
         Speed = 1,
         /// <summary>Lascas ×2 em cada cristal quebrado (e no offline do estagiário).</summary>
         Shards = 2,
-        /// <summary>Crítico +25 pontos (só o anão: o estagiário não tem crítico, D-167).</summary>
+        /// <summary>Crítico +25 pontos no v7, +10 no v8 (só o anão: o estagiário não tem crítico, D-167).</summary>
         Critical = 3,
+        /// <summary>Dano de Crítico ×2 (GDD v8, D-243): o multiplicador do crítico dobra. Só o anão (D-167).</summary>
+        CritDamage = 4,
     }
 
-    /// <summary>Uma carta do raro como está no balanço: o efeito e a duração (GDD v7: ×2 / ÷2 / ×2 / +0,25, 60 s, D-190).</summary>
+    /// <summary>
+    /// Uma carta do raro como está no balanço: o efeito e a duração (GDD v7: ×2 / ÷2 / ×2 / +0,25, 60 s, D-190; GDD v8: ×2 /
+    /// ×2 / +0,10 / ×2, 30 s, e no tier 2 ×4 / ×4 / +0,20 / ×4, D-243).
+    /// </summary>
     public readonly struct RareCardRule
     {
         public RareCardRule(RareCard card, double value, double seconds)
@@ -95,28 +108,42 @@ namespace MinersIdle.Core
                 case RareCard.Damage: return BonusKind.DamageMultiplier;
                 case RareCard.Speed: return BonusKind.IntervalDivisor;
                 case RareCard.Shards: return BonusKind.ShardsMultiplier;
+                case RareCard.CritDamage: return BonusKind.CritDamageMultiplier;
                 default: return BonusKind.CritChance;
             }
         }
     }
 
     /// <summary>
-    /// As regras do cristal raro (M9b E4; D-97, D-184…D-186, D-190): a chance de cada cristal que nasce ser raro (o
-    /// padrão e o ritmo lento do DBG), o tempo para escolher e as cartas. Sem cartas (ou com menos de 2), não há raro.
+    /// As regras do cristal raro (M9b E4; D-97, D-184…D-186, D-190): quando nasce, o tempo para escolher e as cartas. Sem
+    /// cartas (ou com menos de 2), não há raro. Quando nasce: com <see cref="Interval"/> (GDD v8, D-283), um contador de
+    /// tantos segundos de run; sem ele (o v7), a chance de cada cristal que nasce ser raro (o padrão e o ritmo lento do DBG).
+    /// O tier 2 (GDD v8, D-243, D-286) troca o valor das cartas que o têm.
     /// </summary>
     public sealed class RareRules
     {
-        readonly RareCardRule[] _byCard = new RareCardRule[4];
-        readonly bool[] _has = new bool[4];
+        static readonly int CardCount = Enum.GetValues(typeof(RareCard)).Length;
 
-        public RareRules(double chance, double slowChance, double chooseSeconds, IEnumerable<RareCardRule> cards)
+        readonly RareCardRule[] _byCard = new RareCardRule[CardCount];
+        readonly bool[] _has = new bool[CardCount];
+        readonly RareCardRule[] _tier2 = new RareCardRule[CardCount];
+        readonly bool[] _hasTier2 = new bool[CardCount];
+
+        /// <param name="interval">
+        /// Segundos de run entre um raro e o próximo (GDD v8: 60, D-283). 0 = pela chance (o v7, D-184).
+        /// </param>
+        /// <param name="tier2Cards">As cartas no tier 2 (GDD v8: ×4, ×4, +0,20, ×4, D-243); vazio = sem tier 2.</param>
+        public RareRules(double chance, double slowChance, double chooseSeconds, IEnumerable<RareCardRule> cards,
+                         double interval = 0, IEnumerable<RareCardRule> tier2Cards = null)
         {
             if (double.IsNaN(chance) || chance < 0 || chance > 1) throw new ArgumentOutOfRangeException(nameof(chance));
             if (double.IsNaN(slowChance) || slowChance < 0 || slowChance > 1) throw new ArgumentOutOfRangeException(nameof(slowChance));
             if (double.IsNaN(chooseSeconds) || chooseSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(chooseSeconds));
+            if (double.IsNaN(interval) || double.IsInfinity(interval) || interval < 0) throw new ArgumentOutOfRangeException(nameof(interval));
             Chance = chance;
             SlowChance = slowChance;
             ChooseSeconds = chooseSeconds;
+            Interval = interval;
             var list = new List<RareCardRule>();
             if (cards != null)
                 foreach (var card in cards)
@@ -128,7 +155,25 @@ namespace MinersIdle.Core
                 }
             list.Sort((a, b) => a.Card.CompareTo(b.Card));
             Cards = list;
+            if (tier2Cards != null)
+                foreach (var card in tier2Cards)
+                {
+                    if (_hasTier2[(int)card.Card]) throw new ArgumentException($"A carta {card.Card} do tier 2 aparece duas vezes.", nameof(tier2Cards));
+                    if (!_has[(int)card.Card]) throw new ArgumentException($"A carta {card.Card} do tier 2 não está no tier 1.", nameof(tier2Cards));
+                    _hasTier2[(int)card.Card] = true;
+                    _tier2[(int)card.Card] = card;
+                    HasTier2 = true;
+                }
         }
+
+        /// <summary>Segundos de run entre um raro e o próximo (GDD v8: 60, D-283); 0 = pela chance (o v7).</summary>
+        public double Interval { get; }
+
+        /// <summary>O raro nasce pelo contador (GDD v8, D-283), não pela chance de cada cristal.</summary>
+        public bool UsesCounter => Interval > 0;
+
+        /// <summary>O balanço tem o tier 2 do raro (GDD v8, D-243).</summary>
+        public bool HasTier2 { get; }
 
         /// <summary>Chance de cada cristal que nasce ser raro (D-184: 15%).</summary>
         public double Chance { get; }
@@ -142,9 +187,18 @@ namespace MinersIdle.Core
         /// <summary>Há raro: pelo menos 2 cartas (a janela mostra 2 diferentes, D-190).</summary>
         public bool IsEnabled => Cards.Count >= 2;
 
-        public bool Has(RareCard card) => _has[(int)card];
+        public bool Has(RareCard card) => (int)card >= 0 && (int)card < CardCount && _has[(int)card];
         public RareCardRule Get(RareCard card) =>
-            _has[(int)card] ? _byCard[(int)card] : throw new ArgumentException($"Sem a carta {card}.", nameof(card));
+            Has(card) ? _byCard[(int)card] : throw new ArgumentException($"Sem a carta {card}.", nameof(card));
+
+        /// <summary>
+        /// A carta no <paramref name="tier"/> (1 ou 2): no tier 2, o valor dele, se a carta tem; senão, o do tier 1.
+        /// </summary>
+        public RareCardRule Get(RareCard card, int tier)
+        {
+            var rule = Get(card);
+            return tier >= 2 && _hasTier2[(int)card] ? _tier2[(int)card] : rule;
+        }
 
         /// <summary>Sem raro (os balanços até o v5 e os testes que não passam regras).</summary>
         public static RareRules None() => new RareRules(0, 0, 30, null);
@@ -270,6 +324,9 @@ namespace MinersIdle.Core
 
         /// <summary>O produto dos multiplicadores de lascas ativos (a carta "Lascas ×2"); 1 sem nenhum.</summary>
         public double ShardsMultiplier => Product(BonusKind.ShardsMultiplier, internOnly: false);
+
+        /// <summary>O produto dos multiplicadores do dano do crítico (a carta "Dano de Crítico ×2" do v8); 1 sem nenhum.</summary>
+        public double CritDamageMultiplier => Product(BonusKind.CritDamageMultiplier, internOnly: false);
 
         /// <summary>A soma dos pontos a mais na chance de crítico (a carta "Crítico +25%"): 0,25 = +25.</summary>
         public double CritChance

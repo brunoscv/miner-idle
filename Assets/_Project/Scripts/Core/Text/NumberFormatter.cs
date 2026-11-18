@@ -112,6 +112,13 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
+        /// O efeito de um bônus ou carta do raro (M9e E1): "×2" nos multiplicadores (e no divisor do intervalo), "+10%" na
+        /// chance de crítico e no dano a mais. É o <c>{0}</c> dos textos das cartas no catálogo (D-243: ×2 no tier 1, ×4 no 2).
+        /// </summary>
+        public static string FormatEffect(BonusKind kind, double value) =>
+            kind == BonusKind.CritChance || kind == BonusKind.DamagePercent ? "+" + FormatPercent(value) : "×" + Format(value);
+
+        /// <summary>
         /// Tempo de jogo (M8, E3): "45 s", "12 min 05 s", "3 h 07 min"; a partir de uma hora, sem os segundos. Arredonda
         /// para baixo, como as lascas.
         /// </summary>

@@ -36,7 +36,7 @@ namespace MinersIdle.EditorTools
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.BonusMenuName) : null;
             if (menu == null) return false;
             var current = menu.GetComponent<BonusDebugPanel>();
-            if (current != null) return EnsureRare(menu, current) | EnsureAd(menu, current);
+            if (current != null) return EnsureRare(menu, current) | EnsureAd(menu, current) | EnsureRareV8(menu, current);
 
             var grid = menu.Find("Content/Buttons");
             var grant = new Button[GrantButtons.Length];
@@ -83,8 +83,68 @@ namespace MinersIdle.EditorTools
             Debug.Log("[Setup] Painel de debug: menu \"Bônus\" com combo ×10, ×30, ×50, ×100 e Limpar bônus (M9b, E1).");
             EnsureRare(menu, panel);
             EnsureAd(menu, panel);
+            EnsureRareV8(menu, panel);
             return true;
         }
+
+        /// <summary>
+        /// M9e E1 (D-285): a carta Dano de Crítico, Raro agora, Contador 5 s e Tier 2, antes do Fechar (o menu cresce para 6
+        /// fileiras); os nomes das cartas sem número (o efeito vem do bônus: ×2 no tier 1, ×4 no 2) e o contador no alto.
+        /// </summary>
+        static bool EnsureRareV8(Transform menu, BonusDebugPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+            Button Ensure(string name, string label)
+            {
+                var found = grid.Find(name);
+                if (found != null) return found.GetComponent<Button>();
+                changed = true;
+                return DebugPanelSetup.CreateButton(grid, name, label);
+            }
+            var critDamage = Ensure("CardCritDamage", "Carta Dano Crít.");
+            var now = Ensure("RareNow", "Raro agora");
+            var counter = Ensure("RareCounter", "Contador: 60 s");
+            var tier2 = Ensure("RareTier2", "Tier 2: não");
+            grid.Find("Close")?.SetAsLastSibling();
+
+            var content = (RectTransform)menu.Find("Content");
+            if (content != null && !Mathf.Approximately(content.sizeDelta.y, DebugPanelSetup.BonusMenuHeight))
+            {
+                content.sizeDelta = new Vector2(content.sizeDelta.x, DebugPanelSetup.BonusMenuHeight);
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            if (so.FindProperty("rareNow").objectReferenceValue != now)
+            {
+                so.FindProperty("rareNow").objectReferenceValue = now;
+                so.FindProperty("rareCounter").objectReferenceValue = counter;
+                so.FindProperty("rareTier2").objectReferenceValue = tier2;
+                var cards = so.FindProperty("cards");
+                cards.arraySize = 5;
+                cards.GetArrayElementAtIndex(4).objectReferenceValue = critDamage;
+                var labels = so.FindProperty("cardLabels");
+                labels.arraySize = CardLabelsV8.Length;
+                for (int i = 0; i < CardLabelsV8.Length; i++) labels.GetArrayElementAtIndex(i).stringValue = CardLabelsV8[i];
+                so.FindProperty("rareCardFormat").stringValue = "{0} {2}, {1}";
+                so.FindProperty("debugIntervalSeconds").doubleValue = 5;
+                so.FindProperty("counterButtonFormat").stringValue = "Contador: {0}";
+                so.FindProperty("tier2ButtonFormat").stringValue = "Tier 2: {0}";
+                so.FindProperty("yesLabel").stringValue = "sim";
+                so.FindProperty("noLabel").stringValue = "não";
+                so.FindProperty("counterFormat").stringValue = "Raro em {0} (a cada {1}) · tier {2}";
+                so.FindProperty("counterLockedFormat").stringValue = "Raro: só a partir do andar {0} · tier {1}";
+                so.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+            if (changed) Debug.Log("[Setup] Painel de debug: no menu Bônus, Raro agora, Contador 5 s, Tier 2 e a carta Dano de Crítico (M9e E1, D-285).");
+            return changed;
+        }
+
+        /// <summary>Os nomes das cartas no alto do menu, na ordem do enum RareCard; o efeito vem do bônus ativo.</summary>
+        static readonly string[] CardLabelsV8 = { "Dano", "Rápido", "Lascas", "Crítico", "Dano de crítico" };
 
         /// <summary>M9b E5 (D-234): AD agora e Pular espera, antes do Fechar; o menu cresce para 5 fileiras.</summary>
         static bool EnsureAd(Transform menu, BonusDebugPanel panel)

@@ -21,11 +21,14 @@ namespace MinersIdle.Persistence
     /// numa <b>run nova no andar 1</b> (D-263): ficam as lascas vermelhas, as permanentes e o dia, e o andar a que a run
     /// antiga chegou vira o andar mais fundo (<see cref="SavedPermanent.deepestFloor"/>). A run (lascas, melhorias, bônus,
     /// janela do raro, volta do offline pendente) recomeça.
+    ///
+    /// Versão 10 (M9e E1, D-283): o contador do raro (<see cref="rareTimer"/>). Até a 9 abre no zero. O Raro Dourado
+    /// (D-286) vai com as outras permanentes, pelo nome: um save antigo abre sem ele.
     /// </summary>
     [Serializable]
     public sealed class SaveData
     {
-        public const int CurrentVersion = 9;
+        public const int CurrentVersion = 10;
 
         /// <summary>A primeira versão com os números do GDD v8 (M9c E1): as de antes abrem numa run nova (D-263).</summary>
         public const int FirstV8Version = 8;
@@ -66,6 +69,9 @@ namespace MinersIdle.Persistence
         /// com o resumo do dia, sem offline. Até a 8 não há: abre numa run em andamento, como antes.
         /// </summary>
         public SavedRest rest = new SavedRest();
+
+        /// <summary>Save v10 (M9e E1, D-283): os segundos de run desde o último raro. Até a 9: 0 (o contador recomeça).</summary>
+        public double rareTimer;
     }
 
     /// <summary>

@@ -237,8 +237,11 @@ namespace MinersIdle.EditorTools
 
         internal const string BonusMenuName = "BonusMenu";
 
-        /// <summary>O menu Bônus (M9b): os bônus e a janela do raro no alto (<see cref="DayTextHeight"/>) e 5 fileiras de botões (o AD desde a E5).</summary>
-        internal const float BonusMenuHeight = 139f;
+        /// <summary>
+        /// O menu Bônus (M9b): os bônus e a janela do raro no alto (<see cref="DayTextHeight"/>) e 6 fileiras de botões (o AD
+        /// desde a E5, o contador do raro desde o M9e E1).
+        /// </summary>
+        internal const float BonusMenuHeight = 158f;
 
         internal const string InternMenuName = "InternMenu";
 

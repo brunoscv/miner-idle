@@ -45,18 +45,25 @@ namespace MinersIdle.EditorTools
         /// <summary>
         /// As cartas no catálogo (D-219, D-225), na ordem de <see cref="RareCard"/>: o ícone (o martelo do kit Anvil, o
         /// relógio do HUD, o cristal do jogo, o raio do kit Anvil), o nome, o texto que sobe, o efeito, para quem vale.
+        /// Desde o M9e E1, o <c>{0}</c> é o efeito no tier de agora ("×2", "+10%"; no tier 2, "×4", "+20%", D-243).
         /// </summary>
         static readonly (RareCard card, string icon, string title, string gain, string text, string note, bool intern)[] Cards =
         {
-            (RareCard.Damage, UiSkinSetup.IconsFolder + "/Icon23.png", "DANO ×2", "DANO ×2",
-             "Golpe e toque\ncom o dobro\nde dano", "Vale p/ o estagiário", true),
+            (RareCard.Damage, UiSkinSetup.IconsFolder + "/Icon23.png", "DANO {0}", "DANO {0}",
+             "Golpe e toque\ncom {0}\nde dano", "Vale p/ o estagiário", true),
             (RareCard.Speed, "Assets/_Project/Art/UI/icon_speed.png", "RÁPIDO", "RÁPIDO",
              "Golpe 2× mais\nrápido (o tempo\ndo golpe ÷ 2)", "Vale p/ o estagiário", true),
-            (RareCard.Shards, "Assets/_Project/Art/Crystals/icon_crystal.png", "LASCAS ×2", "LASCAS ×2",
-             "Cada cristal\nquebrado paga\no dobro", "Vale p/ o estagiário", true),
-            (RareCard.Critical, UiSkinSetup.IconsFolder + "/Icon18.png", "CRÍTICO +25%", "CRÍTICO +25%",
-             "+25 pontos na\nchance de\ncrítico", "Só o anão", false),
+            (RareCard.Shards, "Assets/_Project/Art/Crystals/icon_crystal.png", "LASCAS {0}", "LASCAS {0}",
+             "Cada cristal\nquebrado paga\n{0}", "Vale p/ o estagiário", true),
+            (RareCard.Critical, UiSkinSetup.IconsFolder + "/Icon18.png", "CRÍTICO {0}", "CRÍTICO {0}",
+             "{0} na\nchance de\ncrítico", "Só o anão", false),
+            // GDD v8 (D-243). O ícone é o do Crítico até a E3 do M9e dar um próprio.
+            (RareCard.CritDamage, UiSkinSetup.IconsFolder + "/Icon18.png", "DANO CRÍT. {0}", "DANO CRÍTICO {0}",
+             "O dano do\ncrítico vale\n{0}", "Só o anão", false),
         };
+
+        /// <summary>Os nomes das cartas antes do M9e E1, com o número escrito: trocados pelos com <c>{0}</c>.</summary>
+        static readonly string[] OldTitles = { "DANO ×2", "LASCAS ×2", "CRÍTICO +25%" };
 
         static TMP_FontAsset _font, _numbers;
 
@@ -228,9 +235,27 @@ namespace MinersIdle.EditorTools
             var so = new SerializedObject(catalog);
             var list = so.FindProperty("entries");
             int added = 0;
+            int updated = 0;
             foreach (var (card, icon, title, gain, text, note, intern) in Cards)
             {
-                if (catalog.Find(BonusSource.Rare, (int)card) != null) continue;
+                var existing = catalog.Find(BonusSource.Rare, (int)card);
+                if (existing != null)
+                {
+                    // M9e E1: o número sai do texto e vira o {0} (o efeito no tier de agora).
+                    if (System.Array.IndexOf(OldTitles, existing.Title) < 0) continue;
+                    for (int i = 0; i < list.arraySize; i++)
+                    {
+                        var old = list.GetArrayElementAtIndex(i);
+                        if (old.FindPropertyRelative("source").enumValueIndex != (int)BonusSource.Rare
+                            || old.FindPropertyRelative("tier").intValue != (int)card) continue;
+                        old.FindPropertyRelative("title").stringValue = title;
+                        old.FindPropertyRelative("description").stringValue = text.Replace('\n', ' ');
+                        old.FindPropertyRelative("gain").stringValue = gain;
+                        old.FindPropertyRelative("cardText").stringValue = text;
+                        updated++;
+                    }
+                    continue;
+                }
                 int index = list.arraySize;
                 list.arraySize = index + 1;
                 var item = list.GetArrayElementAtIndex(index);
@@ -259,11 +284,11 @@ namespace MinersIdle.EditorTools
                 so.FindProperty("rareClose").stringValue = "FECHAR";
                 so.FindProperty("cardSecondsFormat").stringValue = "{0} s";
             }
-            if (added == 0 && !texts) return false;
+            if (added == 0 && updated == 0 && !texts) return false;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[Setup] Catálogo dos bônus: {added} cartas do cristal raro e os textos da janela (M9b E4, D-225).");
+            Debug.Log($"[Setup] Catálogo dos bônus: {added} cartas do cristal raro novas, {updated} com o efeito no texto ({{0}}, M9e E1) e os textos da janela (M9b E4, D-225).");
             return true;
         }
 

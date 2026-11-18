@@ -169,8 +169,8 @@ namespace MinersIdle.Tests
 
         const int Caves = 10;
 
-        /// <summary>O arquivo gravado na versão atual (9 desde o M9d E1: o descanso na tela).</summary>
-        const string VersionNine = "\"version\":\\s*9";
+        /// <summary>O arquivo gravado na versão atual (10 desde o M9e E1: o contador do raro; a 9 trouxe o descanso na tela).</summary>
+        const string CurrentVersionJson = "\"version\":\\s*10";
 
         /// <summary>O balanço com a descida, sem melhorias à venda (o Mapa saiu no v8, D-256).</summary>
         static EconomyRules NoShop()
@@ -189,6 +189,22 @@ namespace MinersIdle.Tests
         {
             Directory.CreateDirectory(_dir);
             File.WriteAllText(_store.FilePath, json);
+        }
+
+        /// <summary>Save v10 (M9e E1, D-283): o contador do raro vai e volta; um save v9 abre com ele no zero.</summary>
+        [Test]
+        public void Version10_KeepsTheRareCounter_AndAVersion9SaveOpensAtZero()
+        {
+            var state = GameState.Restore(10, 0, 0, _ => 0, NoShop(), Caves, 3, rareTimer: 33.5);
+            _save.Save(state, new PermanentState());
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(CurrentVersionJson));
+            var loaded = _save.Load(NoShop(), PermanentRules.None, out _, out var status, Caves);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(loaded.RareTimer, Is.EqualTo(33.5));
+
+            WriteSave("{ \"version\": 9, \"shards\": 5.0, \"cave\": 3, \"rareTimer\": 20.0 }");
+            Assert.That(_save.Load(NoShop(), PermanentRules.None, out _, out _, Caves).RareTimer, Is.EqualTo(0),
+                        "até a 9 não havia contador");
         }
 
         [Test]
@@ -213,7 +229,7 @@ namespace MinersIdle.Tests
             Assert.That(loaded.ShardsEarned, Is.EqualTo(state.ShardsEarned).And.GreaterThan(0));
             Assert.That(loaded.ReachedHeart, Is.False);
             Assert.That(back.DeepestFloor, Is.EqualTo(4), "o recorde vai junto (M9c E1)");
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionNine), "save v9 (M9d E1)");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(CurrentVersionJson), "save v10 (M9e E1)");
         }
 
         [Test]
@@ -235,7 +251,7 @@ namespace MinersIdle.Tests
             Assert.That(permanent.DeepestFloor, Is.EqualTo(1), "a v1 não tinha andar");
 
             _save.Save(state, permanent);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionNine), "regravado na versão nova");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(CurrentVersionJson), "regravado na versão nova");
         }
 
         /// <summary>

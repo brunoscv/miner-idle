@@ -155,8 +155,10 @@ namespace MinersIdle.UI
                 var entry = catalog.Find(BonusSource.Rare, (int)card);
                 slot.icon.sprite = entry?.Icon;
                 slot.icon.enabled = slot.icon.sprite != null;
-                slot.title.text = entry != null ? entry.Title : card.ToString();
-                slot.text.text = entry != null ? entry.CardText : "";
+                // O efeito no tier de agora ({0}: ×2 no tier 1, ×4 no 2; M9e E1, D-243).
+                string effect = Effect(card);
+                slot.title.text = entry != null ? string.Format(entry.Title ?? "", effect) : card.ToString();
+                slot.text.text = entry != null ? string.Format(entry.CardText ?? "", effect) : "";
                 slot.note.text = entry != null ? entry.CardNote : "";
                 slot.note.color = entry != null && entry.ForIntern ? internNoteColor : dwarfNoteColor;
                 slot.seconds.text = CardSecondsText(card);
@@ -188,6 +190,14 @@ namespace MinersIdle.UI
         }
 
         /// <summary>A duração da carta no balanço ("60 s").</summary>
+        /// <summary>O efeito da carta no tier de agora ("×2", "+10%"; o tier 2 do Raro Dourado, D-286).</summary>
+        string Effect(RareCard card)
+        {
+            if (Simulation == null || !Simulation.Strike.Rare.Has(card)) return "";
+            var rule = Simulation.Strike.Rare.Get(card, Simulation.RareTier);
+            return NumberFormatter.FormatEffect(rule.Kind, rule.Value);
+        }
+
         string CardSecondsText(RareCard card)
         {
             double seconds = Simulation != null && Simulation.Strike.Rare.Has(card) ? Simulation.Strike.Rare.Get(card).Seconds : 0;

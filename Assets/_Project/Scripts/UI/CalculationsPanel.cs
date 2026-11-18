@@ -253,6 +253,9 @@ namespace MinersIdle.UI
             double rareChance = Asset == null ? 0 : rareSlow ? Asset.RareSlowChance : Asset.RareChance;
             if (_rareLabel != null && !string.IsNullOrEmpty(rareRhythmFormat))
                 _rareLabel.text = string.Format(rareRhythmFormat, NumberFormatter.FormatPercent(rareChance));
+            // GDD v8 (D-283): o raro nasce pelo contador, sem chance; o ritmo lento não vale, e o botão some.
+            bool hasRhythm = Asset == null || Asset.RareInterval <= 0;
+            if (rareRhythm != null && rareRhythm.gameObject.activeSelf != hasRhythm) rareRhythm.gameObject.SetActive(hasRhythm);
 
             bool spacingChanged = choice.CrystalSpacing.HasValue;
             if (_spacingLabel != null && !string.IsNullOrEmpty(spacingFormat))

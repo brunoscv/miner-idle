@@ -63,6 +63,17 @@ namespace MinersIdle.Core
         /// <summary>O primeiro da fila (o alvo do anão), ou <c>null</c> com a fila vazia.</summary>
         public Crystal Front => _crystals.Count > 0 ? _crystals[0] : null;
 
+        /// <summary>Algum cristal da fila é raro (D-283: nunca dois raros na fila).</summary>
+        public bool HasRare
+        {
+            get
+            {
+                for (int i = 0; i < _crystals.Count; i++)
+                    if (_crystals[i].IsRare) return true;
+                return false;
+            }
+        }
+
         /// <summary>A fila do início da partida, já na tela: o primeiro a <c>FirstCrystalDistance</c>, os outros a cada espaço.</summary>
         public void SpawnInitial(double minerDistance)
         {

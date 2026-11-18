@@ -94,24 +94,29 @@ namespace MinersIdle.Core
         /// <summary>Promoção do Estagiário: a run nova já começa com ele contratado (M7, D-169).</summary>
         public bool StartsWithIntern => EffectiveLevel(PermanentId.InternPromotion) > 0;
 
+        /// <summary>Raro Dourado: as cartas do raro no tier 2 (GDD v8, D-286).</summary>
+        public bool HasGoldenRare => EffectiveLevel(PermanentId.GoldenRare) > 0;
+
         /// <summary>
-        /// Se a linha ainda espera outra: a Promoção só se compra com o Treinar no limite (GDD v7 §4.2: "requer estagiário
-        /// treinado nível 10").
-        /// </summary>
-        /// <summary>
-        /// O nível que a linha de que esta depende precisa ter para ela abrir (a Promoção pede o Treinar no limite, D-169);
-        /// 0 numa linha que não espera outra.
+        /// O que a linha espera para abrir: o nível do Treinar que a Promoção pede (D-169; GDD v8.2: 5), ou o andar mais
+        /// fundo que o Raro Dourado pede (D-286: 10); 0 numa linha que não espera nada.
         /// </summary>
         public int RequiredLevel(PermanentId id)
         {
+            if (id == PermanentId.GoldenRare) return Rules.GoldenRareFloor;
             if (id != PermanentId.InternPromotion) return 0;
             int max = Rules.Get(PermanentId.InternTraining).MaxLevel;
             // GDD v8.2: a Promoção pede o Treinar no 5 (M9d); no v7, no limite (D-169).
             return Rules.PromotionTrainingLevel > 0 ? Math.Min(Rules.PromotionTrainingLevel, max) : max;
         }
 
+        /// <summary>
+        /// Se a linha ainda espera: a Promoção, o Treinar no nível pedido (GDD v7 §4.2: "requer estagiário treinado nível
+        /// 10"); o Raro Dourado, o andar do raro (D-286).
+        /// </summary>
         public bool IsLocked(PermanentId id)
         {
+            if (id == PermanentId.GoldenRare) return State.DeepestFloor < Rules.GoldenRareFloor;
             if (id != PermanentId.InternPromotion) return false;
             var training = Rules.Get(PermanentId.InternTraining);
             return !training.IsEnabled || EffectiveLevel(PermanentId.InternTraining) < RequiredLevel(id);

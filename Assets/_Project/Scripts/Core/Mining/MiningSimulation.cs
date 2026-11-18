@@ -221,6 +221,35 @@ namespace MinersIdle.Core
         /// <summary>Atalho do debug ("Próximo raro", D-226): o próximo cristal que nascer na fila é raro.</summary>
         public bool ForceNextRare { get; set; }
 
+        /// <summary>
+        /// Atalho do debug ("Contador 5 s", D-285): o contador do raro com este intervalo, no lugar do das regras. 0 = o das
+        /// regras. Só vale num balanço com contador (GDD v8).
+        /// </summary>
+        public double RareIntervalOverride { get; set; }
+
+        /// <summary>Atalho do debug ("Tier 2", M9e E1): as cartas no tier 2, sem o Raro Dourado.</summary>
+        public bool ForceRareTier2 { get; set; }
+
+        /// <summary>Os segundos de run entre um raro e o próximo agora (o do DBG ou o das regras); 0 sem contador.</summary>
+        public double RareInterval =>
+            !_strike.Rare.UsesCounter ? 0 : RareIntervalOverride > 0 ? RareIntervalOverride : _strike.Rare.Interval;
+
+        /// <summary>O contador do raro anda: balanço com contador, raro no balanço e o andar dele alcançado (D-283).</summary>
+        public bool IsRareCounting => _strike.Rare.IsEnabled && _strike.Rare.UsesCounter && IsRareUnlocked;
+
+        /// <summary>
+        /// Segundos até o raro (o DBG mostra, D-285): 0 com ele já esperando o próximo cristal nascer. Infinito quando o
+        /// contador não anda.
+        /// </summary>
+        public double RareCountdown => IsRareCounting ? Math.Max(0, RareInterval - _state.RareTimer) : double.PositiveInfinity;
+
+        /// <summary>
+        /// O tier das cartas do raro (GDD v8, D-243, D-286): 2 com o Raro Dourado comprado (ou o atalho do DBG), se o
+        /// balanço tem o tier 2; senão 1. O anúncio do tier 2 por 1 h entra na E2.
+        /// </summary>
+        public int RareTier =>
+            _strike.Rare.HasTier2 && (ForceRareTier2 || _permanents.HasGoldenRare) ? 2 : 1;
+
         /// <summary>A janela do cristal raro (M9b E4): fechada (<c>default</c>), escolhendo, ou mostrando o sorteio.</summary>
         public RareWindow RareWindow => _state.RareWindow;
 
@@ -800,10 +829,18 @@ namespace MinersIdle.Core
             if (ForceNextRare)
             {
                 ForceNextRare = false;
+                _state.ResetRareTimer(); // um raro nasceu: o contador recomeça (D-283)
                 return true;
             }
             var rare = _strike.Rare;
             if (!rare.IsEnabled || !IsRareUnlocked) return false; // GDD v8: só depois do andar 10 (M9c E3)
+            if (rare.UsesCounter)
+            {
+                // GDD v8 (D-283): o contador cheio faz raro o cristal que nasce agora; nunca dois raros na fila.
+                if (_state.RareTimer < RareInterval - Epsilon || _track.HasRare) return false;
+                _state.ResetRareTimer();
+                return true;
+            }
             double chance = rare.Chance;
             if (RareRhythm == RareRhythm.Slow)
             {
@@ -912,7 +949,7 @@ namespace MinersIdle.Core
         /// <summary>A carta entra por 60 s (D-190); igual a uma ativa, só renova o tempo.</summary>
         void ApplyRareCard(RareCard card)
         {
-            var rule = _strike.Rare.Get(card);
+            var rule = _strike.Rare.Get(card, RareTier); // o tier 2 com o Raro Dourado (D-286)
             _state.Bonuses.AddOrRenew(new ActiveBonus(rule.Kind, rule.Value, rule.Seconds, rule.Seconds, BonusSource.Rare, (int)card));
             OnBonusesChanged();
             RareCardApplied?.Invoke(card);
@@ -1114,9 +1151,11 @@ namespace MinersIdle.Core
         /// <summary>
         /// O multiplicador do crítico: o das regras (GDD v8: ×1,5) e, acima de 100% de chance, +1 ponto por 1% a mais
         /// (D-249: 140% de chance → ×1,9).
+        /// A carta "Dano de Crítico ×2" do v8 (D-243) multiplica o resultado: ×1,5 vira ×3.
         /// </summary>
         double CritMultiplier(bool isTap) =>
-            _strike.CritMultiplier + _permanents.CritDamageBonus + Math.Max(0, CritChance(isTap) - 1); // Dedo Fogoso (M9d) e D-249
+            (_strike.CritMultiplier + _permanents.CritDamageBonus + Math.Max(0, CritChance(isTap) - 1)) // Dedo Fogoso (M9d) e D-249
+            * _state.Bonuses.CritDamageMultiplier;
 
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id, _permanents);
@@ -1241,6 +1280,8 @@ namespace MinersIdle.Core
             _state.Bonuses.Advance(step); // o fim de cada um é evento: some no ProcessDueEvents
             // Os 30 s da janela do raro só correm com o jogo aberto (D-222): o offline não passa por aqui.
             if (_state.RareWindow.IsChoosing) _state.RareWindow = _state.RareWindow.WithSecondsLeft(_state.RareWindow.SecondsLeft - step);
+            // O contador do raro (D-283) só anda aqui: parado no descanso, na transição de andar e com o app fechado.
+            if (IsRareCounting) _state.AdvanceRareTimer(step, RareInterval);
 
             // Fila cheia ou parede de pé: o relógio de nascimento espera no limite e nasce assim que der.
             _spawnTimer = SpawnWaits ? Math.Min(_spawnTimer + step, _rules.SpawnInterval) : _spawnTimer + step;

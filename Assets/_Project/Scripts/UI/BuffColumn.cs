@@ -162,8 +162,10 @@ namespace MinersIdle.UI
         {
             var bonus = Simulation.Bonuses.All[_detailIndex];
             var entry = catalog != null ? catalog.Find(bonus.Source, bonus.Tier) : null;
-            detailTitle.text = entry?.Title ?? "";
-            detailDescription.text = entry?.Description ?? "";
+            // As cartas do raro dizem o efeito no texto ({0}: ×2 no tier 1, ×4 no 2; M9e E1).
+            string effect = NumberFormatter.FormatEffect(bonus.Kind, bonus.Value);
+            detailTitle.text = entry != null ? string.Format(entry.Title ?? "", effect) : "";
+            detailDescription.text = entry != null ? string.Format(entry.Description ?? "", effect) : "";
             _detailSeconds = -1;
             UpdateFooter();
 

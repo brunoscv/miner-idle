@@ -56,6 +56,12 @@ namespace MinersIdle.Core
         /// </summary>
         public RareWindow RareWindow { get; internal set; }
 
+        /// <summary>
+        /// O contador do raro (GDD v8, M9e, D-283): segundos de run desde o último raro, até o intervalo das regras. Cheio,
+        /// o próximo cristal que nasce é raro e ele volta ao zero. Vai para o save (v10) e recomeça com a run.
+        /// </summary>
+        public double RareTimer { get; private set; }
+
         /// <summary>Nível da melhoria = compras feitas (D-38).</summary>
         public int LevelOf(UpgradeId id) => _levels[(int)id];
 
@@ -71,7 +77,7 @@ namespace MinersIdle.Core
                                         int caveCount = 1, int cave = 1, long caveBreaks = 0, double playSeconds = 0,
                                         double shardsEarned = 0, bool reachedHeart = false,
                                         OfflineReturn pendingOffline = default, IEnumerable<ActiveBonus> bonuses = null,
-                                        RareWindow rareWindow = default)
+                                        RareWindow rareWindow = default, double rareTimer = 0)
         {
             if (levelOf == null) throw new ArgumentNullException(nameof(levelOf));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
@@ -87,6 +93,7 @@ namespace MinersIdle.Core
                 ShardsEarned = NonNegative(shardsEarned),
                 PendingOffline = pendingOffline,
                 RareWindow = rareWindow,
+                RareTimer = NonNegative(rareTimer),
             };
             state.Bonuses.Restore(bonuses);
             foreach (UpgradeId id in Enum.GetValues(typeof(UpgradeId)))
@@ -124,6 +131,12 @@ namespace MinersIdle.Core
         }
 
         internal void AddPlayTime(double seconds) => PlaySeconds += seconds;
+
+        /// <summary>O contador do raro anda, até <paramref name="interval"/> (cheio, espera o próximo cristal nascer).</summary>
+        internal void AdvanceRareTimer(double seconds, double interval) => RareTimer = Math.Min(RareTimer + seconds, interval);
+
+        /// <summary>Nasceu um raro: o contador recomeça (D-283).</summary>
+        internal void ResetRareTimer() => RareTimer = 0;
 
         /// <summary>
         /// As lascas do offline (M9): entram no saldo e nas lascas ganhas do dia (D-197), mas não são quebras do jogador:

@@ -267,7 +267,18 @@ namespace MinersIdle.Presentation
         }
 
         /// <summary>A carta do raro entrou (D-225): o nome dela sobe do anão em âmbar ("DANO ×2"), como o ganho do combo.</summary>
-        void OnRareCardApplied(RareCard card) => ShowGain(buffs != null ? buffs.Find(BonusSource.Rare, (int)card)?.Gain : null);
+        /// <summary>A carta escolhida sobe do anão com o efeito no tier de agora ({0}: "DANO ×2", ×4 no tier 2; M9e E1).</summary>
+        void OnRareCardApplied(RareCard card)
+        {
+            var gain = buffs != null ? buffs.Find(BonusSource.Rare, (int)card)?.Gain : null;
+            var simulation = Simulation;
+            if (gain != null && simulation != null && simulation.Strike.Rare.Has(card))
+            {
+                var rule = simulation.Strike.Rare.Get(card, simulation.RareTier);
+                gain = string.Format(gain, NumberFormatter.FormatEffect(rule.Kind, rule.Value));
+            }
+            ShowGain(gain);
+        }
 
         /// <summary>O boost do AD entrou (D-231): "VELOCIDADE ×2,5" sobe do anão em âmbar.</summary>
         void OnAdBoostGranted() => ShowGain(buffs != null ? buffs.Find(BonusSource.Ad, 0)?.Gain : null);
