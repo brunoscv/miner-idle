@@ -1,6 +1,6 @@
 # Marco 9d — Descansar e loja do v8
 
-> Plano de 2026-11-17, **aguardando as respostas do Bruno (P1…P7)**. É o **Bloco C** da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, depois do [Marco 9c](Marco%209c%20-%20Andares%20e%20numeros%20do%20v8.md) (aprovado em 2026-11-17, D-271). Base: GDD v8.2 §4.2 (melhorias permanentes) e §7.3–7.4 (interface), D-248, D-252 e o pedido do Bruno na **D-265**.
+> Plano de 2026-11-17, **aprovado no mesmo dia: P1…P7 com as recomendações (D-272…D-278)**. É o **Bloco C** da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, depois do [Marco 9c](Marco%209c%20-%20Andares%20e%20numeros%20do%20v8.md) (aprovado em 2026-11-17, D-271). Base: GDD v8.2 §4.2 (melhorias permanentes) e §7.3–7.4 (interface), D-248, D-252 e o pedido do Bruno na **D-265**.
 >
 > **O M9b E6 continua parado:** a sessão longa dele mede o combo, que sai no Bloco F.
 
@@ -72,6 +72,12 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 - A tela do descanso nas duas versões, **preta** e **desfocada**, com o resumo no topo, a lista das permanentes, as completas no fim e **INICIAR**.
 - O HUD do v8: as lascas e as lascas vermelhas em cima e a barra vertical do andar à esquerda, com a coluna dos bônus.
 - Você escolhe; a escolha vira decisão no registro.
+
+**Como ficou (2026-11-17):** os mockups foram montados por cima de capturas reais do jogo (a LOJA de permanentes, o resumo do dia e o HUD, tiradas na cena Game), em `tools/ci/out/`:
+
+- `m9d-e0-descanso.png`: o **ZZZ**, a tela **preta** e a **desfocada** lado a lado (as duas em tamanho cheio em `m9d-e0-descanso-preta.png` e `-desfocada.png`). O painel é o da LOJA: no título "DIA 1 ENCERRADO"; embaixo, o resumo (andar, tempo, lascas vermelhas ganhas e o banco), a lista das permanentes com o **Dedo Fogoso** (luvas vermelhas) e o **Atalho** (botas douradas), dois ícones do mesmo pacote dos outros, e a Promoção com "Pede o Treinar no 5"; no fim, **INICIAR**.
+- `m9d-e0-hud-folha.png`: o HUD de hoje, o do v8 e a LOJA com o dano e a velocidade no topo (`m9d-e0-hud.png` e `-hud-loja.png` em tamanho cheio). A barra do andar à esquerda tem um trecho de cor por bioma (10 andares cada), o que já se desceu nesta run em âmbar, a seta com o andar de agora, um traço branco no recorde e tracinhos nos marcos 5, 10, 20 e 50. Os bônus passam para o lado da barra.
+- **Uma observação:** com nove permanentes, o painel cobre quase a tela toda. Entre a preta e a desfocada, a diferença fica só nas bordas e na passagem do ZZZ para a loja. A preta é a do GDD e não custa um desfoque por quadro no celular.
 
 ### E1 — O núcleo do descanso e as permanentes novas
 
@@ -168,8 +174,8 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 🔄 escrito em 2026-11-17, aguardando as respostas P1…P7 | — |
-| E0 Mockups | ⏳ | — |
+| Plano | ✅ aprovado em 2026-11-17: P1…P7 com as recomendações (D-272…D-278) | — |
+| E0 Mockups | 🔄 mockups prontos em 2026-11-17, aguardando a escolha do Bruno (fundo e HUD) | Ver "Como ficou" na E0 |
 | E1 Núcleo do descanso e permanentes novas | ⏳ | — |
 | E2 A tela do descanso | ⏳ | — |
 | E3 HUD do v8 | ⏳ | — |
