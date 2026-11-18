@@ -14,3 +14,4 @@
 | # | Data | De | Onde | Ajuste | Estado |
 |---|---|---|---|---|---|
 | — | — | — | — | (vazia; o Bruno comentou em 2026-11-18 que viu "algumas melhorias" no M9e, a anotar) | — |
+| 1 | 2026-11-18 | Claude | Bomba (M9g) | Arte própria do tier 2 (Dinamite, Pacote, Caixa, Barril); até lá, o `icon_bomb` recolorido e maior (D-315) | aberto |
