@@ -141,6 +141,7 @@ namespace MinersIdle.EditorTools
             changed |= HudHiderSetup.EnsureInScene(); // DBG → Efeitos → Esconder HUD
             changed |= FloorTransitionSetup.EnsureInScene(); // a transição de andar e o DBG → Caverna → Transição (M9c E0)
             changed |= NextFloorSetup.EnsureMilestoneDebug(); // DBG → Andar → Recorde e Auto (M9c E3), depois dos AJUSTES
+            changed |= CrystalSheetSetup.EnsureInScene(); // o raro dourado e DBG → Andar → Barra de vida e Estágios (M9f)
             changed |= HudV8Setup.EnsureInScene(); // o HUD do v8: depois da loja, do Descansar e da coluna dos bônus (M9d E3)
 
             if (changed) EditorSceneManager.SaveScene(scene);

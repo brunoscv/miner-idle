@@ -1,6 +1,6 @@
 # Marco 9f — Cristal rachando
 
-> Plano de 2026-11-18, **aguardando as respostas do Bruno (P1…P7)**. É o **Bloco B** da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, depois do [Marco 9e](Marco%209e%20-%20Raro%20e%20anuncios%20do%20v8.md) (aprovado em 2026-11-18, D-297). Segue o processo do v8 (D-298): as melhorias vistas nos testes vão para a [lista de ajustes](Ajustes%20do%20v8%20-%20lista.md). Base: GDD v8.2, "vida exibida: sem barra, o cristal racha conforme perde vida" (Análise §2).
+> Plano de 2026-11-18, **aprovado no mesmo dia: P1…P7 com as recomendações (D-299…D-305)**. É o **Bloco B** da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, depois do [Marco 9e](Marco%209e%20-%20Raro%20e%20anuncios%20do%20v8.md) (aprovado em 2026-11-18, D-297). Segue o processo do v8 (D-298): as melhorias vistas nos testes vão para a [lista de ajustes](Ajustes%20do%20v8%20-%20lista.md). Base: GDD v8.2, "vida exibida: sem barra, o cristal racha conforme perde vida" (Análise §2).
 
 ## Objetivo
 
@@ -31,7 +31,7 @@
 
 - **Uma folha só, sem cortar em 20 arquivos.** O código da descida já desenha "o quadro *n* de uma folha" (`DescentPiece.SetFrame`, o mesmo do anão): só muda o recorte da textura no material, sem criar textura nem material por quadro. Trocar de estágio custa quase nada, e todos os cristais usam a mesma textura.
 - **Cor nova é linha nova.** Uma 6ª cor (ou o dourado do raro, P4) entra embaixo, e a folha vira 128×192. Nada mais muda: o bioma aponta para a linha.
-- **1× em vez de 2×.** O cristal ocupa uns 20–30 pixels na tela de 270 de largura. Com 32 pixels na textura, ele fica perto de 1 texel por pixel e cintila menos ao se afastar. Com 64, metade dos texels some de um quadro para o outro. As cores e o desenho são os mesmos.
+- **1× em vez de 2×.** Um pixel do desenho é um pixel do arquivo: a folha fica 4× menor e é a mesma coisa que o Aseprite mostra. No jogo não muda nada, porque o cristal é desenhado com filtro *Point*: perto da câmera ele ocupa ~85 pixels de largura numa tela de 270 (a prévia da E0 mediu), ou seja, a arte é **ampliada** ~2,7×, e 32 ou 64 dão o mesmo resultado. *(Correção de 2026-11-18: o plano dizia "20–30 pixels na tela"; a prévia mostrou que é bem maior.)*
 - **A importação fica por conta do setup** (Tools → Miners Idle → Projeto → Aplicar configuração do projeto), como a dos outros cristais: filtro *Point*, sem compressão, sem *mipmaps*, *Clamp*.
 
 A imagem que você mandou já é uma ampliação 2× exata, então eu consigo tirar dela a versão 1× sem perder nada. Mesmo assim, o melhor é exportar do arquivo original, que é a fonte.
@@ -99,6 +99,15 @@ O tremor e a parada do golpe continuam como hoje. **Sem som novo:** o som do gol
 - A linha dourada do raro gerada (P4).
 - **Prévia** (`tools/ci/out/m9f-e0-biomas.png`): os 10 biomas com o cristal nos 4 estágios, no corredor de verdade, para você aprovar as cores e o tamanho. Hoje o cristal é 0,84 × 0,80 m e a arte é quadrada; a prévia mostra os dois tamanhos.
 
+**Como ficou (2026-11-18), junto com a E1:** o desenho do cristal é um só caminho de código, então a E0 e a E1 saíram juntas.
+
+- **A folha.** `Assets/_Project/Art/Crystals/crystals_v8.png` (128×160) foi tirada da imagem que o Bruno mandou, reduzindo a ampliação 2× (cada pixel era um bloco 2×2 exato, então não se perde nada). Quando o Bruno exportar do arquivo original, é só substituir o arquivo com o mesmo nome e o mesmo layout.
+- **A importação.** Point, sem compressão, sem mipmaps, Clamp e **sem redimensionar** (`npotScale = None`). Sem isso, o Unity reduzia a folha para 128×128, porque 160 não é potência de 2: os quadros esticavam e a linha vermelha sumia. Os testes pegaram isso.
+- **Os biomas.** `BiomeDefinition` ganhou `crystalSheet` e `crystalRow`. O setup (`Editor/CrystalSheetSetup.cs`) preenche os 10 pela tabela da D-299 e põe em `crystalShardColor` a cor dos estilhaços tirada da linha (a média da metade mais clara dos pixels). Uma linha posta à mão no bioma fica.
+- **O raro dourado.** `crystal_v8_rare.png` (128×32) é a linha azul na rampa dourada `#F2C14E`, com o brilho piscando de hoje e os estilhaços dourados (D-302). Ele está na última linha da prévia, ampliado: a captura do raro na cena ficou de fora porque o anão não chegava até ele no teste temporário, mas o código que desenha é o mesmo dos outros.
+- **O tamanho.** O cristal continua com 0,84 × 0,80 m. Perto da câmera ele tem ~85 px de largura numa tela de 270. Na prévia, o achatamento de 5% não aparece.
+- **A captura.** `tools/ci/out/m9f-e0-biomas.png` mostra, por bioma, o alvo nos 4 estágios (vida em 100%, 90%, 50% e 20%), recortado de capturas 270×600 da câmera da descida. `m9f-e0-corredor.png` mostra o corredor inteiro do andar 1. As duas foram feitas com um teste PlayMode temporário, já apagado.
+
 ### E1 — Rachar na tela (P2, P3, P6)
 
 - `DescentStage` desenha cada cristal com `SetFrame(folha, linha × 4 + estágio, 4)`, com o estágio pela vida (P2).
@@ -107,6 +116,19 @@ O tremor e a parada do golpe continuam como hoje. **Sem som novo:** o som do gol
 - O raro em dourado, rachando e piscando.
 - **DBG → Caverna → "Estágios"**: a fila mostra os 4 estágios em sequência (o cristal *i* no estágio *i* mod 4), para conferir a arte parada.
 - **Testes PlayMode:** um golpe que não quebra muda o quadro do alvo; a barra não aparece e volta com o DBG; o raro usa a linha dourada; a troca de bioma troca a linha.
+
+**Como ficou (2026-11-18):**
+
+- **O desenho.** `DescentStage.DrawCrystal` desenha cada cristal com `SetFrame(folha, linha × 4 + estágio, 4)`. O estágio vem de `CrackStage.Of(vida, vidaMáxima)` (D-300), uma função pura em `Presentation/Descent/CrackStage.cs`. O raro usa a folha dourada com o mesmo estágio. Um bioma sem folha cai no desenho antigo, sem rachar.
+- **A barra de vida** só aparece com `DescentStage.ShowHealthBar` (D-301), que fica desligada.
+- **DBG → Andar** (o menu que era "Caverna") ganhou dois botões, no `UI/CrystalCrackDebug.cs`:
+  - **"Barra de vida: não / sim"**.
+  - **"Estágios: não / sim"**: mudou em relação ao plano. Com os cristais a 3 m (D-277), só o alvo aparece na tela, então mostrar "um estágio por cristal da fila" não servia. Ligado, o cristal **troca de desenho a cada segundo** (inteiro → racha 1 → 2 → 3).
+  - O menu continua com 6 fileiras: os dois botões ocuparam as vagas da última.
+- **Testes:**
+  - `CrystalCrackTests` (PlayMode): os terços da D-300 (9 casos); o alvo rachando com a vida, sem a barra; os botões do DBG; a linha de cada um dos 10 biomas.
+  - O `CrystalArtTests.EachCrystal_BreaksIntoShardsOfItsOwnColor` media o estilhaço contra os cristais antigos de cada bioma. Agora mede contra a linha da folha do v8 de cada bioma; a parte da parede continua com os desenhos antigos.
+  - Rodados: os de cena do cristal, da descida, dos biomas, do raro, do andar, do DBG, da alocação e do feedback (70 + 3; todos passando depois da correção do `CrystalArtTests`).
 
 ### E2 — O efeito (P5)
 
@@ -122,7 +144,7 @@ O tremor e a parada do golpe continuam como hoje. **Sem som novo:** o som do gol
 ## Como testar (Bruno) — ao fim de cada etapa
 
 - **E0:** abrir `tools/ci/out/m9f-e0-biomas.png` e dizer se as cores e o tamanho estão bons.
-- **E1:** cena `Game`, Play. DBG → Andar → **Ir ao andar 20** (os cristais aguentam vários golpes): ver o alvo rachar a cada golpe e sumir a barra. DBG → Caverna → **Barra de vida** para comparar; **Estágios** para ver os 4 desenhos parados. DBG → Andar → ir ao 50 e ao 100 para ver outras cores. DBG → Bônus → **Raro agora** no andar 10 para ver o dourado rachar.
+- **E1:** cena `Game`, Play. DBG → Andar → **Ir ao andar 20** (os cristais aguentam vários golpes): ver o alvo rachar a cada golpe e sumir a barra. DBG → Andar → **Barra de vida** para comparar; **Estágios** para ver os 4 desenhos trocando a cada segundo. DBG → Andar → ir ao 50 e ao 100 para ver outras cores. DBG → Bônus → **Raro agora** no andar 10 para ver o dourado rachar.
 - **E2:** a mesma descida, olhando o brilho e as lascas a cada rachadura, e os estilhaços da quebra na cor do cristal.
 
 ## Critério de pronto
@@ -155,8 +177,8 @@ O tremor e a parada do golpe continuam como hoje. **Sem som novo:** o som do gol
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 📝 escrito em 2026-11-18, aguardando P1…P7 | — |
-| E0 A folha no jogo e a prévia | ⏳ | espera a folha 1× (ou uso a enviada, reduzida) |
-| E1 Rachar na tela | ⏳ | — |
+| Plano | ✅ aprovado em 2026-11-18: P1…P7 com as recomendações (D-299…D-305) | — |
+| E0 A folha no jogo e a prévia | 🔄 pronta em 2026-11-18, aguardando o Bruno | folha tirada da imagem enviada; ver "Como ficou" na E0 |
+| E1 Rachar na tela | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | ver "Como ficou" na E1 |
 | E2 O efeito | ⏳ | — |
 | E3 Sessão longa e celular | ⏭️ testes longos do fim (P7) | — |

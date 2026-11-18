@@ -26,4 +26,6 @@ MonoBehaviour:
   fogColor: {r: 0.05882353, g: 0.03529412, b: 0.039215688, a: 1}
   lampEvery: 1
   crystalTexture: {fileID: 2800000, guid: 9247c7bf8f47e5848be613a3306f3669, type: 3}
-  crystalShardColor: {r: 0.9411765, g: 0.7019608, b: 0.3529412, a: 1}
+  crystalShardColor: {r: 0.5454529, g: 0.5917224, b: 0.81123644, a: 1}
+  crystalSheet: {fileID: 2800000, guid: 02afdf4f8b1eef94985014443a64698e, type: 3}
+  crystalRow: 3

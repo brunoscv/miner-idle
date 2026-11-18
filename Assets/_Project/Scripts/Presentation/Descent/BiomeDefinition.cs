@@ -32,6 +32,11 @@ namespace MinersIdle.Presentation
         [SerializeField] Texture2D crystalTexture;
         [Tooltip("A cor dos estilhaços desse cristal.")]
         [SerializeField] Color crystalShardColor = Color.white;
+        [Tooltip("M9f (D-299): a folha dos cristais do v8 (colunas = estágios da rachadura, linhas = cores). Vazio = o " +
+                 "crystalTexture acima, sem rachar.")]
+        [SerializeField] Texture2D crystalSheet;
+        [Tooltip("A linha (cor) desta caverna na folha, de cima para baixo, a partir de 0.")]
+        [SerializeField, Min(0)] int crystalRow;
 
         public string DisplayName => displayName;
         public Texture2D FloorTexture => floorTexture;
@@ -55,5 +60,11 @@ namespace MinersIdle.Presentation
         public int LampEvery => lampEvery;
         public Texture2D CrystalTexture => crystalTexture;
         public Color CrystalShardColor => crystalShardColor;
+        public Texture2D CrystalSheet => crystalSheet;
+        public int CrystalRow => crystalRow;
+
+        /// <summary>A folha existe e tem a linha desta caverna (D-299).</summary>
+        public bool HasCrystalSheet =>
+            crystalSheet != null && crystalRow < crystalSheet.height * CrackStage.Count / Mathf.Max(1, crystalSheet.width);
     }
 }

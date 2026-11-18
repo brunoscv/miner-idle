@@ -80,7 +80,8 @@ namespace MinersIdle.EditorTools
 
         static string FloorPath(int cave) => $"{FloorFolder}/floor_cave_{cave + 1:00}.png";
         static string FloorTilePath(string set, int tile) => $"{GroundFolder}/{set}{(char)('a' + tile)}.png";
-        static string BiomePath(int cave) => $"{DataFolder}/Caverna_{cave + 1:00}.asset";
+        internal static int CaveCount => Caves.Length;
+        internal static string BiomePath(int cave) => $"{DataFolder}/Caverna_{cave + 1:00}.asset";
 
         public static void EnsureAssets()
         {

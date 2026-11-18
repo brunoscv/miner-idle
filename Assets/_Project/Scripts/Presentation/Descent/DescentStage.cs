@@ -140,6 +140,13 @@ namespace MinersIdle.Presentation
         [SerializeField, Range(0f, 1f)] float rareGlint = 0.45f;
         [Tooltip("Piscadas do brilho do raro por segundo.")]
         [SerializeField, Min(0f)] float rareGlintSpeed = 1.5f;
+        [Tooltip("M9f (D-302): a linha dourada do raro, com os estágios da rachadura (crystal_v8_rare). Vazio = o " +
+                 "rareCrystalTexture acima, sem rachar.")]
+        [SerializeField] Texture2D rareCrystalSheet;
+
+        [Header("Cristal rachando (M9f)")]
+        [Tooltip("A barra de vida sobre o alvo (REQ-CRY-03). Saiu no v8 (D-301): o desenho racha; o DBG a liga para comparar.")]
+        [SerializeField] bool showHealthBar;
 
         [Header("Anão (M1b E6, D-75: folhas do PixelLab; vazio = desenho gerado por código)")]
         [Tooltip("Folha da corrida: quadros quadrados em grade, da esquerda para a direita e de cima para baixo.")]
@@ -440,6 +447,28 @@ namespace MinersIdle.Presentation
 
         /// <summary>Troca o anão pelas folhas com menos pixels (DBG, para comparar; não fica salvo).</summary>
         public bool UseLowDwarf { get; set; }
+
+        /// <summary>A barra de vida sobre o alvo (D-301: fora no v8; DBG → Andar → "Barra de vida").</summary>
+        public bool ShowHealthBar
+        {
+            get => showHealthBar;
+            set => showHealthBar = value;
+        }
+
+        /// <summary>A barra de vida apareceu no último quadro (para os testes).</summary>
+        public bool IsHealthBarShown => _healthBack != null && _healthBack.Visible;
+
+        /// <summary>
+        /// DBG → Andar → "Estágios" (M9f): os cristais trocam de desenho a cada segundo (inteiro, racha 1, 2, 3), para
+        /// conferir a arte. Com os cristais a 3 m (D-277), só o alvo aparece na tela, por isso a troca é no tempo.
+        /// </summary>
+        public bool ShowCrackStages { get; set; }
+
+        /// <summary>O estágio da rachadura do alvo no último quadro (−1 sem alvo desenhado ou sem a folha); para os testes.</summary>
+        public int TargetCrackStage { get; private set; } = -1;
+
+        /// <summary>O quadro da folha em uso no alvo no último quadro (−1 sem folha); para os testes.</summary>
+        public int TargetCrystalFrame { get; private set; } = -1;
 
         /// <summary>A textura do chão agora (null = a gerada por código; para testes).</summary>
         public Texture FloorTexture => _floor != null ? _floor.GetTexture(BaseMapId) : null;
@@ -1270,6 +1299,7 @@ namespace MinersIdle.Presentation
             IReadOnlyList<Crystal> crystals = _holdingQueue ? _heldQueue : simulation.Crystals;
             _drawnCrystals = Mathf.Min(crystals.Count, CrystalSlots);
             int rareShown = 0;
+            TargetCrackStage = TargetCrystalFrame = -1;
             for (int i = 0; i < CrystalSlots; i++)
             {
                 float z = i < crystals.Count ? distance - Ahead(crystals[i].Distance) : float.NegativeInfinity;
@@ -1284,7 +1314,7 @@ namespace MinersIdle.Presentation
                 // Uma textura atribuída no Inspector substitui o cristal provisório; mantém-se a arte antiga como fallback.
                 // O raro (D-220): o desenho dele e um brilho piscando (cor acima de 1 clareia).
                 bool rare = IsRareShown(crystal);
-                _crystals[i].SetTexture(rare ? rareCrystalTexture : CrystalTexture(crystal.Id));
+                DrawCrystal(_crystals[i], crystal, rare, crystal == miner.Target);
                 _crystals[i].SetColor(rare ? RareGlintColor() : Color.white);
                 if (rare) rareShown++;
                 _crystals[i].Place(new Vector3(shake, 0f, z), crystalSize);
@@ -1304,7 +1334,38 @@ namespace MinersIdle.Presentation
         /// <summary>Quantos cristais raros a fila desenhou no último quadro (para os testes).</summary>
         public int RareCrystalsShown { get; private set; }
 
-        bool IsRareShown(Crystal crystal) => crystal.IsRare && rareCrystalTexture != null;
+        bool IsRareShown(Crystal crystal) => crystal.IsRare && (rareCrystalSheet != null || rareCrystalTexture != null);
+
+        /// <summary>
+        /// O desenho de um cristal da fila (M9f): com a folha do v8, o quadro da cor do bioma (ou o dourado do raro) no
+        /// estágio da rachadura pela vida (D-300); sem ela, a textura inteira de antes.
+        /// </summary>
+        void DrawCrystal(DescentPiece piece, Crystal crystal, bool rare, bool isTarget)
+        {
+            int stage = ShowCrackStages ? Mathf.FloorToInt(Time.unscaledTime) % CrackStage.Count
+                                        : CrackStage.Of(crystal.Health, crystal.MaxHealth);
+            var biome = Biome;
+            int frame = -1;
+            if (rare)
+            {
+                if (rareCrystalSheet != null)
+                {
+                    frame = stage;
+                    piece.SetFrame(rareCrystalSheet, frame, CrackStage.Count);
+                }
+                else piece.SetTexture(rareCrystalTexture);
+            }
+            else if (biome != null && biome.HasCrystalSheet)
+            {
+                frame = biome.CrystalRow * CrackStage.Count + stage;
+                piece.SetFrame(biome.CrystalSheet, frame, CrackStage.Count);
+            }
+            else piece.SetTexture(CrystalTexture(crystal.Id));
+
+            if (!isTarget) return;
+            TargetCrystalFrame = frame;
+            TargetCrackStage = frame >= 0 ? stage : -1;
+        }
 
         Color RareGlintColor()
         {
@@ -1537,7 +1598,7 @@ namespace MinersIdle.Presentation
         {
             // Na frente do cristal.
             float z = target != null ? distance - Ahead(target.Distance) - 0.05f : float.NegativeInfinity;
-            bool show = z >= CorridorNear;
+            bool show = showHealthBar && z >= CorridorNear;
             _healthBack.Visible = _healthFill.Visible = show;
             if (!show) return;
 

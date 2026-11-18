@@ -115,6 +115,7 @@ namespace MinersIdle.EditorTools
             BiomeArtSetup.EnsureAssets();
             SupportArtSetup.EnsureAssets();
             CrystalArtSetup.EnsureAssets();
+            CrystalSheetSetup.EnsureAssets(); // a folha rachando do v8 nos biomas (M9f), depois dos biomas e dos cristais
             DwarfArtSetup.EnsureAssets();
             DwarfVariantsSetup.EnsureAssets();
             GrayboxSetup.Ensure();

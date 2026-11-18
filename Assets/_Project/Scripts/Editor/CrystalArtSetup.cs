@@ -110,7 +110,7 @@ namespace MinersIdle.EditorTools
         /// Rampa de uma cor: o contorno escuro fica; o resto ganha o matiz e a saturação da cor, com o brilho do original
         /// (os brilhos mais fortes perdem saturação, como reflexo).
         /// </summary>
-        static Texture2D Ramp(Texture2D source, Color32 target)
+        internal static Texture2D Ramp(Texture2D source, Color32 target)
         {
             Color.RGBToHSV(target, out float hue, out float saturation, out _);
             var pixels = source.GetPixels32();
@@ -128,7 +128,7 @@ namespace MinersIdle.EditorTools
             return result;
         }
 
-        static int Configure(string path)
+        internal static int Configure(string path)
         {
             if (!(AssetImporter.GetAtPath(path) is TextureImporter importer)) return 0;
             if (importer.textureType == TextureImporterType.Default && importer.filterMode == FilterMode.Point

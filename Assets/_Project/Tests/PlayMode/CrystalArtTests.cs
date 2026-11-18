@@ -63,31 +63,52 @@ namespace MinersIdle.Tests
                 // Lê o PNG do disco (no modo batch sem placa de vídeo não dá para ler a textura da GPU).
                 var copy = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 copy.LoadImage(System.IO.File.ReadAllBytes($"Assets/_Project/Art/Crystals/{Names[c]}.png"));
-
                 // Matiz médio dos pixels coloridos do cristal (a base de terra, embaixo, fica de fora).
-                float sx = 0f, sy = 0f;
-                var pixels = copy.GetPixels32();
-                for (int i = copy.width * 20; i < pixels.Length; i++)
-                {
-                    var p = pixels[i];
-                    if (p.a < 200) continue;
-                    Color.RGBToHSV(p, out float h, out float s, out float v);
-                    if (s < 0.3f || v < 0.45f) continue;
-                    sx += Mathf.Cos(h * 2f * Mathf.PI);
-                    sy += Mathf.Sin(h * 2f * Mathf.PI);
-                }
-                float hue = Mathf.Repeat(Mathf.Atan2(sy, sx) / (2f * Mathf.PI), 1f);
+                float hue = MeanHue(copy.GetPixels32(), copy.width * 20);
                 Object.Destroy(copy);
 
-                // Na fila (a caverna c + 1 tem esse cristal) e na parede (o bloco c do revezamento).
-                stage.ApplyBiome(c);
-                foreach (var (where, shard) in new[] { ("fila", stage.CrystalShardColor(0)), ("parede", stage.MixedCrystalShardColor(c)) })
-                {
-                    Color.RGBToHSV(shard, out float shardHue, out _, out _);
-                    float diff = Mathf.Abs(Mathf.DeltaAngle(hue * 360f, shardHue * 360f));
-                    Assert.That(diff, Is.LessThan(20f), $"{Names[c]} ({where}): cristal {hue * 360f:0}°, estilhaço {shardHue * 360f:0}°");
-                }
+                // Na parede (o bloco c do revezamento), que continua com os desenhos de antes.
+                AssertSameHue(hue, stage.MixedCrystalShardColor(c), $"{Names[c]} (parede)");
             }
+
+            // M9f (D-299): na fila, cada caverna usa a sua linha da folha do v8; o estilhaço tem o matiz dela.
+            var sheet = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            sheet.LoadImage(System.IO.File.ReadAllBytes("Assets/_Project/Art/Crystals/crystals_v8.png"));
+            for (int b = 0; b < 10; b++)
+            {
+                stage.ApplyBiome(b);
+                if (stage.Biome == null || !stage.Biome.HasCrystalSheet) continue;
+                int row = stage.Biome.CrystalRow;
+                var frame = sheet.GetPixels32(0); // a folha inteira; recorta o quadro inteiro da linha abaixo
+                var pixels = new System.Collections.Generic.List<Color32>();
+                int y0 = sheet.height - (row + 1) * 32;
+                for (int y = y0; y < y0 + 32; y++)
+                    for (int x = 0; x < 32; x++) pixels.Add(frame[y * sheet.width + x]);
+                AssertSameHue(MeanHue(pixels.ToArray(), 0), stage.CrystalShardColor(0), $"caverna {b + 1}, linha {row} (fila)");
+            }
+            Object.Destroy(sheet);
+        }
+
+        static float MeanHue(Color32[] pixels, int start)
+        {
+            float sx = 0f, sy = 0f;
+            for (int i = start; i < pixels.Length; i++)
+            {
+                var p = pixels[i];
+                if (p.a < 200) continue;
+                Color.RGBToHSV(p, out float h, out float s, out float v);
+                if (s < 0.3f || v < 0.45f) continue;
+                sx += Mathf.Cos(h * 2f * Mathf.PI);
+                sy += Mathf.Sin(h * 2f * Mathf.PI);
+            }
+            return Mathf.Repeat(Mathf.Atan2(sy, sx) / (2f * Mathf.PI), 1f);
+        }
+
+        static void AssertSameHue(float hue, Color shard, string where)
+        {
+            Color.RGBToHSV(shard, out float shardHue, out _, out _);
+            float diff = Mathf.Abs(Mathf.DeltaAngle(hue * 360f, shardHue * 360f));
+            Assert.That(diff, Is.LessThan(20f), $"{where}: cristal {hue * 360f:0}°, estilhaço {shardHue * 360f:0}°");
         }
     }
 }

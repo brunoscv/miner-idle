@@ -14,8 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: MinersIdle.Presentation::MinersIdle.Presentation.BiomeDefinition
   displayName: "N\xFAcleo profundo"
   floorTexture: {fileID: 2800000, guid: 95c194f4fe1b78f4ebd53d0b57277e47, type: 3}
+  floorTiles: []
+  edgeRocks: 1
+  edgeMound: 0
   wallTint: {r: 0.7, g: 0.78, b: 1, a: 1}
   fogColor: {r: 0.015686275, g: 0.023529412, b: 0.05490196, a: 1}
   lampEvery: 1
   crystalTexture: {fileID: 2800000, guid: 9247c7bf8f47e5848be613a3306f3669, type: 3}
-  crystalShardColor: {r: 0.9411765, g: 0.7019608, b: 0.3529412, a: 1}
+  crystalShardColor: {r: 0.81123644, g: 0.5780298, b: 0.55419564, a: 1}
+  crystalSheet: {fileID: 2800000, guid: 02afdf4f8b1eef94985014443a64698e, type: 3}
+  crystalRow: 4
