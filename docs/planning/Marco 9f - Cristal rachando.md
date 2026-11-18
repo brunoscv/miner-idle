@@ -137,6 +137,17 @@ O tremor e a parada do golpe continuam como hoje. **Sem som novo:** o som do gol
 - Sem alocação no `Update`: as lascas usam o mesmo pool da quebra.
 - **Testes PlayMode:** a rachadura nova dispara o efeito uma vez só; o mesmo estágio não dispara de novo; a contagem de alocação continua zero.
 
+**Como ficou (2026-11-18):**
+
+- **Quando dispara.** No próprio golpe: `CrackStage.Crossed(vida depois, dano, vida máxima)` compara o estágio antes e depois do dano. Vale para o golpe do anão, o toque e o golpe do estagiário (`MiningFeedbackView.ShowCrack`, chamado no `OnHit` e no `OnInternHit`). Um golpe que pula dois estágios dá um efeito só. O golpe que quebra não dispara, porque a quebra tem o efeito dela. Um cristal sem a folha (bioma antigo) não dispara.
+- **O brilho.** `DescentStage.FlashCrystal`: o cristal vai a 1,8 de cor (clareia) por **0,08 s** de tempo real (`crackFlashSeconds` e `crackFlashLight` no Inspector do `DescentStage`). No raro, vale o maior entre o brilho e a piscada dourada.
+- **As lascas.** 4 peças (×intensidade do DBG → Efeitos) na cor dos estilhaços do cristal, do mesmo pool de faíscas da quebra (`SparkBurst`), um pouco menores (1,6× o tamanho base contra 2×) e mais curtas (0,45 s contra 0,6 s) que as da quebra. Sem alocação: o teste de alocação continua passando.
+- **A quebra** continua igual. Os estilhaços já saem na cor da linha desde a E0 (`crystalShardColor` do bioma, preenchido pelo setup).
+- **Sem som novo** (D-303).
+- **Testes:**
+  - Em `CrystalCrackTests`: 5 casos de `Crossed` (o primeiro golpe, o mesmo terço, passar de 2/3, pular dois estágios, quebrar). Mais um teste de cena no andar 20: três golpes do anão no mesmo cristal dão um efeito por estágio novo (não por golpe), com o brilho e as lascas.
+  - Rodados: os de cena do cristal, da arte, do feedback, da alocação, da descida, do estagiário na tela, do raro, do toque, dos biomas e do andar (71, todos passando).
+
 ### E3 — Sessão longa e celular
 
 - Vai para os **testes longos do fim** (P7).
@@ -178,7 +189,7 @@ O tremor e a parada do golpe continuam como hoje. **Sem som novo:** o som do gol
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-18: P1…P7 com as recomendações (D-299…D-305) | — |
-| E0 A folha no jogo e a prévia | 🔄 pronta em 2026-11-18, aguardando o Bruno | folha tirada da imagem enviada; ver "Como ficou" na E0 |
-| E1 Rachar na tela | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | ver "Como ficou" na E1 |
-| E2 O efeito | ⏳ | — |
+| E0 A folha no jogo e a prévia | ✅ 2026-11-18 | folha tirada da imagem enviada; ver "Como ficou" na E0 |
+| E1 Rachar na tela | ✅ 2026-11-18 (Bruno: "Testei, pode seguir") | ver "Como ficou" na E1 |
+| E2 O efeito | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | ver "Como ficou" na E2 |
 | E3 Sessão longa e celular | ⏭️ testes longos do fim (P7) | — |

@@ -158,6 +158,7 @@ namespace MinersIdle.Presentation
             float size = SparkBurst.DefaultSize * sizeScale;
 
             stage.Shake(hit.Crystal, (hit.IsTap ? 0.05f : 0.1f) * calm * _intensity); // metros no corredor
+            ShowCrack(hit, at);
             if (hit.IsTap)
             {
                 sparks.Emit(at, Count(4), TapSparkColor, 3f * sizeScale, size * 0.8f);
@@ -185,10 +186,29 @@ namespace MinersIdle.Presentation
             float size = SparkBurst.DefaultSize * sizeScale;
             stage.Shake(hit.Crystal, 0.04f * _intensity);
             sparks.Emit(at, Count(4), InternColor, 3f * sizeScale, size * 0.7f);
+            ShowCrack(hit, at);
 
             var near = at + (Vector3)(Random.insideUnitCircle * 0.4f * sizeScale) + Vector3.up * (0.4f * sizeScale);
             floatingTexts.Show(NumberFormatter.Format(hit.Damage), near, InternColor, 0.45f * sizeScale, 0.7f, 0.8f * sizeScale);
             InternNumbersShown++;
+        }
+
+        /// <summary>Quantas rachaduras novas mostraram o brilho e as lascas (para os testes).</summary>
+        public int CracksShown { get; private set; }
+
+        /// <summary>
+        /// A rachadura nova (M9f E2, D-303): o golpe passou o cristal para o estágio seguinte do desenho (D-300). O cristal
+        /// brilha um instante e solta 3 a 4 lascas na cor dele, menores e mais curtas que os estilhaços da quebra. O golpe
+        /// que quebra não passa por aqui: a quebra tem o efeito dela.
+        /// </summary>
+        void ShowCrack(MiningHit hit, Vector3 at)
+        {
+            var crystal = hit.Crystal;
+            if (!stage.DrawsCracks(crystal) || !CrackStage.Crossed(crystal.Health, hit.Damage, crystal.MaxHealth, out _)) return;
+            stage.FlashCrystal(crystal);
+            float size = SparkBurst.DefaultSize * sizeScale;
+            sparks.Emit(at, Count(4), stage.ShardColorOf(crystal), 3.5f * sizeScale, size * 1.6f, 0.45f);
+            CracksShown++;
         }
 
         void OnTapped(Vector2 screenPosition)

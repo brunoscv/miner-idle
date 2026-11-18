@@ -18,5 +18,17 @@ namespace MinersIdle.Presentation
             if (ratio > 1.0 / 3.0) return 2;
             return 3;
         }
+
+        /// <summary>
+        /// Um golpe que tirou <paramref name="damage"/> e deixou <paramref name="healthAfter"/> passou para um estágio novo
+        /// (D-303)? Golpe que quebrou não conta: a quebra tem o efeito dela.
+        /// </summary>
+        public static bool Crossed(double healthAfter, double damage, double maxHealth, out int stage)
+        {
+            stage = Of(healthAfter, maxHealth);
+            if (healthAfter <= 0) return false;
+            double before = healthAfter + System.Math.Max(0, damage);
+            return stage > Of(before > maxHealth ? maxHealth : before, maxHealth);
+        }
     }
 }

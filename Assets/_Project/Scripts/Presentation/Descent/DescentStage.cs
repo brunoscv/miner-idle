@@ -147,6 +147,10 @@ namespace MinersIdle.Presentation
         [Header("Cristal rachando (M9f)")]
         [Tooltip("A barra de vida sobre o alvo (REQ-CRY-03). Saiu no v8 (D-301): o desenho racha; o DBG a liga para comparar.")]
         [SerializeField] bool showHealthBar;
+        [Tooltip("D-303: quanto dura o brilho do cristal ao rachar de novo, em segundos.")]
+        [SerializeField, Min(0f)] float crackFlashSeconds = 0.08f;
+        [Tooltip("D-303: quanto o brilho clareia (a cor vai a 1 + isto; acima de 1 clareia).")]
+        [SerializeField, Range(0f, 2f)] float crackFlashLight = 0.8f;
 
         [Header("Anão (M1b E6, D-75: folhas do PixelLab; vazio = desenho gerado por código)")]
         [Tooltip("Folha da corrida: quadros quadrados em grade, da esquerda para a direita e de cima para baixo.")]
@@ -453,6 +457,29 @@ namespace MinersIdle.Presentation
         {
             get => showHealthBar;
             set => showHealthBar = value;
+        }
+
+        Crystal _flashCrystal;
+        float _flashUntil;
+
+        /// <summary>O brilho da rachadura nova (D-303): o cristal clareia por <see cref="crackFlashSeconds"/>.</summary>
+        public void FlashCrystal(Crystal crystal)
+        {
+            _flashCrystal = crystal;
+            _flashUntil = Time.unscaledTime + crackFlashSeconds;
+        }
+
+        /// <summary>O cristal está no brilho da rachadura agora.</summary>
+        public bool IsCrystalFlashing(Crystal crystal) =>
+            crystal != null && crystal == _flashCrystal && Time.unscaledTime < _flashUntil;
+
+        /// <summary>Este cristal é desenhado rachando (tem a folha do v8, a do bioma ou a dourada do raro).</summary>
+        public bool DrawsCracks(Crystal crystal)
+        {
+            if (crystal == null) return false;
+            if (IsRareShown(crystal)) return rareCrystalSheet != null;
+            var biome = Biome;
+            return biome != null && biome.HasCrystalSheet;
         }
 
         /// <summary>A barra de vida apareceu no último quadro (para os testes).</summary>
@@ -1315,7 +1342,13 @@ namespace MinersIdle.Presentation
                 // O raro (D-220): o desenho dele e um brilho piscando (cor acima de 1 clareia).
                 bool rare = IsRareShown(crystal);
                 DrawCrystal(_crystals[i], crystal, rare, crystal == miner.Target);
-                _crystals[i].SetColor(rare ? RareGlintColor() : Color.white);
+                var color = rare ? RareGlintColor() : Color.white;
+                if (IsCrystalFlashing(crystal))
+                {
+                    float light = 1f + crackFlashLight;
+                    color = new Color(Mathf.Max(color.r, light), Mathf.Max(color.g, light), Mathf.Max(color.b, light), 1f);
+                }
+                _crystals[i].SetColor(color);
                 if (rare) rareShown++;
                 _crystals[i].Place(new Vector3(shake, 0f, z), crystalSize);
                 _crystals[i].Transform.localRotation = lean;

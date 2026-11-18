@@ -1,4 +1,5 @@
 using System.Collections;
+using MinersIdle.Core;
 using MinersIdle.Game;
 using MinersIdle.Presentation;
 using MinersIdle.UI;
@@ -31,6 +32,65 @@ namespace MinersIdle.Tests
         public void Stage_IntactOnlyAtFullHealth_ThenByThirds(double health, double max, int expected)
         {
             Assert.That(CrackStage.Of(health, max), Is.EqualTo(expected));
+        }
+
+        [TestCase(9.9, 0.1, 10.0, true, 1)]   // o primeiro golpe tira o inteiro
+        [TestCase(9.0, 0.5, 10.0, false, 1)]  // dentro do mesmo terço
+        [TestCase(6.0, 1.5, 10.0, true, 2)]   // passou de 2/3
+        [TestCase(1.0, 8.9, 10.0, true, 3)]   // pulou dois estágios num golpe: um efeito só
+        [TestCase(0.0, 3.0, 10.0, false, 3)]  // quebrou: a quebra tem o efeito dela
+        public void Crossed_OnlyWhenTheHitReachesANewStage(double after, double damage, double max, bool crossed, int stage)
+        {
+            Assert.That(CrackStage.Crossed(after, damage, max, out int now), Is.EqualTo(crossed));
+            Assert.That(now, Is.EqualTo(stage));
+        }
+
+        [UnityTest]
+        public IEnumerator NewCrack_FlashesAndDropsChips_OncePerStage()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            runner.TimeScale = 0f;
+            yield return null;
+
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var feedback = Object.FindAnyObjectByType<MiningFeedbackView>();
+            var sparks = Object.FindAnyObjectByType<SparkBurst>();
+            var sim = runner.Simulation;
+
+            // Andar 20: o cristal aguenta muitos golpes da Picareta do começo, então os primeiros só passam ao racha 1.
+            sim.GoToFloor(20);
+            for (int i = 0; i < 400 && sim.IsInFloorTransition; i++) { sim.Tick(0.05); yield return null; }
+            yield return null;
+
+            int hits = 0, crossings = 0, lastStage = -1;
+            Crystal first = null;
+            System.Action<MiningHit> onHit = hit =>
+            {
+                if (first == null) first = hit.Crystal;
+                if (hit.Crystal != first) return;
+                hits++;
+                int now = CrackStage.Of(hit.Crystal.Health, hit.Crystal.MaxHealth);
+                if (hit.Crystal.Health > 0 && now > (lastStage < 0 ? 0 : lastStage)) crossings++;
+                lastStage = now;
+            };
+            sim.HitLanded += onHit;
+            int before = feedback.CracksShown;
+            bool flashed = false;
+            for (int i = 0; i < 3000 && hits < 3; i++)
+            {
+                sim.Tick(0.02);
+                if (first != null && stage.IsCrystalFlashing(first)) flashed = true;
+                if (i % 10 == 0) yield return null;
+            }
+            sim.HitLanded -= onHit;
+
+            Assert.That(hits, Is.GreaterThanOrEqualTo(3), "o anão bateu três vezes no mesmo cristal");
+            Assert.That(first.Health, Is.GreaterThan(0), "sem quebrar");
+            Assert.That(crossings, Is.GreaterThanOrEqualTo(1), "o primeiro golpe tira o inteiro (D-300)");
+            Assert.That(feedback.CracksShown - before, Is.EqualTo(crossings), "um efeito por estágio novo, não por golpe (D-303)");
+            Assert.That(flashed, Is.True, "o cristal brilhou ao rachar");
+            Assert.That(sparks.ActiveCount, Is.GreaterThan(0), "as lascas no ar");
         }
 
         [Test]
