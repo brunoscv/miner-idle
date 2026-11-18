@@ -77,6 +77,12 @@
 - A **coluna dos bônus** com um anúncio de 1 h e uma carta de 30 s juntos.
 - A linha **Raro Dourado** na tela do descanso.
 
+**Como ficou (2026-11-18):** montados por cima de capturas reais do jogo e do mockup aprovado do HUD do v8, em `tools/ci/out/`:
+
+- `m9e-e0-boost.png`: o painel **BOOST** no estilo da LOJA, com uma linha por anúncio (o bônus, a duração, as horas extras de offline e o botão). Curto com **ASSISTIR**; médio e grande ativos, com **RENOVAR** e "falta 31m" / "falta 1h18" embaixo; e a linha **Raro tier 2** ("Cartas do raro ×4 e +20%, some com o Raro Dourado"). No alto, "Tipos diferentes juntos: vale o maior." e **VOLTAR** no fim.
+- `m9e-e0-coluna.png`: a coluna dos bônus ao lado da barra do andar com o grande ("1h18", selo ×4), o médio ("31m", selo ×3) e a carta Lascas ×2 ("28s"). O selo diz o maior bônus de cada anúncio.
+- `m9e-e0-raro-dourado.png`: a linha **Raro Dourado** depois da Promoção na tela do descanso: "Cartas do raro ×2 » ×4", nv 0/1, **500**.
+
 ### E1 — O raro do v8 (núcleo)
 
 - O **contador de 60 s** (P1) no lugar do sorteio de 15% e do ritmo lento.
@@ -148,7 +154,7 @@
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-18: P1…P9 com as recomendações (D-283…D-291) | — |
-| E0 Mockups | ⏳ | — |
+| E0 Mockups | 🔄 prontos em 2026-11-18, aguardando o Bruno | Ver "Como ficou" na E0 |
 | E1 O raro do v8 | ⏳ | — |
 | E2 Os anúncios e o offline | ⏳ | — |
 | E3 Na tela | ⏳ | — |
