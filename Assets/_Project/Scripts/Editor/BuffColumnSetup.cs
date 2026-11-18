@@ -11,7 +11,7 @@ namespace MinersIdle.EditorTools
 {
     /// <summary>
     /// Parte do <see cref="ProjectSetup"/> para a E2 do M9b (mockup aprovado em 2026-11-10): o <c>Data/BuffCatalog</c> com
-    /// os quatro marcos do combo (ícones do kit Anvil, nomes, textos do ganho), os sprites do anel e do disco, e na cena
+    /// (as linhas do raro e do AD entram pelos setups deles; as do combo saíram no M9g), os sprites do anel e do disco, e na cena
     /// Game a coluna de buffs (<see cref="BuffColumn"/>) à esquerda, logo abaixo do HUD, atrás das janelas. Liga o catálogo
     /// ao feedback (o texto do ganho). Só cria o que falta; os textos ficam no catálogo.
     /// </summary>
@@ -36,20 +36,12 @@ namespace MinersIdle.EditorTools
         static readonly Color AmberText = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         static readonly Color MutedText = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
 
-        /// <summary>Os marcos do combo (GDD v7 §3.4) no catálogo: marco, ícone do kit Anvil, nome, descrição, texto grande.</summary>
-        static readonly (int tier, int icon, string title, string description, string headline)[] ComboEntries =
-        {
-            (10, 2, "+10% de dano", "Golpes e toques mais fortes", ""),
-            (30, 2, "+15% de dano", "Golpes e toques mais fortes", ""),
-            (50, 18, "Crítico garantido", "Todo golpe sai crítico", ""),
-            (100, 332, "Frenesi", "+50% de dano", "FRENESI!"),
-        };
-
         public static bool EnsureInScene()
         {
             bool changed = EnsureSprites();
             var catalog = EnsureCatalog(ref changed);
             if (catalog == null) return changed;
+            changed |= RemoveComboEntries(catalog);
             changed |= WireFeedback(catalog);
 
             var safeArea = GameObject.Find("SafeArea")?.transform;
@@ -215,36 +207,42 @@ namespace MinersIdle.EditorTools
             var catalog = AssetDatabase.LoadAssetAtPath<BuffCatalog>(CatalogPath);
             if (catalog != null) return catalog;
 
+            // As linhas do raro e do AD entram pelos setups deles; o combo saiu no M9g (D-311).
             catalog = ScriptableObject.CreateInstance<BuffCatalog>();
             var so = new SerializedObject(catalog);
-            var list = so.FindProperty("entries");
-            list.arraySize = ComboEntries.Length;
-            for (int i = 0; i < ComboEntries.Length; i++)
-            {
-                var (tier, icon, title, description, headline) = ComboEntries[i];
-                var item = list.GetArrayElementAtIndex(i);
-                item.FindPropertyRelative("source").enumValueIndex = (int)BonusSource.Combo;
-                item.FindPropertyRelative("tier").intValue = tier;
-                item.FindPropertyRelative("icon").objectReferenceValue =
-                    AssetDatabase.LoadAssetAtPath<Sprite>(UiSkinSetup.IconsFolder + "/Icon" + icon + ".png");
-                item.FindPropertyRelative("title").stringValue = title;
-                item.FindPropertyRelative("description").stringValue = description;
-                item.FindPropertyRelative("headline").stringValue = headline;
-            }
             so.FindProperty("secondsFormat").stringValue = "{0}s";
-            so.FindProperty("comboFooterFormat").stringValue = "Combo ×{0} · {1}s";
-            so.FindProperty("gainDamageFormat").stringValue = "+{0} DANO";
-            so.FindProperty("gainCritical").stringValue = "CRÍTICO GARANTIDO";
-            so.FindProperty("gainBothFormat").stringValue = "+{0} DANO · CRÍTICO";
             so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.CreateAsset(catalog, CatalogPath);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[Setup] Catálogo dos bônus criado em {CatalogPath}: os quatro marcos do combo (M9b, E2).");
+            Debug.Log($"[Setup] Catálogo dos bônus criado em {CatalogPath} (M9b, E2).");
             changed = true;
             return catalog;
         }
 
-        /// <summary>O texto do ganho (D-215) lê o catálogo.</summary>
+        /// <summary>
+        /// M9g (D-311): saem do catálogo as linhas dos marcos do combo (a origem 0, que não existe mais no enum). Devolve se
+        /// mudou.
+        /// </summary>
+        static bool RemoveComboEntries(BuffCatalog catalog)
+        {
+            var so = new SerializedObject(catalog);
+            var list = so.FindProperty("entries");
+            int removed = 0;
+            for (int i = list.arraySize - 1; i >= 0; i--)
+            {
+                if (list.GetArrayElementAtIndex(i).FindPropertyRelative("source").intValue != 0) continue;
+                list.DeleteArrayElementAtIndex(i);
+                removed++;
+            }
+            if (removed == 0) return false;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Setup] Catálogo dos bônus: {removed} linhas do combo removidas (M9g, D-311).");
+            return true;
+        }
+
+        /// <summary>O texto do ganho (a carta do raro e o AD) lê o catálogo.</summary>
         static bool WireFeedback(BuffCatalog catalog)
         {
             var feedback = Object.FindAnyObjectByType<MiningFeedbackView>(FindObjectsInactive.Include);
@@ -254,7 +252,7 @@ namespace MinersIdle.EditorTools
             if (field.objectReferenceValue == catalog) return false;
             field.objectReferenceValue = catalog;
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log("[Setup] Feedback: o texto do ganho do combo lê o catálogo dos bônus (M9b, E2).");
+            Debug.Log("[Setup] Feedback: o texto do ganho lê o catálogo dos bônus (M9b, E2).");
             return true;
         }
     }

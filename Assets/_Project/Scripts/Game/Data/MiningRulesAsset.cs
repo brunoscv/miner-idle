@@ -95,7 +95,7 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues doublePickaxe = new UpgradeLineValues(500, 1, 1, 2);
         [Tooltip("Efeito: fração a mais de corrida a cada nível (0,1 = 10%). Limite 0 desliga a linha.")]
         [SerializeField] UpgradeLineValues boots = new UpgradeLineValues(10, 2, 10, 0.1);
-        [Tooltip("Chance de Crítico (GDD v7, D-136). Efeito: chance a mais por nível, no golpe e no toque. Limite 0 desliga.")]
+        [Tooltip("Chance de Crítico (GDD v7, D-136). Efeito: chance a mais por nível, no golpe. Limite 0 desliga.")]
         [SerializeField] UpgradeLineValues critical = new UpgradeLineValues(50, 2, 0, 0.05);
         [Tooltip("Intervalo mínimo entre golpes, em segundos (o do anão e o do estagiário, D-165).")]
         [SerializeField] double minHitInterval = 0.5;
@@ -112,35 +112,17 @@ namespace MinersIdle.Game
         [Tooltip("Mineração do estagiário. Efeito: fração a mais das lascas offline por nível (GDD v7: 1 = +100%; só no offline, D-166).")]
         [SerializeField] UpgradeLineValues internMining = new UpgradeLineValues(50, 1.2, 0, 1);
 
-        [Header("Golpe e toque (valores do GDD: 5%, ×2, 10%, 1 s)")]
+        [Header("Golpe (o toque e o combo saíram no M9g, D-311)")]
         [Tooltip("Chance base de crítico do golpe automático (0–1). GDD v7: 0 (D-136).")]
         [SerializeField] double critChance = 0.05;
-        [Tooltip("Chance base de crítico do toque (0–1). GDD v7: 0,05 (D-136); até o v5, igual à do golpe.")]
-        [SerializeField] double tapCritChance = 0.05;
         [Tooltip("Quanto o dano multiplica no crítico.")]
         [SerializeField] double critMultiplier = 2;
-        [Tooltip("Fração de um golpe que o toque dá (0,1 = 10%).")]
-        [SerializeField] double tapFraction = 0.1;
-        [Tooltip("Segundos sem toque até o combo zerar.")]
-        [SerializeField] double comboWindow = 1;
-        [Tooltip("Toques que valem por segundo, somando os dedos; acima disto o toque não dá dano, crítico nem combo (D-119). 0 = sem teto.")]
-        [SerializeField] int maxTapsPerSecond = 15;
-        [Tooltip("O toque só tira vida de um alvo a até esta distância do anão, em un: o que já está na tela (D-121). " +
-                 "3,9 un ≈ 1,95 m: na câmera F1, uma tela 9:16 mostra 1,99 m de chão à frente do anão (as mais altas, mais).")]
-        [SerializeField] double tapReach = 3.9;
-
         [Tooltip("Quando sai o primeiro golpe num cristal (D-124). Wait: um intervalo depois da chegada (o jogo até 2026-11-01); " +
                  "Charge: o relógio do golpe enche também correndo; Immediate: golpe no instante da chegada.")]
         [SerializeField] ArrivalStrike arrivalStrike = ArrivalStrike.Immediate; // escolha do Bruno no teste (D-124)
-        [Tooltip("A volta da picareta depois do golpe, em segundos (D-126): se o toque quebra o cristal antes disso, o anão " +
+        [Tooltip("A volta da picareta depois do golpe, em segundos (D-126): se a bomba quebra o cristal antes disso, o anão " +
                  "termina o golpe parado e só então corre. Nunca passa do intervalo. 0,72 = os 9 quadros de 80 ms da folha (D-75); 0 desliga.")]
         [SerializeField] double swingRecovery = 0.72;
-
-        [Header("Bônus do combo (M9b; GDD v7 §3.4)")]
-        [Tooltip("Os marcos do combo que viram bônus com tempo quando o jogador para de tocar (D-96). Vazio = sem bônus " +
-                 "(os balanços até o v5). GDD v7: ×10 +10% de dano por 5 s, ×30 +15% por 10 s, ×50 crítico garantido por 20 s, " +
-                 "×100 Frenesi +50% por 30 s.")]
-        [SerializeField] ComboBonusValues[] comboBonuses = new ComboBonusValues[0];
 
         [Header("Cristal raro (M9b E4; D-97, D-184…D-186, D-190)")]
         [Tooltip("Chance de cada cristal que nasce ser raro (0–1). GDD v7: 0,15 (D-184).")]
@@ -204,7 +186,7 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues mountainBlood = new UpgradeLineValues(10, 2, 0, 0.1, CostFormula.OffsetExponential);
         [Tooltip("Coração Ardente. Efeito: fração a mais de lascas por nível (GDD v7: 0,5; 20 níveis = o teto de +1000%).")]
         [SerializeField] UpgradeLineValues burningHeart = new UpgradeLineValues(10, 2, 0, 0.5, CostFormula.OffsetExponential);
-        [Tooltip("Dedos Nervosos. Efeito: chance de crítico a mais por nível, no golpe e no toque (GDD v7: 0,05).")]
+        [Tooltip("Dedos Nervosos. Efeito: chance de crítico a mais por nível, no golpe (GDD v7: 0,05).")]
         [SerializeField] UpgradeLineValues nervousFingers = new UpgradeLineValues(10, 2, 0, 0.05, CostFormula.OffsetExponential);
         [Tooltip("Alma dos Anões. Efeito: níveis de Picareta com que a run começa, por nível (GDD v7: 1).")]
         [SerializeField] UpgradeLineValues dwarfSoul = new UpgradeLineValues(10, 2, 0, 1, CostFormula.OffsetExponential);
@@ -247,7 +229,7 @@ namespace MinersIdle.Game
             walkSpeed, miningRange,
             minCrystals,
             caveCount, caveHealthGrowth, caveRewardGrowth, floorBreaks,
-            tapReach, arrivalStrike, swingRecovery,
+            arrivalStrike, swingRecovery,
             pickaxeFormula,
             PickaxeTunable ? pickaxeCaveGrowth ?? this.pickaxeCaveGrowth : this.pickaxeCaveGrowth,
             levelsPerBiome, offlineMaxHours * 3600, rewardFormula, offlineDeepHours * 3600, offlineDeepFloor,
@@ -274,8 +256,7 @@ namespace MinersIdle.Game
         public double RareInterval => rareInterval;
 
         public StrikeRules ToStrike() =>
-            new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses(),
-                            Rare(), Ad(), Ads(), Bombs());
+            new StrikeRules(critChance, critMultiplier, Rare(), Ad(), Ads(), Bombs());
 
         /// <summary>A Bomba do asset; números inválidos desligam a bomba, com aviso.</summary>
         BombRules Bombs()
@@ -362,24 +343,6 @@ namespace MinersIdle.Game
             return cards;
         }
 
-        /// <summary>Os marcos do combo do asset; os mal preenchidos (combo &lt; 1, duração 0, repetidos) ficam de fora, com aviso.</summary>
-        List<ComboBonusRule> ComboBonuses()
-        {
-            var list = new List<ComboBonusRule>();
-            if (comboBonuses == null) return list;
-            foreach (var values in comboBonuses)
-            {
-                if (values == null) continue;
-                if (!values.IsValid || list.Exists(r => r.Combo == values.Combo))
-                {
-                    Debug.LogWarning($"[Valores] Marco do combo ×{values.Combo} inválido ou repetido em {name}: ignorado.", this);
-                    continue;
-                }
-                list.Add(values.ToRule());
-            }
-            return list;
-        }
-
         /// <param name="pickaxeStep">
         /// O incremento trocado no DBG → Cálculos (E3b-3); <c>null</c> = o do asset. Não vale no Multiply (v5). Na fórmula
         /// Linear (a "2 × Dano Base" da D-133), o passo do custo cresce na mesma proporção do incremento; na DamageScaled
@@ -413,35 +376,6 @@ namespace MinersIdle.Game
                 : line.CostGrowth;
             return new UpgradeDefinition(line.BaseCost, costGrowth, line.MaxLevel, step.Value, line.CostFormula);
         }
-    }
-
-    /// <summary>Um marco do combo no Inspector (vira uma <see cref="ComboBonusRule"/> do Núcleo).</summary>
-    [Serializable]
-    public sealed class ComboBonusValues
-    {
-        [Tooltip("O combo que é preciso alcançar antes de parar de tocar.")]
-        [SerializeField] int combo;
-        [Tooltip("DamagePercent: +% de dano no golpe e no toque. GuaranteedCritical: todo golpe e todo toque saem críticos.")]
-        [SerializeField] BonusKind kind;
-        [Tooltip("O efeito: 0,1 = +10% de dano. Sem uso no crítico garantido.")]
-        [SerializeField] double value;
-        [Tooltip("Quanto dura, em segundos de jogo.")]
-        [SerializeField] double seconds;
-
-        /// <summary>Para o serializador do Unity.</summary>
-        public ComboBonusValues() { }
-
-        public ComboBonusValues(int combo, BonusKind kind, double value, double seconds)
-        {
-            this.combo = combo;
-            this.kind = kind;
-            this.value = value;
-            this.seconds = seconds;
-        }
-
-        public int Combo => combo;
-        public bool IsValid => combo >= 1 && seconds > 0 && !double.IsNaN(value) && value >= 0 && Enum.IsDefined(typeof(BonusKind), kind);
-        public ComboBonusRule ToRule() => new ComboBonusRule(combo, kind, value, seconds);
     }
 
     /// <summary>Um anúncio do Boost no Inspector (vira um <see cref="AdOffer"/> do Núcleo).</summary>

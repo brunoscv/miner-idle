@@ -184,23 +184,27 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
-        public IEnumerator TapOutsideTheBar_StillHitsTheCrystal()
+        public IEnumerator TapOutsideTheBar_StillShowsTheFingerSpark()
         {
             yield return LoadGame();
             _runner.AutoAdvance = false; // M9c E3: no andar 12 o automático desceria com a barra cheia; aqui ela fica cheia
             Simulation.SkipToCave(12);
             yield return null;
             var input = Object.FindAnyObjectByType<TapInput>();
-            // M9c E0 (D-266): na transição do andar novo o toque não vale; passada ela, vale.
+            // M9c E0 (D-266): na transição do andar novo o toque não vale; passada ela, vale (desde o M9g, D-311, o toque
+            // não dá dano: só a faísca do dedo).
             if (Simulation.IsInFloorTransition)
                 Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.False, "na transição, não");
             FillTheBar();
             Assert.That(_pass.IsReady, Is.True);
             yield return null; // um quadro de layout
 
-            int combo = Simulation.Combo;
+            int sparks = 0;
+            void OnTapped(Vector2 _) => sparks++;
+            input.Tapped += OnTapped;
             Assert.That(input.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), Is.True, "o meio da tela");
-            Assert.That(Simulation.Combo, Is.EqualTo(combo + 1));
+            input.Tapped -= OnTapped;
+            Assert.That(sparks, Is.EqualTo(1), "a faísca do dedo");
 
             foreach (var rect in new[] { (RectTransform)_rest.transform.Find("RestButton"),
                                          (RectTransform)_pass.transform.Find("Bar") })

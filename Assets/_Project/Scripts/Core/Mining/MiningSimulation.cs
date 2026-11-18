@@ -7,8 +7,8 @@ namespace MinersIdle.Core
     /// O loop de mineração da descida (M6, D-52): o anão corre até o primeiro cristal da fila, bate a cada intervalo,
     /// quebra, soma lascas e corre para o próximo; sem cristal, continua correndo (D-55). Cristais nascem a cada
     /// intervalo no fim da fila, até o máximo (D-54, D-60). Desde o M3, dano, intervalo, corrida e lascas vêm dos
-    /// atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram. Desde o M5: o toque do
-    /// jogador (<see cref="Tap"/>), o crítico e o combo (<see cref="StrikeRules"/>). Desde o M8: os andares (no v8, M9c:
+    /// atributos (<see cref="MinerStats"/>), que as compras (<see cref="Purchase"/>) melhoram. Desde o M5: o crítico
+    /// (<see cref="StrikeRules"/>); o toque e o combo do M5 saíram no M9g (D-311), e a Bomba entrou no lugar. Desde o M8: os andares (no v8, M9c:
     /// o Próximo Andar, <see cref="AdvanceFloor"/>). Desde o M7: o estagiário, que bate no mesmo cristal do anão com o relógio dele e
     /// avança junto (<see cref="InternHitLanded"/>). (Até o M5, o anão andava num mapa aberto; esse código está na tag
     /// <c>v0.5-campo-aberto</c>.)
@@ -24,9 +24,6 @@ namespace MinersIdle.Core
 
         /// <summary>Trava contra laço infinito por bug: 1 h de jogo tem poucos milhares de eventos.</summary>
         const int MaxStepsPerTick = 10_000_000;
-
-        /// <summary>A janela do teto de toques (D-119), em segundos de jogo.</summary>
-        const double TapRateWindow = 1;
 
         readonly MiningRules _rules;
         readonly CrystalTrack _track;
@@ -50,10 +47,6 @@ namespace MinersIdle.Core
         double _floorTransitionSeconds;
         double _floorTransitionLeft;
         double _floorTransitionLength;
-        int _combo;
-        double _lastTapTime;
-        // Os marcos que o último combo deu (M9b), reaproveitada para não alocar a cada combo.
-        readonly List<ComboBonusRule> _granted = new List<ComboBonusRule>();
 
         // A Bomba (M9g, D-240, D-307, D-308, D-313): segundos de carga, a bomba no ar (quanto falta e quanto ela tira) e as
         // listas reaproveitadas dos cristais no alcance e dos que a explosão quebrou (sem alocar a cada bomba).
@@ -64,21 +57,15 @@ namespace MinersIdle.Core
         readonly List<Crystal> _bombTargets = new List<Crystal>();
         readonly List<Crystal> _bombBroken = new List<Crystal>();
 
-        // D-126: se a picareta já desceu no alvo atual, e quanto falta do golpe depois que o toque quebrou o cristal.
+        // D-126: se a picareta já desceu no alvo atual, e quanto falta do golpe depois que a bomba quebrou o cristal.
         bool _swungAtTarget;
         double _recoveryLeft;
 
-        // Instantes dos últimos toques que valeram (D-119), em anel: cheio, o cursor aponta o mais antigo.
-        readonly double[] _tapTimes;
-        int _tapCursor;
-        int _tapCount;
-
         /// <param name="random">
-        /// Sorteio do crítico, o único da partida: desde a fila (M6) os cristais nascem em lugares fixos, então com ou sem
-        /// toques a fila é a mesma.
+        /// Sorteio do crítico: desde a fila (M6) os cristais nascem em lugares fixos, então a fila não depende dele.
         /// </param>
         /// <param name="economy">Melhorias à venda. Sem ela, nenhuma linha vende e os atributos são os valores base (o jogo do M2).</param>
-        /// <param name="strike">Crítico, toque e combo. Sem elas, não há crítico (o jogo do M2–M4).</param>
+        /// <param name="strike">Crítico, raro, anúncios e bomba. Sem elas, não há crítico (o jogo do M2–M4).</param>
         /// <param name="permanents">
         /// O dia e as melhorias permanentes (Marco 8b), que passam de uma run para a outra. Sem elas, não há descanso nem
         /// permanentes (o jogo até o GDD v5).
@@ -97,7 +84,6 @@ namespace MinersIdle.Core
             RareRhythm = rareRhythm;
             _strike = strike ?? StrikeRules.NoCritical();
             _bombCharge = _strike.Bombs.ChargeSeconds; // D-313: a run começa com a bomba cheia
-            _tapTimes = new double[_strike.MaxTapsPerSecond];
             _state = state ?? new GameState();
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
@@ -123,7 +109,7 @@ namespace MinersIdle.Core
         public event Action<Crystal> CrystalSpawned;
         /// <summary>O alvo do anão mudou (<c>null</c> = ficou sem alvo).</summary>
         public event Action<Crystal> TargetChanged;
-        /// <summary>Golpe no cristal: automático ou toque, com o dano e se foi crítico.</summary>
+        /// <summary>Golpe do anão no cristal, com o dano e se foi crítico.</summary>
         public event Action<MiningHit> HitLanded;
         /// <summary>O cristal quebrou e saiu do mapa; a recompensa já foi somada.</summary>
         public event Action<Crystal> CrystalBroken;
@@ -135,20 +121,11 @@ namespace MinersIdle.Core
         public event Action<MinerStats> StatsChanged;
         /// <summary>
         /// Golpe do estagiário (M7) no alvo do anão: nunca crítico (D-167). Sai à parte do <see cref="HitLanded"/>, que
-        /// continua só do anão e do toque: quem desenha o anão não confunde os dois.
+        /// continua só do anão: quem desenha o anão não confunde os dois.
         /// </summary>
         public event Action<MiningHit> InternHitLanded;
         /// <summary>O estagiário foi contratado, demitido ou mudou de atributos (compra, Treinar, atalhos do debug).</summary>
         public event Action<InternStats> InternChanged;
-        /// <summary>O combo mudou (0 = zerou depois da janela sem toque).</summary>
-        public event Action<int> ComboChanged;
-        /// <summary>O combo chegou a um múltiplo de 10 (o "pop" especial).</summary>
-        public event Action<int> ComboMilestone;
-        /// <summary>
-        /// O combo acabou num ou mais marcos com bônus (M9b, D-96): o combo final e os marcos que valeram (pela regra do
-        /// acúmulo, <see cref="ComboStacking"/>). A lista é reaproveitada: leia na hora, não guarde.
-        /// </summary>
-        public event Action<int, IReadOnlyList<ComboBonusRule>> ComboBonusesGranted;
         /// <summary>
         /// Os bônus com tempo mudaram (M9b): entrou, acabou, o save trouxe ou o debug limpou. O dano já foi recalculado
         /// (<see cref="StatsChanged"/> sai antes).
@@ -210,7 +187,7 @@ namespace MinersIdle.Core
         public event Action<IReadOnlyList<Crystal>> BombThrown;
         /// <summary>
         /// A bomba tirou vida de um cristal na chegada (M9g): a % da vida máxima, sem crítico. Sai à parte do
-        /// <see cref="HitLanded"/>, que continua do anão e do toque.
+        /// <see cref="HitLanded"/>, que continua do anão.
         /// </summary>
         public event Action<MiningHit> BombHitLanded;
         /// <summary>
@@ -226,20 +203,11 @@ namespace MinersIdle.Core
         /// <summary>O dia e as melhorias permanentes (Marco 8b): os mesmos de uma run para a outra.</summary>
         public Permanents Permanents => _permanents;
 
-        /// <summary>Toques seguidos, cada um a menos de <see cref="StrikeRules.ComboWindow"/> do anterior.</summary>
-        public int Combo => _combo;
-
-        /// <summary>Atalho do debug: todo golpe e todo toque saem críticos.</summary>
+        /// <summary>Atalho do debug: todo golpe sai crítico.</summary>
         public bool ForceCritical { get; set; }
 
         /// <summary>Os bônus com tempo valendo agora (M9b; os mesmos do <see cref="GameState"/>, que vão para o save).</summary>
         public ActiveBonuses Bonuses => _state.Bonuses;
-
-        /// <summary>
-        /// Como os marcos do combo se acumulam (D-211). O padrão é o do GDD (<see cref="Core.ComboStacking.Cumulative"/>); o
-        /// DBG → Cálculos troca no meio da partida para comparar (D-217). Vale para o próximo combo.
-        /// </summary>
-        public ComboStacking ComboStacking { get; set; } = ComboStacking.Cumulative;
 
         /// <summary>
         /// Quantos raros nascem (D-185): o do documento (15% por cristal) ou o lento do DBG → Cálculos (2%, sem raro novo
@@ -289,7 +257,7 @@ namespace MinersIdle.Core
         public ArrivalStrike ArrivalStrike { get; set; }
 
         /// <summary>
-        /// Segundos de jogo até o próximo golpe do anão, se nada mudar (sem toque nem compra): a apresentação começa a
+        /// Segundos de jogo até o próximo golpe do anão, se nada mudar (sem bomba nem compra): a apresentação começa a
         /// levantar a picareta antes dele, ainda correndo. Infinito sem alvo.
         /// </summary>
         public double SecondsToNextHit
@@ -313,7 +281,7 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// Quanto dura a volta da picareta agora (D-126): <see cref="MiningRules.SwingRecovery"/>, nunca mais que o
-        /// intervalo do golpe. A apresentação toca o golpe nesse tempo, com o cristal vivo ou quebrado pelo toque.
+        /// intervalo do golpe. A apresentação toca o golpe nesse tempo, com o cristal vivo ou quebrado pela bomba.
         /// </summary>
         public double SwingRecovery => Math.Min(_rules.SwingRecovery, _stats.HitInterval);
 
@@ -356,7 +324,7 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// Se a transição de andar está correndo: o tempo de jogo anda, mas nada mais (golpe, estagiário, nascimento pelo
-        /// relógio, tempo dos bônus e da janela do raro, toque).
+        /// relógio, tempo dos bônus e da janela do raro, bomba).
         /// </summary>
         public bool IsInFloorTransition => _floorTransitionLeft > 0;
 
@@ -379,7 +347,7 @@ namespace MinersIdle.Core
 
         /// <summary>
         /// Descansando (M9d, D-265): a run nova está montada, mas <b>parada</b> até o INICIAR. O tempo não anda (nem o anão,
-        /// nem o estagiário, nem as cartas e bônus, nem o tempo do dia), o toque e as compras da run não valem, o offline
+        /// nem o estagiário, nem as cartas e bônus, nem o tempo do dia), a bomba e as compras da run não valem, o offline
         /// não conta (D-275) e as permanentes <b>só</b> se compram aqui (§4.2). Quem dirige a partida põe na criação e, no
         /// INICIAR, monta outra sem ele (com as permanentes que o jogador comprou: a Alma, a Promoção, o Atalho).
         /// </summary>
@@ -596,52 +564,6 @@ namespace MinersIdle.Core
             return result;
         }
 
-        /// <summary>
-        /// Toque do jogador (REQ-MIN-02, D-47, D-48): soma 1 no combo e, se o anão tem alvo (batendo ou correndo até ele),
-        /// tira dele a fração de um golpe do <see cref="StrikeRules.TapFraction"/> (com a Picareta Dupla), podendo ser
-        /// crítico. Quebra pelo toque paga como qualquer quebra. Sem alvo, ou com ele além do
-        /// <see cref="MiningRules.TapReach"/> (ainda fora da tela, D-121), só o combo conta. Acima do teto de toques por
-        /// segundo (D-119), o toque não vale nada: devolve <c>false</c> e nenhum evento sai.
-        /// </summary>
-        public bool Tap()
-        {
-            if (IsResting) return false; // D-265: descansando
-            if (_floorTransitionLeft > 0) return false; // descendo de andar (D-266): o toque não vale nem conta no combo
-            if (!TakeTapSlot()) return false;
-
-            _combo++;
-            _lastTapTime = Elapsed;
-            ComboChanged?.Invoke(_combo);
-            if (_combo % 10 == 0) ComboMilestone?.Invoke(_combo);
-
-            var target = _miner.Target;
-            if (target == null || target.Distance - _miner.Distance > _rules.TapReach + Epsilon) return true;
-
-            bool critical = RollCritical(isTap: true);
-            double damage = _stats.Damage * _strike.TapFraction * (critical ? CritMultiplier(isTap: true) : 1);
-            bool broke = target.ApplyDamage(damage);
-            HitLanded?.Invoke(new MiningHit(target, damage, isTap: true, isCritical: critical));
-            if (broke) Break(target, byTap: true);
-            return true;
-        }
-
-        /// <summary>
-        /// O teto da D-119: com <see cref="StrikeRules.MaxTapsPerSecond"/> toques valendo no último segundo de jogo, o
-        /// próximo espera o mais antigo deles sair da janela. Toques no mesmo instante (vários dedos num quadro) contam
-        /// um a um.
-        /// </summary>
-        bool TakeTapSlot()
-        {
-            int max = _tapTimes.Length;
-            if (max == 0) return true;
-            if (_tapCount == max && Elapsed < _tapTimes[_tapCursor] + TapRateWindow - Epsilon) return false;
-
-            _tapTimes[_tapCursor] = Elapsed;
-            _tapCursor = (_tapCursor + 1) % max;
-            if (_tapCount < max) _tapCount++;
-            return true;
-        }
-
         // ── A Bomba (M9g; GDD v8 §2.1, D-240, D-255, D-307, D-308, D-309, D-313) ──────────────────────────────────
 
         /// <summary>As regras da bomba deste balanço (<see cref="BombRules.None"/> sem bomba).</summary>
@@ -742,14 +664,14 @@ namespace MinersIdle.Core
                 var crystal = _bombTargets[i];
                 double damage = crystal.MaxHealth * _bombFlightFraction;
                 bool broke = crystal.ApplyDamage(damage);
-                BombHitLanded?.Invoke(new MiningHit(crystal, damage, isTap: false, isCritical: false));
+                BombHitLanded?.Invoke(new MiningHit(crystal, damage, false));
                 if (broke) _bombBroken.Add(crystal);
             }
             BombLanded?.Invoke(_bombTargets);
             for (int i = 0; i < _bombBroken.Count; i++)
             {
                 var crystal = _bombBroken[i];
-                if (crystal == _miner.Target) Break(crystal, byTap: true); // como o toque: o anão termina o golpe (D-126)
+                if (crystal == _miner.Target) Break(crystal, midSwing: true); // o anão termina o golpe antes de correr (D-126)
                 else BreakAhead(crystal);
             }
         }
@@ -933,49 +855,6 @@ namespace MinersIdle.Core
 
         // ── Bônus com tempo (M9b) ─────────────────────────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Termina o combo agora, como se a janela tivesse passado, e dá os bônus dele (D-214: o app foi para o fundo). O
-        /// runner chama antes de salvar ao pausar. <c>false</c> sem combo.
-        /// </summary>
-        public bool EndCombo()
-        {
-            if (_combo <= 0) return false;
-            int ended = _combo;
-            _combo = 0;
-            ComboChanged?.Invoke(0);
-            GrantComboBonuses(ended);
-            return true;
-        }
-
-        /// <summary>
-        /// Os bônus de um combo que terminou em <paramref name="combo"/> (D-96, D-211, D-212): todos os marcos alcançados
-        /// no acumulativo, só o maior na alternativa. Também é o atalho do DBG → Bônus. Devolve quantos bônus entraram.
-        /// </summary>
-        public int GrantComboBonuses(int combo)
-        {
-            _granted.Clear();
-            var rules = _strike.ComboBonuses;
-            for (int i = 0; i < rules.Count; i++)
-                if (rules[i].Combo <= combo) _granted.Add(rules[i]);
-            if (_granted.Count == 0) return 0;
-
-            if (ComboStacking == ComboStacking.HighestOnly)
-            {
-                var highest = _granted[_granted.Count - 1];
-                _granted.Clear();
-                _granted.Add(highest);
-            }
-            for (int i = 0; i < _granted.Count; i++)
-            {
-                var rule = _granted[i];
-                _state.Bonuses.Add(new ActiveBonus(rule.Kind, rule.Value, rule.Seconds, rule.Seconds, BonusSource.Combo, rule.Combo),
-                                   ComboStacking);
-            }
-            OnBonusesChanged();
-            ComboBonusesGranted?.Invoke(combo, _granted);
-            return _granted.Count;
-        }
-
         /// <summary>Atalho do debug: tira todos os bônus. <c>false</c> se não havia nenhum.</summary>
         public bool ClearBonuses()
         {
@@ -1005,7 +884,7 @@ namespace MinersIdle.Core
             BonusesChanged?.Invoke();
         }
 
-        /// <summary>O estagiário com as cartas do raro ativas (dano × e intervalo ÷, D-190); o combo e o AD não valem (D-177).</summary>
+        /// <summary>O estagiário com as cartas do raro ativas (dano × e intervalo ÷, D-190); o AD não vale (D-177).</summary>
         InternStats ComputeInternStats()
         {
             var stats = InternStats.Compute(_rules, _economy, _state, _permanents);
@@ -1401,27 +1280,27 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// Crítico: a chance base do golpe ou do toque (<see cref="StrikeRules"/>) mais a da linha Chance de Crítico
+        /// Crítico: a chance base do golpe (<see cref="StrikeRules"/>) mais a da linha Chance de Crítico
         /// (<see cref="MinerStats.CritBonus"/>, D-136). Com chance 0, nenhum número é sorteado.
         /// </summary>
-        bool RollCritical(bool isTap)
+        bool RollCritical()
         {
-            if (ForceCritical || _state.Bonuses.GuaranteedCritical) return true; // o ×50 do combo (D-178)
-            double chance = CritChance(isTap);
+            if (ForceCritical || _state.Bonuses.GuaranteedCritical) return true; // o crítico garantido (D-178)
+            double chance = CritChance();
             if (chance >= 1) return true; // 100% ou mais: sempre, sem sortear
             return chance > 0 && _critRandom.NextDouble() < chance;
         }
 
-        /// <summary>A chance de crítico do golpe ou do toque: a base (<see cref="StrikeRules"/>) mais a das linhas e cartas.</summary>
-        double CritChance(bool isTap) => (isTap ? _strike.TapCritChance : _strike.CritChance) + _stats.CritBonus;
+        /// <summary>A chance de crítico do golpe: a base (<see cref="StrikeRules"/>) mais a das linhas e cartas.</summary>
+        double CritChance() => _strike.CritChance + _stats.CritBonus;
 
         /// <summary>
         /// O multiplicador do crítico: o das regras (GDD v8: ×1,5) e, acima de 100% de chance, +1 ponto por 1% a mais
         /// (D-249: 140% de chance → ×1,9).
         /// A carta "Dano de Crítico ×2" do v8 (D-243) multiplica o resultado: ×1,5 vira ×3.
         /// </summary>
-        double CritMultiplier(bool isTap) =>
-            (_strike.CritMultiplier + _permanents.CritDamageBonus + Math.Max(0, CritChance(isTap) - 1)) // Dedo Fogoso (M9d) e D-249
+        double CritMultiplier() =>
+            (_strike.CritMultiplier + _permanents.CritDamageBonus + Math.Max(0, CritChance() - 1)) // Dedo Fogoso (M9d) e D-249
             * _state.Bonuses.CritDamageMultiplier;
 
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
@@ -1445,9 +1324,6 @@ namespace MinersIdle.Core
                     changed = true;
                     continue;
                 }
-
-                if (_combo > 0 && Elapsed >= _lastTapTime + _strike.ComboWindow - Epsilon)
-                    EndCombo(); // o jogador parou de tocar: os marcos alcançados viram bônus (D-96)
 
                 if (_state.Bonuses.Count > 0 && _state.Bonuses.RemoveExpired(Epsilon))
                     OnBonusesChanged();
@@ -1527,9 +1403,6 @@ namespace MinersIdle.Core
 
             if (!SpawnWaits)
                 next = Math.Max(0, _rules.SpawnInterval - _spawnTimer);
-
-            if (_combo > 0)
-                next = Math.Min(next, Math.Max(0, _lastTapTime + _strike.ComboWindow - Elapsed));
 
             next = Math.Min(next, _state.Bonuses.NextExpiry);
             if (_state.RareWindow.IsChoosing) next = Math.Min(next, _state.RareWindow.SecondsLeft);
@@ -1683,7 +1556,7 @@ namespace MinersIdle.Core
             _swungAtTarget = false;
             if (_miner.State == MinerState.Recovering)
             {
-                // Ainda terminando o golpe (D-126): o alvo novo já vale para o toque; ele corre quando terminar.
+                // Ainda terminando o golpe (D-126): o alvo novo já vale para a bomba; ele corre quando terminar.
             }
             else if (ToGo() <= Epsilon)
             {
@@ -1704,13 +1577,13 @@ namespace MinersIdle.Core
         void Hit()
         {
             var target = _miner.Target;
-            bool critical = RollCritical(isTap: false);
-            double damage = _stats.Damage * (critical ? CritMultiplier(isTap: false) : 1);
+            bool critical = RollCritical();
+            double damage = _stats.Damage * (critical ? CritMultiplier() : 1);
 
             _state.RegisterHit();
             _swungAtTarget = true;
             bool broke = target.ApplyDamage(damage);
-            HitLanded?.Invoke(new MiningHit(target, damage, isTap: false, isCritical: critical));
+            HitLanded?.Invoke(new MiningHit(target, damage, critical));
 
             if (broke) Break(target);
         }
@@ -1725,18 +1598,18 @@ namespace MinersIdle.Core
             double damage = _internStats.Damage;
             _internHits++;
             bool broke = target.ApplyDamage(damage);
-            InternHitLanded?.Invoke(new MiningHit(target, damage, isTap: false, isCritical: false));
+            InternHitLanded?.Invoke(new MiningHit(target, damage, false));
             if (broke) Break(target);
         }
 
         /// <summary>
-        /// A quebra de um cristal paga e conta na barra do andar. Quebrado pelo toque no meio da picaretada, o anão termina o golpe antes de correr (D-126);
-        /// quebrado pela picareta, ou antes de ela descer nele, corre na hora.
+        /// A quebra de um cristal paga e conta na barra do andar. Quebrado pela bomba no meio da picaretada, o anão termina o
+        /// golpe antes de correr (D-126, que era do toque); quebrado pela picareta, ou antes de ela descer nele, corre na hora.
         /// </summary>
-        void Break(Crystal target, bool byTap = false)
+        void Break(Crystal target, bool midSwing = false)
         {
             double recovery = SwingRecovery - _miner.HitTimer;
-            bool finishSwing = byTap && _miner.State == MinerState.Mining && _swungAtTarget && recovery > Epsilon;
+            bool finishSwing = midSwing && _miner.State == MinerState.Mining && _swungAtTarget && recovery > Epsilon;
 
             _track.Remove(target);
             _state.RegisterBreak(target.Reward * _stats.RewardMultiplier);

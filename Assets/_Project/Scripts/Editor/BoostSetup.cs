@@ -116,7 +116,7 @@ namespace MinersIdle.EditorTools
                 int index = list.arraySize;
                 list.arraySize = index + 1;
                 var item = list.GetArrayElementAtIndex(index);
-                item.FindPropertyRelative("source").enumValueIndex = (int)BonusSource.Ad;
+                item.FindPropertyRelative("source").intValue = (int)BonusSource.Ad;
                 item.FindPropertyRelative("tier").intValue = (int)kind;
                 item.FindPropertyRelative("icon").objectReferenceValue =
                     kind == AdKind.RareTier2 ? Golden : AssetDatabase.LoadAssetAtPath<Sprite>(AdSetup.BoltIconPath);
@@ -137,7 +137,7 @@ namespace MinersIdle.EditorTools
             for (int i = 0; i < list.arraySize && critDamage != null; i++)
             {
                 var item = list.GetArrayElementAtIndex(i);
-                if (item.FindPropertyRelative("source").enumValueIndex != (int)BonusSource.Rare
+                if (item.FindPropertyRelative("source").intValue != (int)BonusSource.Rare
                     || item.FindPropertyRelative("tier").intValue != (int)RareCard.CritDamage) continue;
                 var field = item.FindPropertyRelative("icon");
                 if (field.objectReferenceValue != null && field.objectReferenceValue != crit) continue;

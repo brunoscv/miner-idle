@@ -332,8 +332,9 @@ namespace MinersIdle.Presentation
         bool _hitThisTarget;
         // M7 (E2): o instante do último golpe do estagiário (InternHitLanded); a picaretada dele sai daqui.
         double _lastInternHitAt = double.NegativeInfinity;
-        bool _lastHitWasTap;
-        bool _tapHitWhileStanding;
+        // A bomba (que herdou o caso do toque, M9g): o último golpe no alvo foi dela, e o anão estava parado nele.
+        bool _lastHitWasBomb;
+        bool _bombHitWhileStanding;
         double _lastSwingAt = double.NegativeInfinity;
         Crystal _preparedTarget;
         double _finisherStart = double.NegativeInfinity;
@@ -751,6 +752,7 @@ namespace MinersIdle.Presentation
         protected override void Subscribe(MiningSimulation simulation)
         {
             simulation.HitLanded += OnHit;
+            simulation.BombHitLanded += OnBombHit;
             simulation.InternHitLanded += OnInternHit;
             simulation.TargetChanged += OnTargetChanged;
             simulation.CrystalBroken += OnCrystalBroken;
@@ -762,6 +764,7 @@ namespace MinersIdle.Presentation
         protected override void Unsubscribe(MiningSimulation simulation)
         {
             simulation.HitLanded -= OnHit;
+            simulation.BombHitLanded -= OnBombHit;
             simulation.InternHitLanded -= OnInternHit;
             simulation.TargetChanged -= OnTargetChanged;
             simulation.CrystalBroken -= OnCrystalBroken;
@@ -774,8 +777,8 @@ namespace MinersIdle.Presentation
         {
             _hitThisTarget = false;
             _lastInternHitAt = double.NegativeInfinity;
-            _lastHitWasTap = false;
-            _tapHitWhileStanding = false;
+            _lastHitWasBomb = false;
+            _bombHitWhileStanding = false;
             _lastSwingAt = double.NegativeInfinity;
             _preparedTarget = null;
             _finisherStart = double.NegativeInfinity;
@@ -950,22 +953,21 @@ namespace MinersIdle.Presentation
 
         void OnHit(MiningHit hit)
         {
-            if (!hit.IsTap)
-            {
-                _hitThisTarget = true;
-                _lastSwingAt = Simulation.Elapsed;
-                StartHold(hitStopSeconds);
-            }
-            else
-            {
-                // O estado antes da quebra: a simulação avisa o golpe antes de tirar o cristal e pôr o anão para correr.
-                _tapHitWhileStanding = Simulation.Miner.State == MinerState.Mining;
-            }
-            _lastHitWasTap = hit.IsTap;
+            _hitThisTarget = true;
+            _lastSwingAt = Simulation.Elapsed;
+            StartHold(hitStopSeconds);
+            _lastHitWasBomb = false;
+        }
+
+        void OnBombHit(MiningHit hit)
+        {
+            // O estado antes da quebra: a simulação avisa o golpe antes de tirar o cristal e pôr o anão para correr.
+            if (hit.Crystal == Simulation.Miner.Target) _bombHitWhileStanding = Simulation.Miner.State == MinerState.Mining;
+            _lastHitWasBomb = true;
         }
 
         /// <summary>
-        /// O toque do jogador quebrou o cristal com o anão parado nele antes da picareta descer (pela regra ele já pode
+        /// A bomba (antes, o toque) quebrou o cristal com o anão parado nele antes da picareta descer (pela regra ele já pode
         /// correr): o anão faz mesmo assim uma picaretada completa e rápida (pedido do Bruno). Se ele já tinha batido nesse
         /// cristal, ou ainda corria até ele, não: segue correndo (D-125; com o golpe na chegada, a despedida repetia o golpe
         /// e o anão deslizava com a picareta). Quebra pela picareta (D-125): o impacto fica parado um pouco mais e a descida
@@ -975,7 +977,7 @@ namespace MinersIdle.Presentation
         {
             var simulation = Simulation;
             if (simulation == null) return;
-            if (!_lastHitWasTap)
+            if (!_lastHitWasBomb)
             {
                 if (!strikeFeel) return;
                 StartHold(breakStopSeconds);
@@ -983,7 +985,7 @@ namespace MinersIdle.Presentation
                 _heldDistance = ShownDistance;
                 return;
             }
-            if (!_tapHitWhileStanding || _hitThisTarget) return;
+            if (!_bombHitWhileStanding || _hitThisTarget) return;
             double gap = (crystal.Distance - simulation.Miner.Distance) * metersPerUnit;
             if (gap <= FinisherReach) _finisherStart = simulation.Elapsed;
         }
@@ -1106,7 +1108,7 @@ namespace MinersIdle.Presentation
         /// <summary>O meio de um cristal na tela do jogo (efeitos de golpe e de quebra).</summary>
         public Vector3 CrystalOnScreen(Crystal crystal) => ToScreenWorld(CrystalLocalPosition(crystal) + Vector3.up * 0.35f);
 
-        /// <summary>O alto do capacete do anão na tela do jogo (combo e crítico aparecem em volta dele).</summary>
+        /// <summary>O alto do capacete do anão na tela do jogo (o crítico e os ganhos aparecem em volta dele).</summary>
         public Vector3 MinerOnScreen => ToScreenWorld(new Vector3(0f, DescentFraming.DwarfHeight, framing.distance));
 
         // -------------------------------------------------------------------------------------------------------------
@@ -1583,18 +1585,13 @@ namespace MinersIdle.Presentation
         }
 
         /// <summary>
-        /// Com o jogador tocando (combo ativo), o toque costuma quebrar o cristal antes da chegada, e o levantar começava e
-        /// era cortado a cada cristal (achado do Bruno em 2026-11-02). Aí o anão só levanta se o alvo aguenta os toques que
-        /// cabem no levantar, no teto de toques por segundo (D-119) e sem crítico; uma vez começado, vai até o fim.
+        /// Com a bomba no ar, ela pode quebrar o cristal antes da chegada, e o levantar seria cortado (como era com o toque,
+        /// achado do Bruno em 2026-11-02). Aí o anão só levanta se o alvo aguenta a bomba; uma vez começado, vai até o fim.
         /// </summary>
         bool CanPrepare(MiningSimulation simulation, Crystal target)
         {
-            if (simulation.Combo == 0 || target == _preparedTarget) return true;
-            var strike = simulation.Strike;
-            if (strike.MaxTapsPerSecond <= 0) return false;
-            double windUp = dwarfMineWindUp.Length * MineFrameSeconds(simulation.Stats.HitInterval);
-            double taps = Math.Ceiling(windUp * strike.MaxTapsPerSecond);
-            return target.Health > taps * simulation.Stats.Damage * strike.TapFraction;
+            if (!simulation.IsBombInFlight || target == _preparedTarget) return true;
+            return target.Health > target.MaxHealth * simulation.BombFraction;
         }
 
         /// <summary>Respiração na pose parada (D-125): sobe e desce devagar desde a chegada, começando do chão.</summary>

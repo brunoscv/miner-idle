@@ -101,11 +101,22 @@
 
 ### E2 — O toque sai do jogo (D-311)
 
-- **Núcleo:** saem `Tap()`, o combo, os bônus do combo (`ComboBonusRule`, `ComboStacking`, a fonte Combo dos bônus), o teto de toques e a fração do toque das regras do golpe (`StrikeRules`) e dos balanços (v7 e v8). Saem também o crítico do toque, o "toque quebra" do golpe na chegada e o arremate do toque (D-124). Um bônus de combo num save antigo é descartado ao abrir.
-- **Jogo e tela:** o `TapInput` vira o leitor do **gesto da bomba** (E3), com a faísca no dedo. Saem o "xN" do combo, o som dos marcos do combo, os bônus do combo na coluna e no catálogo, o acúmulo do combo no DBG → Cálculos e no `calculations.json`, e o "Toques automáticos" do DBG. O Dedos Nervosos perde o "e do toque".
+- **Núcleo:** saem `Tap()`, o combo, os bônus do combo (`ComboBonusRule`, `ComboStacking`, a fonte Combo dos bônus), o teto de toques e a fração do toque das regras do golpe (`StrikeRules`) e dos balanços (v5, v7 e v8). Saem também o crítico do toque e o alcance do toque (`tapReach`). O fim da picaretada quando algo quebra o cristal no meio dela (D-126) fica, agora para a bomba (D-320). Um bônus de combo num save antigo é descartado ao abrir.
+- **Jogo e tela:** o `TapInput` fica só com a faísca no dedo (o gesto da bomba já mora na faixa, D-318). Saem o "xN" do combo, o som dos marcos do combo, os bônus do combo na coluna e no catálogo, o acúmulo do combo no DBG → Cálculos e no `calculations.json`, e o "Toques automáticos" do DBG. O Dedos Nervosos perde o "e do toque".
 - **Testes:**
   - saem os do toque e do combo (`ComboBonusTests`, `ComboBonusFlowTests`, `TapGuardTests`, `TapInputTests`, `TouchFingerTests` e os casos do toque em `StrikeTests` e afins);
   - os que usavam o toque **para causar dano** (feedback, som, coluna, raro, estagiário, alocação) passam a usar o golpe ou a bomba.
+
+**Feito (2026-11-18):**
+
+- **Núcleo, jogo e dados:** tudo da lista acima. Nos três balanços saíram os campos do toque e do combo; o catálogo dos bônus perdeu as entradas do combo, e a carta de dano do raro diz "Golpe com {0} de dano". O `BonusSource` ficou `Raro = 1, AD = 2` (D-321).
+- **Tela e DBG:** sem o "xN", sem o som do toque e dos marcos do combo, sem o tremor do combo no HUD. O setup tira da cena o texto do combo, os "Toques auto", os atalhos de combo do DBG → Bônus e o "Acúmulo" (D-321).
+- **Testes apagados:** `ComboBonusTests`, `TapGuardTests`, `ComboBonusFlowTests`, `TapInputTests`, `TouchFingerTests` e, dentro de outros arquivos, os casos que só mediam o toque ou o combo (`StrikeTests`, `CalculationTests`, `GddV7RulesTests`, `FeedbackTests`, `SoundTests`).
+- **Testes reescritos:**
+  - para a bomba: `SwingRecoveryTests`, `DwarfArtTests` (D-320), `StrikeTests` (nascimentos), `AllocationTests` e `LongSessionTests`;
+  - para o golpe: `FeedbackTests`, `SoundTests` e a vibração em `SettingsFlowTests`;
+  - para as cartas do raro: `BuffColumnTests` e `RareCrystalTests`.
+- Tudo compila (núcleo, jogo, tela, Editor, EditMode e PlayMode). Os testes não foram rodados: ficam para o fim.
 
 ### E3 — Na tela (D-310, D-314, D-315, D-316)
 
@@ -125,7 +136,7 @@
 
 - **E0:** abrir os mockups em `tools/ci/out/m9g-e0-*.png`.
 - **E1 (com a faixa):** aplicar o setup (Tools → Miners Idle → Projeto → Aplicar configuração do projeto), dar Play na cena Game, esperar a faixa encher (5 s) e arrastar o quadrado da bomba até o fim. DBG → Bomba → **Estilo** troca A+C e C. DBG → Bomba → **Lançar** e ver a vida dos cristais da tela cair a % da bomba (com a barra de vida do DBG → Andar ligada, para ver). **Próxima bomba** até o Barril e ver tudo quebrar de uma vez.
-- **E2:** tocar no cristal e ver que não tira vida nem mostra o "xN".
+- **E2:** aplicar o setup e dar Play na cena Game. Tocar no cristal: não tira vida nem mostra o "xN", só a faísca do dedo. DBG → Efeitos sem "Toques auto"; DBG → Bônus sem os atalhos do combo, com o cabeçalho "Dano +x%"; DBG → Cálculos sem "Acúmulo". Lançar a bomba enquanto o anão bate: ele termina a picaretada parado antes de correr (D-320).
 - **E3:** deslizar da esquerda para a direita a cada 5 s por alguns andares; comprar a Pequena Vermelha no descanso (DBG → Dia → +100 vermelhas); DBG → Bomba → **Bomba automática** para ver o jogo andar sozinho com a bomba.
 
 ## Critério de pronto
@@ -162,7 +173,7 @@
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-18 (D-307…D-317) | P1, P4 e o toque mudados pelo Bruno |
 | E0 Mockups e a arte | ✅ escolhido o A+C (D-318) | mockups em `tools/ci/out/m9g-e0-*.png`; `bombs.png` sai no próximo setup |
-| E1 A Bomba no núcleo (+ a faixa) | 🔍 aguardando o Bruno | núcleo, testes EditMode (`BombTests`, não rodados: ficam para o fim), a faixa A+C/C, o voo, a explosão e o DBG → Bomba |
-| E2 O toque sai do jogo | ⏳ | — |
+| E1 A Bomba no núcleo (+ a faixa) | ✅ aprovada em 2026-11-18 (Bruno: "ficou muito, muito bom") | núcleo, testes EditMode (`BombTests`, não rodados: ficam para o fim), a faixa A+C/C, o voo, a explosão e o DBG → Bomba |
+| E2 O toque sai do jogo | ✅ aprovada em 2026-11-18 (Bruno: "Passou") | toque e combo fora do núcleo, da tela, do DBG e dos dados; testes ajustados e compilando (D-320, D-321) |
 | E3 Na tela | ⏳ | — |
 | E4 Sessão longa e celular | ⏭️ testes longos do fim (D-317) | — |

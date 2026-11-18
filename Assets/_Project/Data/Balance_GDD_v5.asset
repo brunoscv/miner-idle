@@ -62,7 +62,3 @@ MonoBehaviour:
   minHitInterval: 0.1
   critChance: 0.05
   critMultiplier: 2
-  tapFraction: 0.33
-  comboWindow: 1
-  maxTapsPerSecond: 15
-  tapReach: 3.9

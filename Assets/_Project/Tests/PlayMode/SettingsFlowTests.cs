@@ -173,58 +173,44 @@ namespace MinersIdle.Tests
             Assert.That(_screen.IsOpen, Is.True);
         }
 
-        /// <summary>Avança a partida até o alvo do anão estar ao alcance do toque.</summary>
-        static void TickUntilInReach(MiningSimulation simulation)
+        /// <summary>Avança a partida até o próximo golpe do anão e devolve esse golpe (ou nada, se não houve).</summary>
+        static MiningHit? NextHit(MiningSimulation simulation)
         {
-            for (int i = 0; i < 400; i++)
-            {
-                var target = simulation.Miner.Target;
-                if (target != null && target.Distance - simulation.Miner.Distance <= simulation.Rules.TapReach) return;
-                simulation.Tick(0.05);
-            }
-            Assert.Fail("o alvo nunca chegou ao alcance do toque");
+            MiningHit? landed = null;
+            void OnHit(MiningHit hit) => landed ??= hit;
+            simulation.HitLanded += OnHit;
+            for (int i = 0; i < 400 && landed == null; i++) simulation.Tick(Math.Min(0.05, simulation.SecondsToNextHit + 1e-6));
+            simulation.HitLanded -= OnHit;
+            return landed;
         }
 
         /// <summary>
-        /// D-199: o toque comum não vibra; o crítico vibra curto; descer de andar vibra longo (era a parede, que saiu no v8,
+        /// D-199: o golpe comum não vibra; o crítico vibra curto; descer de andar vibra longo (era a parede, que saiu no v8,
         /// D-256); desligada, nada. A partida é avançada à mão (o runner parado), e entre um pulso e outro passa o
-        /// intervalo mínimo em tempo real.
+        /// intervalo mínimo em tempo real. Até o M9g eram os toques; o toque saiu (D-311) e o golpe do anão faz o papel.
         /// </summary>
         [UnityTest]
-        public IEnumerator Vibration_ShortOnCritical_LongOnANewFloor_NothingOnANormalTap()
+        public IEnumerator Vibration_ShortOnCritical_LongOnANewFloor_NothingOnANormalHit()
         {
             yield return Load(withFiles: false);
             var haptics = Object.FindAnyObjectByType<Haptics>();
             var simulation = _runner.Simulation;
             _runner.enabled = false;
-            MiningHit? tapHit = null;
-            simulation.HitLanded += hit => { if (hit.IsTap) tapHit = hit; };
 
-            // Um toque comum (o sorteio às vezes dá crítico: tenta até sair um comum).
-            bool sawNormal = false;
-            for (int i = 0; i < 200 && !sawNormal; i++)
-            {
-                TickUntilInReach(simulation);
-                int before = haptics.PulseCount;
-                tapHit = null;
-                simulation.Tap();
-                if (tapHit is { IsCritical: false })
-                {
-                    sawNormal = true;
-                    Assert.That(haptics.PulseCount, Is.EqualTo(before), "o toque comum não vibra");
-                }
-            }
-            Assert.That(sawNormal, Is.True, "nenhum toque acertou o cristal");
+            // Um golpe comum (o crítico do anão é 0% de base no v8).
+            int before = haptics.PulseCount;
+            var hit = NextHit(simulation);
+            Assert.That(hit, Is.Not.Null, "o anão bateu");
+            Assume.That(hit.Value.IsCritical, Is.False, "um golpe comum");
+            Assert.That(haptics.PulseCount, Is.EqualTo(before), "o golpe comum não vibra");
 
-            // Um toque crítico: com o cristal ao alcance, espera o intervalo dos pulsos parado e toca.
-            TickUntilInReach(simulation);
+            // Um golpe crítico: espera o intervalo dos pulsos parado e anda até o golpe.
             yield return new WaitForSecondsRealtime(0.2f);
             int beforeCritical = haptics.PulseCount;
             _runner.ForceCritical = true;
-            tapHit = null;
-            simulation.Tap();
+            hit = NextHit(simulation);
             _runner.ForceCritical = false;
-            Assert.That(tapHit?.IsCritical, Is.True, "o toque acertou");
+            Assert.That(hit?.IsCritical, Is.True, "o golpe acertou");
             Assert.That(haptics.PulseCount, Is.EqualTo(beforeCritical + 1), "o crítico vibra");
             Assert.That(haptics.LastPulseMilliseconds, Is.EqualTo(haptics.CriticalMilliseconds));
 
@@ -242,11 +228,7 @@ namespace MinersIdle.Tests
             yield return new WaitForSecondsRealtime(0.2f);
             int beforeOff = haptics.PulseCount;
             _runner.ForceCritical = true;
-            for (int i = 0; i < 20; i++)
-            {
-                simulation.Tick(0.05);
-                simulation.Tap();
-            }
+            for (int i = 0; i < 3; i++) NextHit(simulation);
             _runner.ForceCritical = false;
             Assert.That(haptics.PulseCount, Is.EqualTo(beforeOff), "vibração desligada");
         }

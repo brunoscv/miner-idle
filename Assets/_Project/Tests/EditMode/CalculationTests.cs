@@ -98,25 +98,6 @@ namespace MinersIdle.Tests
             Assert.That(default(CalculationChoice).WithPickaxeStep(2).IsDefault, Is.False);
             Assert.That(default(CalculationChoice).WithPickaxeStep(2).WithPickaxeStep(null).IsDefault, Is.True);
             Assert.That(default(CalculationChoice).WithPickaxeCaveGrowth(1.3).WithPickaxeCaveGrowth(null).IsDefault, Is.True);
-            Assert.That(default(CalculationChoice).WithComboStacking(ComboStacking.HighestOnly).IsDefault, Is.False,
-                        "só o maior marco (D-217)");
-            Assert.That(default(CalculationChoice).ComboStacking, Is.EqualTo(ComboStacking.Cumulative), "o GDD soma (D-183)");
-        }
-
-        [Test]
-        public void Store_KeepsTheComboStacking_AndAnOldFileSums()
-        {
-            var store = new CalculationStore(new FileSaveStore(_dir, CalculationStore.FileName));
-            var choice = default(CalculationChoice).WithPickaxeStep(2).WithComboStacking(ComboStacking.HighestOnly);
-            store.Save(choice.ToData());
-            var back = CalculationChoice.FromData(store.Load());
-            Assert.That(back, Is.EqualTo(choice));
-            Assert.That(back.WithPickaxeStep(5).ComboStacking, Is.EqualTo(ComboStacking.HighestOnly), "trocar outra coisa não volta o acúmulo");
-
-            Directory.CreateDirectory(_dir);
-            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"pickaxeByCave\": true }");
-            Assert.That(CalculationChoice.FromData(store.Load()).ComboStacking, Is.EqualTo(ComboStacking.Cumulative),
-                        "arquivo de antes do M9b: a soma do GDD");
         }
 
         /// <summary>M9b E4 (D-226): o ritmo do raro do DBG → Cálculos vai para o calculations.json; arquivo antigo = o GDD.</summary>
@@ -127,14 +108,14 @@ namespace MinersIdle.Tests
             Assert.That(default(CalculationChoice).WithRareRhythm(RareRhythm.Slow).IsDefault, Is.False);
 
             var store = new CalculationStore(new FileSaveStore(_dir, CalculationStore.FileName));
-            var choice = default(CalculationChoice).WithComboStacking(ComboStacking.HighestOnly).WithRareRhythm(RareRhythm.Slow);
+            var choice = default(CalculationChoice).WithPickaxeStep(2).WithRareRhythm(RareRhythm.Slow);
             store.Save(choice.ToData());
             var back = CalculationChoice.FromData(store.Load());
             Assert.That(back, Is.EqualTo(choice));
             Assert.That(back.WithPickaxeStep(5).RareRhythm, Is.EqualTo(RareRhythm.Slow), "trocar outra coisa não volta o ritmo");
 
             Directory.CreateDirectory(_dir);
-            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"comboHighestOnly\": true }");
+            File.WriteAllText(Path.Combine(_dir, CalculationStore.FileName), "{ \"balance\": 0, \"comboHighestOnly\": true }"); // o acúmulo do combo saiu (D-311): o campo velho é ignorado
             Assert.That(CalculationChoice.FromData(store.Load()).RareRhythm, Is.EqualTo(RareRhythm.Gdd));
         }
 

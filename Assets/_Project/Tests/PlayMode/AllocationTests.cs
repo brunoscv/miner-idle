@@ -13,8 +13,8 @@ using UnityEngine.TestTools;
 namespace MinersIdle.Tests
 {
     /// <summary>
-    /// Marco 5, E5 (pendência do M2 pela D-32): o loop de mineração não aloca memória a cada golpe, toque ou crítico, com
-    /// a cena inteira escutando (feedback, som, HUD). Conta as alocações (marcador "GC.Alloc" do Profiler) das chamadas
+    /// Marco 5, E5 (pendência do M2 pela D-32): o loop de mineração não aloca memória a cada golpe, bomba ou crítico, com
+    /// a cena inteira escutando (feedback, som, HUD). O toque e o combo saíram no M9g (D-311): a bomba entra no lugar. Conta as alocações (marcador "GC.Alloc" do Profiler) das chamadas
     /// que cada quadro faz, depois de aquecer os pools com quadros de verdade passando.
     ///
     /// Alocações que ficam, de propósito, e por evento (não por quadro): o objeto <see cref="Crystal"/> de cada cristal
@@ -62,13 +62,13 @@ namespace MinersIdle.Tests
             _tapInput = UnityEngine.Object.FindAnyObjectByType<TapInput>();
             if (rules != null) _runner.UseRules(rules);
 
-            _tapInput.AutoTap = true;
+            _runner.Simulation.AutoBomb = true; // as bombas voam e explodem pela primeira vez
             _runner.TimeScale = 20f;
             _runner.ForceCritical = true;
             yield return new WaitForSecondsRealtime(2f);
             _runner.ForceCritical = false;
             yield return new WaitForSecondsRealtime(1.5f);
-            _tapInput.AutoTap = false;
+            _runner.Simulation.AutoBomb = false;
             _runner.TimeScale = 1f;
 
             // O pool de cristais na lotação máxima (e um pouco mais): um cristal a mais na tela do que no aquecimento
@@ -78,12 +78,6 @@ namespace MinersIdle.Tests
             yield return null;
             for (int i = 0; i < 3; i++) simulation.BreakTarget();
             yield return Settle();
-
-            // Ensaio do combo até o x10, do jeito que os testes medem: o primeiro "xN" que reaparece paga custos de
-            // primeira vez (51 alocações na medição, 2 na segunda vez).
-            for (int i = 0; i < 10; i++) _runner.Simulation.Tap();
-            yield return Settle();
-            // Desde o M9b, parar no x10 dá +10% por 5 s: o fim dele (DANO do HUD redesenhado) cairia no meio das medidas.
             _runner.Simulation.ClearBonuses();
             yield return null;
         }
@@ -107,8 +101,8 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// Alocações de <paramref name="action"/> e quantas quebras e nascimentos aconteceram nela. Com o toque do GDD v5
-        /// (33% do golpe, D-86/D-103) um toque pode quebrar o cristal; a quebra e o nascimento alocam de propósito
+        /// Alocações de <paramref name="action"/> e quantas quebras e nascimentos aconteceram nela. Um golpe ou uma bomba
+        /// pode quebrar o cristal; a quebra e o nascimento alocam de propósito
         /// (<see cref="MaxAllocsPerEvent"/>), então o teto de cada medida desconta esses eventos.
         /// </summary>
         int AllocationsAndEvents(Action action, out int events)
@@ -125,59 +119,47 @@ namespace MinersIdle.Tests
             return allocations;
         }
 
-        /// <summary>Deixa faíscas, textos e lascas voltarem aos pools e o combo zerar (1 s de jogo sem toque).</summary>
+        /// <summary>Deixa faíscas, textos e lascas voltarem aos pools.</summary>
         static IEnumerator Settle() => new WaitForSecondsRealtime(1.5f);
 
+        /// <summary>
+        /// M9g (D-311): a bomba (o lançamento e a chegada, com a explosão, os números e o som), o crítico do golpe e o
+        /// toque na tela (só a faísca do dedo, depois da checagem "caiu na interface?") não alocam.
+        /// </summary>
         [UnityTest]
-        public IEnumerator TapCriticalAndUiCheck_DoNotAllocate()
+        public IEnumerator BombCriticalAndScreenTap_DoNotAllocate()
         {
             yield return LoadAndWarmUp();
             var simulation = _runner.Simulation;
             Assume.That(simulation.Miner.Target, Is.Not.Null);
+            if (!simulation.HasBomb) Assert.Ignore("Sem bomba no balanço ativo (rode o setup do projeto).");
+            _runner.TimeScale = 0f; // só os Tick do teste andam
 
             yield return AvoidRareTarget();
-            int tap = AllocationsAndEvents(() => simulation.Tap(), out int tapEvents);
+            int thrown = AllocationsAndEvents(() =>
+            {
+                simulation.FillBomb();
+                simulation.ThrowBomb();
+            }, out int thrownEvents);
+            int landed = AllocationsAndEvents(() => simulation.Tick(simulation.BombFlightLeft + 1e-6), out int landedEvents);
             yield return Settle();
 
             yield return AvoidRareTarget();
             _runner.ForceCritical = true;
-            int critical = AllocationsAndEvents(() => simulation.Tap(), out int criticalEvents);
+            int critical = AllocationsAndEvents(() => simulation.Tick(simulation.SecondsToNextHit + 1e-6), out int criticalEvents);
             _runner.ForceCritical = false;
             yield return Settle();
 
-            yield return AvoidRareTarget();
-            // O toque de verdade: passa pela checagem "caiu na interface?" (raycast de UI) antes de virar Tap().
             int screenTap = AllocationsAndEvents(
                 () => _tapInput.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), out int screenEvents);
+            _runner.TimeScale = 1f;
 
-            Debug.Log($"[Alloc] toque {tap} · crítico {critical} · toque na tela {screenTap} " +
-                      $"(quebras e nascimentos: {tapEvents} · {criticalEvents} · {screenEvents})");
-            Assert.That(tap, Is.LessThanOrEqualTo(MaxAllocsPerEvent * tapEvents), "toque (golpe, tremor, faíscas, som)");
+            Debug.Log($"[Alloc] bomba sai {thrown} · chega {landed} · crítico {critical} · toque na tela {screenTap} " +
+                      $"(quebras e nascimentos: {thrownEvents} · {landedEvents} · {criticalEvents} · {screenEvents})");
+            Assert.That(thrown, Is.LessThanOrEqualTo(MaxAllocsPerEvent * thrownEvents), "a bomba sai (o voo começa)");
+            Assert.That(landed, Is.LessThanOrEqualTo(MaxAllocsPerEvent * landedEvents), "a bomba chega (explosão, números, som)");
             Assert.That(critical, Is.LessThanOrEqualTo(MaxAllocsPerEvent * criticalEvents), "crítico (CRÍTICO!, tremor de tela, som)");
             Assert.That(screenTap, Is.LessThanOrEqualTo(MaxAllocsPerEvent * screenEvents), "toque na tela, com a checagem da interface");
-        }
-
-        [UnityTest]
-        public IEnumerator ComboAndMilestone_AllocateOnlyTheEditorCopyOfTheText()
-        {
-            yield return LoadAndWarmUp();
-            var simulation = _runner.Simulation;
-            yield return AvoidRareTarget();
-            simulation.Tap(); // combo 1: o "xN" ainda não aparece
-
-            yield return null;
-            int combo = AllocationsAndEvents(() => simulation.Tap(), out int comboEvents); // "x2" aparece
-            int comboTaps = AllocationsAndEvents(
-                () => { for (int i = 0; i < 7; i++) simulation.Tap(); }, out int comboTapsEvents); // x3…x9
-            int milestone = AllocationsAndEvents(() => simulation.Tap(), out int milestoneEvents); // x10 e o "x10!"
-
-            Debug.Log($"[Alloc] x2 {combo} · x3…x9 {comboTaps} · x10 {milestone} " +
-                      $"(quebras e nascimentos: {comboEvents} · {comboTapsEvents} · {milestoneEvents})");
-            Assert.That(combo, Is.LessThanOrEqualTo(EditorAllocsPerSetText + MaxAllocsPerEvent * comboEvents), "x2");
-            Assert.That(comboTaps, Is.LessThanOrEqualTo(7 * EditorAllocsPerSetText + MaxAllocsPerEvent * comboTapsEvents),
-                        "x3…x9: só o SetText do \"xN\"");
-            Assert.That(milestone, Is.LessThanOrEqualTo(2 * EditorAllocsPerSetText + MaxAllocsPerEvent * milestoneEvents),
-                        "x10: \"xN\" e \"x10!\" pelo SetText");
         }
 
         /// <summary>

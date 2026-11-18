@@ -6,17 +6,17 @@ namespace MinersIdle.Core
     /// <summary>O que um bônus com tempo faz (M9b). O AD traz o dele na E5.</summary>
     public enum BonusKind
     {
-        /// <summary>+% no dano do golpe e do toque (D-178); os de vários bônus somam (D-179).</summary>
+        /// <summary>+% no dano do golpe (D-178); os de vários bônus somam (D-179).</summary>
         DamagePercent,
-        /// <summary>Todo golpe e todo toque saem críticos (D-178).</summary>
+        /// <summary>Todo golpe sai crítico (D-178).</summary>
         GuaranteedCritical,
-        /// <summary>O dano multiplica pelo valor (a carta "Dano ×2" do raro, D-219), depois dos +% do combo.</summary>
+        /// <summary>O dano multiplica pelo valor (a carta "Dano ×2" do raro, D-219), depois dos +%.</summary>
         DamageMultiplier,
         /// <summary>O intervalo do golpe divide pelo valor (a carta "Rápido", D-219), depois do piso de 0,1 s (D-180).</summary>
         IntervalDivisor,
         /// <summary>O que cada cristal quebrado paga multiplica pelo valor (a carta "Lascas ×2", D-219).</summary>
         ShardsMultiplier,
-        /// <summary>Pontos a mais na chance de crítico do golpe e do toque (a carta "Crítico +25%", D-219): 0,25 = +25.</summary>
+        /// <summary>Pontos a mais na chance de crítico do golpe (a carta "Crítico +25%", D-219): 0,25 = +25.</summary>
         CritChance,
         /// <summary>
         /// O multiplicador do crítico multiplica pelo valor (a carta "Dano de Crítico ×2" do v8, D-243): ×1,5 vira ×3. Só o
@@ -29,19 +29,20 @@ namespace MinersIdle.Core
         RareTier2,
     }
 
-    /// <summary>De onde o bônus veio.</summary>
+    /// <summary>
+    /// De onde o bônus veio. O 0 era o combo, que saiu no M9g (D-311): os números ficam, porque os assets guardam o número;
+    /// no save vai o nome, e um "Combo" antigo é descartado ao abrir.
+    /// </summary>
     public enum BonusSource
     {
-        /// <summary>Um marco do combo (×10, ×30, ×50, ×100), ao parar de tocar (D-96).</summary>
-        Combo,
         /// <summary>Uma carta do cristal raro (D-190); o <see cref="ActiveBonus.Tier"/> é a <see cref="RareCard"/>.</summary>
-        Rare,
+        Rare = 1,
         /// <summary>
         /// O AD. No v7 (M9b E5, D-187), o boost de velocidade: intervalo ÷ 2,5 por 30 s, só no anão (D-177), com o
         /// <see cref="ActiveBonus.Tier"/> 0. No v8 (M9e E2), os anúncios do Boost: o <see cref="ActiveBonus.Tier"/> é o
         /// <see cref="AdKind"/>, e cada anúncio entra como um bônus por atributo.
         /// </summary>
-        Ad,
+        Ad = 2,
     }
 
     /// <summary>
@@ -319,45 +320,7 @@ namespace MinersIdle.Core
     }
 
     /// <summary>
-    /// Como os marcos do combo se acumulam (D-183, D-211). <see cref="Cumulative"/> é o GDD ("bônus temporário
-    /// acumulativo"); <see cref="HighestOnly"/> é a alternativa do DBG → Cálculos.
-    /// </summary>
-    public enum ComboStacking
-    {
-        /// <summary>
-        /// Parar no ×57 dá os bônus do ×10, do ×30 e do ×50 juntos. Um bônus igual a outro ainda ativo vale junto, com o
-        /// próprio tempo (dois +10% = +20%); o crítico garantido soma o tempo que sobra.
-        /// </summary>
-        Cumulative,
-        /// <summary>Parar no ×57 dá só o do ×50. O mesmo marco de novo renova o tempo, sem somar efeito.</summary>
-        HighestOnly,
-    }
-
-    /// <summary>Um marco do combo, como está no balanço (GDD v7 §3.4): a partir de quantos toques, o quê e por quanto tempo.</summary>
-    public readonly struct ComboBonusRule
-    {
-        public ComboBonusRule(int combo, BonusKind kind, double value, double seconds)
-        {
-            if (combo < 1) throw new ArgumentOutOfRangeException(nameof(combo));
-            if (double.IsNaN(value) || value < 0) throw new ArgumentOutOfRangeException(nameof(value));
-            if (double.IsNaN(seconds) || seconds <= 0) throw new ArgumentOutOfRangeException(nameof(seconds));
-            Combo = combo;
-            Kind = kind;
-            Value = value;
-            Seconds = seconds;
-        }
-
-        /// <summary>O combo que é preciso alcançar (10, 30, 50, 100).</summary>
-        public int Combo { get; }
-        public BonusKind Kind { get; }
-        /// <summary>O efeito: 0,10 = +10% de dano. Sem uso no crítico garantido.</summary>
-        public double Value { get; }
-        /// <summary>A duração, em segundos de jogo.</summary>
-        public double Seconds { get; }
-    }
-
-    /// <summary>
-    /// Um bônus valendo agora: o que faz, de onde veio (<see cref="Tier"/> = o marco do combo) e quanto falta. O tempo é
+    /// Um bônus valendo agora: o que faz, de onde veio (<see cref="Tier"/> = a carta do raro ou o anúncio) e quanto falta. O tempo é
     /// de jogo (o ×20 do DBG acelera) e corre também com o app fechado (D-181).
     /// </summary>
     public readonly struct ActiveBonus
@@ -378,7 +341,7 @@ namespace MinersIdle.Core
         public double Duration { get; }
         public double SecondsLeft { get; }
         public BonusSource Source { get; }
-        /// <summary>O marco que deu o bônus (10, 30, 50, 100 no combo).</summary>
+        /// <summary>O que deu o bônus: a <see cref="RareCard"/> do raro ou o <see cref="AdKind"/> do anúncio.</summary>
         public int Tier { get; }
 
         internal ActiveBonus WithSecondsLeft(double seconds) => new ActiveBonus(Kind, Value, Math.Max(Duration, seconds), seconds, Source, Tier);
@@ -451,7 +414,7 @@ namespace MinersIdle.Core
             }
         }
 
-        /// <summary>O dano × do estagiário: as cartas do raro (D-190) e os anúncios do v8 (D-246); o combo não (D-177).</summary>
+        /// <summary>O dano × do estagiário: as cartas do raro (D-190) e os anúncios do v8 (D-246).</summary>
         public double InternDamageMultiplier => Product(BonusKind.DamageMultiplier, internOnly: true);
 
         /// <summary>O intervalo ÷ do estagiário: só as cartas do raro (o boost do AD do v7 não vale para ele, D-177).</summary>
@@ -503,8 +466,8 @@ namespace MinersIdle.Core
         public static bool IsAdOffer(ActiveBonus bonus) => bonus.Source == BonusSource.Ad && bonus.Tier > 0;
 
         /// <summary>
-        /// Se o bônus vale também para o estagiário: as cartas do raro (D-190) e os anúncios do v8 (D-246). O combo e o
-        /// boost de velocidade do v7, não (D-177). O crítico não muda nada para ele (D-167).
+        /// Se o bônus vale também para o estagiário: as cartas do raro (D-190) e os anúncios do v8 (D-246). O boost de
+        /// velocidade do v7, não (D-177). O crítico não muda nada para ele (D-167).
         /// </summary>
         public static bool AppliesToIntern(ActiveBonus bonus) => bonus.Source == BonusSource.Rare || IsAdOffer(bonus);
 
@@ -534,31 +497,6 @@ namespace MinersIdle.Core
                 for (int i = 0; i < _bonuses.Count; i++) next = Math.Min(next, Math.Max(0, _bonuses[i].SecondsLeft));
                 return next;
             }
-        }
-
-        /// <summary>
-        /// Entra um bônus, pela regra do acúmulo (D-211): no padrão, um bônus de dano vale junto com os iguais, e o crítico
-        /// garantido soma o tempo ao que já está ativo; na alternativa, o mesmo marco renova o tempo.
-        /// </summary>
-        internal void Add(ActiveBonus bonus, ComboStacking stacking)
-        {
-            if (bonus.SecondsLeft <= 0) return;
-            for (int i = 0; i < _bonuses.Count; i++)
-            {
-                var active = _bonuses[i];
-                if (stacking == ComboStacking.HighestOnly && active.Source == bonus.Source && active.Tier == bonus.Tier)
-                {
-                    _bonuses[i] = active.WithSecondsLeft(bonus.SecondsLeft);
-                    return;
-                }
-                if (stacking == ComboStacking.Cumulative && bonus.Kind == BonusKind.GuaranteedCritical
-                    && active.Kind == BonusKind.GuaranteedCritical)
-                {
-                    _bonuses[i] = active.WithSecondsLeft(active.SecondsLeft + bonus.SecondsLeft);
-                    return;
-                }
-            }
-            _bonuses.Add(bonus);
         }
 
         /// <summary>

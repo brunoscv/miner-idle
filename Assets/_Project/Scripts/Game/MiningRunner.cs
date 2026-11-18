@@ -15,7 +15,7 @@ namespace MinersIdle.Game
     /// sair. Aberta direto (Play na
     /// cena Game, testes PlayMode), a cena roda sem save: os testes nunca mexem no progresso de quem joga.
     ///
-    /// Cálculos (M8 E3b-3, D-143): a taxa e o incremento da Picareta, o acúmulo do combo e o ritmo do raro podem ser
+    /// Cálculos (M8 E3b-3, D-143): a taxa e o incremento da Picareta, e o ritmo do raro podem ser
     /// trocados pelo DBG (<see cref="UseCalculation"/>); o balanço é um só, o do GDD v8 (M9c E1, D-256). A escolha só é lida e gravada no aparelho
     /// pelo caminho do <c>GameBootstrap</c>, como o save, e nunca num build de release (lá vale sempre o GDD).
     ///
@@ -159,8 +159,6 @@ namespace MinersIdle.Game
         {
             if (paused)
             {
-                // D-214: ir para o fundo termina o combo na hora; os bônus dele entram e vão para o save.
-                Simulation?.EndCombo();
                 SaveNow();
                 return;
             }
@@ -171,7 +169,6 @@ namespace MinersIdle.Game
 
         void OnApplicationQuit()
         {
-            Simulation?.EndCombo(); // D-214, como na pausa
             SaveNow();
         }
 
@@ -426,9 +423,6 @@ namespace MinersIdle.Game
                 new Permanents(rules.ToPermanents(), _permanent), new SeededRandom(RareSeed(seed)), _calculation.RareRhythm)
             {
                 ForceCritical = _forceCritical,
-                // M9b E3 (D-217): o acúmulo do DBG → Cálculos sobrevive a cada simulação nova (compra de Picareta trocada,
-                // Reiniciar run, descanso, reabrir).
-                ComboStacking = _calculation.ComboStacking,
                 AutoAdvance = _autoAdvance,
                 IsResting = resting,
             };

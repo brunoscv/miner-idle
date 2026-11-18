@@ -52,13 +52,13 @@ namespace MinersIdle.Tests
 
         static MiningSimulation Sim(PermanentState permanent = null, StrikeRules strike = null, PermanentRules rules = null,
                                     GameState state = null) =>
-            new MiningSimulation(Rules(), new SeededRandom(5), state, Economy(), strike ?? new StrikeRules(0, 1.5, 0.33, 1),
+            new MiningSimulation(Rules(), new SeededRandom(5), state, Economy(), strike ?? new StrikeRules(0, 1.5),
                                  new Permanents(rules ?? V82Permanents(), permanent ?? new PermanentState()));
 
         // ── A run parada até o INICIAR (D-265, D-275) ───────────────────────────────────────────────────────────
 
         [Test]
-        public void Resting_NothingRuns_NorTheTap_NorTheRunShop_NorTheOffline()
+        public void Resting_NothingRuns_NorTheRunShop_NorTheOffline()
         {
             var sim = Sim();
             sim.AddShards(1000);
@@ -70,7 +70,6 @@ namespace MinersIdle.Tests
 
             Assert.That(sim.State.PlaySeconds, Is.EqualTo(0), "o tempo do dia não anda");
             Assert.That(sim.Miner.Distance, Is.EqualTo(distance), "o anão não anda");
-            Assert.That(sim.Tap(), Is.False, "o toque não vale");
             Assert.That(sim.Purchase(UpgradeId.Pickaxe), Is.EqualTo(PurchaseResult.Locked), "a loja da run espera o INICIAR");
             Assert.That(sim.State.Shards, Is.EqualTo(1000));
             Assert.That(sim.ApplyOffline(3600).SecondsCounted, Is.EqualTo(0), "D-275: o offline não conta");
@@ -164,7 +163,7 @@ namespace MinersIdle.Tests
         public void FieryFinger_AddsToTheCriticalDamage(double baseChance, int nervous, int fiery, double multiplier)
         {
             var sim = Sim(With((PermanentId.NervousFingers, nervous), (PermanentId.FieryFinger, fiery)),
-                          new StrikeRules(baseChance, 1.5, 0.33, 1));
+                          new StrikeRules(baseChance, 1.5));
             sim.ForceCritical = true;
 
             var hit = FirstHit(sim);
@@ -192,7 +191,7 @@ namespace MinersIdle.Tests
         public void Shortcut_SpacesTheCrystalsOfTheQueue(int level, double units)
         {
             var sim = new MiningSimulation(Rules(initialCrystals: 3), new SeededRandom(5), null, Economy(),
-                                           new StrikeRules(0, 1.5, 0.33, 1),
+                                           new StrikeRules(0, 1.5),
                                            new Permanents(V82Permanents(), With((PermanentId.Shortcut, level))));
 
             Assert.That(sim.Crystals.Count, Is.EqualTo(3));

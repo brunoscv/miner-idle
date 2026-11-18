@@ -54,20 +54,23 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
-        public IEnumerator TapCriticalBreakAndPurchase_EachPlayTheirSound()
+        public IEnumerator HitCriticalBreakAndPurchase_EachPlayTheirSound()
         {
             yield return LoadGame();
             var simulation = _runner.Simulation;
+            _runner.TimeScale = 0f; // o teste anda o tempo
+            yield return new WaitForSecondsRealtime(0.1f); // longe de qualquer som dos quadros anteriores
             _runner.ForceCritical = true;
 
-            int taps = _sound.PlayedCount(Sfx.Tap);
+            int hits = _sound.PlayedCount(Sfx.Hit);
             int criticals = _sound.PlayedCount(Sfx.Critical);
             int breaks = _sound.PlayedCount(Sfx.Break);
-            simulation.Tap();
-            Assert.That(_sound.PlayedCount(Sfx.Tap), Is.EqualTo(taps + 1), "toque");
+            simulation.Tick(simulation.SecondsToNextHit + 1e-6);
+            _runner.ForceCritical = false;
+            Assert.That(_sound.PlayedCount(Sfx.Hit), Is.EqualTo(hits + 1), "golpe do anão");
             Assert.That(_sound.PlayedCount(Sfx.Critical), Is.EqualTo(criticals + 1), "crítico");
 
-            // No v7 o toque crítico já quebra o cristal da caverna 1; o BreakTarget só quebra se ainda houver alvo.
+            // No v8 o golpe já quebra o cristal do andar 1; o BreakTarget só quebra se ainda houver alvo.
             simulation.BreakTarget();
             Assert.That(_sound.PlayedCount(Sfx.Break), Is.GreaterThan(breaks), "quebra");
 
@@ -77,30 +80,26 @@ namespace MinersIdle.Tests
                 if (simulation.Purchase(id) == PurchaseResult.Purchased) { bought = true; break; }
             Assert.That(bought, Is.True);
             Assert.That(_sound.PlayedCount(Sfx.Purchase), Is.EqualTo(1), "compra");
-
-            // O golpe do anão: espera o próximo (no tempo ×20 vem logo).
-            int hits = _sound.PlayedCount(Sfx.Hit);
-            _runner.TimeScale = 20f;
-            float waited = 0f;
-            while (_sound.PlayedCount(Sfx.Hit) == hits && waited < 3f)
-            {
-                waited += Time.unscaledDeltaTime;
-                yield return null;
-            }
-            Assert.That(_sound.PlayedCount(Sfx.Hit), Is.GreaterThan(hits), "golpe do anão");
         }
 
+        /// <summary>Vários golpes no mesmo quadro (um passo grande de jogo) tocam o som uma vez (era com os toques, D-311).</summary>
         [UnityTest]
-        public IEnumerator TenTapsInOneFrame_PlayTheTapOnce_AndTheMilestoneOnce()
+        public IEnumerator SeveralHitsInOneFrame_PlayTheHitOnce()
         {
             yield return LoadGame();
+            var simulation = _runner.Simulation;
+            _runner.TimeScale = 0f; // o teste anda o tempo
             yield return new WaitForSecondsRealtime(0.1f); // longe de qualquer som dos quadros anteriores
-            int taps = _sound.PlayedCount(Sfx.Tap);
+            int hits = _sound.PlayedCount(Sfx.Hit);
+            int landed = 0;
+            void OnHit(MiningHit hit) => landed++;
+            simulation.HitLanded += OnHit;
 
-            for (int i = 0; i < 10; i++) _runner.Simulation.Tap();
+            for (int i = 0; i < 5; i++) simulation.Tick(simulation.SecondsToNextHit + 1e-6);
 
-            Assert.That(_sound.PlayedCount(Sfx.Tap), Is.EqualTo(taps + 1), "o mesmo som não se empilha no mesmo quadro");
-            Assert.That(_sound.PlayedCount(Sfx.Milestone), Is.EqualTo(1), "x10");
+            simulation.HitLanded -= OnHit;
+            Assert.That(landed, Is.GreaterThan(1), "o anão bateu mais de uma vez");
+            Assert.That(_sound.PlayedCount(Sfx.Hit), Is.EqualTo(hits + 1), "o mesmo som não se empilha no mesmo quadro");
         }
 
         [UnityTest]
@@ -114,11 +113,12 @@ namespace MinersIdle.Tests
             button.GetComponent<Button>().onClick.Invoke();
             Assert.That(_sound.SoundEnabled, Is.False);
 
-            int taps = _sound.PlayedCount(Sfx.Tap);
+            int hits = _sound.PlayedCount(Sfx.Hit);
             int breaks = _sound.PlayedCount(Sfx.Break);
-            _runner.Simulation.Tap();
+            _runner.TimeScale = 0f;
+            _runner.Simulation.Tick(_runner.Simulation.SecondsToNextHit + 1e-6);
             _runner.Simulation.BreakTarget();
-            Assert.That(_sound.PlayedCount(Sfx.Tap), Is.EqualTo(taps));
+            Assert.That(_sound.PlayedCount(Sfx.Hit), Is.EqualTo(hits));
             Assert.That(_sound.PlayedCount(Sfx.Break), Is.EqualTo(breaks));
 
             button.GetComponent<Button>().onClick.Invoke();

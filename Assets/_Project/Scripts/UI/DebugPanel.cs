@@ -28,7 +28,6 @@ namespace MinersIdle.UI
         const float StatsRefreshSeconds = 0.5f;
 
         [SerializeField] MiningRunner runner;
-        [SerializeField] TapInput tapInput;
         [SerializeField] ScreenShake screenShake;
         [Tooltip("Os AJUSTES (M9, E4): com eles, o \"Tremor on/off\" troca o ajuste (fica gravado), não só a câmera.")]
         [SerializeField] GameSettings settings;
@@ -39,9 +38,8 @@ namespace MinersIdle.UI
         [SerializeField] GameObject content;
         [SerializeField] TMP_Text stats;
         [Tooltip("{0} semente · {1} escala do tempo · {2} minutos de jogo · {3} golpes · {4} quebras · {5} lascas/min · " +
-                 "{6} cristais na fila · {7} máximo · {8} alvo (id) · {9} distância descida (un) · toques no último " +
-                 "segundo (D-118, D-119): {10} valeram · {11} acima do teto · {12} começos do aparelho · " +
-                 "{13} começos repetidos · {14} dedos na tela agora · {15} dedos que encostaram com outro na tela (D-123)")]
+                 "{6} cristais na fila · {7} máximo · {8} alvo (id) · {9} distância descida (un). Os toques e os dedos " +
+                 "(D-118, D-119, D-123) saíram com o toque no M9g (D-311).")]
         [SerializeField, TextArea(3, 8)] string statsFormat;
         [SerializeField] TMP_Text upgrades;
         [Tooltip("Pares nível/próximo custo, na ordem de UpgradeId: {0}/{1} Picareta · {2}/{3} Velocidade · {4}/{5} Mineração · " +
@@ -66,7 +64,6 @@ namespace MinersIdle.UI
         [SerializeField] Button buyCritical;
         [SerializeField] Button saveNow;
         [SerializeField] Button deleteSave;
-        [SerializeField] Button autoTap;
         [SerializeField] Button forceCritical;
         [SerializeField] Button shake;
         [SerializeField] Button sound;
@@ -111,7 +108,7 @@ namespace MinersIdle.UI
         [SerializeField] Button bombButton;
         [SerializeField] DebugMenu bombMenu;
 
-        readonly object[] _statsArgs = new object[16];
+        readonly object[] _statsArgs = new object[10];
 
         /// <summary>Nível e próximo custo de cada linha, na ordem de <see cref="UpgradeId"/> (o Letrado entrou no M8).</summary>
         readonly object[] _upgradeArgs = new object[2 * System.Enum.GetValues(typeof(UpgradeId)).Length];
@@ -150,7 +147,6 @@ namespace MinersIdle.UI
             buyCritical.onClick.AddListener(BuyCritical);
             saveNow.onClick.AddListener(SaveNow);
             deleteSave.onClick.AddListener(DeleteSave);
-            autoTap.onClick.AddListener(ToggleAutoTap);
             forceCritical.onClick.AddListener(ToggleForceCritical);
             shake.onClick.AddListener(ToggleShake);
             sound.onClick.AddListener(ToggleSound);
@@ -189,7 +185,6 @@ namespace MinersIdle.UI
             buyCritical.onClick.RemoveListener(BuyCritical);
             saveNow.onClick.RemoveListener(SaveNow);
             deleteSave.onClick.RemoveListener(DeleteSave);
-            autoTap.onClick.RemoveListener(ToggleAutoTap);
             forceCritical.onClick.RemoveListener(ToggleForceCritical);
             shake.onClick.RemoveListener(ToggleShake);
             sound.onClick.RemoveListener(ToggleSound);
@@ -321,7 +316,6 @@ namespace MinersIdle.UI
 
         void SaveNow() => runner.SaveNow();
         void DeleteSave() => runner.ResetProgress();
-        void ToggleAutoTap() => tapInput.AutoTap = !tapInput.AutoTap;
         void ToggleForceCritical() => runner.ForceCritical = !runner.ForceCritical;
         void ToggleShake()
         {
@@ -360,7 +354,6 @@ namespace MinersIdle.UI
             var state = simulation.State;
             double minutes = simulation.Elapsed / 60;
             var target = simulation.Miner.Target;
-            var taps = tapInput.LastSecond;
             _statsArgs[0] = runner.Seed;
             _statsArgs[1] = NumberFormatter.Format(runner.TimeScale);
             _statsArgs[2] = NumberFormatter.Format(minutes);
@@ -371,12 +364,6 @@ namespace MinersIdle.UI
             _statsArgs[7] = simulation.Rules.MaxCrystals;
             _statsArgs[8] = target != null ? target.Id.ToString() : "-";
             _statsArgs[9] = NumberFormatter.Format(simulation.Miner.Distance);
-            _statsArgs[10] = taps.Counted;
-            _statsArgs[11] = taps.Capped;
-            _statsArgs[12] = taps.Began;
-            _statsArgs[13] = taps.Repeated;
-            _statsArgs[14] = tapInput.FingersDown;
-            _statsArgs[15] = taps.Together;
             stats.text = string.Format(statsFormat, _statsArgs);
 
             var economy = simulation.Economy;

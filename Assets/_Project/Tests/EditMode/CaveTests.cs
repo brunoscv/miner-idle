@@ -19,7 +19,7 @@ namespace MinersIdle.Tests
         const int Breaks = 10;
 
         /// <summary>
-        /// Dano 100 contra vida 10: um toque (33%) já quebra o cristal do andar 1. Sem tempo passando (Tick(0)), o anão
+        /// Dano 100 contra vida 10: um golpe já quebra o cristal do andar 1. Sem tempo passando (Tick(0)), o anão
         /// não golpeia: só quebra o que o teste manda.
         /// </summary>
         static MiningRules Rules(int caveCount = 10, double spawnInterval = 1e9) =>
@@ -29,7 +29,7 @@ namespace MinersIdle.Tests
                 minCrystals: 4, caveCount: caveCount, caveHealthGrowth: 8, caveRewardGrowth: 3, floorBreaks: Breaks);
 
         static MiningSimulation Sim(MiningRules rules = null, ulong seed = 1) =>
-            new MiningSimulation(rules ?? Rules(), new SeededRandom(seed), strike: new StrikeRules(0, 2, 0.33, 1));
+            new MiningSimulation(rules ?? Rules(), new SeededRandom(seed), strike: new StrikeRules(0, 2));
 
         /// <summary>Quebra <paramref name="count"/> cristais pelo atalho do debug (o mesmo caminho de uma quebra normal).</summary>
         static void BreakCrystals(MiningSimulation sim, int count)
@@ -67,10 +67,8 @@ namespace MinersIdle.Tests
             Assert.That(sim.FloorProgress, Is.EqualTo(0.9).Within(1e-9));
             Assert.That(sim.CanAdvance, Is.False, "9 não bastam");
 
-            // O 10º pelo toque (D-95: toda quebra conta).
-            sim.Tick(0);
-            sim.Tap();
-            Assert.That(sim.State.CaveBreaks, Is.EqualTo(Breaks), "a quebra do toque conta");
+            BreakCrystals(sim, 1);
+            Assert.That(sim.State.CaveBreaks, Is.EqualTo(Breaks), "o 10º enche a barra");
             Assert.That(sim.FloorProgress, Is.EqualTo(1));
             Assert.That(sim.CanAdvance, Is.True);
         }

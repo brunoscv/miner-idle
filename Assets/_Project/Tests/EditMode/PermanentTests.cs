@@ -41,7 +41,7 @@ namespace MinersIdle.Tests
             Line(10, 10), Line(20, 0.1), Line(20, 0.5), Line(10, 0.05), Line(10, 1));
 
         static MiningSimulation Sim(PermanentState permanent = null, GameState state = null) =>
-            new MiningSimulation(Rules(), new SeededRandom(7), state, V7(), new StrikeRules(0, 2, 0.33, 1, tapCritChance: 0.05),
+            new MiningSimulation(Rules(), new SeededRandom(7), state, V7(), new StrikeRules(0, 2),
                                  new Permanents(V7Permanents(), permanent ?? new PermanentState()));
 
         static PermanentState WithLevel(PermanentId id, int level, double redShards = 0) =>
@@ -230,7 +230,7 @@ namespace MinersIdle.Tests
         public void NervousFingers_AddsToTheCriticalChance()
         {
             var stats = Sim(WithLevel(PermanentId.NervousFingers, 3)).Stats;
-            Assert.That(stats.CritBonus, Is.EqualTo(0.15).Within(1e-9), "+5% por nível, no golpe e no toque");
+            Assert.That(stats.CritBonus, Is.EqualTo(0.15).Within(1e-9), "+5% por nível, no golpe");
         }
 
         [Test]

@@ -9,9 +9,8 @@ using UnityEngine.UI;
 namespace MinersIdle.UI
 {
     /// <summary>
-    /// DBG → Bônus (M9b, E1; D-217): dá os bônus de um combo terminado em ×10, ×30, ×50 ou ×100 sem tocar (pela mesma regra
-    /// do jogo, <see cref="MiningSimulation.GrantComboBonuses"/>), limpa os ativos e, no alto, mostra o combo de agora, a
-    /// regra do acúmulo, o dano a mais somado e cada bônus ativo com o tempo que falta. M9b E4 (D-226): Próximo raro, Janela
+    /// DBG → Bônus (M9b, E1; D-217): limpa os bônus ativos e, no alto, mostra o dano a mais somado e cada bônus ativo com o
+    /// tempo que falta (os botões dos marcos do combo saíram com o combo no M9g, D-311). M9b E4 (D-226): Próximo raro, Janela
     /// agora e uma carta direta de cada tipo, e a janela do raro no alto. M9b E5 (D-234): AD agora e Pular espera. M9e E1
     /// (D-285): Raro agora, Contador 5 s, Tier 2 e a carta Dano de Crítico; no alto, os segundos até o raro e o tier. As
     /// cartas que o balanço não tem ficam escondidas. M9e E2: um botão por anúncio do Boost (curto, médio, grande e o do
@@ -21,16 +20,11 @@ namespace MinersIdle.UI
     /// </summary>
     public sealed class BonusDebugPanel : MonoBehaviour
     {
-        /// <summary>Os combos dos botões, na ordem de <see cref="grant"/>.</summary>
-        public static readonly int[] Combos = { 10, 30, 50, 100 };
-
         /// <summary>De quanto em quanto tempo real a lista é refeita com o menu aberto (o tempo que falta muda sempre).</summary>
         const float RefreshSeconds = 0.1f;
 
         [SerializeField] MiningRunner runner;
 
-        [Tooltip("Combo ×10, ×30, ×50 e ×100, na ordem de Combos.")]
-        [SerializeField] Button[] grant = Array.Empty<Button>();
         [SerializeField] Button clear;
 
         [Header("Cristal raro (M9b E4, D-226)")]
@@ -96,21 +90,14 @@ namespace MinersIdle.UI
         [SerializeField] string adFormat;
 
         [SerializeField] TMP_Text summary;
-        [Tooltip("A primeira linha. {0} combo de agora · {1} regra do acúmulo · {2} dano a mais somado")]
+        [Tooltip("A primeira linha. {0} dano a mais somado")]
         [SerializeField] string headerFormat;
-        [SerializeField] string cumulativeLabel;
-        [SerializeField] string highestOnlyLabel;
         [Tooltip("Sem bônus ativo.")]
         [SerializeField] string noneLabel;
-        [Tooltip("Um bônus de dano. {0} o efeito · {1} o tempo que falta · {2} o marco")]
-        [SerializeField] string damageFormat;
-        [Tooltip("O crítico garantido. {1} o tempo que falta · {2} o marco")]
-        [SerializeField] string criticalFormat;
         [Tooltip("Entre um bônus e outro.")]
         [SerializeField] string separator = " · ";
 
         readonly StringBuilder _text = new StringBuilder(256);
-        UnityEngine.Events.UnityAction[] _grant = Array.Empty<UnityEngine.Events.UnityAction>();
         UnityEngine.Events.UnityAction[] _cards = Array.Empty<UnityEngine.Events.UnityAction>();
         TMP_Text _counterLabel, _tier2Label, _shortAdsLabel;
         UnityEngine.Events.UnityAction[] _ads = Array.Empty<UnityEngine.Events.UnityAction>();
@@ -120,12 +107,6 @@ namespace MinersIdle.UI
         void Awake()
         {
             _menu = GetComponent<DebugMenu>();
-            _grant = new UnityEngine.Events.UnityAction[grant.Length];
-            for (int i = 0; i < grant.Length; i++)
-            {
-                int index = i;
-                _grant[i] = () => Grant(index);
-            }
             _cards = new UnityEngine.Events.UnityAction[cards.Length];
             for (int i = 0; i < cards.Length; i++)
             {
@@ -145,8 +126,6 @@ namespace MinersIdle.UI
 
         void OnEnable()
         {
-            for (int i = 0; i < grant.Length; i++)
-                if (grant[i] != null) grant[i].onClick.AddListener(_grant[i]);
             if (clear != null) clear.onClick.AddListener(Clear);
             if (nextRare != null) nextRare.onClick.AddListener(NextRare);
             if (adNow != null) adNow.onClick.AddListener(AdNow);
@@ -166,8 +145,6 @@ namespace MinersIdle.UI
 
         void OnDisable()
         {
-            for (int i = 0; i < grant.Length; i++)
-                if (grant[i] != null) grant[i].onClick.RemoveListener(_grant[i]);
             if (clear != null) clear.onClick.RemoveListener(Clear);
             if (nextRare != null) nextRare.onClick.RemoveListener(NextRare);
             if (adNow != null) adNow.onClick.RemoveListener(AdNow);
@@ -191,14 +168,6 @@ namespace MinersIdle.UI
             _refresh = RefreshSeconds;
             Refresh();
             RefreshButtons();
-        }
-
-        /// <summary>Os bônus de um combo terminado no marco do botão <paramref name="index"/> (de <see cref="Combos"/>).</summary>
-        public void Grant(int index)
-        {
-            if (index < 0 || index >= Combos.Length || runner.Simulation == null) return;
-            runner.Simulation.GrantComboBonuses(Combos[index]);
-            _refresh = 0f;
         }
 
         public void Clear()
@@ -333,9 +302,7 @@ namespace MinersIdle.UI
 
             var bonuses = simulation.Bonuses;
             _text.Clear();
-            _text.AppendFormat(headerFormat, simulation.Combo,
-                               simulation.ComboStacking == ComboStacking.Cumulative ? cumulativeLabel : highestOnlyLabel,
-                               NumberFormatter.FormatPercent(bonuses.DamagePercent));
+            _text.AppendFormat(headerFormat, NumberFormatter.FormatPercent(bonuses.DamagePercent));
             _text.Append('\n');
             if (bonuses.Count == 0) _text.Append(noneLabel);
             bool first = true;
@@ -356,11 +323,8 @@ namespace MinersIdle.UI
                                        bonus.Kind == BonusKind.RareTier2 ? "" : NumberFormatter.FormatEffect(bonus.Kind, bonus.Value),
                                        Seconds(bonus.SecondsLeft));
                 }
-                else if (bonus.Source == BonusSource.Ad)
-                    _text.AppendFormat(adFormat ?? "{0} {1}", NumberFormatter.Format(bonus.Value), Seconds(bonus.SecondsLeft));
                 else
-                    _text.AppendFormat(bonus.Kind == BonusKind.GuaranteedCritical ? criticalFormat : damageFormat,
-                                       NumberFormatter.FormatPercent(bonus.Value), Seconds(bonus.SecondsLeft), bonus.Tier);
+                    _text.AppendFormat(adFormat ?? "{0} {1}", NumberFormatter.Format(bonus.Value), Seconds(bonus.SecondsLeft));
             }
 
             var window = simulation.RareWindow;

@@ -10,20 +10,18 @@ namespace MinersIdle.EditorTools
 {
     /// <summary>
     /// Parte do <see cref="ProjectSetup"/> para a E1 do M9b, com a cena Game aberta: o menu DBG → Bônus
-    /// (<see cref="BonusDebugPanel"/>), com os atalhos de combo ×10, ×30, ×50 e ×100, o Limpar e a lista dos bônus ativos no
+    /// (<see cref="BonusDebugPanel"/>), com o Limpar e a lista dos bônus ativos no
     /// alto. O menu em si (fundo, grade, Fechar) vem do <see cref="DebugPanelSetup"/>. Só cria o que falta; os textos ficam
     /// na cena.
     /// </summary>
     static class BonusDebugSetup
     {
-        /// <summary>Os botões de combo, na ordem de <see cref="BonusDebugPanel.Combos"/>.</summary>
-        static readonly (string name, string label)[] GrantButtons =
-        {
-            ("Combo10", "Combo ×10"),
-            ("Combo30", "Combo ×30"),
-            ("Combo50", "Combo ×50"),
-            ("Combo100", "Combo ×100"),
-        };
+        /// <summary>Os botões dos marcos do combo, que saíram no M9g (D-311): o setup os tira da cena.</summary>
+        static readonly string[] OldComboButtons = { "Combo10", "Combo30", "Combo50", "Combo100" };
+
+        /// <summary>A primeira linha do alto, sem o combo (M9g); antes, "Combo ×{0} · {1} · dano +{2}".</summary>
+        const string HeaderFormat = "Dano +{0}";
+        const string NoneLabel = "Nenhum bônus ativo. Use os atalhos.";
 
         const string ClearName = "ClearBonuses";
         const string ClearLabel = "Limpar bônus";
@@ -37,22 +35,15 @@ namespace MinersIdle.EditorTools
             if (menu == null) return false;
             var current = menu.GetComponent<BonusDebugPanel>();
             if (current != null)
-                return EnsureRare(menu, current) | EnsureAd(menu, current) | EnsureRareV8(menu, current) | EnsureAdsV8(menu, current);
+                return RemoveCombo(menu, current) | EnsureRare(menu, current) | EnsureAd(menu, current)
+                       | EnsureRareV8(menu, current) | EnsureAdsV8(menu, current);
 
             var grid = menu.Find("Content/Buttons");
-            var grant = new Button[GrantButtons.Length];
-            for (int i = 0; i < GrantButtons.Length; i++)
-            {
-                var (name, label) = GrantButtons[i];
-                var existing = grid.Find(name);
-                grant[i] = existing != null ? existing.GetComponent<Button>() : DebugPanelSetup.CreateButton(grid, name, label);
-                grant[i].transform.SetSiblingIndex(i);
-            }
             var clearButton = grid.Find(ClearName);
             var clear = clearButton != null ? clearButton.GetComponent<Button>() : DebugPanelSetup.CreateButton(grid, ClearName, ClearLabel);
             grid.Find("Close")?.SetAsLastSibling();
 
-            // O combo, a regra do acúmulo e os bônus ativos no alto do menu, acima da grade.
+            // O dano a mais e os bônus ativos no alto do menu, acima da grade.
             var content = menu.Find("Content");
             var summary = GrayboxSetup.CreateHudText(content, "Summary", "", 7f, TextColor, new Vector2(0f, 1f), new Vector2(1f, 1f));
             var rect = (RectTransform)summary.transform;
@@ -69,24 +60,44 @@ namespace MinersIdle.EditorTools
                 ("summary", summary));
 
             var so = new SerializedObject(panel);
-            var buttons = so.FindProperty("grant");
-            buttons.arraySize = grant.Length;
-            for (int i = 0; i < grant.Length; i++) buttons.GetArrayElementAtIndex(i).objectReferenceValue = grant[i];
-            so.FindProperty("headerFormat").stringValue = "Combo ×{0} · {1} · dano +{2}";
-            so.FindProperty("cumulativeLabel").stringValue = "acumulativo";
-            so.FindProperty("highestOnlyLabel").stringValue = "só o maior marco";
-            so.FindProperty("noneLabel").stringValue = "Nenhum bônus ativo. Toque até ×10 e pare, ou use os atalhos.";
-            so.FindProperty("damageFormat").stringValue = "×{2}: +{0} dano, {1}";
-            so.FindProperty("criticalFormat").stringValue = "×{2}: crítico garantido, {1}";
+            so.FindProperty("headerFormat").stringValue = HeaderFormat;
+            so.FindProperty("noneLabel").stringValue = NoneLabel;
             so.FindProperty("separator").stringValue = " · ";
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            Debug.Log("[Setup] Painel de debug: menu \"Bônus\" com combo ×10, ×30, ×50, ×100 e Limpar bônus (M9b, E1).");
+            Debug.Log("[Setup] Painel de debug: menu \"Bônus\" com Limpar bônus (M9b, E1).");
             EnsureRare(menu, panel);
             EnsureAd(menu, panel);
             EnsureRareV8(menu, panel);
             EnsureAdsV8(menu, panel);
             return true;
+        }
+
+        /// <summary>
+        /// M9g (D-311): saem os botões dos marcos do combo, e o alto deixa de mostrar o combo e o acúmulo. Devolve se mudou.
+        /// </summary>
+        static bool RemoveCombo(Transform menu, BonusDebugPanel panel)
+        {
+            bool changed = false;
+            var grid = menu.Find("Content/Buttons");
+            foreach (var name in OldComboButtons)
+            {
+                var button = grid != null ? grid.Find(name) : null;
+                if (button == null) continue;
+                Object.DestroyImmediate(button.gameObject);
+                changed = true;
+            }
+            var so = new SerializedObject(panel);
+            var header = so.FindProperty("headerFormat");
+            if (header.stringValue != HeaderFormat)
+            {
+                header.stringValue = HeaderFormat;
+                so.FindProperty("noneLabel").stringValue = NoneLabel;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+            if (changed) Debug.Log("[Setup] DBG → Bônus: saem os atalhos do combo (M9g, D-311).");
+            return changed;
         }
 
         /// <summary>

@@ -11,8 +11,8 @@ namespace MinersIdle.UI
     /// DBG → Cálculos (M8 E3b-3, D-143): a taxa e o incremento da Picareta (passos de 0,01 e de 1; tocar no valor volta
     /// ao do GDD), Reiniciar run e Padrão GDD. O seletor de balanço e o botão "Picareta" (pela caverna, D-201) saíram no v8
     /// (M9c E1, D-256). Embaixo do DBG, um aviso fixo diz o cálculo em uso: "Cálculo: GDD v8" quando tudo está no padrão; em
-    /// âmbar, com a lista do que saiu do GDD. M9b E3 (D-217): o botão "Acúmulo" troca a soma dos marcos do combo (GDD,
-    /// D-183) por só o do maior marco, e entra no aviso. M9b E4 (D-226): o botão "Raro" troca o ritmo do cristal raro (15%
+    /// âmbar, com a lista do que saiu do GDD. O botão "Acúmulo" do combo (D-217) saiu com o
+    /// combo no M9g (D-311). M9b E4 (D-226): o botão "Raro" troca o ritmo do cristal raro (15%
     /// ⇄ 2%, D-185), também no aviso. Fica no menu Cálculos, filho do painel de debug: no release some junto (lá
     /// vale sempre o GDD). Só manda comandos ao <see cref="MiningRunner"/>; quem guarda a escolha no aparelho é ele.
     /// Os textos (rótulos e modelos) ficam na cena.
@@ -66,16 +66,6 @@ namespace MinersIdle.UI
         [Tooltip("Somado ao aviso quando o incremento saiu do GDD. {0} = incremento.")]
         [SerializeField] string stepChangedFormat;
 
-        [Header("Acúmulo dos marcos do combo (M9b E3, D-217)")]
-        [Tooltip("O botão \"Acúmulo\": a soma dos marcos (GDD) ⇄ só o do maior marco.")]
-        [SerializeField] Button comboStacking;
-        [Tooltip("Rótulo do botão com a soma (a do GDD).")]
-        [SerializeField] string stackingCumulativeLabel;
-        [Tooltip("Rótulo do botão com só o maior marco.")]
-        [SerializeField] string stackingHighestLabel;
-        [Tooltip("Somado ao aviso com só o maior marco.")]
-        [SerializeField] string stackingChangedFormat;
-
         [Header("Ritmo do cristal raro (M9b E4, D-226)")]
         [Tooltip("O botão \"Raro\": o ritmo do documento ⇄ o lento.")]
         [SerializeField] Button rareRhythm;
@@ -103,7 +93,7 @@ namespace MinersIdle.UI
         const float DisabledLabelAlpha = 0.35f;
 
         readonly StringBuilder _warning = new StringBuilder();
-        TMP_Text _growthLabel, _stepLabel, _stackingLabel, _rareLabel, _spacingLabel;
+        TMP_Text _growthLabel, _stepLabel, _rareLabel, _spacingLabel;
         TMP_Text[] _tuningLabels;
         float _refresh;
 
@@ -111,7 +101,6 @@ namespace MinersIdle.UI
         {
             if (growthValue != null) _growthLabel = growthValue.GetComponentInChildren<TMP_Text>();
             if (stepValue != null) _stepLabel = stepValue.GetComponentInChildren<TMP_Text>();
-            if (comboStacking != null) _stackingLabel = comboStacking.GetComponentInChildren<TMP_Text>();
             if (rareRhythm != null) _rareLabel = rareRhythm.GetComponentInChildren<TMP_Text>();
             if (crystalSpacing != null) _spacingLabel = crystalSpacing.GetComponentInChildren<TMP_Text>();
             _tuningLabels = new[]
@@ -131,7 +120,6 @@ namespace MinersIdle.UI
             stepMinus.onClick.AddListener(LowerStep);
             stepValue.onClick.AddListener(DefaultStep);
             stepPlus.onClick.AddListener(RaiseStep);
-            if (comboStacking != null) comboStacking.onClick.AddListener(ToggleComboStacking);
             if (rareRhythm != null) rareRhythm.onClick.AddListener(ToggleRareRhythm);
             if (crystalSpacing != null) crystalSpacing.onClick.AddListener(ToggleCrystalSpacing);
             runner.SimulationStarted += OnSimulationStarted;
@@ -148,7 +136,6 @@ namespace MinersIdle.UI
             stepMinus.onClick.RemoveListener(LowerStep);
             stepValue.onClick.RemoveListener(DefaultStep);
             stepPlus.onClick.RemoveListener(RaiseStep);
-            if (comboStacking != null) comboStacking.onClick.RemoveListener(ToggleComboStacking);
             if (rareRhythm != null) rareRhythm.onClick.RemoveListener(ToggleRareRhythm);
             if (crystalSpacing != null) crystalSpacing.onClick.RemoveListener(ToggleCrystalSpacing);
             runner.SimulationStarted -= OnSimulationStarted;
@@ -185,16 +172,6 @@ namespace MinersIdle.UI
         public void LowerStep() => SetStep(Step - StepStep);
         public void RaiseStep() => SetStep(Step + StepStep);
         public void DefaultStep() => SetStep(Asset.PickaxeStep);
-
-        /// <summary>
-        /// O botão "Acúmulo" (D-217): a soma dos marcos do combo (GDD) ⇄ só o do maior marco, mantendo o progresso e os
-        /// bônus que já valem. Vale a partir do próximo combo.
-        /// </summary>
-        public void ToggleComboStacking()
-        {
-            var next = runner.Calculation.ComboStacking == ComboStacking.Cumulative ? ComboStacking.HighestOnly : ComboStacking.Cumulative;
-            runner.UseCalculation(runner.Calculation.WithComboStacking(next));
-        }
 
         /// <summary>O botão "Raro" (D-226): o ritmo do documento (15%) ⇄ o lento (2%), mantendo o progresso.</summary>
         public void ToggleRareRhythm()
@@ -246,9 +223,6 @@ namespace MinersIdle.UI
             if (_growthLabel != null) _growthLabel.text = string.Format(growthFormat, NumberFormatter.Format(Growth));
             if (_stepLabel != null) _stepLabel.text = string.Format(stepFormat, NumberFormatter.Format(Step));
 
-            bool highestOnly = choice.ComboStacking == ComboStacking.HighestOnly;
-            if (_stackingLabel != null) _stackingLabel.text = highestOnly ? stackingHighestLabel : stackingCumulativeLabel;
-
             bool rareSlow = choice.RareRhythm == RareRhythm.Slow;
             double rareChance = Asset == null ? 0 : rareSlow ? Asset.RareSlowChance : Asset.RareChance;
             if (_rareLabel != null && !string.IsNullOrEmpty(rareRhythmFormat))
@@ -268,7 +242,6 @@ namespace MinersIdle.UI
             _warning.AppendFormat(warningFormat, balanceLabel);
             if (tunable && choice.PickaxeCaveGrowth.HasValue) _warning.AppendFormat(growthChangedFormat, NumberFormatter.Format(Growth));
             if (tunable && choice.PickaxeStep.HasValue) _warning.AppendFormat(stepChangedFormat, NumberFormatter.Format(Step));
-            if (highestOnly) _warning.Append(stackingChangedFormat);
             if (rareSlow && !string.IsNullOrEmpty(rareSlowChangedFormat))
                 _warning.AppendFormat(rareSlowChangedFormat, NumberFormatter.FormatPercent(rareChance));
             if (spacingChanged && !string.IsNullOrEmpty(spacingChangedFormat))

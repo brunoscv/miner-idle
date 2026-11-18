@@ -91,7 +91,7 @@ namespace MinersIdle.Persistence
     }
 
     /// <summary>
-    /// Um bônus com tempo ativo (M9b). O tipo e a origem vão pelo nome (<c>"DamagePercent"</c>, <c>"Combo"</c>), como os
+    /// Um bônus com tempo ativo (M9b). O tipo e a origem vão pelo nome (<c>"DamagePercent"</c>, <c>"Rare"</c>), como os
     /// níveis: um tipo novo não estraga o save, e um tipo que sumiu é ignorado.
     /// </summary>
     [Serializable]

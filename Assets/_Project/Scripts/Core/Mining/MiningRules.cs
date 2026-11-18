@@ -42,7 +42,6 @@ namespace MinersIdle.Core
             double walkSpeed, double miningRange,
             int minCrystals = 0,
             int caveCount = 1, double caveHealthGrowth = 1, double caveRewardGrowth = 1, int floorBreaks = 100,
-            double tapReach = double.PositiveInfinity,
             ArrivalStrike arrivalStrike = ArrivalStrike.Wait,
             double swingRecovery = 0,
             PickaxeFormula pickaxeFormula = PickaxeFormula.Multiply, double pickaxeCaveGrowth = 1.2,
@@ -67,7 +66,6 @@ namespace MinersIdle.Core
             if (caveHealthGrowth <= 0 || double.IsNaN(caveHealthGrowth)) throw new ArgumentOutOfRangeException(nameof(caveHealthGrowth));
             if (caveRewardGrowth <= 0 || double.IsNaN(caveRewardGrowth)) throw new ArgumentOutOfRangeException(nameof(caveRewardGrowth));
             if (floorBreaks < 0) throw new ArgumentOutOfRangeException(nameof(floorBreaks));
-            if (tapReach < 0 || double.IsNaN(tapReach)) throw new ArgumentOutOfRangeException(nameof(tapReach));
             if (swingRecovery < 0 || double.IsNaN(swingRecovery)) throw new ArgumentOutOfRangeException(nameof(swingRecovery));
             if (!Enum.IsDefined(typeof(PickaxeFormula), pickaxeFormula)) throw new ArgumentOutOfRangeException(nameof(pickaxeFormula));
             if (levelsPerBiome < 1) throw new ArgumentOutOfRangeException(nameof(levelsPerBiome));
@@ -103,7 +101,6 @@ namespace MinersIdle.Core
             AutoAdvanceFloor = autoAdvanceFloor;
             InternFloor = internFloor;
             RareFloor = rareFloor;
-            TapReach = tapReach;
             ArrivalStrike = arrivalStrike;
             SwingRecovery = swingRecovery;
             PickaxeFormula = pickaxeFormula;
@@ -155,17 +152,11 @@ namespace MinersIdle.Core
         /// </summary>
         public int FloorBreaks { get; }
 
-        /// <summary>
-        /// O toque só tira vida de um alvo a até esta distância do anão: o alvo que já está na tela (D-121). Mais longe, o
-        /// toque só conta no combo. Infinito = o toque vale a qualquer distância (a D-48a, antes de 2026-11-01).
-        /// </summary>
-        public double TapReach { get; }
-
         /// <summary>Quando sai o primeiro golpe num cristal (D-124). <see cref="Core.ArrivalStrike.Wait"/> = o jogo até 2026-11-01.</summary>
         public ArrivalStrike ArrivalStrike { get; }
 
         /// <summary>
-        /// Quanto dura a volta da picareta depois do golpe, em segundos (D-126): se o toque quebra o cristal antes disso, o
+        /// Quanto dura a volta da picareta depois do golpe, em segundos (D-126): se a bomba quebra o cristal antes disso, o
         /// anão termina o golpe parado e só então corre. Nunca passa do intervalo do golpe. 0 = corre na hora (o jogo até
         /// 2026-11-02).
         /// </summary>

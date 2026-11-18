@@ -6,7 +6,7 @@ namespace MinersIdle.Game
 {
     /// <summary>
     /// Como cada bônus com tempo aparece (M9b, E2; D-141, D-215): o ícone da coluna da esquerda, o nome e a descrição do
-    /// detalhe e o texto grande do ganho ("FRENESI!"), mais os textos do ganho e do tempo. Tudo em pt-BR e em dados:
+    /// detalhe e os textos do tempo (o texto grande e o ganho eram do combo, que saiu no M9g, D-311). Tudo em pt-BR e em dados:
     /// nenhum texto de interface no código. O asset do jogo é <c>Data/BuffCatalog</c>. Desde a E4, as cartas do cristal
     /// raro (origem <see cref="BonusSource.Rare"/>, tier = a <see cref="RareCard"/>) com o texto da carta, para quem vale e
     /// o texto que sobe ao escolher, e os textos da janela (D-225). Desde a E5, o boost do AD (origem
@@ -20,15 +20,13 @@ namespace MinersIdle.Game
         public sealed class Entry
         {
             [SerializeField] BonusSource source;
-            [Tooltip("O marco que dá o bônus (10, 30, 50, 100 no combo).")]
+            [Tooltip("A carta do raro (RareCard) ou o anúncio (AdKind; 0 = o boost do v7).")]
             [SerializeField] int tier;
             [SerializeField] Sprite icon;
             [Tooltip("A primeira linha do detalhe (âmbar).")]
             [SerializeField] string title;
             [Tooltip("A segunda linha do detalhe.")]
             [SerializeField] string description;
-            [Tooltip("Texto grande ao ganhar, com um tremor leve (\"FRENESI!\"). Vazio = só o texto do ganho.")]
-            [SerializeField] string headline;
             [Tooltip("Raro: o texto que sobe do anão ao escolher a carta (\"DANO ×2\").")]
             [SerializeField] string gain;
             [Tooltip("Raro: o efeito escrito na carta da janela (pode ter quebra de linha).")]
@@ -41,14 +39,13 @@ namespace MinersIdle.Game
             /// <summary>Para o serializador do Unity.</summary>
             public Entry() { }
 
-            public Entry(BonusSource source, int tier, Sprite icon, string title, string description, string headline = "")
+            public Entry(BonusSource source, int tier, Sprite icon, string title, string description)
             {
                 this.source = source;
                 this.tier = tier;
                 this.icon = icon;
                 this.title = title;
                 this.description = description;
-                this.headline = headline;
             }
 
             public BonusSource Source => source;
@@ -56,7 +53,6 @@ namespace MinersIdle.Game
             public Sprite Icon => icon;
             public string Title => title;
             public string Description => description;
-            public string Headline => headline;
             public string Gain => gain;
             public string CardText => cardText;
             public string CardNote => cardNote;
@@ -68,14 +64,6 @@ namespace MinersIdle.Game
         [Header("Textos")]
         [Tooltip("Os segundos ao lado do ícone. {0} = segundos que faltam.")]
         [SerializeField] string secondsFormat;
-        [Tooltip("A terceira linha do detalhe. {0} = o marco do combo, {1} = segundos que faltam.")]
-        [SerializeField] string comboFooterFormat;
-        [Tooltip("O texto que sobe do contador ao ganhar só dano. {0} = a soma, \"25%\".")]
-        [SerializeField] string gainDamageFormat;
-        [Tooltip("Ao ganhar só o crítico garantido.")]
-        [SerializeField] string gainCritical;
-        [Tooltip("Ao ganhar dano e o crítico garantido juntos. {0} = a soma do dano.")]
-        [SerializeField] string gainBothFormat;
 
         [Header("Cristal raro (M9b E4, D-225)")]
         [Tooltip("A terceira linha do detalhe de uma carta do raro. {0} = segundos que faltam.")]
@@ -162,10 +150,6 @@ namespace MinersIdle.Game
         public string CardSecondsFormat => cardSecondsFormat;
 
         public string SecondsFormat => secondsFormat;
-        public string ComboFooterFormat => comboFooterFormat;
-        public string GainDamageFormat => gainDamageFormat;
-        public string GainCritical => gainCritical;
-        public string GainBothFormat => gainBothFormat;
 
         /// <summary>A linha de um bônus; <c>null</c> se o catálogo não o tem (aparece sem ícone).</summary>
         public Entry Find(BonusSource source, int tier)

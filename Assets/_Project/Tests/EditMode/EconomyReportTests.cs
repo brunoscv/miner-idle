@@ -82,7 +82,7 @@ namespace MinersIdle.Tests
                 Assert.That(slow.FirstPurchaseAt.Value, Is.GreaterThan(fast.FirstPurchaseAt.Value));
         }
 
-        /// <summary>O asset do GDD v5 (D-87) tem os números do GDD §3–§4 e o toque de 33% (D-86).</summary>
+        /// <summary>O asset do GDD v5 (D-87) tem os números do GDD §3–§4 (o toque de 33%, D-86, saiu no M9g, D-311).</summary>
         [Test]
         public void GddV5_HasTheGddNumbers()
         {
@@ -99,7 +99,6 @@ namespace MinersIdle.Tests
                 Is.EqualTo(Value("minHitInterval")).Within(1e-9), "19 níveis de −0,1 s chegam ao mínimo de 0,1 s");
             Assert.That(values.FindProperty("mining.maxLevel").intValue * Value("mining.effect"), Is.EqualTo(10), "até +1000%");
             Assert.That(Value("doublePickaxe.baseCost"), Is.EqualTo(5000));
-            Assert.That(Value("tapFraction"), Is.EqualTo(0.33), "toque de 33% (D-86)");
             Assert.That(Value("critChance"), Is.EqualTo(0.05));
             Assert.That(Value("crystalHealth"), Is.EqualTo(10), "caverna 1: 10 × 8^0 (D-92)");
             Assert.That(Value("crystalReward"), Is.EqualTo(1), "caverna 1: 1 × 3^0 (D-92)");

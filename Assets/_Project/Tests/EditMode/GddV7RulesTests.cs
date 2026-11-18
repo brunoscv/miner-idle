@@ -38,8 +38,8 @@ namespace MinersIdle.Tests
             minHitInterval: 0.1,
             critical: new UpgradeDefinition(50, 2, 10, 0.05));
 
-        /// <summary>GDD v7 §3.3 (D-136): golpe automático sem crítico de base, toque com 5%; sem teto de toques.</summary>
-        static StrikeRules V7Strike() => new StrikeRules(0, 2, 0.33, 1, tapCritChance: 0.05);
+        /// <summary>GDD v7 §3.3 (D-136): golpe automático sem crítico de base (o toque, com 5%, saiu no M9g, D-311).</summary>
+        static StrikeRules V7Strike() => new StrikeRules(0, 2);
 
         static MiningSimulation Sim(MiningRules rules = null, ulong critSeed = 7) =>
             new MiningSimulation(rules ?? Rules(), new SeededRandom(critSeed), economy: V7(), strike: V7Strike());
@@ -222,22 +222,11 @@ namespace MinersIdle.Tests
             int total = 0, critical = 0;
             sim.HitLanded += hit =>
             {
-                if (hit.IsTap) return;
                 total++;
                 if (hit.IsCritical) critical++;
             };
             sim.Tick(hits);
             return (total, critical);
-        }
-
-        static int CountTapCriticals(MiningSimulation sim, int taps)
-        {
-            sim.SpawnCrystalAt(1);
-            sim.Tick(0);
-            int critical = 0;
-            sim.HitLanded += hit => { if (hit.IsTap && hit.IsCritical) critical++; };
-            for (int i = 0; i < taps; i++) sim.Tap();
-            return critical;
         }
 
         [Test]
@@ -249,15 +238,8 @@ namespace MinersIdle.Tests
             Assert.That(critical, Is.EqualTo(0));
         }
 
-        /// <summary>20.000 toques a 5%: média 1.000, desvio ~31; a faixa é de ~4 desvios.</summary>
         [Test]
-        public void Tap_HasFivePercentCriticalBase()
-        {
-            Assert.That(CountTapCriticals(Sim(), 20_000), Is.InRange(875, 1_125));
-        }
-
-        [Test]
-        public void CriticalLine_AddsFivePercent_ToTheHitAndToTheTap()
+        public void CriticalLine_AddsFivePercent_ToTheHit()
         {
             var auto = Sim();
             auto.AddShards(50);
@@ -265,11 +247,6 @@ namespace MinersIdle.Tests
             Assert.That(auto.Stats.CritBonus, Is.EqualTo(0.05).Within(1e-12));
             var (hits, autoCritical) = CountAutomatic(auto, 100_000);
             Assert.That(autoCritical / (double)hits, Is.InRange(0.047, 0.053), "golpe: 0% + 5%");
-
-            var tap = Sim(critSeed: 11);
-            tap.AddShards(50);
-            tap.Purchase(UpgradeId.Critical);
-            Assert.That(CountTapCriticals(tap, 20_000), Is.InRange(1_830, 2_170), "toque: 5% + 5% (média 2.000, desvio ~42)");
         }
 
         [Test]
@@ -428,8 +405,6 @@ namespace MinersIdle.Tests
             Assert.That(rules.FloorBreaks, Is.EqualTo(100), "a trava dos 100 cristais do v7 vira a barra (andar × 100)");
 
             Assert.That(strike.CritChance, Is.EqualTo(0));
-            Assert.That(strike.TapCritChance, Is.EqualTo(0.05));
-            Assert.That(strike.TapFraction, Is.EqualTo(0.33));
         }
     }
 }

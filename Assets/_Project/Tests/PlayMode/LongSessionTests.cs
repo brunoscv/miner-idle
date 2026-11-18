@@ -116,7 +116,7 @@ namespace MinersIdle.Tests
                     Assert.That(Simulation.State.Cave, Is.GreaterThan(caveBefore), "o automático só desce");
                     autoFloors += Simulation.State.Cave - caveBefore;
                 }
-                Simulation.Tap();
+                if (Simulation.CanThrowBomb) Simulation.ThrowBomb(); // o jogador lança a bomba cheia (era o toque, D-311)
                 CheckSane();
 
                 // A barra cheia acende o botão; o jogador toca nele (sem o automático, é o único jeito de descer).

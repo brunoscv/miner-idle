@@ -34,10 +34,9 @@ namespace MinersIdle.Tests
                 minCrystalSpacing: 2, spawnDistance: 12, crystalHealth: health, crystalReward: 1, damage: 1, hitInterval: 1,
                 walkSpeed: 4, miningRange: 1);
 
-        /// <summary>O raro e o marco ×10 do combo (+10% por 5 s), para ver a ordem do dano (D-219).</summary>
+        /// <summary>O raro (o combo, que entrava na ordem do dano da D-219, saiu no M9g, D-311).</summary>
         static StrikeRules Strike(double chance = 0.15, double slowChance = 0.02, IEnumerable<RareCardRule> cards = null) =>
-            new StrikeRules(0, 2, 0.1, 1, comboBonuses: new[] { new ComboBonusRule(10, BonusKind.DamagePercent, 0.10, 5) },
-                            rare: new RareRules(chance, slowChance, 30, cards ?? Cards));
+            new StrikeRules(0, 2, rare: new RareRules(chance, slowChance, 30, cards ?? Cards));
 
         static EconomyRules WithIntern() => new EconomyRules(
             pickaxe: new UpgradeDefinition(2, 2, 49, 1, CostFormula.Linear),
@@ -210,16 +209,15 @@ namespace MinersIdle.Tests
         // ── As cartas (D-219) ───────────────────────────────────────────────────────────────────────────────────────
 
         [Test]
-        public void Damage_DoublesTheDwarfAfterTheCombo_AndTheIntern()
+        public void Damage_DoublesTheDwarf_AndTheIntern()
         {
             var sim = Sim();
             sim.HireIntern();
             double intern = sim.InternStats.Damage;
-            sim.GrantComboBonuses(10); // +10%
 
             sim.GrantRareCard(RareCard.Damage);
 
-            Assert.That(sim.Stats.Damage, Is.EqualTo(1.1 * 2).Within(1e-12));
+            Assert.That(sim.Stats.Damage, Is.EqualTo(1 * 2).Within(1e-12));
             Assert.That(sim.InternStats.Damage, Is.EqualTo(intern * 2).Within(1e-12));
         }
 
@@ -421,7 +419,7 @@ namespace MinersIdle.Tests
             Assert.That(rules.IsEnabled, Is.True);
             Assert.That(new RareRules(0.15, 0.02, 30, new[] { Cards[0] }).IsEnabled, Is.False, "1 carta não faz janela de 2");
             Assert.That(RareRules.None().IsEnabled, Is.False);
-            var sim = Sim(strike: new StrikeRules(0, 2, 0.1, 1, rare: new RareRules(1, 1, 30, new[] { Cards[0] })));
+            var sim = Sim(strike: new StrikeRules(0, 2, rare: new RareRules(1, 1, 30, new[] { Cards[0] })));
             Assert.That(sim.OpenRareWindow(), Is.False);
         }
 

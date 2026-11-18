@@ -39,7 +39,7 @@ namespace MinersIdle.Tests
             PermanentState.Restore(0, 1, p => p == id ? level : 0, V8Permanents());
 
         static MiningSimulation Sim(PermanentState permanent = null, MiningRules rules = null, StrikeRules strike = null) =>
-            new MiningSimulation(rules ?? V8Rules(), new SeededRandom(3), strike: strike ?? new StrikeRules(0, 1.5, 0.33, 1),
+            new MiningSimulation(rules ?? V8Rules(), new SeededRandom(3), strike: strike ?? new StrikeRules(0, 1.5),
                                  permanents: new Permanents(V8Permanents(), permanent ?? new PermanentState()));
 
         static MiningRulesAsset Asset()
@@ -133,7 +133,7 @@ namespace MinersIdle.Tests
         [TestCase(0.9, 10, 1.9, TestName = "Critical_At140Percent_IsTimesOnePointNine")]
         public void Critical_AboveOneHundredPercent_AddsToTheMultiplier(double baseChance, int nervousFingers, double multiplier)
         {
-            var sim = Sim(WithLevel(PermanentId.NervousFingers, nervousFingers), Tough(), new StrikeRules(baseChance, 1.5, 0.33, 1));
+            var sim = Sim(WithLevel(PermanentId.NervousFingers, nervousFingers), Tough(), new StrikeRules(baseChance, 1.5));
             double chance = baseChance + 0.05 * nervousFingers;
             if (chance < 1) sim.ForceCritical = true; // abaixo de 100% o sorteio decide; aqui só o multiplicador importa
 
@@ -146,7 +146,7 @@ namespace MinersIdle.Tests
         [Test]
         public void Critical_AtOrAboveOneHundredPercent_NeverMisses()
         {
-            var sim = Sim(WithLevel(PermanentId.NervousFingers, 10), Tough(), new StrikeRules(0.5, 1.5, 0.33, 1));
+            var sim = Sim(WithLevel(PermanentId.NervousFingers, 10), Tough(), new StrikeRules(0.5, 1.5));
             var hits = new List<MiningHit>();
             sim.HitLanded += hits.Add;
             sim.SpawnCrystalAt(sim.Miner.Distance + 1);
@@ -244,7 +244,6 @@ namespace MinersIdle.Tests
                         "marcos: automático e estagiário no 5, raro depois do 10 (M9c E3)");
             Assert.That(strike.CritMultiplier, Is.EqualTo(1.5), "×1,5 (D-249)");
             Assert.That(strike.CritChance, Is.EqualTo(0));
-            Assert.That(strike.TapCritChance, Is.EqualTo(0.05));
 
             var memory = permanents.Get(PermanentId.Memory);
             Assert.That((memory.Effect, memory.MaxLevel, memory.CostAt(0)), Is.EqualTo((5.0, 100, 11.0)), "−5, até 100, 10 + 2^(n−1)");

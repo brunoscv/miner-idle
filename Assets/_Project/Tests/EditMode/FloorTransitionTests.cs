@@ -18,7 +18,7 @@ namespace MinersIdle.Tests
                 miningRange: 1, minCrystals: 4, caveCount: 10, caveHealthGrowth: 2, caveRewardGrowth: 2, floorBreaks: 100);
 
         static MiningSimulation Sim() =>
-            new MiningSimulation(Rules(), new SeededRandom(1), strike: new StrikeRules(0, 2, 0.33, 1));
+            new MiningSimulation(Rules(), new SeededRandom(1), strike: new StrikeRules(0, 2));
 
         [Test]
         public void WithoutDuration_TheNewCaveStartsAtOnce()
@@ -68,8 +68,6 @@ namespace MinersIdle.Tests
             Assert.That(sim.State.PlaySeconds, Is.EqualTo(play + 1.5).Within(1e-9), "o dia conta o tempo da transição");
             Assert.That(sim.Miner.Distance, Is.EqualTo(distance), "o anão não corre");
             Assert.That(hits, Is.EqualTo(0), "nem golpeia");
-            Assert.That(sim.Tap(), Is.False, "o toque não vale");
-            Assert.That(sim.Combo, Is.EqualTo(0));
             Assert.That(sim.FloorTransitionLeft, Is.EqualTo(0.5).Within(1e-9));
         }
 
@@ -89,7 +87,6 @@ namespace MinersIdle.Tests
             Assert.That(ended, Is.EqualTo(1));
             Assert.That(sim.IsInFloorTransition, Is.False);
             Assert.That(sim.Miner.Distance, Is.GreaterThan(distance), "o segundo que sobrou foi de jogo");
-            Assert.That(sim.Tap(), Is.True, "o toque volta a valer");
         }
 
         [Test]

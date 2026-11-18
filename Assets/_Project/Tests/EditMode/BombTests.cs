@@ -22,7 +22,7 @@ namespace MinersIdle.Tests
                 miningRange: 1, caveCount: caveCount);
 
         static StrikeRules Strike(double reach = 4, double flight = 0.4) =>
-            new StrikeRules(0, 1.5, 0.33, 1, bombs: new BombRules(V8Bombs, 5, flight, reach));
+            new StrikeRules(0, 1.5, bombs: new BombRules(V8Bombs, 5, flight, reach));
 
         /// <summary>Só a linha Bomba ligada (as outras desligadas), como no GDD v8: 7 compras, 10 + 2^(n−1).</summary>
         static PermanentRules BombLine()

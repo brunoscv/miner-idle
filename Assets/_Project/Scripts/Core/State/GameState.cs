@@ -45,7 +45,7 @@ namespace MinersIdle.Core
         public OfflineReturn PendingOffline { get; private set; }
 
         /// <summary>
-        /// Os bônus com tempo valendo agora (M9b): os do combo. Vão para o save (D-181) e acabam com a run (D-213: o
+        /// Os bônus com tempo valendo agora (M9b): as cartas do raro e os do AD (o combo saiu no M9g, D-311). Vão para o save (D-181) e acabam com a run (D-213: o
         /// descanso começa um <see cref="GameState"/> novo).
         /// </summary>
         public ActiveBonuses Bonuses { get; } = new ActiveBonuses();

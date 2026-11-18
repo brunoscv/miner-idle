@@ -114,7 +114,7 @@ namespace MinersIdle.EditorTools
                 int index = list.arraySize;
                 list.arraySize = index + 1;
                 var item = list.GetArrayElementAtIndex(index);
-                item.FindPropertyRelative("source").enumValueIndex = (int)BonusSource.Ad;
+                item.FindPropertyRelative("source").intValue = (int)BonusSource.Ad;
                 item.FindPropertyRelative("tier").intValue = 0;
                 item.FindPropertyRelative("icon").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(BoltIconPath);
                 item.FindPropertyRelative("title").stringValue = "VELOCIDADE ×2,5";

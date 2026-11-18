@@ -28,7 +28,7 @@ namespace MinersIdle.Tests
             return $"(andar {simulation.State.Cave}, transição {simulation.IsInFloorTransition}, " +
                    $"barra {simulation.State.CaveBreaks}/{simulation.RequiredBreaks}, " +
                    $"alvo {(target == null ? "nenhum" : target.IsRare ? "raro" : "cristal")}, " +
-                   $"janela do raro {(rare != null && rare.IsOpen)}, combo {simulation.Combo}, tempo {simulation.Elapsed:0.00})";
+                   $"janela do raro {(rare != null && rare.IsOpen)}, tempo {simulation.Elapsed:0.00})";
         }
     }
 }

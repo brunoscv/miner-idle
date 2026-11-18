@@ -25,8 +25,7 @@ namespace MinersIdle.EditorTools
         /// <summary>Modelo das estatísticas (ver o Tooltip de <c>DebugPanel.statsFormat</c>).</summary>
         const string StatsFormat =
             "Semente {0}\nTempo ×{1} · {2} min de jogo\nGolpes {3} · Quebras {4}\nLascas/min {5}\n" +
-            "Cristais {6}/{7} · Alvo #{8} · Descida {9} un\n" +
-            "Toques/s {10} valeram · {11} acima do teto\nDedos: {12} começos · {13} repetidos · {15} juntos · {14} na tela";
+            "Cristais {6}/{7} · Alvo #{8} · Descida {9} un"; // os toques e os dedos saíram com o toque (M9g, D-311)
 
         /// <summary>Modelo do nível e próximo custo das melhorias (ver o Tooltip de <c>DebugPanel.upgradesFormat</c>).</summary>
         /// <remarks>A Dupla e as Botas saíram no GDD v7 (D-136): os índices {6}–{9} ficam sem uso.</remarks>
@@ -155,7 +154,6 @@ namespace MinersIdle.EditorTools
             var panel = root.AddComponent<DebugPanel>();
             GrayboxSetup.SetReferences(panel,
                 ("runner", Object.FindAnyObjectByType<MiningRunner>()),
-                ("tapInput", Object.FindAnyObjectByType<TapInput>()),
                 ("screenShake", Object.FindAnyObjectByType<ScreenShake>()),
                 ("soundBoard", Object.FindAnyObjectByType<SoundBoard>()),
                 ("toggleButton", toggle),
@@ -176,7 +174,6 @@ namespace MinersIdle.EditorTools
                 ("buyCritical", CreateButton(grid.transform, BuyCriticalName, BuyCriticalLabel)),
                 ("saveNow", CreateButton(grid.transform, "SaveNow", "Salvar agora")),
                 ("deleteSave", CreateButton(grid.transform, "DeleteSave", "Apagar save")),
-                ("autoTap", CreateButton(grid.transform, "AutoTap", "Toques auto")),
                 ("forceCritical", CreateButton(grid.transform, "ForceCritical", "Crítico sempre")),
                 ("shake", CreateButton(grid.transform, "Shake", "Tremor on/off")),
                 ("sound", CreateButton(grid.transform, "Sound", "Som on/off")),
@@ -217,7 +214,7 @@ namespace MinersIdle.EditorTools
             {
                 "SpawnCrystal", "AddShards", "BuyPickaxe", "BuySpeed", "BuyMining", BuyCriticalName,
             }),
-            ("EffectsMenu", "Effects", "Efeitos", 48f, new[] { "AutoTap", "ForceCritical", "Shake", "Sound" }),
+            ("EffectsMenu", "Effects", "Efeitos", 48f, new[] { "ForceCritical", "Shake", "Sound" }),
             // M9c E1: o menu do andar (o objeto continua "CaveMenu"), com os atalhos do Próximo Andar.
             ("CaveMenu", "Cave", FloorMenuLabel, FloorMenuHeight, new[]
             {
@@ -291,6 +288,15 @@ namespace MinersIdle.EditorTools
             {
                 Object.DestroyImmediate(dupla.gameObject);
                 Debug.Log("[Setup] Painel de debug: \"Comprar P. Dupla\" removido (a Dupla saiu no GDD v7, D-136).");
+                changed = true;
+            }
+
+            // M9g (D-311): o "Toques auto" saiu com o toque (estava na grade ou já no menu Efeitos).
+            var autoTap = FindButton(panel, "AutoTap");
+            if (autoTap != null)
+            {
+                Object.DestroyImmediate(autoTap.gameObject);
+                Debug.Log("[Setup] Painel de debug: \"Toques auto\" removido (o toque saiu no M9g, D-311).");
                 changed = true;
             }
 

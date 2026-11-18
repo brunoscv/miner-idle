@@ -143,38 +143,13 @@ namespace MinersIdle.Tests
                         "pela compra: Dano Base 1 + 1,2^1 (D-202); o andar 10 não entra");
         }
 
-        /// <summary>
-        /// M9b E3 (D-217): "Acúmulo" troca a soma dos marcos do combo (GDD) por só o do maior marco, sem recomeçar a run;
-        /// vale também depois de Reiniciar run (a simulação nova), e Padrão GDD volta à soma.
-        /// </summary>
+        /// <summary>M9g (D-311): o botão "Acúmulo" (os marcos do combo, D-217) saiu do DBG → Cálculos com o combo.</summary>
         [UnityTest]
-        public IEnumerator ComboStacking_SwitchesToTheHighestMilestone_AndSurvivesANewRun()
+        public IEnumerator ComboStackingButton_IsGone()
         {
             yield return Load();
-            if (_runner.Simulation.Strike.ComboBonuses.Count == 0)
-                Assert.Ignore("O balanço ativo não tem os marcos do combo (rode o setup: GDD v7).");
-            Assert.That(Label("ComboStacking"), Is.EqualTo("Acúmulo: soma"), "botão Acúmulo (rode o setup do projeto)");
-            Assert.That(_runner.Simulation.ComboStacking, Is.EqualTo(ComboStacking.Cumulative));
-
-            _runner.Simulation.SkipToCave(5);
-            Click("ComboStacking");
-            Assert.That(_runner.Calculation.ComboStacking, Is.EqualTo(ComboStacking.HighestOnly));
-            Assert.That(_runner.Simulation.ComboStacking, Is.EqualTo(ComboStacking.HighestOnly));
-            Assert.That(_runner.Simulation.State.Cave, Is.EqualTo(5), "não recomeça a run");
-            Assert.That(Label("ComboStacking"), Is.EqualTo("Acúmulo: maior"));
-            Assert.That(_warning.text, Is.EqualTo("Cálculo: GDD v8 · combo só o maior marco"));
-
-            _runner.Simulation.GrantComboBonuses(35);
-            Assert.That(_runner.Simulation.Bonuses.Count, Is.EqualTo(1), "só o do ×30");
-            Assert.That(_runner.Simulation.Bonuses.DamagePercent, Is.EqualTo(0.15).Within(1e-9));
-
-            Click("RestartRun");
-            Assert.That(_runner.Simulation.ComboStacking, Is.EqualTo(ComboStacking.HighestOnly), "a simulação nova segue a escolha");
-
-            Click("ResetDefaults");
-            Assert.That(_runner.Simulation.ComboStacking, Is.EqualTo(ComboStacking.Cumulative));
-            Assert.That(Label("ComboStacking"), Is.EqualTo("Acúmulo: soma"));
-            Assert.That(_warning.text, Is.EqualTo("Cálculo: GDD v8"));
+            Assert.That(_panel.transform.Find("CalcMenu/Content/Buttons/ComboStacking"), Is.Null,
+                        "sem o botão Acúmulo no DBG → Cálculos (rode o setup do projeto)");
         }
 
         /// <summary>D-256: sem o seletor, Padrão GDD não troca de balanço nem recomeça a run; a taxa da Picareta vale no v8.</summary>

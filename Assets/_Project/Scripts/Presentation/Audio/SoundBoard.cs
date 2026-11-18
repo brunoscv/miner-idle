@@ -5,7 +5,8 @@ using UnityEngine;
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Som provisório da mineração (M5, E4): um bipe para golpe, toque, crítico, quebra, compra e marco do combo. Só
+    /// Som provisório da mineração (M5, E4): um bipe para golpe, crítico, quebra, compra e marco (o
+    /// do toque e o do combo saíram no M9g, D-311; a faísca no dedo não tem som). Só
     /// escuta a simulação. Os clipes são sintetizados uma vez no <c>Awake</c> (<see cref="SfxSynth"/>) e tocam num pool
     /// fixo de <see cref="AudioSource"/>: nada é criado durante o jogo. Desligável no DBG; o volume vem dos AJUSTES (M9, E4).
     /// </summary>
@@ -79,8 +80,6 @@ namespace MinersIdle.Presentation
             simulation.HitLanded += OnHit;
             simulation.CrystalBroken += OnBroken;
             simulation.UpgradePurchased += OnPurchased;
-            simulation.ComboMilestone += OnComboMilestone;
-            simulation.ComboBonusesGranted += OnBonusesGranted;
             simulation.RareWindowChanged += OnRareWindowChanged;
             simulation.AdBoostGranted += OnAdBoostGranted;
         }
@@ -90,8 +89,6 @@ namespace MinersIdle.Presentation
             simulation.HitLanded -= OnHit;
             simulation.CrystalBroken -= OnBroken;
             simulation.UpgradePurchased -= OnPurchased;
-            simulation.ComboMilestone -= OnComboMilestone;
-            simulation.ComboBonusesGranted -= OnBonusesGranted;
             simulation.RareWindowChanged -= OnRareWindowChanged;
             simulation.AdBoostGranted -= OnAdBoostGranted;
         }
@@ -100,15 +97,12 @@ namespace MinersIdle.Presentation
 
         void OnHit(MiningHit hit)
         {
-            Play(hit.IsTap ? Sfx.Tap : Sfx.Hit, 1f + Random.Range(-pitchJitter, pitchJitter));
+            Play(Sfx.Hit, 1f + Random.Range(-pitchJitter, pitchJitter));
             if (hit.IsCritical) Play(Sfx.Critical);
         }
 
         void OnBroken(Crystal crystal) => Play(Sfx.Break);
         void OnPurchased(UpgradeId id, int level) => Play(Sfx.Purchase);
-        void OnComboMilestone(int combo) => Play(Sfx.Milestone);
-        /// <summary>O ganho do combo (M9b, D-215) usa o som de marco que já existe.</summary>
-        void OnBonusesGranted(int combo, IReadOnlyList<ComboBonusRule> granted) => Play(Sfx.Milestone);
 
         /// <summary>Um raro quebrou (D-225): a janela abre, ou ganha um na fila, com o som de marco.</summary>
         void OnRareWindowChanged(RareWindow window)

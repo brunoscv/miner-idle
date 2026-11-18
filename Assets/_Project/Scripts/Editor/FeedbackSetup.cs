@@ -24,7 +24,6 @@ namespace MinersIdle.EditorTools
         const string FlashName = "Flash";
 
         static readonly Color ShardColor = new Color32(0xC2, 0x3C, 0xFF, 0xFF);
-        static readonly Color ComboColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         static readonly Color CaveBannerColor = new Color32(0xFF, 0xD0, 0x6A, 0xFF);
         const string CaveBannerName = "CaveBanner";
 
@@ -47,8 +46,6 @@ namespace MinersIdle.EditorTools
             var texts = ScriptableObject.CreateInstance<FeedbackTexts>();
             var so = new SerializedObject(texts);
             so.FindProperty("criticalLabel").stringValue = "CRÍTICO!";
-            so.FindProperty("comboFormat").stringValue = "x{0}";
-            so.FindProperty("milestoneFormat").stringValue = "x{0}!";
             so.FindProperty("caveBannerFormat").stringValue = CaveBannerFormat;
             SetHeartTexts(so);
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -338,20 +335,24 @@ namespace MinersIdle.EditorTools
                 var lascas = GameObject.Find("Hud")?.transform.Find("Lascas") as RectTransform;
                 GrayboxSetup.SetReferences(flight, ("shardTemplate", shardTemplate), ("target", lascas), ("worldCamera", camera));
 
-                var combo = WorldText(effects.transform, "Combo", 5f);
-                combo.color = ComboColor;
-                combo.sortingOrder = 31200;
-                combo.gameObject.SetActive(false);
-
                 var feedback = effects.AddComponent<MiningFeedbackView>();
                 GrayboxSetup.SetReferences(feedback,
                     ("runner", mining.GetComponent<MiningRunner>()), ("texts", texts),
                     ("tapInput", mining.GetComponent<TapInput>()),
                     ("stage", Object.FindAnyObjectByType<DescentStage>()),
                     ("worldCamera", camera), ("screenShake", camera.GetComponent<ScreenShake>()),
-                    ("sparks", sparks), ("floatingTexts", floating), ("shardFlight", flight), ("comboText", combo));
+                    ("sparks", sparks), ("floatingTexts", floating), ("shardFlight", flight));
 
                 Debug.Log("[Setup] Efeitos de feedback criados na cena Game.");
+                changed = true;
+            }
+
+            // M9g (D-311): o "xN" do combo saiu.
+            var oldCombo = mining.transform.Find(EffectsName + "/Combo");
+            if (oldCombo != null)
+            {
+                Object.DestroyImmediate(oldCombo.gameObject);
+                Debug.Log("[Setup] Feedback: sai o \"xN\" do combo (M9g, D-311).");
                 changed = true;
             }
 

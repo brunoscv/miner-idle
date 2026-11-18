@@ -19,14 +19,16 @@ namespace MinersIdle.Tests
         DescentStage _stage;
         MiningRunner _runner;
 
-        IEnumerator Load()
+        IEnumerator Load(bool bomb = false)
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 "Assets/_Project/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
             _stage = Object.FindAnyObjectByType<DescentStage>();
             _runner = Object.FindAnyObjectByType<MiningRunner>();
-            _runner.UseRules(TestBalance.GddV5); // a pose e o golpe pedem cristais de vários golpes (no v7 morrem num só)
+            // A pose e o golpe pedem cristais de vários golpes (no v7 morrem num só); a quebra no meio da picaretada, a
+            // bomba de teste (era o toque, que saiu no M9g, D-311).
+            _runner.UseRules(bomb ? TestBalance.GddV5WithBomb() : TestBalance.GddV5);
             yield return null;
             if (_stage.DwarfFrame < 0) Assert.Ignore("Sem as folhas do anão na cena (rode o setup).");
         }
@@ -57,14 +59,14 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// O toque quebra o cristal antes da picareta descer: o anão faz mesmo assim uma picaretada completa (pedido do
-        /// Bruno), com o quadro de impacto, antes de seguir correndo. Só existe com o golpe um intervalo depois da chegada
-        /// (Wait); com o golpe na chegada (D-124) ele já bateu, e o caso é o teste seguinte.
+        /// A bomba quebra o cristal antes da picareta descer: o anão faz mesmo assim uma picaretada completa (pedido do
+        /// Bruno, do tempo do toque), com o quadro de impacto, antes de seguir correndo. Só existe com o golpe um intervalo
+        /// depois da chegada (Wait); com o golpe na chegada (D-124) ele já bateu, e o caso é o teste seguinte.
         /// </summary>
         [UnityTest]
-        public IEnumerator TapBreak_StillShowsAFullSwing()
+        public IEnumerator BombBreak_StillShowsAFullSwing()
         {
-            yield return Load();
+            yield return Load(bomb: true);
             _runner.ArrivalStrike = ArrivalStrike.Wait;
             var simulation = _runner.Simulation;
             float timeout = Time.realtimeSinceStartup + 20f;
@@ -74,9 +76,10 @@ namespace MinersIdle.Tests
             int broken = 0;
             void OnBroken(Crystal crystal) => broken++;
             simulation.CrystalBroken += OnBroken;
-            while (broken == 0 && Time.realtimeSinceStartup < timeout) simulation.Tap();
+            simulation.FillBomb();
+            Assert.That(simulation.ThrowBomb(), Is.True, "a bomba sai");
             simulation.CrystalBroken -= OnBroken;
-            Assert.That(broken, Is.EqualTo(1), "o toque quebrou o cristal");
+            Assert.That(broken, Is.EqualTo(1), "a bomba quebrou o cristal");
 
             bool finishing = false, impact = false;
             float end = Time.realtimeSinceStartup + 1f;
@@ -91,14 +94,14 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// Golpe na chegada (D-124, A2) com o jogador tocando (achado do Bruno em 2026-11-02): o toque quebra cristais o
-        /// tempo todo, e a despedida repetia o golpe que o anão já tinha dado, com ele deslizando com a picareta. Agora,
-        /// correndo, nunca a despedida: só a passada, o levantar antes da chegada ou a parada da quebra.
+        /// Golpe na chegada (D-124, A2) com cristais quebrando o tempo todo (achado do Bruno em 2026-11-02, com o toque;
+        /// desde o M9g, a bomba): a despedida repetia o golpe que o anão já tinha dado, com ele deslizando com a picareta.
+        /// Agora, correndo, nunca a despedida: só a passada, o levantar antes da chegada ou a parada da quebra.
         /// </summary>
         [UnityTest]
-        public IEnumerator ArrivalStrike_Tapping_RunsStraightWithoutRepeatingTheSwing()
+        public IEnumerator ArrivalStrike_Bombing_RunsStraightWithoutRepeatingTheSwing()
         {
-            yield return Load();
+            yield return Load(bomb: true);
             _runner.ArrivalStrike = ArrivalStrike.Immediate;
             _stage.StrikeFeel = true;
             var simulation = _runner.Simulation;
@@ -110,7 +113,11 @@ namespace MinersIdle.Tests
             float timeout = Time.realtimeSinceStartup + 20f;
             while ((breaks < 4 || runningFrames < 20) && Time.realtimeSinceStartup < timeout)
             {
-                simulation.Tap(); // um toque por quadro: o teto de 15/s segura o resto
+                if (simulation.Miner.State == MinerState.Mining)
+                {
+                    simulation.FillBomb();
+                    simulation.ThrowBomb(); // depois da picaretada da chegada
+                }
                 yield return null;
                 if (simulation.Miner.State != MinerState.Running) continue;
                 runningFrames++;
@@ -120,18 +127,18 @@ namespace MinersIdle.Tests
             }
             simulation.CrystalBroken -= OnBroken;
 
-            Assert.That(breaks, Is.GreaterThanOrEqualTo(4), "quebrou cristais tocando");
+            Assert.That(breaks, Is.GreaterThanOrEqualTo(4), "quebrou cristais com a bomba");
             Assert.That(runningFrames, Is.GreaterThanOrEqualTo(20), "viu o anão correr entre eles");
         }
 
         /// <summary>
-        /// D-126 (escolha do Bruno em 2026-11-02): o toque quebra o cristal no meio da picaretada e o anão termina o golpe
-        /// parado, com a folha de mineração, igual à picaretada no cristal vivo; só depois corre.
+        /// D-126 (escolha do Bruno em 2026-11-02): a bomba (era o toque) quebra o cristal no meio da picaretada e o anão
+        /// termina o golpe parado, com a folha de mineração, igual à picaretada no cristal vivo; só depois corre.
         /// </summary>
         [UnityTest]
-        public IEnumerator TapBreak_MidSwing_FinishesTheSwingStanding()
+        public IEnumerator BombBreak_MidSwing_FinishesTheSwingStanding()
         {
-            yield return Load();
+            yield return Load(bomb: true);
             _runner.ArrivalStrike = ArrivalStrike.Immediate;
             _stage.StrikeFeel = true;
             var simulation = _runner.Simulation;
@@ -145,7 +152,11 @@ namespace MinersIdle.Tests
             while (recoveries < 2 && Time.realtimeSinceStartup < timeout)
             {
                 var state = simulation.Miner.State;
-                if (state == MinerState.Mining) simulation.Tap(); // só toca depois da picaretada da chegada
+                if (state == MinerState.Mining)
+                {
+                    simulation.FillBomb();
+                    simulation.ThrowBomb(); // só depois da picaretada da chegada
+                }
                 yield return null;
                 state = simulation.Miner.State;
                 if (state == MinerState.Mining) mineSheet = _stage.DwarfSheet;

@@ -65,7 +65,7 @@ namespace MinersIdle.Tests
             internPickaxeGrowth: 2);
 
         static StrikeRules Strike(IEnumerable<RareCardRule> cards = null) =>
-            new StrikeRules(0, 1.5, 0.33, 1, rare: new RareRules(0, 0, 30, cards ?? Tier1, 60, cards == null ? Tier2 : null),
+            new StrikeRules(0, 1.5, rare: new RareRules(0, 0, 30, cards ?? Tier1, 60, cards == null ? Tier2 : null),
                             ads: Ads);
 
         static readonly UpgradeDefinition Off = new UpgradeDefinition(0, 1, 0, 0);
@@ -190,7 +190,7 @@ namespace MinersIdle.Tests
         [Test]
         public void WithoutAdsInTheBalance_NothingToWatch()
         {
-            var sim = Sim(strike: new StrikeRules(0, 1.5, 0.33, 1));
+            var sim = Sim(strike: new StrikeRules(0, 1.5));
             foreach (AdKind kind in Enum.GetValues(typeof(AdKind)))
             {
                 Assert.That(sim.CanWatch(kind), Is.False);

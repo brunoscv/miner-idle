@@ -1,16 +1,15 @@
 using System.Collections.Generic;
 using MinersIdle.Core;
 using MinersIdle.Game;
-using TMPro;
 using UnityEngine;
 
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Feedback de mineração (M5, E3; REQ-UI-05: cor, forma e movimento). Só escuta a simulação e o toque e escolhe a
-    /// reação; nenhuma regra mora aqui. Golpe: o cristal treme e solta faíscas. Toque: tremor menor, faísca no cristal e
-    /// no dedo. Crítico: "CRÍTICO!" amarelo perto do anão e tremor de tela. Combo: "xN" pulsando sobre o anão, "pop" nos
-    /// múltiplos de 10. Quebra: tremor leve e a lasca voando até o HUD. Com toques muito rápidos, os tremores diminuem.
+    /// Feedback de mineração (M5, E3; REQ-UI-05: cor, forma e movimento). Só escuta a simulação e o dedo e escolhe a
+    /// reação; nenhuma regra mora aqui. Golpe: o cristal treme e solta faíscas. Dedo na tela: só a faísca no dedo (o toque
+    /// e o combo saíram no M9g, D-311). Crítico: "CRÍTICO!" amarelo perto do anão e tremor de tela. Quebra: tremor leve e
+    /// a lasca voando até o HUD.
     ///
     /// M6 (E4): na vista de frente o anão e o cristal ficam muitas vezes maiores na tela que no mapa visto de cima; as
     /// faíscas, os textos e a lasca crescem por <see cref="sizeScale"/>. <see cref="Intensity"/> (DBG) multiplica
@@ -22,8 +21,7 @@ namespace MinersIdle.Presentation
     /// M7 (E2, D-171): o golpe do estagiário é mais leve que o do anão: poucas faíscas cinza, o cristal treme pouco, sem
     /// tremor de tela; o dano sai no cristal, num número menor e cinza.
     ///
-    /// M9b (E2, D-215): ao zerar o combo com bônus, o ganho sobe de onde estava o "xN" ("+25% DANO", "CRÍTICO GARANTIDO");
-    /// no marco com texto grande no catálogo (o ×100), "FRENESI!" maior, com tremor leve. Sem vibração.
+    /// M9b (E4, E5): a carta do raro e o boost do AD sobem do anão em âmbar ("DANO ×2").
     ///
     /// M9g (D-316): a bomba estoura em cada cristal que pegou: faíscas laranja e amarelas, o cristal treme forte, o dano
     /// sobe em laranja e a tela treme uma vez por bomba (não uma por cristal).
@@ -35,10 +33,7 @@ namespace MinersIdle.Presentation
         static readonly Color CriticalColor = new Color32(0xFF, 0xE0, 0x3A, 0xFF);
         static readonly Color MilestoneColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         static readonly Color InternColor = new Color32(0xB8, 0xBC, 0xC2, 0xFF);
-        static readonly Color HeadlineColor = new Color32(0xE8, 0x4A, 0x2A, 0xFF);
         static readonly Color BombColor = new Color32(0xFF, 0x7A, 0x1F, 0xFF);
-
-        const float ComboPulseSeconds = 0.15f;
 
         [SerializeField] FeedbackTexts texts;
         [SerializeField] TapInput tapInput;
@@ -49,9 +44,7 @@ namespace MinersIdle.Presentation
         [SerializeField] SparkBurst sparks;
         [SerializeField] FloatingTexts floatingTexts;
         [SerializeField] ShardFlight shardFlight;
-        [Tooltip("O \"xN\" que fica sobre o anão enquanto o combo dura.")]
-        [SerializeField] TextMeshPro comboText;
-        [Tooltip("Os textos do ganho e o texto grande de cada marco (M9b).")]
+        [Tooltip("Os textos do ganho da carta do raro e do AD (M9b).")]
         [SerializeField] BuffCatalog buffs;
 
         [Header("Força na vista de frente (M6, E4)")]
@@ -66,22 +59,9 @@ namespace MinersIdle.Presentation
         [SerializeField] float criticalShakeSeconds = 0.3f;
         [SerializeField] float breakShake = 0.5f;
         [SerializeField] float breakShakeSeconds = 0.25f;
-        [SerializeField] float milestoneShake = 0.25f;
-        [SerializeField] float milestoneShakeSeconds = 0.2f;
-        [Tooltip("No texto grande do ganho (o \"FRENESI!\" do ×100, D-215).")]
-        [SerializeField] float headlineShake = 0.35f;
-        [SerializeField] float headlineShakeSeconds = 0.35f;
         [Tooltip("O estouro da bomba (M9g, D-316): uma vez por lançamento.")]
         [SerializeField] float bombShake = 0.6f;
         [SerializeField] float bombShakeSeconds = 0.3f;
-        [Tooltip("Com muitos toques por segundo, os tremores caem até esta fração (1 = nunca diminuem).")]
-        [SerializeField, Range(0f, 1f)] float minCalm = 0.6f;
-
-        // Ritmo de toques: os últimos instantes de toque, para os tremores diminuírem quando o dedo vai muito rápido.
-        readonly float[] _recentTaps = new float[16];
-        int _tapCursor;
-        float _comboPulse;
-
         float _intensity = 1f;
 
         /// <summary>Multiplica quantidades e tremores (o ajuste "Intensidade dos efeitos" do DBG, M6 E4).</summary>
@@ -97,12 +77,8 @@ namespace MinersIdle.Presentation
         /// <summary>A cor do número dos golpes do estagiário (cinza, D-171).</summary>
         public static Color InternNumberColor => InternColor;
 
-        public bool IsComboShown => comboText.gameObject.activeSelf;
-        public string ComboShown => comboText.text;
-
-        /// <summary>O último texto do ganho e o último texto grande (M9b; para testes). <c>null</c> = nenhum.</summary>
+        /// <summary>O último texto do ganho (a carta do raro ou o AD; para testes). <c>null</c> = nenhum.</summary>
         public string LastGainText { get; private set; }
-        public string LastHeadline { get; private set; }
 
         protected override void OnEnable()
         {
@@ -121,9 +97,6 @@ namespace MinersIdle.Presentation
             simulation.HitLanded += OnHit;
             simulation.InternHitLanded += OnInternHit;
             simulation.CrystalBroken += OnBroken;
-            simulation.ComboChanged += OnComboChanged;
-            simulation.ComboMilestone += OnComboMilestone;
-            simulation.ComboBonusesGranted += OnBonusesGranted;
             simulation.RareCardApplied += OnRareCardApplied;
             simulation.AdBoostGranted += OnAdBoostGranted;
             simulation.BombHitLanded += OnBombHit;
@@ -135,29 +108,13 @@ namespace MinersIdle.Presentation
             simulation.HitLanded -= OnHit;
             simulation.InternHitLanded -= OnInternHit;
             simulation.CrystalBroken -= OnBroken;
-            simulation.ComboChanged -= OnComboChanged;
-            simulation.ComboMilestone -= OnComboMilestone;
-            simulation.ComboBonusesGranted -= OnBonusesGranted;
             simulation.RareCardApplied -= OnRareCardApplied;
             simulation.AdBoostGranted -= OnAdBoostGranted;
             simulation.BombHitLanded -= OnBombHit;
             simulation.BombLanded -= OnBombLanded;
         }
 
-        protected override void Rebuild(MiningSimulation simulation) => OnComboChanged(simulation.Combo);
-
-        void LateUpdate()
-        {
-            if (!comboText.gameObject.activeSelf) return;
-
-            comboText.transform.position = stage.MinerOnScreen + Vector3.up * (0.8f * sizeScale);
-            if (_comboPulse <= 0f) return;
-            _comboPulse = Mathf.Max(0f, _comboPulse - Time.unscaledDeltaTime / ComboPulseSeconds);
-            comboText.transform.localScale = Vector3.one * (ComboScale * (1f + 0.35f * _comboPulse));
-        }
-
-        /// <summary>O "xN" cresce menos que os outros efeitos: fica sobre o anão o tempo todo do combo.</summary>
-        float ComboScale => sizeScale * 0.6f;
+        protected override void Rebuild(MiningSimulation simulation) { }
 
         /// <summary>Quantas peças, com a intensidade do DBG (pelo menos uma).</summary>
         int Count(int baseCount) => Mathf.Max(1, Mathf.RoundToInt(baseCount * _intensity));
@@ -165,26 +122,18 @@ namespace MinersIdle.Presentation
         void OnHit(MiningHit hit)
         {
             var at = stage.CrystalOnScreen(hit.Crystal);
-            float calm = Calm();
             float size = SparkBurst.DefaultSize * sizeScale;
 
-            stage.Shake(hit.Crystal, (hit.IsTap ? 0.05f : 0.1f) * calm * _intensity); // metros no corredor
+            stage.Shake(hit.Crystal, 0.1f * _intensity); // metros no corredor
             ShowCrack(hit, at);
-            if (hit.IsTap)
-            {
-                sparks.Emit(at, Count(4), TapSparkColor, 3f * sizeScale, size * 0.8f);
-            }
-            else
-            {
-                sparks.Emit(at, Count(9), HitSparkColor, 4f * sizeScale, size);
-                screenShake.Shake(hitShake * calm * _intensity, hitShakeSeconds);
-            }
+            sparks.Emit(at, Count(9), HitSparkColor, 4f * sizeScale, size);
+            screenShake.Shake(hitShake * _intensity, hitShakeSeconds);
 
             if (!hit.IsCritical) return;
             sparks.Emit(at, Count(18), CriticalColor, 6f * sizeScale, size * 1.4f, 0.5f);
             var near = stage.MinerOnScreen + (Vector3)(Random.insideUnitCircle * 1.2f * sizeScale) + Vector3.up * (0.5f * sizeScale);
             floatingTexts.Show(texts.CriticalLabel, near, CriticalColor, 1.05f * sizeScale * 0.65f, 0.85f, 1.2f * sizeScale); // um pouco menor (pedido do Bruno)
-            screenShake.Shake(criticalShake * calm * _intensity, criticalShakeSeconds);
+            screenShake.Shake(criticalShake * _intensity, criticalShakeSeconds);
         }
 
         /// <summary>
@@ -248,9 +197,6 @@ namespace MinersIdle.Presentation
 
         void OnTapped(Vector2 screenPosition)
         {
-            _recentTaps[_tapCursor] = Time.unscaledTime;
-            _tapCursor = (_tapCursor + 1) % _recentTaps.Length;
-
             var world = worldCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, -worldCamera.transform.position.z));
             sparks.Emit(new Vector3(world.x, world.y, 0f), Count(3), TapSparkColor, 2f * sizeScale, SparkBurst.DefaultSize * sizeScale * 0.6f);
         }
@@ -258,70 +204,15 @@ namespace MinersIdle.Presentation
         void OnBroken(Crystal crystal)
         {
             var at = stage.CrystalOnScreen(crystal);
-            float calm = Calm();
             float size = SparkBurst.DefaultSize * sizeScale;
             Color shards = stage.ShardColorOf(crystal);
 
-            screenShake.Shake(breakShake * calm * _intensity, breakShakeSeconds);
+            screenShake.Shake(breakShake * _intensity, breakShakeSeconds);
             sparks.Emit(at, Count(10), HitSparkColor, 5f * sizeScale, size);
             sparks.Emit(at, Count(18), shards, 6f * sizeScale, size * 2f, 0.6f); // estilhaços na cor do cristal
             shardFlight.Launch(at, sizeScale * 0.7f);
         }
 
-        void OnComboChanged(int combo)
-        {
-            bool show = combo > 1; // "x1" não diz nada; o combo aparece a partir do 2º toque
-            comboText.gameObject.SetActive(show);
-            if (!show) return;
-
-            comboText.SetText(texts.ComboFormat, combo);
-            _comboPulse = 1f;
-        }
-
-        void OnComboMilestone(int combo)
-        {
-            floatingTexts.ShowNumber(texts.MilestoneFormat, combo, stage.MinerOnScreen + Vector3.up * (1.6f * sizeScale),
-                                     MilestoneColor, 1.6f * sizeScale * 0.65f, 0.9f, 1.5f * sizeScale);
-            screenShake.Shake(milestoneShake * _intensity, milestoneShakeSeconds);
-        }
-
-        /// <summary>
-        /// O ganho ao zerar o combo (D-215): a soma do dano que entrou e/ou o crítico garantido, subindo de onde estava o
-        /// "xN"; com o texto grande de um marco (o "FRENESI!"), ele sobe acima, maior, com tremor leve (obedece aos AJUSTES).
-        /// </summary>
-        void OnBonusesGranted(int combo, IReadOnlyList<ComboBonusRule> granted)
-        {
-            if (buffs == null) return;
-            double damage = 0;
-            bool critical = false;
-            string headline = null;
-            for (int i = 0; i < granted.Count; i++)
-            {
-                var rule = granted[i];
-                if (rule.Kind == BonusKind.DamagePercent) damage += rule.Value;
-                else if (rule.Kind == BonusKind.GuaranteedCritical) critical = true;
-                var entry = buffs.Find(BonusSource.Combo, rule.Combo);
-                if (entry != null && !string.IsNullOrEmpty(entry.Headline)) headline = entry.Headline;
-            }
-
-            string gain = damage > 0 && critical ? string.Format(buffs.GainBothFormat, NumberFormatter.FormatPercent(damage))
-                        : damage > 0 ? string.Format(buffs.GainDamageFormat, NumberFormatter.FormatPercent(damage))
-                        : critical ? buffs.GainCritical
-                        : null;
-            var at = stage.MinerOnScreen + Vector3.up * (0.8f * sizeScale);
-            if (gain != null)
-                floatingTexts.Show(gain, at, MilestoneColor, 0.9f * sizeScale * 0.65f, 1.2f, 1.2f * sizeScale);
-            if (headline != null)
-            {
-                floatingTexts.Show(headline, at + Vector3.up * (0.9f * sizeScale), HeadlineColor, 1.8f * sizeScale * 0.65f, 1.3f,
-                                   1.4f * sizeScale);
-                screenShake.Shake(headlineShake * _intensity, headlineShakeSeconds);
-            }
-            LastGainText = gain;
-            LastHeadline = headline;
-        }
-
-        /// <summary>A carta do raro entrou (D-225): o nome dela sobe do anão em âmbar ("DANO ×2"), como o ganho do combo.</summary>
         /// <summary>A carta escolhida sobe do anão com o efeito no tier de agora ({0}: "DANO ×2", ×4 no tier 2; M9e E1).</summary>
         void OnRareCardApplied(RareCard card)
         {
@@ -344,16 +235,6 @@ namespace MinersIdle.Presentation
             floatingTexts.Show(gain, stage.MinerOnScreen + Vector3.up * (0.8f * sizeScale), MilestoneColor,
                                0.9f * sizeScale * 0.65f, 1.2f, 1.2f * sizeScale);
             LastGainText = gain;
-        }
-
-        /// <summary>1 com toques calmos; cai até <see cref="minCalm"/> quando há muitos toques no último segundo.</summary>
-        float Calm()
-        {
-            float now = Time.unscaledTime;
-            int recent = 0;
-            for (int i = 0; i < _recentTaps.Length; i++)
-                if (_recentTaps[i] > 0f && now - _recentTaps[i] < 1f) recent++;
-            return Mathf.Lerp(1f, minCalm, Mathf.Clamp01((recent - 4) / 8f));
         }
     }
 }

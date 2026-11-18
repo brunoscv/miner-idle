@@ -189,8 +189,9 @@ namespace MinersIdle.Tests
                         Is.EqualTo(new[] { "Speed1", "Speed5", "Speed20", "Camera", "Shop", "Effects", "Cave", "Calc", "Day", "Intern", "Offline", "Bonus" }),
                         "o DBG fica só com o tempo, a câmera e os menus (Cálculos desde a E3b-3, Dia desde o Marco 8b, Estagiário desde o M7, Offline desde o M9, Bônus desde o M9b)");
             Assert.That(_panel.transform.Find("ShopMenu/Content/Buttons/BuyDoublePickaxe"), Is.Null, "a Dupla saiu (D-136)");
-            foreach (var name in new[] { "AutoTap", "ForceCritical", "Shake", "Sound" })
+            foreach (var name in new[] { "ForceCritical", "Shake", "Sound" })
                 Assert.That(_panel.transform.Find("EffectsMenu/Content/Buttons/" + name), Is.Not.Null, name);
+            Assert.That(_panel.transform.Find("EffectsMenu/Content/Buttons/AutoTap"), Is.Null, "os toques auto saíram (D-311)");
             foreach (var name in new[] { "BreakTarget", "NextCave", "SaveNow", "RestartSameSeed", "RestartNewSeed", "DeleteSave", "ResetStats" })
                 Assert.That(_panel.transform.Find("CaveMenu/Content/Buttons/" + name), Is.Not.Null, name);
 

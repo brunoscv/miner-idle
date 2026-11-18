@@ -6,7 +6,6 @@ namespace MinersIdle.Presentation
     public enum Sfx
     {
         Hit,
-        Tap,
         Critical,
         Break,
         Purchase,
@@ -68,11 +67,6 @@ namespace MinersIdle.Presentation
                     {
                         new Note(0f, 0.22f, Wave.Whoosh, 1400f, 5000f, 1.1f),
                         new Note(0f, 0.04f, Wave.Triangle, 2600f, 2400f, 0.06f),
-                    };
-                case Sfx.Tap: // "shiu" curto e mais agudo do dedo
-                    return new[]
-                    {
-                        new Note(0f, 0.13f, Wave.Whoosh, 2500f, 7000f, 0.85f),
                     };
                 case Sfx.Critical: // duas notas subindo, com estalo
                     return new[]

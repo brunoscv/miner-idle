@@ -103,31 +103,9 @@ MonoBehaviour:
     maxLevel: 10
     effect: 1
   critChance: 0
-  tapCritChance: 0.05
   critMultiplier: 2
-  tapFraction: 0.33
-  comboWindow: 1
-  maxTapsPerSecond: 15
-  tapReach: 3.9
   arrivalStrike: 2
   swingRecovery: 0.72
-  comboBonuses:
-  - combo: 10
-    kind: 0
-    value: 0.1
-    seconds: 5
-  - combo: 30
-    kind: 0
-    value: 0.15
-    seconds: 10
-  - combo: 50
-    kind: 1
-    value: 0
-    seconds: 20
-  - combo: 100
-    kind: 0
-    value: 0.5
-    seconds: 30
   rareChance: 0.15
   rareSlowChance: 0.02
   rareChooseSeconds: 30

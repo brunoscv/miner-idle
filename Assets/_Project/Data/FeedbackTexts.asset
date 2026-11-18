@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: FeedbackTexts
   m_EditorClassIdentifier: MinersIdle.Game::MinersIdle.Game.FeedbackTexts
   criticalLabel: "CR\xCDTICO!"
-  comboFormat: x{0}
-  milestoneFormat: x{0}!
   caveBannerFormat: 'ANDAR {0}
 
     <size=50%>{1}</size>'

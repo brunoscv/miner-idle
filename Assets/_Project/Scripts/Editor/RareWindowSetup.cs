@@ -50,7 +50,7 @@ namespace MinersIdle.EditorTools
         static readonly (RareCard card, string icon, string title, string gain, string text, string note, bool intern)[] Cards =
         {
             (RareCard.Damage, UiSkinSetup.IconsFolder + "/Icon23.png", "DANO {0}", "DANO {0}",
-             "Golpe e toque\ncom {0}\nde dano", "Vale p/ o estagiário", true),
+             "Golpe\ncom {0}\nde dano", "Vale p/ o estagiário", true),
             (RareCard.Speed, "Assets/_Project/Art/UI/icon_speed.png", "RÁPIDO", "RÁPIDO",
              "Golpe 2× mais\nrápido (o tempo\ndo golpe ÷ 2)", "Vale p/ o estagiário", true),
             (RareCard.Shards, "Assets/_Project/Art/Crystals/icon_crystal.png", "LASCAS {0}", "LASCAS {0}",
@@ -88,7 +88,7 @@ namespace MinersIdle.EditorTools
             else root.transform.SetAsLastSibling();
             Stretch((RectTransform)root.transform);
 
-            // O fundo escurece e bloqueia os toques no mapa (D-223): o TapInput não minera com a UI por cima.
+            // O fundo escurece e bloqueia os toques no mapa (D-223): a faísca do dedo não sai com a UI por cima.
             var screen = new GameObject("Screen", typeof(RectTransform), typeof(Image));
             screen.transform.SetParent(root.transform, false);
             Stretch((RectTransform)screen.transform);
@@ -246,7 +246,7 @@ namespace MinersIdle.EditorTools
                     for (int i = 0; i < list.arraySize; i++)
                     {
                         var old = list.GetArrayElementAtIndex(i);
-                        if (old.FindPropertyRelative("source").enumValueIndex != (int)BonusSource.Rare
+                        if (old.FindPropertyRelative("source").intValue != (int)BonusSource.Rare
                             || old.FindPropertyRelative("tier").intValue != (int)card) continue;
                         old.FindPropertyRelative("title").stringValue = title;
                         old.FindPropertyRelative("description").stringValue = text.Replace('\n', ' ');
@@ -259,7 +259,7 @@ namespace MinersIdle.EditorTools
                 int index = list.arraySize;
                 list.arraySize = index + 1;
                 var item = list.GetArrayElementAtIndex(index);
-                item.FindPropertyRelative("source").enumValueIndex = (int)BonusSource.Rare;
+                item.FindPropertyRelative("source").intValue = (int)BonusSource.Rare;
                 item.FindPropertyRelative("tier").intValue = (int)card;
                 item.FindPropertyRelative("icon").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(icon);
                 item.FindPropertyRelative("title").stringValue = title;

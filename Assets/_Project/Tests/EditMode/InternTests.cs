@@ -52,7 +52,7 @@ namespace MinersIdle.Tests
         static MiningSimulation Sim(MiningRules rules = null, GameState state = null, PermanentState permanent = null,
                                     EconomyRules economy = null) =>
             new MiningSimulation(rules ?? Rules(), new SeededRandom(7), state, economy ?? V7(),
-                                 new StrikeRules(0, 2, 0.33, 1, tapCritChance: 0.05),
+                                 new StrikeRules(0, 2),
                                  new Permanents(V7Permanents(), permanent ?? new PermanentState()));
 
         static GameState With(params (UpgradeId id, int level)[] levels)
@@ -310,17 +310,17 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// A matriz do Roadmap, no lugar de casos soltos: uma partida longa com a fila nascendo, toques que quebram cristais
-        /// no meio da picaretada (D-126) e compras dos dois. O estagiário só bate com o anão batendo, sempre no alvo dele,
+        /// A matriz do Roadmap, no lugar de casos soltos: uma partida longa com a fila nascendo e compras dos dois
+        /// (os toques que quebravam no meio da picaretada saíram com o toque, M9g, D-311). O estagiário só bate com o anão batendo, sempre no alvo dele,
         /// nunca num cristal já quebrado, e cada cristal quebra (e paga) uma vez.
         /// </summary>
         [Test]
-        public void LongSession_WithTaps_NeverDoublesATarget_NorHitsAFallenCrystal()
+        public void LongSession_NeverDoublesATarget_NorHitsAFallenCrystal()
         {
             var rules = new MiningRules(
                 initialCrystals: 6, firstCrystalDistance: 3, maxCrystals: 10, spawnInterval: 0.8, minCrystalSpacing: 2,
                 spawnDistance: 12, crystalHealth: 6, crystalReward: 1, damage: 1, hitInterval: 2, walkSpeed: 4,
-                miningRange: 1, minCrystals: 3, arrivalStrike: ArrivalStrike.Charge, swingRecovery: 0.72, tapReach: 3.9);
+                miningRange: 1, minCrystals: 3, arrivalStrike: ArrivalStrike.Charge, swingRecovery: 0.72);
             var sim = Sim(rules);
             sim.HireIntern();
             var broken = new HashSet<Crystal>();
@@ -337,11 +337,9 @@ namespace MinersIdle.Tests
                 Assert.That(broken.Contains(hit.Crystal), Is.False, "nunca num cristal que caiu");
             };
 
-            var random = new System.Random(3);
             for (int step = 0; step < 6000; step++)
             {
                 sim.Tick(0.05);
-                if (random.NextDouble() < 0.3) sim.Tap();
                 if (step % 400 == 0)
                 {
                     sim.AddShards(5000);

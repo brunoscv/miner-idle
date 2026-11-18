@@ -9,7 +9,7 @@ namespace MinersIdle.UI
     /// Os números da partida: LASCAS e VERMELHAS no HUD do alto, o andar na etiqueta da barra do andar e DANO e VELOCIDADE
     /// no alto da LOJA (M9d E3, D-278: o HUD do v8 só tem as lascas). Os rótulos ficam na cena (dados); aqui só os valores,
     /// todos pelo <see cref="NumberFormatter"/>. DANO e VELOCIDADE são os atributos atuais (com melhorias, M3). Atualiza
-    /// por evento, nunca por quadro. M5: LASCAS pulsa quando a lasca voadora chega; o HUD treme nos marcos do combo.
+    /// por evento, nunca por quadro. M5: LASCAS pulsa quando a lasca voadora chega (o HUD tremia nos marcos do combo, que saiu no M9g).
     /// M9b (E2, D-216): o DANO já vem com os bônus de dano e fica âmbar enquanto houver algum.
     /// </summary>
     public sealed class HudView : MiningViewBase
@@ -28,14 +28,10 @@ namespace MinersIdle.UI
         [SerializeField] Color boostedSpeedColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
 
         const float PulseSeconds = 0.2f;
-        const float ShakeSeconds = 0.2f;
 
-        RectTransform _rect;
-        Vector2 _basePosition;
         Color _damageColor;
         Color _speedColor;
         float _pulse;
-        float _shake;
 
         /// <summary>Se LASCAS está pulsando agora (para testes).</summary>
         public bool IsShardsPulsing => _pulse > 0f;
@@ -54,13 +50,11 @@ namespace MinersIdle.UI
         /// <summary>A VELOCIDADE está âmbar (boost do AD ou carta Rápido; para testes).</summary>
         public bool IsSpeedBoosted => speedValue.color == boostedSpeedColor && _speedColor != boostedSpeedColor;
 
-        /// <summary>Um bônus de dano vale agora: os +% do combo ou a carta "Dano ×2" do raro (D-216).</summary>
+        /// <summary>Um bônus de dano vale agora: um +% de dano ou a carta "Dano ×2" do raro (D-216).</summary>
         bool DamageBoosted => Simulation != null && (Simulation.Bonuses.DamagePercent > 0 || Simulation.Bonuses.DamageMultiplier > 1);
 
         void Awake()
         {
-            _rect = (RectTransform)transform;
-            _basePosition = _rect.anchoredPosition;
             _damageColor = damageValue.color;
             _speedColor = speedValue.color;
         }
@@ -81,7 +75,6 @@ namespace MinersIdle.UI
         {
             simulation.ShardsChanged += OnShardsChanged;
             simulation.StatsChanged += OnStatsChanged;
-            simulation.ComboMilestone += OnComboMilestone;
             simulation.CaveChanged += OnCaveChanged;
             simulation.PermanentsChanged += OnPermanentsChanged;
         }
@@ -90,7 +83,6 @@ namespace MinersIdle.UI
         {
             simulation.ShardsChanged -= OnShardsChanged;
             simulation.StatsChanged -= OnStatsChanged;
-            simulation.ComboMilestone -= OnComboMilestone;
             simulation.CaveChanged -= OnCaveChanged;
             simulation.PermanentsChanged -= OnPermanentsChanged;
         }
@@ -102,16 +94,9 @@ namespace MinersIdle.UI
                 _pulse = Mathf.Max(0f, _pulse - Time.unscaledDeltaTime / PulseSeconds);
                 shardsValue.transform.localScale = Vector3.one * (1f + 0.3f * _pulse);
             }
-
-            if (_shake > 0f)
-            {
-                _shake = Mathf.Max(0f, _shake - Time.unscaledDeltaTime / ShakeSeconds);
-                _rect.anchoredPosition = _basePosition + Random.insideUnitCircle * (3f * _shake);
-            }
         }
 
         void OnShardArrived() => _pulse = 1f;
-        void OnComboMilestone(int combo) => _shake = 1f;
 
         protected override void Rebuild(MiningSimulation simulation)
         {

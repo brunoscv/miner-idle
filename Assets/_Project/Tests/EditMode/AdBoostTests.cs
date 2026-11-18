@@ -30,7 +30,7 @@ namespace MinersIdle.Tests
         };
 
         static StrikeRules Strike(AdRules ad = null) =>
-            new StrikeRules(0, 2, 0.1, 1, rare: new RareRules(0, 0, 30, Cards), ad: ad ?? new AdRules(2.5, 30));
+            new StrikeRules(0, 2, rare: new RareRules(0, 0, 30, Cards), ad: ad ?? new AdRules(2.5, 30));
 
         static EconomyRules WithIntern() => new EconomyRules(
             pickaxe: new UpgradeDefinition(2, 2, 49, 1, CostFormula.Linear),

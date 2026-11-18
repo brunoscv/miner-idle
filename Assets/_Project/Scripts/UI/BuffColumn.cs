@@ -21,7 +21,7 @@ namespace MinersIdle.UI
     {
         public const float EndingSeconds = 5f;
         public const float DetailSeconds = 2f;
-        /// <summary>Ícones criados de saída (o pior caso do mockup: 4 do combo, 2 do raro e 1 do AD).</summary>
+        /// <summary>Ícones criados de saída (o pior caso: as cartas do raro e os anúncios).</summary>
         const int InitialSlots = 8;
         const float BlinkPeriod = 0.5f;
 
@@ -208,10 +208,8 @@ namespace MinersIdle.UI
                                                   NumberFormatter.FormatTimer(bonus.SecondsLeft));
             else if (bonus.Source == BonusSource.Rare)
                 detailFooter.SetText(catalog != null ? catalog.RareFooterFormat : "{0}", (float)seconds);
-            else if (bonus.Source == BonusSource.Ad)
-                detailFooter.SetText(catalog != null ? catalog.AdFooterFormat : "{0}", (float)seconds);
             else
-                detailFooter.SetText(catalog != null ? catalog.ComboFooterFormat : "{0} {1}", (float)bonus.Tier, (float)seconds);
+                detailFooter.SetText(catalog != null ? catalog.AdFooterFormat : "{0}", (float)seconds);
         }
 
         void HideDetail()

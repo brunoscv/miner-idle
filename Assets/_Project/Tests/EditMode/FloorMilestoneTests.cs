@@ -51,7 +51,7 @@ namespace MinersIdle.Tests
         static MiningSimulation Sim(MiningRules rules = null, double rareChance = 0, PermanentState permanent = null,
                                     GameState state = null) =>
             new MiningSimulation(rules ?? Rules(), new SeededRandom(3), state, WithIntern(),
-                                 new StrikeRules(0, 1.5, 0.33, 1, rare: new RareRules(rareChance, 0, 30, Cards)),
+                                 new StrikeRules(0, 1.5, rare: new RareRules(rareChance, 0, 30, Cards)),
                                  new Permanents(Permanents(), permanent ?? new PermanentState()), new SeededRandom(5));
 
         static void BreakOne(MiningSimulation sim)

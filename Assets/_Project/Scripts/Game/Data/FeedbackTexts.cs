@@ -13,10 +13,6 @@ namespace MinersIdle.Game
     public sealed class FeedbackTexts : ScriptableObject
     {
         [SerializeField] string criticalLabel;
-        [Tooltip("{0} = combo atual.")]
-        [SerializeField] string comboFormat;
-        [Tooltip("{0} = combo no marco (10, 20…).")]
-        [SerializeField] string milestoneFormat;
         [Tooltip("O cartão do andar novo (M8, D-111; M9c E2, D-269). {0} = número do andar; {1} = nome do bioma.")]
         [SerializeField] string caveBannerFormat;
 
@@ -128,8 +124,6 @@ namespace MinersIdle.Game
         [SerializeField] CreditLine[] credits = new CreditLine[0];
 
         public string CriticalLabel => criticalLabel;
-        public string ComboFormat => comboFormat;
-        public string MilestoneFormat => milestoneFormat;
         public string CaveBannerFormat => caveBannerFormat;
         public string NextFloorTitle => nextFloorTitle;
         public string NextFloorCountFormat => nextFloorCountFormat;

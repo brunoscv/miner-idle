@@ -41,7 +41,7 @@ namespace MinersIdle.Tests
                 miningRange: 1, caveCount: 100, caveHealthGrowth: 1, floorBreaks: 1, rareFloor: 10);
 
         static StrikeRules Strike(double critChance = 0) =>
-            new StrikeRules(critChance, 1.5, 0.33, 1, rare: new RareRules(0, 0, 30, Tier1, interval: 60, tier2Cards: Tier2));
+            new StrikeRules(critChance, 1.5, rare: new RareRules(0, 0, 30, Tier1, interval: 60, tier2Cards: Tier2));
 
         static readonly UpgradeDefinition Off = new UpgradeDefinition(0, 1, 0, 0);
 
@@ -281,7 +281,7 @@ namespace MinersIdle.Tests
         [Test]
         public void WithoutTier2InTheBalance_TheTierStays1()
         {
-            var sim = AtFloor10(strike: new StrikeRules(0, 1.5, 0.33, 1, rare: new RareRules(0, 0, 30, Tier1, interval: 60)));
+            var sim = AtFloor10(strike: new StrikeRules(0, 1.5, rare: new RareRules(0, 0, 30, Tier1, interval: 60)));
             sim.ForceRareTier2 = true;
             Assert.That(sim.RareTier, Is.EqualTo(1));
             sim.GrantRareCard(RareCard.Damage);

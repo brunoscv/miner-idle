@@ -41,15 +41,14 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
-        public IEnumerator TapAndCritical_ShowSparksAndTheCriticalText()
+        public IEnumerator CriticalHit_ShowsSparksAndTheCriticalText()
         {
             yield return LoadGame();
             _runner.ForceCritical = true;
-            // O anão parado: com o golpe na chegada (D-124) ele bate no primeiro cristal antes de 1 s, e as faíscas e o
-            // crítico desse golpe contariam aqui.
+            // O teste anda o tempo até o golpe (era o toque, que saiu no M9g, D-311).
             _runner.TimeScale = 0f;
 
-            _runner.Simulation.Tap();
+            _runner.Simulation.Tick(_runner.Simulation.SecondsToNextHit + 1e-6);
 
             Assert.That(_sparks.ActiveCount, Is.GreaterThan(0), "faíscas");
             Assert.That(_floating.ActiveCount, Is.GreaterThan(0), "texto do crítico");
@@ -59,34 +58,6 @@ namespace MinersIdle.Tests
             yield return new WaitForSecondsRealtime(1f);
             Assert.That(_floating.ActiveCount, Is.EqualTo(0), "o texto some sozinho");
             Assert.That(_sparks.ActiveCount, Is.EqualTo(0), "as faíscas voltam ao pool");
-        }
-
-        [UnityTest]
-        public IEnumerator Combo_AppearsFromTheSecondTap_AndHidesAfterOneSecond()
-        {
-            yield return LoadGame();
-            var simulation = _runner.Simulation;
-
-            simulation.Tap();
-            Assert.That(_feedback.IsComboShown, Is.False, "x1 não aparece");
-            simulation.Tap();
-            simulation.Tap();
-            Assert.That(_feedback.IsComboShown, Is.True);
-            Assert.That(_feedback.ComboShown, Does.Contain("3"));
-
-            yield return new WaitForSecondsRealtime(1.3f); // a janela do combo é de 1 s de jogo
-            Assert.That(_feedback.IsComboShown, Is.False);
-        }
-
-        [UnityTest]
-        public IEnumerator ComboMilestone_PopsABigText()
-        {
-            yield return LoadGame();
-            for (int i = 0; i < 10; i++) _runner.Simulation.Tap();
-
-            Assert.That(_floating.ActiveCount, Is.GreaterThan(0));
-            // Não o último texto: se o 10º toque sair crítico (5%), o "CRÍTICO!" pode vir depois do "x10!".
-            Assert.That(_floating.IsShowing("10"), Is.True, "o \"x10!\" está na tela");
         }
 
         [UnityTest]
@@ -122,7 +93,8 @@ namespace MinersIdle.Tests
             _shake.ShakeEnabled = false;
 
             _runner.ForceCritical = true;
-            _runner.Simulation.Tap();
+            _runner.TimeScale = 0f;
+            _runner.Simulation.Tick(_runner.Simulation.SecondsToNextHit + 1e-6); // um golpe crítico
             _runner.Simulation.BreakTarget();
             yield return null;
 

@@ -4,9 +4,9 @@ using UnityEngine;
 namespace MinersIdle.Persistence
 {
     /// <summary>
-    /// A escolha do DBG → Cálculos (M8 E3b-3, D-143), como fica no arquivo: os números da Picareta trocados no DBG, o
-    /// acúmulo do combo e o ritmo do raro. O seletor de balanço e a Picareta pela caverna saíram no v8 (M9c E1, D-256):
-    /// um arquivo antigo com esses campos só os ignora. Campos públicos para o
+    /// A escolha do DBG → Cálculos (M8 E3b-3, D-143), como fica no arquivo: os números da Picareta trocados no DBG e o
+    /// ritmo do raro. O seletor de balanço e a Picareta pela caverna saíram no v8 (M9c E1, D-256), e o acúmulo do combo
+    /// no M9g (D-311): um arquivo antigo com esses campos só os ignora. Campos públicos para o
     /// <c>JsonUtility</c>; os "has" dizem se o número saiu do GDD (sem eles, o JSON não tem como guardar "nenhum").
     /// </summary>
     [Serializable]
@@ -16,11 +16,6 @@ namespace MinersIdle.Persistence
         public double pickaxeCaveGrowth;
         public bool hasPickaxeStep;
         public double pickaxeStep;
-        /// <summary>
-        /// O combo dá só o bônus do maior marco (M9b E3, D-217), no lugar da soma do GDD (D-183). Arquivo antigo, sem o
-        /// campo: <c>false</c>, a soma.
-        /// </summary>
-        public bool comboHighestOnly;
         /// <summary>O ritmo lento do cristal raro (M9b E4, D-226: 2%). Arquivo antigo, sem o campo: <c>false</c>, os 15% do GDD.</summary>
         public bool rareSlow;
         /// <summary>A distância entre cristais do DBG (M9d, D-277), em unidades. Arquivo antigo, sem o campo: a do balanço.</summary>
