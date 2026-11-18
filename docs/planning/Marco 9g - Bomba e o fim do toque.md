@@ -74,6 +74,13 @@
   2. **O voo.** A bomba sai do botão e faz um arco de 0,4 s até cada cristal da tela.
   3. **A explosão** em cada um, com o número laranja (no mockup, "-10%" só para indicar; no jogo é o dano).
   - O espaçamento é de 3 m, então quase sempre há um cristal na tela, às vezes dois (o próximo entrando por baixo). O mockup mostra dois.
+- **Segunda rodada (pedido do Bruno, 2026-11-18):** a bomba sobe para **cima do Descansar e do Próximo Andar**, centralizada na tela. O deslize passa a ser **na própria bomba**: o jogador arrasta a bomba da esquerda para a direita, como um "deslize para liberar". Antes, o deslize valia em qualquer lugar do corredor. Três modelos, cada um com três estados (carregando, cheia, arrastando):
+  - `m9g-e0-deslize-a.png` **A, trilho da vagoneta:** a bomba vai numa vagoneta sobre trilhos. Carregando, os dormentes acendem da esquerda para a direita. Cheia, a vagoneta ganha cor e aparecem as setas. Empurrar até o batente vermelho lança a bomba, com poeira e riscos atrás.
+  - `m9g-e0-deslize-b.png` **B, pavio:** a bomba fica na ponta de um pavio. Carregando, a chama corre o pavio até o fim. Cheia, o pavio todo brilha e solta faíscas. Arrastar a bomba pelo pavio vai queimando o caminho, até a estrela do fim.
+  - `m9g-e0-deslize-c.png` **C, destravar:** uma fenda com a bomba num botão redondo. Carregando, a fenda enche de laranja e mostra os segundos. Cheia, o botão acende e aparecem as setas e "ARRASTE". Arrastando, o laranja vem atrás.
+  - `m9g-e0-deslize-modelos.png`: os três na tela inteira, cheios.
+  - Nos três: soltar antes do fim devolve a bomba ao começo, sem lançar; chegar ao fim lança (o voo e a explosão seguem os quadros 2 e 3 acima). O vão entre o Descansar e o Próximo Andar fica vazio de novo; dá para alargar os dois botões, se o Bruno quiser. O DBG sobe para baixo do placar, para não ficar embaixo da faixa.
+  - **A escolha do Bruno vira decisão** (ajusta a D-310: o deslize é na bomba, não no corredor).
 - `m9g-e0-descanso.png`: a linha **Bomba**, no molde das outras: o ícone da bomba atual, "nv 0/7", "Pequena 10% » 20%" e o preço (11 vermelhas na primeira compra). Fica entre o Atalho e a Promoção.
 
 ### E1 — A Bomba no núcleo (D-307, D-308, D-309, D-313, D-314)
