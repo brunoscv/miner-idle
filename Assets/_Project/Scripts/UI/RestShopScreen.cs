@@ -13,7 +13,8 @@ namespace MinersIdle.UI
     /// A tela do descanso (M9d E2, D-265, GDD v8.2 §4.2): depois do DESCANSAR, o ZZZ (1,5 s; um toque pula) e a loja das
     /// permanentes com o jogo parado. No alto, o dia que terminou e o banco de lascas vermelhas; o andar, o tempo e as
     /// ganhas; a lista das permanentes (as do limite no fim); e INICIAR, que começa a run nova com o que foi comprado.
-    /// Fundo preto (o do GDD) ou o jogo desfocado (D-279), trocado no DBG → Dia até o Bruno escolher. Abre pelo evento
+    /// Fundo: o jogo desfocado, escolhido pelo Bruno (D-280); a preta (a do GDD) segue no DBG → Dia para comparar, e é o
+    /// que sobra quando a foto não sai (sem placa de vídeo). Abre pelo evento
     /// <see cref="MiningRunner.Rested"/>; quando o descanso foi o atalho do DBG ou o jogo reabriu descansando, sem o ZZZ.
     /// Os números do dia vêm do <see cref="RestSummary"/>; o banco, das permanentes. Textos em dados.
     /// </summary>
@@ -29,8 +30,9 @@ namespace MinersIdle.UI
         [Tooltip("Tudo o que aparece com a tela aberta (o fundo, o ZZZ e o painel).")]
         [SerializeField] GameObject screen;
 
-        [Header("Fundo (D-279)")]
-        [SerializeField] Background background = Background.Black;
+        [Header("Fundo (D-279, D-280)")]
+        [Tooltip("A desfocada, escolhida pelo Bruno (D-280); o DBG → Dia troca para a preta.")]
+        [SerializeField] Background background = Background.Blurred;
         [Tooltip("O jogo desfocado: uma foto pequena da câmera, ampliada com filtro.")]
         [SerializeField] RawImage blurred;
         [Tooltip("A câmera do mundo, para a foto do fundo desfocado.")]

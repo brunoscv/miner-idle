@@ -43815,7 +43815,7 @@ MonoBehaviour:
   rowPrefab: {fileID: 4326013133113151214, guid: 061a9cc4d5cf0e44db841a84d2c546a5, type: 3}
   rowsParent: {fileID: 89411491}
   screen: {fileID: 1529760181}
-  background: 0
+  background: 1
   blurred: {fileID: 460988177}
   worldCamera: {fileID: 825664067}
   blurDivisor: 24

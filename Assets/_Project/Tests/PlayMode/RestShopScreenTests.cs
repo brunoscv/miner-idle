@@ -14,8 +14,8 @@ using UnityEngine.UI;
 namespace MinersIdle.Tests
 {
     /// <summary>
-    /// M9d E2 (D-265, D-279): a tela do descanso na cena Game. O ZZZ passa sozinho em 1,5 s; com a tela aberta, nada se
-    /// mexe atrás (o anão, os cristais, o tempo do dia); o DBG → Dia troca o fundo, preta ⇄ desfocada, com a tela aberta.
+    /// M9d E2 (D-265, D-279, D-280): a tela do descanso na cena Game. O ZZZ passa sozinho em 1,5 s; com a tela aberta,
+    /// nada se mexe atrás (o anão, os cristais, o tempo do dia); abre desfocada (D-280) e o DBG → Dia troca para a preta.
     /// No teste em batch (sem placa de vídeo) a foto do fundo desfocado não sai e ele fica preto: o teste mede isso.
     /// </summary>
     public class RestShopScreenTests
@@ -72,26 +72,26 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
-        public IEnumerator TheDebugBackground_SwitchesBlackAndBlurred_WithTheScreenOpen()
+        public IEnumerator TheDebugBackground_SwitchesBlurredAndBlack_WithTheScreenOpen()
         {
             yield return LoadGame();
-            Assert.That(_rest.BackgroundMode, Is.EqualTo(RestShopScreen.Background.Black), "até a escolha, a preta (D-279)");
+            Assert.That(_rest.BackgroundMode, Is.EqualTo(RestShopScreen.Background.Blurred), "a desfocada, escolhida (D-280)");
             var button = DebugButton("RestBackground");
-            Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("Fundo: preta"));
+            Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("Fundo: desfocada"));
 
             _runner.Rest(force: true);
             Assert.That(_rest.IsOpen, Is.True);
-            Assert.That(_rest.IsBlurredShown, Is.False);
-
-            button.onClick.Invoke();
-            Assert.That(_rest.BackgroundMode, Is.EqualTo(RestShopScreen.Background.Blurred));
-            Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("Fundo: desfocada"));
             bool canCapture = SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null;
             Assert.That(_rest.IsBlurredShown, Is.EqualTo(canCapture), "o jogo desfocado (sem placa de vídeo, fica a preta)");
 
             button.onClick.Invoke();
             Assert.That(_rest.BackgroundMode, Is.EqualTo(RestShopScreen.Background.Black));
+            Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("Fundo: preta"));
             Assert.That(_rest.IsBlurredShown, Is.False);
+
+            button.onClick.Invoke();
+            Assert.That(_rest.BackgroundMode, Is.EqualTo(RestShopScreen.Background.Blurred));
+            Assert.That(_rest.IsBlurredShown, Is.EqualTo(canCapture));
 
             _runner.StartRun();
             Assert.That(_rest.IsOpen, Is.False);

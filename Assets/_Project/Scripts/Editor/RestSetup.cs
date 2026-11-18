@@ -104,7 +104,7 @@ namespace MinersIdle.EditorTools
             var existing = safeArea.Find(RestShopName);
             if (existing != null)
                 return DayDebugSetup.EnsureRestBackground(existing.GetComponent<RestShopScreen>()) | ZzzInGameFont(existing) |
-                       changed;
+                       BlurredBackground(existing.GetComponent<RestShopScreen>()) | changed;
 
             _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
             _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
@@ -257,6 +257,19 @@ namespace MinersIdle.EditorTools
             }
             if (changed) Debug.Log("[Setup] ZZZ na fonte do jogo (M9d E2).");
             return changed;
+        }
+
+        /// <summary>D-280: o Bruno escolheu o fundo desfocado; a cena montada antes abria na preta.</summary>
+        static bool BlurredBackground(RestShopScreen view)
+        {
+            if (view == null) return false;
+            var so = new SerializedObject(view);
+            var background = so.FindProperty("background");
+            if (background == null || background.enumValueIndex == (int)RestShopScreen.Background.Blurred) return false;
+            background.enumValueIndex = (int)RestShopScreen.Background.Blurred;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] Tela do descanso abre com o fundo desfocado (D-280).");
+            return true;
         }
 
         /// <summary>M9d E2: o resumo do dia sai (a tela do descanso faz o papel dele, com o COMEÇAR e o PERMANENTES).</summary>

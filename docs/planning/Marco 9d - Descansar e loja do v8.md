@@ -116,7 +116,7 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 
 - **A tela do descanso** (`RestShopScreen`, objeto `RestShop` na cena Game) abre pelo evento `Rested`. Pelo DESCANSAR do modal (e do coração da montanha, que passa pelo mesmo modal), primeiro o **ZZZ**: três Z âmbar que sobem e acendem em 1,5 s; um toque pula. Pelo "Descansar agora" do DBG e ao reabrir o jogo descansando, direto na tela, sem o ZZZ (`MiningRunner.RestedQuietly`).
 - **O painel** tem a largura da LOJA e quase a altura da tela. Na barra de título, "DIA N ENCERRADO" e o banco de lascas vermelhas (que desce a cada compra). Embaixo, o quadro do resumo (o andar a que chegou, o tempo do dia e as vermelhas ganhas) e o aviso "Compre com o jogo parado. A run começa no INICIAR.". Depois, as 9 permanentes com preço e botão, numa lista que rola (as do limite vão para o fim), e **INICIAR**.
-- **Os dois fundos (D-279):** a **preta** (padrão) e a **desfocada**, trocadas em DBG → Dia → **Fundo: preta / desfocada**; com a tela aberta, troca na hora (o DBG fica por cima da tela). A desfocada é uma foto da câmera do mundo tirada ao abrir, bem pequena e ampliada com filtro, escurecida. Tirar a foto uma vez basta, porque o jogo está parado, e o celular não paga desfoque a cada quadro. Diferença do mockup: a foto pega o corredor, mas não a interface (HUD e botões), que fica fora da câmera.
+- **Os dois fundos (D-279, D-280):** a **desfocada** (a escolhida pelo Bruno em 2026-11-18, D-280, e o padrão) e a **preta**, trocadas em DBG → Dia → **Fundo: desfocada / preta**; com a tela aberta, troca na hora (o DBG fica por cima da tela). A desfocada é uma foto da câmera do mundo tirada ao abrir, bem pequena e ampliada com filtro, escurecida. Tirar a foto uma vez basta, porque o jogo está parado, e o celular não paga desfoque a cada quadro. Diferença do mockup: a foto pega o corredor, mas não a interface (HUD e botões), que fica fora da câmera.
 - **O resumo do dia antigo saiu**, com o COMEÇAR e o PERMANENTES.
 - **LOJA → Permanentes em consulta (D-276):** durante a run, cada linha mostra o nível e o efeito de agora ("Dano +10%"), sem preço nem botão, e "Compre ao Descansar" no alto da lista. O "!" da LOJA não acende por elas.
 - **Textos** em dados: `restShopNote` e `restShopStart` nos `FeedbackTexts` (e "Chegou ao andar" no lugar de "Chegou ao nível"); `permanentsConsultNote` no `ShopCatalog`.
@@ -147,8 +147,8 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
   8. Com o Treinar no 5 (DBG → Estagiário ou comprando), a Promoção acende no descanso.
 - **E2:** antes, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`. Cena `Bootstrap`, Play:
   1. LOJA → Permanentes: cada linha mostra o nível e o efeito de agora, sem preço nem botão, e "Compre ao Descansar" no alto.
-  2. Chegar ao andar 10 (DBG → Andar), **Descansar** → **DESCANSAR**: o ZZZ (1,5 s; um toque pula) e a tela do descanso, de fundo preto.
-  3. DBG → Dia → **Fundo: preta**: vira **desfocada** na hora, com o corredor atrás. Tocar de novo volta à preta. Comparar as duas e escolher.
+  2. Chegar ao andar 10 (DBG → Andar), **Descansar** → **DESCANSAR**: o ZZZ (1,5 s; um toque pula) e a tela do descanso, com o corredor desfocado atrás (D-280).
+  3. DBG → Dia → **Fundo: desfocada**: vira **preta** na hora. Tocar de novo volta à desfocada.
   4. O anão parado atrás; DBG → Dia → **+100 vermelhas**, comprar a Memória e o Dedo Fogoso: o banco no alto desce; arrastar a lista mostra as de baixo.
   5. Fechar o jogo e abrir: a mesma tela, sem o ZZZ, com as compras.
   6. **INICIAR**: andar 1, a run começa.
@@ -205,8 +205,8 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-17: P1…P7 com as recomendações (D-272…D-278) | — |
-| E0 Mockups | 🔄 mockups prontos em 2026-11-17; o fundo se escolhe no jogo, na E2 (D-279); o HUD aguarda a escolha | Ver "Como ficou" na E0 |
+| E0 Mockups | 🔄 mockups prontos em 2026-11-17; o fundo foi escolhido no jogo: a desfocada (D-279, D-280); o HUD aguarda a escolha | Ver "Como ficou" na E0 |
 | E1 Núcleo do descanso e permanentes novas | ✅ aprovada pelo Bruno em 2026-11-17 | Ver "Como ficou" na E1 |
-| E2 A tela do descanso | 🔄 pronta em 2026-11-17, aguardando o teste do Bruno e a escolha do fundo (D-279) | Ver "Como ficou" na E2 |
+| E2 A tela do descanso | 🔄 pronta em 2026-11-17; fundo desfocado escolhido em 2026-11-18 (D-280); aguardando a aprovação do Bruno | Ver "Como ficou" na E2 |
 | E3 HUD do v8 | ⏳ | — |
 | E4 Sessão longa e celular | ⏳ | — |
