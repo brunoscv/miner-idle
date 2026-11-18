@@ -125,6 +125,29 @@
 - **DBG:** "Anúncios curtos" (as durações ÷ 60, para ver acabar) e o "Pular espera" de hoje para cada anúncio.
 - **Testes EditMode:** renova e o maior vale; o menor volta quando o maior acaba; as horas extras e o teto; o estagiário com o bônus no offline; o raro do offline.
 
+**Como ficou (2026-11-18):**
+
+- **Os anúncios (D-244, D-251).** Curto ×2 / +10% / 20 min / +1 h; médio ×3 / +15% / 40 min / +2 h; grande ×4 / +20% / 80 min / +4 h. Cada um vira quatro bônus: dano, lascas, dano do crítico e chance de crítico. Os valores ficam no balanço do v8 (`adOffers`), preenchidos pelo setup só se estiverem vazios.
+  - O **mesmo de novo** renova o tempo e não soma o efeito.
+  - **Tipos diferentes juntos:** vale o maior em cada atributo, e a chance de crítico também é a do maior, não a soma. Os tempos correm em paralelo: quando o grande acaba, o curto que ainda tinha tempo volta a valer.
+  - **Raro × anúncio (D-287):** multiplicam. Carta Dano ×2 com o grande dá ×8. A chance de crítico soma: carta +10% com o grande +20% dá +30%.
+- **O 4º anúncio (D-250):** deixa as cartas do raro no tier 2 por 60 min, sem bônus próprio. Só aparece com o recorde no andar 10 e some depois de comprar o Raro Dourado.
+- **O estagiário (D-246).** O anúncio vale para ele também no online (o dano e as lascas; o crítico não, D-167). Até o v7 só o raro valia para ele.
+- **O offline.**
+  - **Horas extras (D-244, D-254):** os anúncios ativos na hora de fechar somam as horas ao teto de 4 h (6 h depois do andar 20), com teto de 8 h. O do tier 2 não dá horas.
+  - **O anúncio no estagiário:** vale pelo tempo que faltava. O curto com 10 min restantes dá ×2 em 10 min da hora e ×1 no resto. Entre anúncios, o maior.
+  - **O raro do offline (D-284):** a partir do andar 10 e com o estagiário contratado, um raro a cada 60 s (o contador do DBG também vale), com uma carta sorteada. A carta vale 30 s só para ele; as de crítico não mudam nada (D-167). O tier da carta depende do Raro Dourado ou do tempo que ainda faltava do anúncio do tier 2 naquele momento. O contador da run não anda fora, e as cartas não voltam com o jogador.
+- **Sai o AD de velocidade (D-290).** No balanço do v8, `adSpeedDivisor` e `adBoostSeconds` ficam em 0. Por isso o botão AD antigo some da tela até o menu do Boost da E3. O código fica para o v7. Os dois testes PlayMode do AD antigo (`AdFlowTests`) são ignorados quando o balanço não tem esse AD.
+- **Save:** os anúncios vão com os outros bônus ativos, cada um com o tempo que falta, então não precisou de versão nova (continua a 10).
+- **DBG → Bônus:**
+  - **Anúncio curto / médio / grande / tier 2:** dão o anúncio na hora, sem a tela do anúncio. O botão fica cinza quando não pode (o tier 2 antes do andar 10 ou com o Raro Dourado).
+  - **Anúncios curtos: não / sim:** as durações ÷ 60 (o curto dura 20 s, o tier 2, 60 s), para ver acabar.
+  - O resumo no alto mostra cada anúncio ativo com o efeito e o tempo, e a linha "Offline se fechar agora: até 7 h".
+  - O menu cresceu para 8 fileiras.
+- **Testes:**
+  - `AdOffersTests` (EditMode, 16): o curto e os 20 min; renovar sem somar; o maior vale e o menor volta; raro × anúncio; o estagiário; os anúncios curtos do DBG; sem anúncios no balanço; o tier 2 a partir do andar 10 e sumindo com o Raro Dourado; as horas extras e o teto (também depois do 20); o anúncio no estagiário do offline pelo tempo que faltava; o raro do offline, um a cada 60 s, só com o estagiário; o save; o balanço do v8.
+  - Rodados: EditMode inteiro (542, todos passando) e PlayMode do AD, raro, offline, save, coluna, combo, painel de debug, cálculos, estagiário, HUD e cena (55: 53 passando, 2 ignorados, os do AD antigo).
+
 ### E3 — Na tela
 
 - O **menu do Boost** e o modal de cada anúncio (P6).
@@ -176,6 +199,6 @@
 | Plano | ✅ aprovado em 2026-11-18: P1…P9 com as recomendações (D-283…D-291) | — |
 | E0 Mockups | 🔄 prontos em 2026-11-18, aguardando o Bruno | Ver "Como ficou" na E0 |
 | E1 O raro do v8 | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E1 |
-| E2 Os anúncios e o offline | ⏳ | — |
+| E2 Os anúncios e o offline | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E2 |
 | E3 Na tela | ⏳ | — |
 | E4 Sessão longa e celular | ⏭️ nos testes longos do fim (D-291) | — |

@@ -17,12 +17,15 @@ namespace MinersIdle.Core
         /// </param>
         /// <param name="rare">O cristal raro (M9b E4); <c>null</c> = nenhum raro (o jogo até o combo).</param>
         /// <param name="ad">O boost do AD (M9b E5); <c>null</c> = sem AD (o jogo até o raro).</param>
+        /// <param name="ads">Os anúncios do Boost (M9e E2, GDD v8); <c>null</c> = nenhum (o jogo até o v7).</param>
         public StrikeRules(double critChance, double critMultiplier, double tapFraction, double comboWindow,
                            int maxTapsPerSecond = 0, double? tapCritChance = null,
-                           IEnumerable<ComboBonusRule> comboBonuses = null, RareRules rare = null, AdRules ad = null)
+                           IEnumerable<ComboBonusRule> comboBonuses = null, RareRules rare = null, AdRules ad = null,
+                           AdOffers ads = null)
         {
             Rare = rare ?? RareRules.None();
             Ad = ad ?? AdRules.None();
+            Ads = ads ?? AdOffers.None();
             if (double.IsNaN(critChance) || critChance < 0 || critChance > 1) throw new ArgumentOutOfRangeException(nameof(critChance));
             double tapCrit = tapCritChance ?? critChance;
             if (double.IsNaN(tapCrit) || tapCrit < 0 || tapCrit > 1) throw new ArgumentOutOfRangeException(nameof(tapCritChance));
@@ -69,6 +72,9 @@ namespace MinersIdle.Core
 
         /// <summary>O boost do AD (M9b E5); <see cref="AdRules.None"/> sem ele.</summary>
         public AdRules Ad { get; }
+
+        /// <summary>Os anúncios do Boost (M9e E2, GDD v8); <see cref="AdOffers.None"/> sem eles.</summary>
+        public AdOffers Ads { get; }
 
         /// <summary>Sem crítico nem teto; toque e combo como no GDD. É o padrão de quem não passa regras (testes do M2–M4).</summary>
         public static StrikeRules NoCritical() => new StrikeRules(0, 2, 0.1, 1);

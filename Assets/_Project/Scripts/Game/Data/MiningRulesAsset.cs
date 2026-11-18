@@ -164,6 +164,15 @@ namespace MinersIdle.Game
         [Tooltip("Quanto o boost dura, em segundos de jogo. GDD v7: 30. O botão só volta quando ele acaba (D-188).")]
         [SerializeField] double adBoostSeconds;
 
+        [Header("Anúncios do Boost (M9e E2; GDD v8.2 §3.5, D-244, D-250, D-251, D-254)")]
+        [Tooltip("Curto, médio e grande. GDD v8: ×2 / +10% / 20 min / +1 h; ×3 / +15% / 40 min / +2 h; ×4 / +20% / 80 min / " +
+                 "+4 h. Vazio = sem o menu do Boost (o v7).")]
+        [SerializeField] AdOfferValues[] adOffers = new AdOfferValues[0];
+        [Tooltip("Minutos do 4º anúncio, as cartas do raro no tier 2 (D-250: 60). 0 = sem ele.")]
+        [SerializeField] double adRareTier2Minutes;
+        [Tooltip("O teto do offline com as horas extras dos anúncios (D-244: 8 h).")]
+        [SerializeField] double adOfflineCapHours;
+
         [Header("Dia e melhorias permanentes (Marco 8b; custo em lascas vermelhas, D-158)")]
         [Tooltip("Nível a partir do qual o Descansar aparece e as lascas vermelhas começam (D-138, D-152). GDD v7: 10. 0 desliga.")]
         [SerializeField] int restLevel;
@@ -251,7 +260,28 @@ namespace MinersIdle.Game
 
         public StrikeRules ToStrike() =>
             new StrikeRules(critChance, critMultiplier, tapFraction, comboWindow, maxTapsPerSecond, tapCritChance, ComboBonuses(),
-                            Rare(), Ad());
+                            Rare(), Ad(), Ads());
+
+        /// <summary>Os anúncios do Boost do asset; os mal preenchidos ou repetidos ficam de fora, com aviso.</summary>
+        AdOffers Ads()
+        {
+            var offers = new List<AdOffer>();
+            if (adOffers != null)
+                foreach (var values in adOffers)
+                {
+                    if (values == null) continue;
+                    if (!values.IsValid || offers.Exists(o => o.Kind == values.Kind))
+                    {
+                        Debug.LogWarning($"[Valores] Anúncio {values.Kind} inválido ou repetido em {name}: ignorado.", this);
+                        continue;
+                    }
+                    offers.Add(values.ToOffer());
+                }
+            double tier2 = double.IsNaN(adRareTier2Minutes) || adRareTier2Minutes < 0 ? 0 : adRareTier2Minutes * 60;
+            double cap = double.IsNaN(adOfflineCapHours) || adOfflineCapHours < 0 ? 0 : adOfflineCapHours * 3600;
+            if (offers.Count == 0 && tier2 == 0) return AdOffers.None();
+            return new AdOffers(offers, tier2, cap);
+        }
 
         /// <summary>O boost do AD do asset; números inválidos desligam o AD.</summary>
         AdRules Ad()
@@ -378,6 +408,39 @@ namespace MinersIdle.Game
         public int Combo => combo;
         public bool IsValid => combo >= 1 && seconds > 0 && !double.IsNaN(value) && value >= 0 && Enum.IsDefined(typeof(BonusKind), kind);
         public ComboBonusRule ToRule() => new ComboBonusRule(combo, kind, value, seconds);
+    }
+
+    /// <summary>Um anúncio do Boost no Inspector (vira um <see cref="AdOffer"/> do Núcleo).</summary>
+    [Serializable]
+    public sealed class AdOfferValues
+    {
+        [Tooltip("Short, Medium ou Big.")]
+        [SerializeField] AdKind kind = AdKind.Short;
+        [Tooltip("Dano, lascas e dano do crítico ×isto (GDD v8: 2, 3, 4).")]
+        [SerializeField] double multiplier;
+        [Tooltip("Pontos a mais na chance de crítico (GDD v8: 0,10, 0,15, 0,20).")]
+        [SerializeField] double critChance;
+        [Tooltip("Quanto dura, em minutos de jogo (GDD v8: 20, 40, 80).")]
+        [SerializeField] double minutes;
+        [Tooltip("Horas que soma ao teto do offline se ativo ao fechar o app (GDD v8: 1, 2, 4; D-254).")]
+        [SerializeField] double offlineHours;
+
+        /// <summary>Para o serializador do Unity.</summary>
+        public AdOfferValues() { }
+
+        public AdOfferValues(AdKind kind, double multiplier, double critChance, double minutes, double offlineHours)
+        {
+            this.kind = kind;
+            this.multiplier = multiplier;
+            this.critChance = critChance;
+            this.minutes = minutes;
+            this.offlineHours = offlineHours;
+        }
+
+        public AdKind Kind => kind;
+        public bool IsValid => kind >= AdKind.Short && kind <= AdKind.Big && multiplier >= 1 && critChance >= 0 && minutes > 0
+                               && offlineHours >= 0;
+        public AdOffer ToOffer() => new AdOffer(kind, multiplier, critChance, minutes * 60, offlineHours * 3600);
     }
 
     /// <summary>Uma carta do cristal raro no Inspector (vira uma <see cref="RareCardRule"/> do Núcleo).</summary>

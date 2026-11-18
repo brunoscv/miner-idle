@@ -106,6 +106,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV8FloorMilestones();
             EnsureGddV8RestShop();
             EnsureGddV8RareCrystal();
+            EnsureGddV8Ads();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -734,6 +735,42 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v8: raro a cada 60 s, cartas do v8 de 30 s, tier 2 e o Raro Dourado de 500 vermelhas (M9e E1, D-283, D-286).");
+        }
+
+        /// <summary>
+        /// M9e E2 (GDD v8.2 §3.5; D-244, D-250, D-254, D-290): os anúncios do Boost — curto ×2 / +10% / 20 min / +1 h,
+        /// médio ×3 / +15% / 40 min / +2 h, grande ×4 / +20% / 80 min / +4 h —, o "tier 2 por 1 h" e o teto de 8 h do
+        /// offline; e sai o boost de velocidade do v7 (D-290). Só preenche se os anúncios estiverem vazios.
+        /// </summary>
+        static void EnsureGddV8Ads()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var list = serialized.FindProperty("adOffers");
+            if (list.arraySize > 0) return;
+            (AdKind kind, double multiplier, double crit, double minutes, double hours)[] offers =
+            {
+                (AdKind.Short, 2, 0.10, 20, 1), (AdKind.Medium, 3, 0.15, 40, 2), (AdKind.Big, 4, 0.20, 80, 4),
+            };
+            list.arraySize = offers.Length;
+            for (int i = 0; i < offers.Length; i++)
+            {
+                var item = list.GetArrayElementAtIndex(i);
+                item.FindPropertyRelative("kind").intValue = (int)offers[i].kind;
+                item.FindPropertyRelative("multiplier").doubleValue = offers[i].multiplier;
+                item.FindPropertyRelative("critChance").doubleValue = offers[i].crit;
+                item.FindPropertyRelative("minutes").doubleValue = offers[i].minutes;
+                item.FindPropertyRelative("offlineHours").doubleValue = offers[i].hours;
+            }
+            serialized.FindProperty("adRareTier2Minutes").doubleValue = 60;
+            serialized.FindProperty("adOfflineCapHours").doubleValue = 8;
+            serialized.FindProperty("adSpeedDivisor").doubleValue = 0;
+            serialized.FindProperty("adBoostSeconds").doubleValue = 0;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8: anúncios curto, médio e grande, o tier 2 por 1 h, teto de 8 h; sai o AD de velocidade (M9e E2, D-290).");
         }
 
         static void SetCards(SerializedProperty list, double seconds, params (RareCard card, double value)[] cards)

@@ -23,6 +23,10 @@ namespace MinersIdle.Core
         /// anão (o estagiário não tem crítico, D-167). No fim da lista: o save guarda pelo nome.
         /// </summary>
         CritDamageMultiplier,
+        /// <summary>
+        /// As cartas do raro no tier 2 enquanto durar (o 4º anúncio, "tier 2 por 1 h", GDD v8, D-250). Sem valor de efeito.
+        /// </summary>
+        RareTier2,
     }
 
     /// <summary>De onde o bônus veio.</summary>
@@ -32,8 +36,108 @@ namespace MinersIdle.Core
         Combo,
         /// <summary>Uma carta do cristal raro (D-190); o <see cref="ActiveBonus.Tier"/> é a <see cref="RareCard"/>.</summary>
         Rare,
-        /// <summary>O boost do AD (M9b E5, D-187): intervalo ÷ 2,5 por 30 s, só no anão (D-177).</summary>
+        /// <summary>
+        /// O AD. No v7 (M9b E5, D-187), o boost de velocidade: intervalo ÷ 2,5 por 30 s, só no anão (D-177), com o
+        /// <see cref="ActiveBonus.Tier"/> 0. No v8 (M9e E2), os anúncios do Boost: o <see cref="ActiveBonus.Tier"/> é o
+        /// <see cref="AdKind"/>, e cada anúncio entra como um bônus por atributo.
+        /// </summary>
         Ad,
+    }
+
+    /// <summary>
+    /// Os anúncios do menu do Boost (GDD v8.2 §3.5, M9e E2). O número vai no <see cref="ActiveBonus.Tier"/> dos bônus dele:
+    /// não reordenar. O 0 é o boost de velocidade do v7.
+    /// </summary>
+    public enum AdKind
+    {
+        /// <summary>Curto: ×2 em dano, lascas e dano do crítico, +10% de crítico, 20 min, +1 h de offline.</summary>
+        Short = 1,
+        /// <summary>Médio: ×3, +15%, 40 min, +2 h.</summary>
+        Medium = 2,
+        /// <summary>Grande: ×4, +20%, 1 h 20, +4 h.</summary>
+        Big = 3,
+        /// <summary>As cartas do raro no tier 2 por 1 h (D-250); some com o Raro Dourado.</summary>
+        RareTier2 = 4,
+    }
+
+    /// <summary>
+    /// Um anúncio do Boost como está no balanço (GDD v8.2 §3.5): o multiplicador de dano, lascas e dano do crítico, os
+    /// pontos a mais na chance de crítico, quanto dura e quantos segundos soma ao teto do offline (D-244, D-254).
+    /// </summary>
+    public readonly struct AdOffer
+    {
+        public AdOffer(AdKind kind, double multiplier, double critChance, double seconds, double offlineSeconds)
+        {
+            if (kind < AdKind.Short || kind > AdKind.Big) throw new ArgumentOutOfRangeException(nameof(kind));
+            if (double.IsNaN(multiplier) || multiplier < 1) throw new ArgumentOutOfRangeException(nameof(multiplier));
+            if (double.IsNaN(critChance) || critChance < 0) throw new ArgumentOutOfRangeException(nameof(critChance));
+            if (double.IsNaN(seconds) || seconds <= 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+            if (double.IsNaN(offlineSeconds) || offlineSeconds < 0) throw new ArgumentOutOfRangeException(nameof(offlineSeconds));
+            Kind = kind;
+            Multiplier = multiplier;
+            CritChance = critChance;
+            Seconds = seconds;
+            OfflineSeconds = offlineSeconds;
+        }
+
+        public AdKind Kind { get; }
+        /// <summary>Dano, lascas e dano do crítico ×isto (2, 3, 4).</summary>
+        public double Multiplier { get; }
+        /// <summary>Pontos a mais na chance de crítico (0,10 = +10%).</summary>
+        public double CritChance { get; }
+        /// <summary>Quanto dura, em segundos de jogo (corre também com o app fechado, D-181).</summary>
+        public double Seconds { get; }
+        /// <summary>O que soma ao teto do offline, se ativo ao fechar o app (D-254): 1 h, 2 h, 4 h.</summary>
+        public double OfflineSeconds { get; }
+    }
+
+    /// <summary>
+    /// Os anúncios do Boost do balanço (GDD v8.2 §3.5; D-244, D-250, D-251, D-254): curto, médio e grande, o do tier 2 do
+    /// raro e o teto do offline com as horas extras. Sem anúncios (<see cref="None"/>): o jogo até o v7.
+    /// </summary>
+    public sealed class AdOffers
+    {
+        readonly AdOffer[] _byKind = new AdOffer[4];
+        readonly bool[] _has = new bool[4];
+
+        /// <param name="tier2Seconds">Quanto dura o "tier 2 por 1 h" (D-250: 3600); 0 = sem ele.</param>
+        /// <param name="offlineCapSeconds">O teto do offline com as horas extras (D-244: 8 h).</param>
+        public AdOffers(IEnumerable<AdOffer> offers, double tier2Seconds, double offlineCapSeconds)
+        {
+            if (double.IsNaN(tier2Seconds) || tier2Seconds < 0) throw new ArgumentOutOfRangeException(nameof(tier2Seconds));
+            if (double.IsNaN(offlineCapSeconds) || offlineCapSeconds < 0) throw new ArgumentOutOfRangeException(nameof(offlineCapSeconds));
+            var list = new List<AdOffer>();
+            if (offers != null)
+                foreach (var offer in offers)
+                {
+                    int i = (int)offer.Kind;
+                    if (_has[i]) throw new ArgumentException($"O anúncio {offer.Kind} aparece duas vezes.", nameof(offers));
+                    _has[i] = true;
+                    _byKind[i] = offer;
+                    list.Add(offer);
+                }
+            list.Sort((a, b) => a.Kind.CompareTo(b.Kind));
+            All = list;
+            Tier2Seconds = tier2Seconds;
+            OfflineCapSeconds = offlineCapSeconds;
+        }
+
+        public IReadOnlyList<AdOffer> All { get; }
+        public double Tier2Seconds { get; }
+        public double OfflineCapSeconds { get; }
+
+        /// <summary>O balanço tem o menu do Boost (algum anúncio).</summary>
+        public bool IsEnabled => All.Count > 0;
+
+        /// <summary>O balanço tem o "tier 2 por 1 h" (D-250).</summary>
+        public bool HasTier2 => Tier2Seconds > 0;
+
+        public bool Has(AdKind kind) => kind >= AdKind.Short && kind <= AdKind.Big && _has[(int)kind];
+
+        public AdOffer Get(AdKind kind) =>
+            Has(kind) ? _byKind[(int)kind] : throw new ArgumentException($"Sem o anúncio {kind}.", nameof(kind));
+
+        public static AdOffers None() => new AdOffers(null, 0, 0);
     }
 
     /// <summary>
@@ -328,22 +432,29 @@ namespace MinersIdle.Core
         /// <summary>O produto dos multiplicadores do dano do crítico (a carta "Dano de Crítico ×2" do v8); 1 sem nenhum.</summary>
         public double CritDamageMultiplier => Product(BonusKind.CritDamageMultiplier, internOnly: false);
 
-        /// <summary>A soma dos pontos a mais na chance de crítico (a carta "Crítico +25%"): 0,25 = +25.</summary>
+        /// <summary>
+        /// A soma dos pontos a mais na chance de crítico (a carta "Crítico +25%"): 0,25 = +25. Dos anúncios, só o maior
+        /// (D-251), somado ao resto (D-287).
+        /// </summary>
         public double CritChance
         {
             get
             {
-                double sum = 0;
+                double sum = 0, ad = 0;
                 for (int i = 0; i < _bonuses.Count; i++)
-                    if (_bonuses[i].Kind == BonusKind.CritChance) sum += _bonuses[i].Value;
-                return sum;
+                {
+                    if (_bonuses[i].Kind != BonusKind.CritChance) continue;
+                    if (IsAdOffer(_bonuses[i])) ad = Math.Max(ad, _bonuses[i].Value);
+                    else sum += _bonuses[i].Value;
+                }
+                return sum + ad;
             }
         }
 
-        /// <summary>O dano × do estagiário: só as cartas do raro valem para ele (D-177, D-190).</summary>
+        /// <summary>O dano × do estagiário: as cartas do raro (D-190) e os anúncios do v8 (D-246); o combo não (D-177).</summary>
         public double InternDamageMultiplier => Product(BonusKind.DamageMultiplier, internOnly: true);
 
-        /// <summary>O intervalo ÷ do estagiário: só as cartas do raro (o boost do AD não vale para ele, D-177).</summary>
+        /// <summary>O intervalo ÷ do estagiário: só as cartas do raro (o boost do AD do v7 não vale para ele, D-177).</summary>
         public double InternIntervalDivisor => Product(BonusKind.IntervalDivisor, internOnly: true);
 
         /// <summary>Se alguma carta do raro está ativa (o ritmo lento não faz raro novo, D-185).</summary>
@@ -357,27 +468,61 @@ namespace MinersIdle.Core
             }
         }
 
-        /// <summary>O boost do AD ativo, ou <c>null</c> (D-188: no máximo um).</summary>
+        /// <summary>O boost de velocidade do AD do v7 ativo, ou <c>null</c> (D-188: no máximo um).</summary>
         public ActiveBonus? AdBoost
         {
             get
             {
                 for (int i = 0; i < _bonuses.Count; i++)
-                    if (_bonuses[i].Source == BonusSource.Ad) return _bonuses[i];
+                    if (_bonuses[i].Source == BonusSource.Ad && !IsAdOffer(_bonuses[i])) return _bonuses[i];
                 return null;
             }
         }
 
-        /// <summary>Se o bônus vale também para o estagiário: só as cartas do raro (D-177, D-190).</summary>
-        public static bool AppliesToIntern(ActiveBonus bonus) => bonus.Source == BonusSource.Rare;
+        /// <summary>O anúncio do tier 2 do raro está ativo (D-250).</summary>
+        public bool HasRareTier2Ad
+        {
+            get
+            {
+                for (int i = 0; i < _bonuses.Count; i++)
+                    if (_bonuses[i].Kind == BonusKind.RareTier2) return true;
+                return false;
+            }
+        }
 
+        /// <summary>Segundos que faltam do anúncio <paramref name="kind"/> (o maior dos bônus dele); 0 sem ele.</summary>
+        public double AdSecondsLeft(AdKind kind)
+        {
+            double left = 0;
+            for (int i = 0; i < _bonuses.Count; i++)
+                if (_bonuses[i].Source == BonusSource.Ad && _bonuses[i].Tier == (int)kind) left = Math.Max(left, _bonuses[i].SecondsLeft);
+            return left;
+        }
+
+        /// <summary>Um bônus de um anúncio do Boost do v8 (não o boost de velocidade do v7, que tem o tier 0).</summary>
+        public static bool IsAdOffer(ActiveBonus bonus) => bonus.Source == BonusSource.Ad && bonus.Tier > 0;
+
+        /// <summary>
+        /// Se o bônus vale também para o estagiário: as cartas do raro (D-190) e os anúncios do v8 (D-246). O combo e o
+        /// boost de velocidade do v7, não (D-177). O crítico não muda nada para ele (D-167).
+        /// </summary>
+        public static bool AppliesToIntern(ActiveBonus bonus) => bonus.Source == BonusSource.Rare || IsAdOffer(bonus);
+
+        /// <summary>
+        /// O produto dos bônus do tipo: os anúncios do v8 entre si valem o maior (D-251), e esse maior multiplica o resto
+        /// (as cartas do raro, D-287).
+        /// </summary>
         double Product(BonusKind kind, bool internOnly)
         {
-            double product = 1;
+            double product = 1, ad = 1;
             for (int i = 0; i < _bonuses.Count; i++)
-                if (_bonuses[i].Kind == kind && _bonuses[i].Value > 0 && (!internOnly || AppliesToIntern(_bonuses[i])))
-                    product *= _bonuses[i].Value;
-            return product;
+            {
+                var bonus = _bonuses[i];
+                if (bonus.Kind != kind || bonus.Value <= 0 || (internOnly && !AppliesToIntern(bonus))) continue;
+                if (IsAdOffer(bonus)) ad = Math.Max(ad, bonus.Value);
+                else product *= bonus.Value;
+            }
+            return product * ad;
         }
 
         /// <summary>Segundos até o próximo bônus acabar; infinito sem nenhum.</summary>
@@ -417,8 +562,8 @@ namespace MinersIdle.Core
         }
 
         /// <summary>
-        /// Entra uma carta do raro (D-190): igual a outra ainda ativa (mesma origem e mesma carta), só renova o tempo, sem
-        /// somar efeito; diferente, vale junto.
+        /// Entra uma carta do raro (D-190) ou um bônus de anúncio (D-244): igual a outro ainda ativo (mesma origem, mesmo
+        /// tier e mesmo tipo), só renova o tempo, sem somar efeito; diferente, vale junto.
         /// </summary>
         internal void AddOrRenew(ActiveBonus bonus)
         {
@@ -426,7 +571,7 @@ namespace MinersIdle.Core
             for (int i = 0; i < _bonuses.Count; i++)
             {
                 var active = _bonuses[i];
-                if (active.Source != bonus.Source || active.Tier != bonus.Tier) continue;
+                if (active.Source != bonus.Source || active.Tier != bonus.Tier || active.Kind != bonus.Kind) continue;
                 _bonuses[i] = new ActiveBonus(bonus.Kind, bonus.Value, bonus.Duration, bonus.SecondsLeft, bonus.Source, bonus.Tier);
                 return;
             }

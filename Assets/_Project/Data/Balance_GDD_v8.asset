@@ -157,8 +157,26 @@ MonoBehaviour:
   - card: 4
     value: 4
     seconds: 30
-  adSpeedDivisor: 2.5
-  adBoostSeconds: 30
+  adSpeedDivisor: 0
+  adBoostSeconds: 0
+  adOffers:
+  - kind: 1
+    multiplier: 2
+    critChance: 0.1
+    minutes: 20
+    offlineHours: 1
+  - kind: 2
+    multiplier: 3
+    critChance: 0.15
+    minutes: 40
+    offlineHours: 2
+  - kind: 3
+    multiplier: 4
+    critChance: 0.2
+    minutes: 80
+    offlineHours: 4
+  adRareTier2Minutes: 60
+  adOfflineCapHours: 8
   restLevel: 10
   redShardMilestoneStep: 10
   redShardMilestone: 5

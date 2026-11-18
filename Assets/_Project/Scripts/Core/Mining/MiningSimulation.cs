@@ -181,6 +181,9 @@ namespace MinersIdle.Core
         /// </summary>
         public event Action AdBoostGranted;
 
+        /// <summary>Um anúncio do Boost foi assistido (ou renovado) e os bônus dele entraram (M9e E2).</summary>
+        public event Action<AdKind> AdWatched;
+
         /// <summary>
         /// A transição de andar começou (M9c E0, D-266): a caverna já é a nova (sai antes do <see cref="CaveChanged"/>) e,
         /// até <see cref="FloorTransitionEnded"/>, nada corre. O número é a caverna nova.
@@ -248,7 +251,7 @@ namespace MinersIdle.Core
         /// balanço tem o tier 2; senão 1. O anúncio do tier 2 por 1 h entra na E2.
         /// </summary>
         public int RareTier =>
-            _strike.Rare.HasTier2 && (ForceRareTier2 || _permanents.HasGoldenRare) ? 2 : 1;
+            _strike.Rare.HasTier2 && (ForceRareTier2 || _permanents.HasGoldenRare || _state.Bonuses.HasRareTier2Ad) ? 2 : 1;
 
         /// <summary>A janela do cristal raro (M9b E4): fechada (<c>default</c>), escolhendo, ou mostrando o sorteio.</summary>
         public RareWindow RareWindow => _state.RareWindow;
@@ -482,7 +485,11 @@ namespace MinersIdle.Core
             if (IsResting) return default; // D-275: descansando, o jogo está parado; nem o estagiário trabalha
             // A conta antes de o tempo dos bônus correr: a carta do raro que estava ativa vale para o estagiário até acabar
             // (D-181, D-190). A janela do raro não anda: espera o jogador (D-222).
-            var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway, IsAutoAdvancing);
+            // GDD v8 (D-284): um raro a cada intervalo do contador de offline, quebrado pelo estagiário, com uma carta
+            // sorteada do tier que vale para ele. O contador da run não anda (D-283).
+            double counted = secondsAway <= 0 || double.IsInfinity(secondsAway) ? 0 : Math.Min(secondsAway, OfflineMaxSeconds);
+            var rares = OfflineRareCards(counted);
+            var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway, IsAutoAdvancing, _strike.Ads, rares);
 
             // Os bônus com tempo correm com o app fechado (D-181, D-214), sem o teto do offline; relógio voltado não devolve tempo.
             if (secondsAway > 0 && !double.IsInfinity(secondsAway)) AdvanceBonuses(secondsAway);
@@ -497,6 +504,35 @@ namespace MinersIdle.Core
             _state.AddOfflineShards(report.Shards);
             ShardsChanged?.Invoke(_state.Shards);
             return report;
+        }
+
+        /// <summary>
+        /// As cartas dos raros do offline (D-284): um a cada <see cref="RareInterval"/> de <paramref name="counted"/>, com o
+        /// estagiário contratado e o raro liberado; a carta é sorteada no gerador do raro, no tier daquele instante (o
+        /// anúncio do tier 2 pode acabar no meio). <c>null</c> sem nenhum.
+        /// </summary>
+        List<OfflineRareCard> OfflineRareCards(double counted)
+        {
+            var rare = _strike.Rare;
+            if (counted <= 0 || !IsRareCounting || !_internStats.IsHired || rare.Cards.Count == 0) return null;
+            double interval = RareInterval;
+            long count = (long)Math.Floor(counted / interval + 1e-9);
+            if (count <= 0) return null;
+            bool permanentTier2 = rare.HasTier2 && (ForceRareTier2 || _permanents.HasGoldenRare);
+            double tier2AdLeft = 0;
+            var all = _state.Bonuses.All;
+            for (int i = 0; i < all.Count; i++)
+                if (all[i].Kind == BonusKind.RareTier2) tier2AdLeft = Math.Max(tier2AdLeft, all[i].SecondsLeft);
+
+            var cards = new List<OfflineRareCard>((int)Math.Min(count, 100_000));
+            for (long k = 1; k <= count && k <= 100_000; k++)
+            {
+                double at = k * interval;
+                var card = rare.Cards[_rareRandom.NextInt(0, rare.Cards.Count)].Card;
+                int tier = permanentTier2 || (rare.HasTier2 && tier2AdLeft > at) ? 2 : 1;
+                cards.Add(new OfflineRareCard(at, rare.Get(card, tier)));
+            }
+            return cards;
         }
 
         /// <summary>A volta esperando o COLETAR (M9, E2); vazia quando não há.</summary>
@@ -910,6 +946,75 @@ namespace MinersIdle.Core
             AdBoostGranted?.Invoke();
             return true;
         }
+
+        // ── Os anúncios do Boost (M9e E2, GDD v8.2 §3.5) ────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Atalho do debug ("Anúncios curtos", M9e E2): as durações dos anúncios divididas por isto (60: 20 min viram 20 s),
+        /// para ver acabar. 1 = as do balanço. Vale para o próximo anúncio assistido.
+        /// </summary>
+        public double AdDurationDivisor
+        {
+            get => _adDurationDivisor;
+            set
+            {
+                if (double.IsNaN(value) || value < 1) throw new ArgumentOutOfRangeException(nameof(value));
+                _adDurationDivisor = value;
+            }
+        }
+
+        double _adDurationDivisor = 1;
+
+        /// <summary>
+        /// O anúncio pode ser assistido: o balanço tem ele. Com um ativo do mesmo tipo, de novo renova (D-244). O do tier 2
+        /// do raro (D-250) só a partir do andar do raro, com o tier 2 no balanço e sem o Raro Dourado.
+        /// </summary>
+        public bool CanWatch(AdKind kind)
+        {
+            var ads = _strike.Ads;
+            if (kind != AdKind.RareTier2) return ads.Has(kind);
+            return ads.HasTier2 && _strike.Rare.IsEnabled && _strike.Rare.HasTier2 && IsRareUnlocked && !_permanents.HasGoldenRare;
+        }
+
+        /// <summary>Segundos que faltam do anúncio; 0 sem ele.</summary>
+        public double AdSecondsLeft(AdKind kind) => _state.Bonuses.AdSecondsLeft(kind);
+
+        /// <summary>
+        /// O anúncio terminou (o RECOMPENSA, D-218) ou o atalho do debug: os bônus dele entram por um bônus por atributo
+        /// (dano, lascas e dano do crítico ×, chance de crítico +), para o anão e, menos o crítico, para o estagiário
+        /// (D-246). O mesmo anúncio de novo renova o tempo, sem somar (D-244); anúncios diferentes juntos: vale o maior em
+        /// cada atributo (D-251). O do tier 2 deixa as cartas do raro no tier 2 enquanto durar. <c>false</c> se não pode.
+        /// </summary>
+        public bool WatchAd(AdKind kind)
+        {
+            if (!CanWatch(kind)) return false;
+            var bonuses = _state.Bonuses;
+            int tier = (int)kind;
+            if (kind == AdKind.RareTier2)
+            {
+                double seconds = _strike.Ads.Tier2Seconds / _adDurationDivisor;
+                bonuses.AddOrRenew(new ActiveBonus(BonusKind.RareTier2, 1, seconds, seconds, BonusSource.Ad, tier));
+            }
+            else
+            {
+                var offer = _strike.Ads.Get(kind);
+                double seconds = offer.Seconds / _adDurationDivisor;
+                bonuses.AddOrRenew(new ActiveBonus(BonusKind.DamageMultiplier, offer.Multiplier, seconds, seconds, BonusSource.Ad, tier));
+                bonuses.AddOrRenew(new ActiveBonus(BonusKind.ShardsMultiplier, offer.Multiplier, seconds, seconds, BonusSource.Ad, tier));
+                bonuses.AddOrRenew(new ActiveBonus(BonusKind.CritDamageMultiplier, offer.Multiplier, seconds, seconds, BonusSource.Ad, tier));
+                if (offer.CritChance > 0)
+                    bonuses.AddOrRenew(new ActiveBonus(BonusKind.CritChance, offer.CritChance, seconds, seconds, BonusSource.Ad, tier));
+            }
+            OnBonusesChanged();
+            AdWatched?.Invoke(kind);
+            return true;
+        }
+
+        /// <summary>
+        /// O teto do offline agora (D-253, D-254): 4 h (6 h a partir do andar 20) e, com anúncios ativos, as horas extras
+        /// deles, até 8 h. É o que conta se o app fechar agora.
+        /// </summary>
+        public double OfflineMaxSeconds => OfflineMining.MaxSeconds(_rules, _state, _permanents, _strike.Ads);
 
         /// <summary>Atalho do debug (D-226): a carta direto, sem janela. <c>false</c> se o balanço não tem essa carta.</summary>
         public bool GrantRareCard(RareCard card)

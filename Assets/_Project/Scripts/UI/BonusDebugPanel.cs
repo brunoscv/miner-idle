@@ -14,7 +14,9 @@ namespace MinersIdle.UI
     /// regra do acúmulo, o dano a mais somado e cada bônus ativo com o tempo que falta. M9b E4 (D-226): Próximo raro, Janela
     /// agora e uma carta direta de cada tipo, e a janela do raro no alto. M9b E5 (D-234): AD agora e Pular espera. M9e E1
     /// (D-285): Raro agora, Contador 5 s, Tier 2 e a carta Dano de Crítico; no alto, os segundos até o raro e o tier. As
-    /// cartas que o balanço não tem ficam escondidas. Fica no painel de debug: no release
+    /// cartas que o balanço não tem ficam escondidas. M9e E2: um botão por anúncio do Boost (curto, médio, grande e o do
+    /// tier 2, direto, sem o modal), "Anúncios curtos" (as durações ÷ 60) e cada anúncio ativo no alto, com o tempo que
+    /// falta e as horas de offline de agora. Fica no painel de debug: no release
     /// some junto. Só manda comandos à simulação do <see cref="MiningRunner"/>. Os textos ficam na cena.
     /// </summary>
     public sealed class BonusDebugPanel : MonoBehaviour
@@ -48,6 +50,21 @@ namespace MinersIdle.UI
         [SerializeField] string windowPickedFormat;
         [Tooltip("Somado ao alto com o próximo raro marcado.")]
         [SerializeField] string nextRareLabel;
+
+        [Header("Anúncios do Boost (M9e E2)")]
+        [Tooltip("Um anúncio direto, sem o modal, na ordem do AdKind (Curto, Médio, Grande, Tier 2).")]
+        [SerializeField] Button[] ads = Array.Empty<Button>();
+        [Tooltip("Liga e desliga as durações ÷ debugAdDivisor (para ver acabar).")]
+        [SerializeField] Button shortAds;
+        [SerializeField] double debugAdDivisor = 60;
+        [Tooltip("O rótulo do botão. {0} sim ou não")]
+        [SerializeField] string shortAdsFormat;
+        [Tooltip("O nome de cada anúncio no alto, na ordem do AdKind (Curto, Médio, Grande, Tier 2).")]
+        [SerializeField] string[] adLabels = Array.Empty<string>();
+        [Tooltip("Um anúncio ativo. {0} o nome · {1} o efeito (×2) · {2} o tempo que falta")]
+        [SerializeField] string adOfferFormat;
+        [Tooltip("A linha do offline. {0} o teto se o app fechar agora")]
+        [SerializeField] string offlineFormat;
 
         [Header("Contador do raro (M9e E1, D-283, D-285)")]
         [Tooltip("Um raro já, num cristal que nasce agora (sem esperar o contador).")]
@@ -95,7 +112,8 @@ namespace MinersIdle.UI
         readonly StringBuilder _text = new StringBuilder(256);
         UnityEngine.Events.UnityAction[] _grant = Array.Empty<UnityEngine.Events.UnityAction>();
         UnityEngine.Events.UnityAction[] _cards = Array.Empty<UnityEngine.Events.UnityAction>();
-        TMP_Text _counterLabel, _tier2Label;
+        TMP_Text _counterLabel, _tier2Label, _shortAdsLabel;
+        UnityEngine.Events.UnityAction[] _ads = Array.Empty<UnityEngine.Events.UnityAction>();
         DebugMenu _menu;
         float _refresh;
 
@@ -116,6 +134,13 @@ namespace MinersIdle.UI
             }
             if (rareCounter != null) _counterLabel = rareCounter.GetComponentInChildren<TMP_Text>(true);
             if (rareTier2 != null) _tier2Label = rareTier2.GetComponentInChildren<TMP_Text>(true);
+            if (shortAds != null) _shortAdsLabel = shortAds.GetComponentInChildren<TMP_Text>(true);
+            _ads = new UnityEngine.Events.UnityAction[ads.Length];
+            for (int i = 0; i < ads.Length; i++)
+            {
+                var kind = (AdKind)(i + 1);
+                _ads[i] = () => WatchAd(kind);
+            }
         }
 
         void OnEnable()
@@ -132,6 +157,9 @@ namespace MinersIdle.UI
             if (rareNow != null) rareNow.onClick.AddListener(RareNow);
             if (rareCounter != null) rareCounter.onClick.AddListener(ToggleCounter);
             if (rareTier2 != null) rareTier2.onClick.AddListener(ToggleTier2);
+            for (int i = 0; i < ads.Length; i++)
+                if (ads[i] != null) ads[i].onClick.AddListener(_ads[i]);
+            if (shortAds != null) shortAds.onClick.AddListener(ToggleShortAds);
             _refresh = 0f;
             RefreshButtons();
         }
@@ -150,6 +178,9 @@ namespace MinersIdle.UI
             if (rareNow != null) rareNow.onClick.RemoveListener(RareNow);
             if (rareCounter != null) rareCounter.onClick.RemoveListener(ToggleCounter);
             if (rareTier2 != null) rareTier2.onClick.RemoveListener(ToggleTier2);
+            for (int i = 0; i < ads.Length; i++)
+                if (ads[i] != null) ads[i].onClick.RemoveListener(_ads[i]);
+            if (shortAds != null) shortAds.onClick.RemoveListener(ToggleShortAds);
         }
 
         void Update()
@@ -214,6 +245,27 @@ namespace MinersIdle.UI
             RefreshButtons();
         }
 
+        /// <summary>Um anúncio do Boost direto, sem o modal (M9e E2): de novo, renova (D-244).</summary>
+        public void WatchAd(AdKind kind)
+        {
+            runner.Simulation?.WatchAd(kind);
+            _refresh = 0f;
+            RefreshButtons();
+        }
+
+        /// <summary>Anúncios curtos (M9e E2): as durações dos próximos anúncios ÷ 60, para ver acabar; de novo, volta.</summary>
+        public void ToggleShortAds()
+        {
+            var simulation = runner.Simulation;
+            if (simulation == null) return;
+            simulation.AdDurationDivisor = simulation.AdDurationDivisor > 1 ? 1 : debugAdDivisor;
+            _refresh = 0f;
+            RefreshButtons();
+        }
+
+        /// <summary>O rótulo do botão dos anúncios curtos (também para os testes).</summary>
+        public string ShortAdsButtonText => _shortAdsLabel != null ? _shortAdsLabel.text : "";
+
         /// <summary>O rótulo do botão do contador (também para os testes).</summary>
         public string CounterButtonText => _counterLabel != null ? _counterLabel.text : "";
 
@@ -235,6 +287,13 @@ namespace MinersIdle.UI
                 _counterLabel.text = string.Format(counterButtonFormat, WholeSeconds(simulation.RareInterval));
             if (_tier2Label != null && !string.IsNullOrEmpty(tier2ButtonFormat))
                 _tier2Label.text = string.Format(tier2ButtonFormat, simulation.RareTier >= 2 ? yesLabel : noLabel);
+            if (_shortAdsLabel != null && !string.IsNullOrEmpty(shortAdsFormat))
+                _shortAdsLabel.text = string.Format(shortAdsFormat, simulation.AdDurationDivisor > 1 ? yesLabel : noLabel);
+            for (int i = 0; i < ads.Length; i++)
+                if (ads[i] != null) ads[i].interactable = simulation.CanWatch((AdKind)(i + 1));
+            // O boost de velocidade do v7 (D-234) só no balanço que o tem; no v8 ele saiu (D-290).
+            bool speedAd = simulation.Strike.Ad.IsEnabled;
+            if (adNow != null && adNow.gameObject.activeSelf != speedAd) adNow.gameObject.SetActive(speedAd);
         }
 
         /// <summary>Janela agora (D-226): a janela das cartas, como se um raro tivesse quebrado.</summary>
@@ -279,13 +338,24 @@ namespace MinersIdle.UI
                                NumberFormatter.FormatPercent(bonuses.DamagePercent));
             _text.Append('\n');
             if (bonuses.Count == 0) _text.Append(noneLabel);
+            bool first = true;
             for (int i = 0; i < bonuses.Count; i++)
             {
                 var bonus = bonuses.All[i];
-                if (i > 0) _text.Append(separator);
+                if (ActiveBonuses.IsAdOffer(bonus) && bonus.Kind != BonusKind.DamageMultiplier && bonus.Kind != BonusKind.RareTier2)
+                    continue;
+                if (!first) _text.Append(separator);
+                first = false;
                 if (bonus.Source == BonusSource.Rare)
                     _text.AppendFormat(rareCardFormat ?? "{0} {1}", CardLabel((RareCard)bonus.Tier), Seconds(bonus.SecondsLeft),
                                        Effect(bonus));
+                else if (ActiveBonuses.IsAdOffer(bonus))
+                {
+                    // Um anúncio do v8 é um bônus por atributo: o alto mostra um só, o do dano (ou o do tier 2).
+                    _text.AppendFormat(adOfferFormat ?? "{0} {1} {2}", AdLabel(bonus.Tier),
+                                       bonus.Kind == BonusKind.RareTier2 ? "" : NumberFormatter.FormatEffect(bonus.Kind, bonus.Value),
+                                       Seconds(bonus.SecondsLeft));
+                }
                 else if (bonus.Source == BonusSource.Ad)
                     _text.AppendFormat(adFormat ?? "{0} {1}", NumberFormatter.Format(bonus.Value), Seconds(bonus.SecondsLeft));
                 else
@@ -300,6 +370,8 @@ namespace MinersIdle.UI
             else if (window.IsOpen && !string.IsNullOrEmpty(windowPickedFormat))
                 _text.Append('\n').AppendFormat(windowPickedFormat, CardLabel(window.CardAt(window.Chosen)), window.Queued);
             if (simulation.ForceNextRare && !string.IsNullOrEmpty(nextRareLabel)) _text.Append('\n').Append(nextRareLabel);
+            if (simulation.Strike.Ads.IsEnabled && !string.IsNullOrEmpty(offlineFormat))
+                _text.Append('\n').AppendFormat(offlineFormat, NumberFormatter.FormatDuration(simulation.OfflineMaxSeconds, trimWholeHours: true));
             var rare = simulation.Strike.Rare;
             if (rare.IsEnabled && rare.UsesCounter)
             {
@@ -317,10 +389,16 @@ namespace MinersIdle.UI
 
         static string WholeSeconds(double seconds) => Math.Round(seconds).ToString("0", PtBr) + " s";
 
+        string AdLabel(int tier) => tier >= 1 && tier <= adLabels.Length ? adLabels[tier - 1] : ((AdKind)tier).ToString();
+
         string CardLabel(RareCard card) => (int)card < cardLabels.Length ? cardLabels[(int)card] : card.ToString();
 
-        /// <summary>O tempo que falta com um décimo ("4,3 s"): no DBG, para ver o fim exato.</summary>
-        static string Seconds(double seconds) => Math.Max(0, seconds).ToString("0.0", PtBr) + " s";
+        /// <summary>
+        /// O tempo que falta com um décimo ("4,3 s"): no DBG, para ver o fim exato. Acima de um minuto (os anúncios),
+        /// em minutos e segundos ("19 min 05 s").
+        /// </summary>
+        static string Seconds(double seconds) =>
+            seconds >= 60 ? NumberFormatter.FormatDuration(seconds) : Math.Max(0, seconds).ToString("0.0", PtBr) + " s";
 
         static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
     }

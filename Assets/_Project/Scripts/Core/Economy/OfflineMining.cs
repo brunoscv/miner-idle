@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MinersIdle.Core
 {
@@ -10,8 +11,10 @@ namespace MinersIdle.Core
     {
         public OfflineReport(double secondsAway, double secondsCounted, bool hired, long crystals, long hitsPerCrystal,
                              double secondsPerCrystal, double shardsPerCrystal, double shards,
-                             int fromFloor = 0, int toFloor = 0, long endBreaks = 0)
+                             int fromFloor = 0, int toFloor = 0, long endBreaks = 0, double maxSeconds = 0, int rares = 0)
         {
+            MaxSeconds = maxSeconds;
+            Rares = Math.Max(0, rares);
             FromFloor = fromFloor;
             ToFloor = Math.Max(fromFloor, toFloor);
             EndBreaks = Math.Max(0, endBreaks);
@@ -47,6 +50,10 @@ namespace MinersIdle.Core
         public int ToFloor { get; }
         /// <summary>Os cristais na barra do <see cref="ToFloor"/> na volta (sem o automático, a barra pode estar cheia, P4).</summary>
         public long EndBreaks { get; }
+        /// <summary>O teto que valeu nesta volta: o do andar e, com anúncios ativos ao fechar, as horas extras (D-254).</summary>
+        public double MaxSeconds { get; }
+        /// <summary>Raros que ele quebrou no offline, um por intervalo do contador (D-284).</summary>
+        public int Rares { get; }
         /// <summary>Quantos andares ele desceu sozinho.</summary>
         public int FloorsDescended => ToFloor - FromFloor;
 
@@ -105,6 +112,19 @@ namespace MinersIdle.Core
         static double Clean(double value) => double.IsNaN(value) || double.IsInfinity(value) ? 0 : value;
     }
 
+    /// <summary>A carta de um raro quebrado no offline (D-284): quando, em segundos desde que o app fechou, e a regra dela.</summary>
+    public readonly struct OfflineRareCard
+    {
+        public OfflineRareCard(double at, RareCardRule rule)
+        {
+            At = at;
+            Rule = rule;
+        }
+
+        public double At { get; }
+        public RareCardRule Rule { get; }
+    }
+
     /// <summary>Um trecho do offline com os mesmos atributos do começo ao fim (<see cref="OfflineMining.Stretch"/>).</summary>
     public readonly struct OfflineStretch
     {
@@ -143,19 +163,31 @@ namespace MinersIdle.Core
         /// O teto do tempo contado (GDD v8, D-253): 4 h; 6 h para quem já chegou ao andar 20 (o mais fundo de todas as runs,
         /// <see cref="PermanentState.DeepestFloor"/>, ou o andar de agora, o que for maior).
         /// </summary>
-        public static double MaxSeconds(MiningRules rules, GameState state, Permanents permanents)
+        /// <param name="ads">
+        /// Os anúncios do Boost (M9e E2): cada um ativo no <paramref name="state"/> soma as horas dele (+1, +2, +4 h, D-254),
+        /// com o teto deles (8 h, D-244), também depois do andar 20. <c>null</c> = sem anúncios.
+        /// </param>
+        public static double MaxSeconds(MiningRules rules, GameState state, Permanents permanents, AdOffers ads = null)
         {
             if (rules == null) throw new ArgumentNullException(nameof(rules));
             int deepest = Math.Max(state?.Cave ?? 1, permanents?.State.DeepestFloor ?? 1);
-            return rules.OfflineMaxSecondsFor(deepest);
+            double max = rules.OfflineMaxSecondsFor(deepest);
+            if (ads == null || !ads.IsEnabled || state == null) return max;
+            double extra = 0;
+            foreach (var offer in ads.All)
+                if (state.Bonuses.AdSecondsLeft(offer.Kind) > 0) extra += offer.OfflineSeconds;
+            return extra > 0 ? Math.Min(max + extra, Math.Max(max, ads.OfflineCapSeconds)) : max;
         }
 
         /// <summary>
         /// A conta do tempo fora, com o estado da run e as permanentes de agora. <paramref name="autoAdvance"/>: o avanço
         /// automático vale (o marco do andar 5 e o ajuste ligado, <see cref="MiningSimulation.IsAutoAdvancing"/>).
         /// </summary>
+        /// <param name="ads">Os anúncios do Boost (M9e E2): as horas extras no teto (<see cref="MaxSeconds"/>).</param>
+        /// <param name="rareCards">As cartas dos raros quebrados no offline (D-284), em ordem de tempo; <c>null</c> = nenhuma.</param>
         public static OfflineReport Compute(MiningRules rules, EconomyRules economy, GameState state, Permanents permanents,
-                                            double secondsAway, bool autoAdvance = false)
+                                            double secondsAway, bool autoAdvance = false, AdOffers ads = null,
+                                            IReadOnlyList<OfflineRareCard> rareCards = null)
         {
             if (rules == null) throw new ArgumentNullException(nameof(rules));
             if (economy == null) throw new ArgumentNullException(nameof(economy));
@@ -163,11 +195,12 @@ namespace MinersIdle.Core
             if (double.IsNaN(secondsAway)) throw new ArgumentOutOfRangeException(nameof(secondsAway));
 
             var intern = InternStats.Compute(rules, economy, state, permanents);
-            double counted = secondsAway <= 0 ? 0 : Math.Min(secondsAway, MaxSeconds(rules, state, permanents));
+            double max = MaxSeconds(rules, state, permanents, ads);
+            double counted = secondsAway <= 0 ? 0 : Math.Min(secondsAway, max);
             int floor = state.Cave;
             long breaks = state.CaveBreaks;
             if (!intern.IsHired)
-                return new OfflineReport(secondsAway, counted, false, 0, 0, 0, 0, 0, floor, floor, breaks);
+                return new OfflineReport(secondsAway, counted, false, 0, 0, 0, 0, 0, floor, floor, breaks, max);
 
             // O relatório mostra o ritmo do andar de partida, sem cartas.
             double reward = rules.CrystalRewardIn(floor) * intern.OfflineRewardMultiplier;
@@ -175,10 +208,15 @@ namespace MinersIdle.Core
             double spacing = permanents?.CrystalSpacing(rules) ?? rules.MinCrystalSpacing; // com o Atalho (M9d)
             double perCrystal = SecondsPerCrystal(rules, hits, intern.HitInterval, spacing);
 
-            // Trechos: cada pedaço de tempo com as mesmas cartas do raro (M9b E4, D-181, D-190) e no mesmo andar (M9c E4).
-            // O tempo no meio de um cristal passa para o trecho seguinte.
-            bool cards = HasInternCard(state.Bonuses, counted);
-            var bonuses = state.Bonuses.All;
+            // Trechos: cada pedaço de tempo com os mesmos bônus para ele — as cartas do raro (M9b E4, D-181, D-190), os
+            // anúncios (M9e, D-246) e as cartas dos raros do offline (D-284) — e no mesmo andar (M9c E4). O tempo no meio
+            // de um cristal passa para o trecho seguinte.
+            var effects = InternEffects(state.Bonuses, rareCards, counted);
+            int rares = 0;
+            if (rareCards != null)
+                for (int i = 0; i < rareCards.Count; i++)
+                    if (rareCards[i].At <= counted + Epsilon) rares++;
+            var cardMax = effects != null ? new double[Enum.GetValues(typeof(RareCard)).Length] : null;
             long crystals = 0;
             double shards = 0, carried = 0, from = 0;
             while (true)
@@ -193,18 +231,7 @@ namespace MinersIdle.Core
                 if (from >= counted - Epsilon) break;
 
                 double until = counted, damage = 1, divisor = 1, multiplier = 1;
-                if (cards)
-                {
-                    for (int i = 0; i < bonuses.Count; i++)
-                    {
-                        var bonus = bonuses[i];
-                        if (!IsInternCard(bonus) || bonus.SecondsLeft <= from) continue;
-                        until = Math.Min(until, bonus.SecondsLeft);
-                        if (bonus.Kind == BonusKind.DamageMultiplier) damage *= bonus.Value;
-                        else if (bonus.Kind == BonusKind.IntervalDivisor) divisor *= bonus.Value;
-                        else multiplier *= bonus.Value;
-                    }
-                }
+                if (effects != null) until = Factors(effects, cardMax, from, until, out damage, out divisor, out multiplier);
                 double floorReward = rules.CrystalRewardIn(floor) * intern.OfflineRewardMultiplier * multiplier;
                 long floorHits = HitsPerCrystal(rules.CrystalHealthIn(floor), intern.Damage * damage);
                 double floorPerCrystal = SecondsPerCrystal(rules, floorHits, intern.HitInterval / divisor, spacing);
@@ -230,27 +257,115 @@ namespace MinersIdle.Core
                 from = until;
             }
             return new OfflineReport(secondsAway, counted, true, crystals, hits, perCrystal, reward, shards,
-                                     state.Cave, floor, breaks);
+                                     state.Cave, floor, breaks, max, rares);
         }
 
         const double Epsilon = 1e-9;
+
+        /// <summary>
+        /// Um bônus para o estagiário no offline, com começo e fim em segundos desde que o app fechou: uma carta do raro
+        /// (<see cref="Group"/> = a carta), um anúncio (<see cref="IsAd"/>) ou a carta de um raro do offline.
+        /// </summary>
+        readonly struct InternEffect
+        {
+            public InternEffect(double start, double end, BonusKind kind, double value, bool isAd, int group)
+            {
+                Start = start;
+                End = end;
+                Kind = kind;
+                Value = value;
+                IsAd = isAd;
+                Group = group;
+            }
+
+            public double Start { get; }
+            public double End { get; }
+            public BonusKind Kind { get; }
+            public double Value { get; }
+            public bool IsAd { get; }
+            public int Group { get; }
+        }
+
+        /// <summary>Os bônus que mudam o estagiário no offline; <c>null</c> sem nenhum.</summary>
+        static List<InternEffect> InternEffects(ActiveBonuses bonuses, IReadOnlyList<OfflineRareCard> rareCards, double counted)
+        {
+            if (counted <= 0) return null;
+            List<InternEffect> effects = null;
+            for (int i = 0; i < bonuses.Count; i++)
+            {
+                var bonus = bonuses.All[i];
+                if (!IsInternCard(bonus) || bonus.SecondsLeft <= 0) continue;
+                (effects ??= new List<InternEffect>()).Add(new InternEffect(0, bonus.SecondsLeft, bonus.Kind, bonus.Value,
+                                                                            ActiveBonuses.IsAdOffer(bonus), bonus.Tier));
+            }
+            if (rareCards != null)
+                for (int i = 0; i < rareCards.Count; i++)
+                {
+                    var card = rareCards[i];
+                    var kind = card.Rule.Kind;
+                    if (card.At >= counted || !IsInternKind(kind)) continue; // as de crítico não fazem nada para ele (D-167)
+                    (effects ??= new List<InternEffect>()).Add(new InternEffect(card.At, card.At + card.Rule.Seconds, kind,
+                                                                                card.Rule.Value, false, (int)card.Rule.Card));
+                }
+            return effects;
+        }
+
+        /// <summary>
+        /// Os multiplicadores do estagiário a partir de <paramref name="from"/>: a mesma carta ativa duas vezes (a do jogo e
+        /// a de um raro do offline) vale uma (renova, D-243); entre anúncios, o maior (D-251); anúncio × cartas (D-287).
+        /// Devolve até quando eles valem (o próximo começo ou fim).
+        /// </summary>
+        static double Factors(List<InternEffect> effects, double[] cardMax, double from, double until,
+                              out double damage, out double divisor, out double multiplier)
+        {
+            Array.Clear(cardMax, 0, cardMax.Length);
+            double adDamage = 1, adDivisor = 1, adShards = 1;
+            for (int i = 0; i < effects.Count; i++)
+            {
+                var effect = effects[i];
+                if (effect.Start > from + Epsilon)
+                {
+                    until = Math.Min(until, effect.Start);
+                    continue;
+                }
+                if (effect.End <= from + Epsilon) continue;
+                until = Math.Min(until, effect.End);
+                if (effect.IsAd)
+                {
+                    if (effect.Kind == BonusKind.DamageMultiplier) adDamage = Math.Max(adDamage, effect.Value);
+                    else if (effect.Kind == BonusKind.IntervalDivisor) adDivisor = Math.Max(adDivisor, effect.Value);
+                    else adShards = Math.Max(adShards, effect.Value);
+                }
+                else if (effect.Group >= 0 && effect.Group < cardMax.Length)
+                    cardMax[effect.Group] = Math.Max(cardMax[effect.Group], effect.Value);
+            }
+            damage = adDamage;
+            divisor = adDivisor;
+            multiplier = adShards;
+            for (int card = 0; card < cardMax.Length; card++)
+            {
+                if (cardMax[card] <= 0) continue;
+                var kind = RareCardRule.KindOf((RareCard)card);
+                if (kind == BonusKind.DamageMultiplier) damage *= cardMax[card];
+                else if (kind == BonusKind.IntervalDivisor) divisor *= cardMax[card];
+                else if (kind == BonusKind.ShardsMultiplier) multiplier *= cardMax[card];
+            }
+            return until;
+        }
+
+        static bool IsInternKind(BonusKind kind) =>
+            kind == BonusKind.DamageMultiplier || kind == BonusKind.IntervalDivisor || kind == BonusKind.ShardsMultiplier;
 
         /// <summary>Os cristais que o andar pede (D-239): com a Memória, se houver permanentes.</summary>
         static long Requirement(MiningRules rules, Permanents permanents, int floor) =>
             permanents?.FloorRequirement(rules, floor) ?? Math.Max(0, rules.FloorBreaksIn(floor));
 
-        /// <summary>Uma carta do raro que muda o estagiário: dano ×, intervalo ÷ ou lascas × (o crítico não, D-167).</summary>
+        /// <summary>
+        /// Um bônus que muda o estagiário: carta do raro ou anúncio do v8 (D-246), em dano ×, intervalo ÷ ou lascas × (o
+        /// crítico não, D-167).
+        /// </summary>
         static bool IsInternCard(ActiveBonus bonus) =>
-            ActiveBonuses.AppliesToIntern(bonus) && bonus.Value > 0 &&
-            (bonus.Kind == BonusKind.DamageMultiplier || bonus.Kind == BonusKind.IntervalDivisor || bonus.Kind == BonusKind.ShardsMultiplier);
-
-        static bool HasInternCard(ActiveBonuses bonuses, double counted)
-        {
-            if (counted <= 0) return false;
-            for (int i = 0; i < bonuses.Count; i++)
-                if (IsInternCard(bonuses.All[i]) && bonuses.All[i].SecondsLeft > 0) return true;
-            return false;
-        }
+            ActiveBonuses.AppliesToIntern(bonus) && bonus.Value > 0 && IsInternKind(bonus.Kind);
 
         /// <summary>Golpes para quebrar um cristal: ⌈vida ÷ dano⌉ (a folga evita um golpe a mais por arredondamento).</summary>
         public static long HitsPerCrystal(double health, double damage)

@@ -36,7 +36,8 @@ namespace MinersIdle.EditorTools
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.BonusMenuName) : null;
             if (menu == null) return false;
             var current = menu.GetComponent<BonusDebugPanel>();
-            if (current != null) return EnsureRare(menu, current) | EnsureAd(menu, current) | EnsureRareV8(menu, current);
+            if (current != null)
+                return EnsureRare(menu, current) | EnsureAd(menu, current) | EnsureRareV8(menu, current) | EnsureAdsV8(menu, current);
 
             var grid = menu.Find("Content/Buttons");
             var grant = new Button[GrantButtons.Length];
@@ -84,7 +85,61 @@ namespace MinersIdle.EditorTools
             EnsureRare(menu, panel);
             EnsureAd(menu, panel);
             EnsureRareV8(menu, panel);
+            EnsureAdsV8(menu, panel);
             return true;
+        }
+
+        /// <summary>
+        /// M9e E2: um botão por anúncio do Boost (direto, sem o modal) e Anúncios curtos, antes do Fechar (o menu cresce
+        /// para 8 fileiras); no alto, cada anúncio ativo e o teto do offline de agora.
+        /// </summary>
+        static bool EnsureAdsV8(Transform menu, BonusDebugPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+            Button Ensure(string name, string label)
+            {
+                var found = grid.Find(name);
+                if (found != null) return found.GetComponent<Button>();
+                changed = true;
+                return DebugPanelSetup.CreateButton(grid, name, label);
+            }
+            var buttons = new[]
+            {
+                Ensure("AdShort", "Anúncio curto"), Ensure("AdMedium", "Anúncio médio"),
+                Ensure("AdBig", "Anúncio grande"), Ensure("AdRareTier2", "Anúncio tier 2"),
+            };
+            var shortAds = Ensure("ShortAds", "Anúncios curtos: não");
+            grid.Find("Close")?.SetAsLastSibling();
+
+            var content = (RectTransform)menu.Find("Content");
+            if (content != null && !Mathf.Approximately(content.sizeDelta.y, DebugPanelSetup.BonusMenuHeight))
+            {
+                content.sizeDelta = new Vector2(content.sizeDelta.x, DebugPanelSetup.BonusMenuHeight);
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            if (so.FindProperty("shortAds").objectReferenceValue != shortAds)
+            {
+                var list = so.FindProperty("ads");
+                list.arraySize = buttons.Length;
+                for (int i = 0; i < buttons.Length; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = buttons[i];
+                so.FindProperty("shortAds").objectReferenceValue = shortAds;
+                so.FindProperty("debugAdDivisor").doubleValue = 60;
+                so.FindProperty("shortAdsFormat").stringValue = "Anúncios curtos: {0}";
+                var labels = so.FindProperty("adLabels");
+                string[] names = { "Curto", "Médio", "Grande", "Tier 2" };
+                labels.arraySize = names.Length;
+                for (int i = 0; i < names.Length; i++) labels.GetArrayElementAtIndex(i).stringValue = names[i];
+                so.FindProperty("adOfferFormat").stringValue = "{0} {1}, {2}";
+                so.FindProperty("offlineFormat").stringValue = "Offline se fechar agora: até {0}";
+                so.ApplyModifiedPropertiesWithoutUndo();
+                changed = true;
+            }
+            if (changed) Debug.Log("[Setup] Painel de debug: no menu Bônus, os anúncios curto, médio, grande e tier 2 e Anúncios curtos (M9e E2).");
+            return changed;
         }
 
         /// <summary>
