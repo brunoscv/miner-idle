@@ -24,7 +24,12 @@ namespace MinersIdle.EditorTools
         };
 
         const string SummaryFormat = "Dia {0} · banco {1} · leva agora {2} (andar {3})\n" +
-                                     "Memória {4} · Sangue {5} · Coração {6}\nDedos {7} · Alma {8}";
+                                     "Memória {4} · Sangue {5} · Coração {6}\nDedos {7} · Alma {8}" + NewPermanents;
+
+        /// <summary>M9d E1: os níveis do Dedo Fogoso e do Atalho no fim do resumo.</summary>
+        const string NewPermanents = " · Fogoso {9} · Atalho {10}";
+
+        const string ShortcutName = "Shortcut";
 
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
@@ -33,7 +38,8 @@ namespace MinersIdle.EditorTools
             var debugPanel = Object.FindAnyObjectByType<DebugPanel>(FindObjectsInactive.Include);
             var menu = debugPanel != null ? debugPanel.transform.Find(DebugPanelSetup.DayMenuName) : null;
             if (menu == null) return false;
-            if (menu.GetComponent<DayDebugPanel>() is DayDebugPanel existing) return EnsureFloorWord(existing);
+            if (menu.GetComponent<DayDebugPanel>() is DayDebugPanel existing)
+                return EnsureFloorWord(existing) | EnsureShortcut(menu, existing);
 
             var grid = menu.Find("Content/Buttons");
             var references = new System.Collections.Generic.List<(string, Object)>
@@ -66,7 +72,53 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[Setup] Painel de debug: menu \"Dia\" com lascas vermelhas, Descansar agora e as permanentes (Marco 8b, D-159).");
+            EnsureShortcut(menu, panel);
             return true;
+        }
+
+        /// <summary>
+        /// M9d E1 (D-277): o botão "Atalho" na grade (antes do Fechar), +1 nível por toque e de volta ao 0 no limite, e os
+        /// níveis do Dedo Fogoso e do Atalho no resumo.
+        /// </summary>
+        static bool EnsureShortcut(Transform menu, DayDebugPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+
+            var button = grid.Find(ShortcutName);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(grid, ShortcutName, "Atalho 0/5").transform;
+                var close = grid.Find("Close");
+                if (close != null) button.SetSiblingIndex(close.GetSiblingIndex());
+                changed = true;
+            }
+
+            var so = new UnityEditor.SerializedObject(panel);
+            var reference = so.FindProperty("shortcut");
+            var target = button.GetComponent<Button>();
+            if (reference.objectReferenceValue != target)
+            {
+                reference.objectReferenceValue = target;
+                changed = true;
+            }
+            var label = so.FindProperty("shortcutFormat");
+            if (string.IsNullOrEmpty(label.stringValue))
+            {
+                label.stringValue = "Atalho {0}/{1}";
+                changed = true;
+            }
+            var format = so.FindProperty("summaryFormat");
+            if (!format.stringValue.Contains("{9}"))
+            {
+                format.stringValue += NewPermanents;
+                changed = true;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            if (changed) Debug.Log("[Setup] DBG → Dia: botão \"Atalho\" e o Dedo Fogoso e o Atalho no resumo (M9d E1, D-277).");
+            return changed;
         }
 
         /// <summary>P9 (M9c E2): o resumo do DBG → Dia diz "andar" no lugar de "nível".</summary>

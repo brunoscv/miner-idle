@@ -62,6 +62,48 @@ namespace MinersIdle.EditorTools
             return changed;
         }
 
+        const string PermanentScrollName = "PermanentScroll";
+
+        /// <summary>
+        /// M9d E1: com o Dedo Fogoso e o Atalho, são 9 linhas de 40 px, que não cabem acima do VOLTAR (a moldura tem 38 px,
+        /// a linha não encolhe). A lista vai para dentro de uma área com rolagem no mesmo lugar: o fundo recorta e o dedo
+        /// arrasta. Depois do <see cref="InternShopSetup"/>, que copia a lista para a aba do estagiário.
+        /// </summary>
+        public static bool EnsurePermanentScroll()
+        {
+            var panel = GameObject.Find("SafeArea")?.transform.Find("Shop/Screen/Panel");
+            var rows = panel != null ? panel.Find("PermanentRows") as RectTransform : null;
+            if (rows == null) return false; // já está na rolagem (ou a loja não existe)
+
+            var scroll = new GameObject(PermanentScrollName, typeof(RectTransform), typeof(RectMask2D), typeof(ScrollRect));
+            var viewport = (RectTransform)scroll.transform;
+            viewport.SetParent(panel, false);
+            viewport.SetSiblingIndex(rows.GetSiblingIndex());
+            viewport.anchorMin = rows.anchorMin;
+            viewport.anchorMax = rows.anchorMax;
+            viewport.pivot = rows.pivot;
+            viewport.offsetMin = rows.offsetMin;
+            viewport.offsetMax = rows.offsetMax;
+
+            rows.SetParent(viewport, false);
+            rows.anchorMin = new Vector2(0f, 1f);
+            rows.anchorMax = Vector2.one;
+            rows.pivot = new Vector2(0.5f, 1f);
+            rows.offsetMin = rows.offsetMax = Vector2.zero;
+            var fitter = rows.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var rect = scroll.GetComponent<ScrollRect>();
+            rect.content = rows;
+            rect.viewport = viewport;
+            rect.horizontal = false;
+            rect.vertical = true;
+            rect.movementType = ScrollRect.MovementType.Clamped;
+            rect.scrollSensitivity = 20f;
+            Debug.Log("[Setup] LOJA → Permanentes com rolagem: as 9 linhas (M9d E1).");
+            return true;
+        }
+
         // ── Catálogo ─────────────────────────────────────────────────────────────────────────────────────────────
 
         static void EnsureCatalog(ShopCatalog catalog)
@@ -155,6 +197,9 @@ namespace MinersIdle.EditorTools
                 // M7 (E3, D-174): Treinar a manopla (raro), Promoção o elmo dourado (lendário).
                 case PermanentId.InternTraining: return (Icon(212), Frame("slot_rarity_rare"));
                 case PermanentId.InternPromotion: return (Icon(155), Frame("slot_rarity_legendary"));
+                // M9d E1 (dos mockups da E0): Dedo Fogoso a luva em chamas (épico), Atalho as botas (raro).
+                case PermanentId.FieryFinger: return (Icon(201), Frame("slot_rarity_epic"));
+                case PermanentId.Shortcut: return (Icon(235), Frame("slot_rarity_rare"));
                 default: return (null, null);
             }
         }

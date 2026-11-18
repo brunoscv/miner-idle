@@ -13,13 +13,21 @@ namespace MinersIdle.Game
     public readonly struct CalculationChoice : IEquatable<CalculationChoice>
     {
         public CalculationChoice(double? pickaxeCaveGrowth = null, double? pickaxeStep = null,
-                                 ComboStacking comboStacking = ComboStacking.Cumulative, RareRhythm rareRhythm = RareRhythm.Gdd)
+                                 ComboStacking comboStacking = ComboStacking.Cumulative, RareRhythm rareRhythm = RareRhythm.Gdd,
+                                 double? crystalSpacing = null)
         {
             PickaxeCaveGrowth = pickaxeCaveGrowth;
             PickaxeStep = pickaxeStep;
             ComboStacking = comboStacking;
             RareRhythm = rareRhythm;
+            CrystalSpacing = crystalSpacing;
         }
+
+        /// <summary>
+        /// A distância entre cristais, em unidades, no lugar da do balanço (M9d, D-277: comparar 1 m com os 3 m do GDD);
+        /// <c>null</c> = a do balanço.
+        /// </summary>
+        public double? CrystalSpacing { get; }
 
         /// <summary>A taxa da Picareta (<c>taxa^n</c>), ou <c>null</c> para a do balanço.</summary>
         public double? PickaxeCaveGrowth { get; }
@@ -38,16 +46,19 @@ namespace MinersIdle.Game
 
         /// <summary>Tudo como o GDD diz, sem número trocado.</summary>
         public bool IsDefault => !PickaxeCaveGrowth.HasValue && !PickaxeStep.HasValue &&
-                                 ComboStacking == ComboStacking.Cumulative && RareRhythm == RareRhythm.Gdd;
+                                 ComboStacking == ComboStacking.Cumulative && RareRhythm == RareRhythm.Gdd &&
+                                 !CrystalSpacing.HasValue;
 
         public CalculationChoice WithPickaxeCaveGrowth(double? growth) =>
-            new CalculationChoice(growth, PickaxeStep, ComboStacking, RareRhythm);
+            new CalculationChoice(growth, PickaxeStep, ComboStacking, RareRhythm, CrystalSpacing);
         public CalculationChoice WithPickaxeStep(double? step) =>
-            new CalculationChoice(PickaxeCaveGrowth, step, ComboStacking, RareRhythm);
+            new CalculationChoice(PickaxeCaveGrowth, step, ComboStacking, RareRhythm, CrystalSpacing);
         public CalculationChoice WithComboStacking(ComboStacking stacking) =>
-            new CalculationChoice(PickaxeCaveGrowth, PickaxeStep, stacking, RareRhythm);
+            new CalculationChoice(PickaxeCaveGrowth, PickaxeStep, stacking, RareRhythm, CrystalSpacing);
         public CalculationChoice WithRareRhythm(RareRhythm rhythm) =>
-            new CalculationChoice(PickaxeCaveGrowth, PickaxeStep, ComboStacking, rhythm);
+            new CalculationChoice(PickaxeCaveGrowth, PickaxeStep, ComboStacking, rhythm, CrystalSpacing);
+        public CalculationChoice WithCrystalSpacing(double? spacing) =>
+            new CalculationChoice(PickaxeCaveGrowth, PickaxeStep, ComboStacking, RareRhythm, spacing);
 
         public CalculationData ToData() => new CalculationData
         {
@@ -57,6 +68,8 @@ namespace MinersIdle.Game
             pickaxeStep = PickaxeStep ?? 0,
             comboHighestOnly = ComboStacking == ComboStacking.HighestOnly,
             rareSlow = RareRhythm == RareRhythm.Slow,
+            hasCrystalSpacing = CrystalSpacing.HasValue,
+            crystalSpacing = CrystalSpacing ?? 0,
         };
 
         public static CalculationChoice FromData(CalculationData data) => data == null
@@ -64,14 +77,16 @@ namespace MinersIdle.Game
             : new CalculationChoice(data.hasPickaxeCaveGrowth ? data.pickaxeCaveGrowth : (double?)null,
                                     data.hasPickaxeStep ? data.pickaxeStep : (double?)null,
                                     data.comboHighestOnly ? ComboStacking.HighestOnly : ComboStacking.Cumulative,
-                                    data.rareSlow ? RareRhythm.Slow : RareRhythm.Gdd);
+                                    data.rareSlow ? RareRhythm.Slow : RareRhythm.Gdd,
+                                    data.hasCrystalSpacing ? data.crystalSpacing : (double?)null);
 
         public bool Equals(CalculationChoice other) =>
             Nullable.Equals(PickaxeCaveGrowth, other.PickaxeCaveGrowth) && Nullable.Equals(PickaxeStep, other.PickaxeStep) &&
-            ComboStacking == other.ComboStacking && RareRhythm == other.RareRhythm;
+            ComboStacking == other.ComboStacking && RareRhythm == other.RareRhythm &&
+            Nullable.Equals(CrystalSpacing, other.CrystalSpacing);
 
         public override bool Equals(object obj) => obj is CalculationChoice other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(PickaxeCaveGrowth, PickaxeStep, ComboStacking, RareRhythm);
+        public override int GetHashCode() => HashCode.Combine(PickaxeCaveGrowth, PickaxeStep, ComboStacking, RareRhythm, CrystalSpacing);
     }
 }

@@ -90,10 +90,24 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 - **DBG → Dia:** "Descansar agora" leva direto à tela do descanso (sem o modal e sem o ZZZ). Os "+10" e "+100 lascas vermelhas" que já existem continuam; entra "Atalho: n" (um toque sobe um nível, de 5 volta a 0).
 - **Testes EditMode:** nada anda descansando; INICIAR monta a run com Alma e Promoção; comprar fora do descanso é `Locked`; Promoção com o Treinar 4 e 5; o crítico com o Dedo Fogoso e com o excedente; a distância com o Atalho de 0 a 5; o offline com o Atalho; o save v9 e o v8 abrindo.
 
+**Como ficou (2026-11-17):**
+
+- **A run parada:** o `MiningRunner.Rest` monta a run nova já com `IsResting` e grava. Descansando, a `MiningSimulation` não anda (`Tick`), o toque e a loja da run não valem, o offline não conta (D-275) e não dá para descansar de novo. O `StartRun()` (o INICIAR) monta **outra** run, com as permanentes de agora (Alma, Promoção e Atalho entram certos), grava e avisa (`RunStarted`).
+- **A tela provisória:** até a E2, a tela do descanso é o **resumo do dia** de antes. Ele abre pelo evento `Rested` (pelo modal, pelo DBG e ao reabrir o jogo descansando); **COMEÇAR** faz o INICIAR; **PERMANENTES** abre a LOJA na aba delas e, ao fechar a loja ainda descansando, o resumo volta com o banco de agora.
+- **Compra só no descanso:** `PurchasePermanent` é `Locked` fora dele, e a linha da LOJA mostra o preço sem acender; o selo "!" da LOJA também só acende por uma permanente descansando (D-276). Os atalhos do DBG continuam dando níveis de graça.
+- **Promoção no Treinar 5:** `PermanentRules.PromotionTrainingLevel` (0 = o limite do Treinar, como no v7). O setup põe 5 no `Balance_GDD_v8`.
+- **Dedo Fogoso:** +0,5 por nível no multiplicador do crítico (×1,5 → ×2,0 no 1), somado ao excedente da chance acima de 100% (D-249). Linha nova na LOJA ("Dano crítico +0% » +50%"), luvas em chamas.
+- **Atalho:** a distância entre cristais é `3 m − 0,5 m × nível` (6 unidades no nível 0, 1 no 5), na fila e na corrida do offline. Linha nova na LOJA ("Distância −0 m » −0,5 m"), botas. O `minCrystalSpacing` do `Balance_GDD_v8` passou de 2 para **6** (3 m, D-277). Efeito visível no offline: a corrida por cristal no andar 1 vai de 0,5 s para 1,5 s, então 1 h fora rende 2.400 cristais em vez de 7.200 (até o Atalho).
+- **LOJA → Permanentes rola:** com 9 linhas de 40 px (a moldura tem 38 px, não dá para encolher), a lista passou do VOLTAR. Ela foi para dentro de uma área com rolagem, no mesmo lugar; arrastar com o dedo mostra as de baixo.
+- **Save v9:** guarda o resumo do dia que estava na tela; reabrir descansando volta ao resumo, sem offline. Um save v8 abre jogando.
+- **DBG:** Dia → **Atalho 0/5** (um toque sobe um nível; do 5 volta ao 0) e o resumo do menu mostra o Fogoso e o Atalho; Cálculos → **Distância: 3 m** ⇄ 1 m (a de antes, para comparar). "Descansar agora" agora para no resumo (a run espera o COMEÇAR).
+- **Testes (2026-11-17, todos verdes: EditMode 510, PlayMode 162):** `RestShopTests` (EditMode, novo) e os casos novos de save v9; os testes que compravam permanentes no meio da run passam a comprar descansando, e os PlayMode do descanso medem a run parada até o COMEÇAR.
+
 ### E2 — A tela do descanso
 
 - O **DESCANSAR** do modal (e o do coração da montanha) mostra o **ZZZ** e depois a **tela do descanso** (o fundo escolhido na E0): o resumo do dia em cima (P1), a lista das permanentes com preço e compra, e **INICIAR** no fim. O resumo do dia antigo sai, e PERMANENTES e COMEÇAR saem com ele.
 - Comprar atualiza o banco de lascas vermelhas no topo. INICIAR fecha a tela e a run nova começa ali.
+- **Os dois fundos (D-279):** a preta e a do jogo desfocado, com um botão no DBG para trocar; o Bruno escolhe vendo. Até lá, a preta.
 - **LOJA → Permanentes** vira consulta (P5).
 - Textos em dados (`FeedbackTexts`), montado pelo `ProjectSetup`.
 - **Testes PlayMode:** DESCANSAR → ZZZ → tela; o anão não se mexe com a tela aberta; comprar e INICIAR; fechar e abrir com a tela aberta volta nela; a aba da LOJA não compra; o coração da montanha passa pelo mesmo caminho.
@@ -112,11 +126,15 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 ## Como testar (Bruno) — ao fim de cada etapa
 
 - **E0:** abrir os mockups (imagens no chat) e escolher.
-- **E1:** sem tela nova ainda; os testes cobrem. Para ver, cena `Bootstrap`, Play:
-  1. DBG → Dia → **Descansar agora**: o anão para e nada se mexe (a tela do descanso ainda é a provisória).
-  2. Tentar comprar uma permanente pela LOJA durante a run: não compra.
-  3. DBG → Dia → **Atalho: 5**, INICIAR: os cristais quase colados. **Atalho: 0**: 3 m entre eles.
-  4. Com o Dedo Fogoso comprado, o número do crítico fica maior (DBG → Cálculos mostra o multiplicador).
+- **E1:** sem tela nova ainda (a do descanso é o resumo do dia de antes). Antes, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`. Cena `Bootstrap`, Play:
+  1. Logo de cara, os cristais estão a **3 m** um do outro (antes, 1 m). DBG → Cálculos → **Distância: 3 m** troca para 1 m e volta.
+  2. DBG → Dia → **+100 vermelhas** e, na LOJA → Permanentes, tentar comprar: o preço aparece, mas o botão não acende (só no descanso).
+  3. DBG → Dia → **Descansar agora**: abre o resumo do dia e **nada se mexe** atrás (o anão, os cristais, o tempo).
+  4. No resumo, **PERMANENTES**: agora compra. Comprar o **Dedo Fogoso** e o **Atalho**, fechar a LOJA: o resumo volta, com o banco descontado.
+  5. **COMEÇAR**: andar 1, a run anda, e os cristais vêm mais perto (2,5 m com o Atalho 1).
+  6. DBG → Dia → **Atalho 0/5**: cada toque aproxima os cristais que nascem depois; no 5, quase colados; mais um toque volta a 3 m.
+  7. Descansar de novo e fechar o jogo no resumo; abrir: volta no resumo, sem "Bem-vindo de volta".
+  8. Com o Treinar no 5 (DBG → Estagiário ou comprando), a Promoção acende no descanso.
 - **E2:** cena `Bootstrap`, Play:
   1. Chegar ao andar 10 (DBG → Andar), **Descansar** → **DESCANSAR**: o ZZZ e a tela do descanso.
   2. O anão parado atrás; comprar a Memória e o Dedo Fogoso; o banco desce.
@@ -175,8 +193,8 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-17: P1…P7 com as recomendações (D-272…D-278) | — |
-| E0 Mockups | 🔄 mockups prontos em 2026-11-17, aguardando a escolha do Bruno (fundo e HUD) | Ver "Como ficou" na E0 |
-| E1 Núcleo do descanso e permanentes novas | ⏳ | — |
+| E0 Mockups | 🔄 mockups prontos em 2026-11-17; o fundo se escolhe no jogo, na E2 (D-279); o HUD aguarda a escolha | Ver "Como ficou" na E0 |
+| E1 Núcleo do descanso e permanentes novas | 🔄 pronta em 2026-11-17, aguardando o teste do Bruno | Ver "Como ficou" na E1 |
 | E2 A tela do descanso | ⏳ | — |
 | E3 HUD do v8 | ⏳ | — |
 | E4 Sessão longa e celular | ⏳ | — |

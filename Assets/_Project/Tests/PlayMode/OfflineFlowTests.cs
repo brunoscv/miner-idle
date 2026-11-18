@@ -99,18 +99,19 @@ namespace MinersIdle.Tests
             var report = _runner.LastOffline.Value;
             Assert.That(report.Hired, Is.True);
             Assert.That(report.SecondsCounted, Is.EqualTo(3600));
-            // Andar 1: vida 1, dano 1 → 1 golpe; 0,5 s de corrida por cristal (A2) → 7.200 cristais de 0,2 lasca (v8, D-238).
+            // Andar 1: vida 1, dano 1 → 1 golpe; 1,5 s de corrida por cristal (3 m a 4 por segundo, D-277) → 2.400 cristais de
+            // 0,2 lasca (v8, D-238).
             Assert.That(report.HitsPerCrystal, Is.EqualTo(1));
-            Assert.That(report.Crystals, Is.EqualTo(7200));
-            Assert.That(report.Shards, Is.EqualTo(7200 * 0.2).Within(1e-6));
+            Assert.That(report.Crystals, Is.EqualTo(2400));
+            Assert.That(report.Shards, Is.EqualTo(2400 * 0.2).Within(1e-6));
 
             // O "Bem-vindo de volta" (D-197): as lascas esperam o COLETAR.
             Assert.That(_modal.IsOpen, Is.True);
             Assert.That(Simulation.State.Shards, Is.EqualTo(0), "ainda não entrou");
             Assert.That(_modal.AwayText, Is.EqualTo("1 h 00 min"));
             Assert.That(_modal.ShowsCounted, Is.False, "não passou do teto");
-            Assert.That(_modal.CrystalsText, Is.EqualTo(NumberFormatter.Format(7200)));
-            Assert.That(_modal.ShardsText, Is.EqualTo("+" + NumberFormatter.FormatShards(7200 * 0.2)));
+            Assert.That(_modal.CrystalsText, Is.EqualTo(NumberFormatter.Format(2400)));
+            Assert.That(_modal.ShardsText, Is.EqualTo("+" + NumberFormatter.FormatShards(2400 * 0.2)));
             Assert.That(_modal.NoteText, Is.EqualTo("Ele minerou no andar 1 enquanto você esteve fora."));
             Assert.That(_modal.ShowsFloors, Is.False, "antes do andar 5 não há automático: sem descida");
 
@@ -118,10 +119,10 @@ namespace MinersIdle.Tests
             Assert.That(_modal.IsOpen, Is.False);
             Assert.That(Simulation.State.Shards, Is.EqualTo(report.Shards).Within(1e-6), "entrou no COLETAR");
             Assert.That(Simulation.State.ShardsEarned, Is.EqualTo(report.Shards).Within(1e-6), "nas lascas do dia");
-            Assert.That(Simulation.State.CaveBreaks, Is.EqualTo(caveBreaks + 7200), "conta na barra do andar (D-246, M9c E4)");
+            Assert.That(Simulation.State.CaveBreaks, Is.EqualTo(caveBreaks + 2400), "conta na barra do andar (D-246, M9c E4)");
             Assert.That(Simulation.State.Cave, Is.EqualTo(cave), "sem o automático, não passa de andar: a barra fica cheia");
             Assert.That(Simulation.CanAdvance, Is.True);
-            Assert.That(Summary, Does.Contain(NumberFormatter.Format(7200) + " cristais"));
+            Assert.That(Summary, Does.Contain(NumberFormatter.Format(2400) + " cristais"));
         }
 
         [UnityTest]
@@ -188,7 +189,7 @@ namespace MinersIdle.Tests
             Click("Away30S");
 
             var report = _runner.LastOffline.Value;
-            Assert.That(report.Crystals, Is.EqualTo(60), "nível 1: 30 s a 0,5 s por cristal");
+            Assert.That(report.Crystals, Is.EqualTo(20), "nível 1: 30 s a 1,5 s por cristal (3 m, D-277)");
             Assert.That(_modal.IsOpen, Is.False);
             Assert.That(Simulation.State.Shards, Is.EqualTo(report.Shards).Within(1e-6));
             Assert.That(Simulation.PendingOffline.HasShards, Is.False);
@@ -215,7 +216,7 @@ namespace MinersIdle.Tests
             _runner.UseSave(new SaveService(store)); // abrir de novo: carrega o save e conta o tempo fora
             var report = _runner.LastOffline.Value;
             Assert.That(report.SecondsAway, Is.EqualTo(600).Within(1e-6));
-            Assert.That(report.Crystals, Is.EqualTo(1200), "10 min a 0,5 s por cristal");
+            Assert.That(report.Crystals, Is.EqualTo(400), "10 min a 1,5 s por cristal (3 m, D-277)");
             Assert.That(_modal.IsOpen, Is.True);
             Assert.That(_modal.AwayText, Is.EqualTo("10 min 00 s"));
             Assert.That(_runner.Simulation.State.Shards, Is.EqualTo(before).Within(1e-6), "espera o COLETAR");

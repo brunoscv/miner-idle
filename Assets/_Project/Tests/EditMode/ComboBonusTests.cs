@@ -236,7 +236,9 @@ namespace MinersIdle.Tests
         {
             var sim = Sim();
             sim.AddRedShards(1000);
+            sim.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             sim.PurchasePermanent(PermanentId.MountainBlood); // +10%
+            sim.IsResting = false;
             double withBlood = sim.Stats.Damage;
             Assert.That(withBlood, Is.EqualTo(1.1).Within(1e-12));
 

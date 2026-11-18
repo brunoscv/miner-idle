@@ -127,6 +127,14 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 1e0fda90ff6b45e48afb7256637c7845, type: 3}
     frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
     lockedFormat: 
+  - permanent: 7
+    title: Dedo Fogoso
+    effectFormat: "Dano cr\xEDtico +{0} \xBB +{1}"
+    maxedFormat: "Dano cr\xEDtico +{0}"
+    style: 3
+    icon: {fileID: 21300000, guid: dd843817b8c3c994788784891ac7a1d3, type: 3}
+    frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+    lockedFormat: 
   - permanent: 4
     title: "Alma dos An\xF5es"
     effectFormat: "Picareta come\xE7a no {0} \xBB {1}"
@@ -141,6 +149,14 @@ MonoBehaviour:
     maxedFormat: Dano dele {0}
     style: 3
     icon: {fileID: 21300000, guid: 7703db80fd87bfa40b80f32d0cd5059f, type: 3}
+    frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+    lockedFormat: 
+  - permanent: 8
+    title: Atalho
+    effectFormat: "Dist\xE2ncia \u2212{0} m \xBB \u2212{1} m"
+    maxedFormat: "Dist\xE2ncia \u2212{0} m"
+    style: 0
+    icon: {fileID: 21300000, guid: 589a5064e65ed0d4e8bd66cc90e349fa, type: 3}
     frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
     lockedFormat: 
   - permanent: 6

@@ -174,7 +174,7 @@ namespace MinersIdle.Tests
                     Assert.That(Simulation.DeepestFloor, Is.EqualTo(deepest), "o recorde sobrevive ao descanso");
                     // A Memória medida no andar do recorde: nos primeiros andares ela já pode ter zerado a barra.
                     long requirement = Simulation.Permanents.FloorRequirement(Simulation.Rules, deepest);
-                    purchases += BuyPermanents();
+                    purchases += BuyPermanents(); // M9d (§4.2): descansando, antes do COMEÇAR
                     double memory = Simulation.Permanents.State.LevelOf(PermanentId.Memory);
                     if (memory > Math.Max(0, memoryBought))
                     {
@@ -182,6 +182,7 @@ namespace MinersIdle.Tests
                                     $"a Memória encurta a barra do andar {deepest}");
                         memoryBought = memory;
                     }
+                    StartByTheButton();
                 }
 
                 if (played >= nextReopen)
@@ -290,9 +291,18 @@ namespace MinersIdle.Tests
             Assert.That(_restModal.IsOpen, Is.True, "o Descansar abre o modal");
             _restModal.transform.Find("Screen/Panel/Confirm").GetComponent<Button>().onClick.Invoke();
             Assert.That(_summary.IsOpen, Is.True, "o resumo do dia");
-            _summary.transform.Find("Screen/Panel/Start").GetComponent<Button>().onClick.Invoke();
+            Assert.That(_runner.IsResting, Is.True, "M9d: a run nova espera o COMEÇAR");
             Assert.That(Simulation.Permanents.State.Day, Is.EqualTo(day + 1));
             Assert.That(Simulation.State.Cave, Is.EqualTo(1), "a run nova");
+        }
+
+        /// <summary>O COMEÇAR do resumo do dia (o INICIAR do M9d): a run nova, com as permanentes compradas.</summary>
+        void StartByTheButton()
+        {
+            _summary.transform.Find("Screen/Panel/Start").GetComponent<Button>().onClick.Invoke();
+            Assert.That(_summary.IsOpen, Is.False);
+            Assert.That(_runner.IsResting, Is.False, "a run começou");
+            Assert.That(Simulation.State.Cave, Is.EqualTo(1));
         }
 
         /// <summary>O que não pode se perder ao fechar e abrir.</summary>

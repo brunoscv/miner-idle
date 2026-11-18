@@ -152,6 +152,7 @@ namespace MinersIdle.Tests
         {
             var permanent = PermanentState.Restore(11, 1, _ => 0, V7Permanents());
             var sim = Sim(permanent);
+            sim.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             int changes = 0;
             sim.PermanentsChanged += () => changes++;
 
@@ -162,6 +163,7 @@ namespace MinersIdle.Tests
             Assert.That(sim.PurchasePermanent(PermanentId.MountainBlood), Is.EqualTo(PurchaseResult.NotEnoughShards));
 
             var maxed = Sim(WithLevel(PermanentId.Memory, 10, redShards: 10000));
+            maxed.IsResting = true;
             Assert.That(maxed.PurchasePermanent(PermanentId.Memory), Is.EqualTo(PurchaseResult.MaxLevel));
             Assert.That(maxed.Permanents.NextCost(PermanentId.Memory), Is.Null);
         }
@@ -173,6 +175,7 @@ namespace MinersIdle.Tests
         {
             var sim = Sim(PermanentState.Restore(11, 1, _ => 0, V7Permanents()));
             double before = sim.Stats.Damage; // 1 + 1,2^0 = 2
+            sim.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
 
             sim.PurchasePermanent(PermanentId.MountainBlood);
 
@@ -287,6 +290,7 @@ namespace MinersIdle.Tests
         public void PermanentPreview_ShowsLevelCostEffect_AndTheButtonState()
         {
             var sim = Sim(WithLevel(PermanentId.MountainBlood, 5, redShards: 41));
+            sim.IsResting = true; // M9d: o botão só compra descansando
 
             var blood = sim.PreviewPermanent(PermanentId.MountainBlood);
             Assert.That(blood.Level, Is.EqualTo(5));

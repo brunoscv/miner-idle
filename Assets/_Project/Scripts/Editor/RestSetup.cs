@@ -64,6 +64,7 @@ namespace MinersIdle.EditorTools
             _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
 
             bool changed = EnsureSummary(safeArea, texts);
+            changed |= EnsureSummaryRunner(safeArea);
             changed |= EnsureModal(safeArea, texts); // logo depois da tela do coração; o resumo fica logo acima dele
             changed |= EnsureBarButton(safeArea, texts);
             changed |= EnsureHeartRest(safeArea);
@@ -72,6 +73,21 @@ namespace MinersIdle.EditorTools
         }
 
         // ── O resumo do dia (D-154) ─────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>M9d E1 (D-265): o resumo abre pelo descanso do runner e o COMEÇAR inicia a run parada.</summary>
+        static bool EnsureSummaryRunner(Transform safeArea)
+        {
+            var view = safeArea.Find(SummaryName)?.GetComponent<DaySummaryScreen>();
+            if (view == null) return false;
+            var so = new SerializedObject(view);
+            var property = so.FindProperty("runner");
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            if (property.objectReferenceValue == runner) return false;
+            property.objectReferenceValue = runner;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[Setup] Resumo do dia ligado ao descanso parado (M9d E1, D-265).");
+            return true;
+        }
 
         static bool EnsureSummary(Transform safeArea, FeedbackTexts texts)
         {
@@ -120,7 +136,7 @@ namespace MinersIdle.EditorTools
             screen.SetActive(false);
             var view = root.AddComponent<RestScreen>();
             GrayboxSetup.SetReferences(view, ("runner", Object.FindAnyObjectByType<MiningRunner>()), ("texts", texts),
-                ("summary", safeArea.Find(SummaryName).GetComponent<DaySummaryScreen>()), ("screen", screen),
+                ("screen", screen),
                 ("title", title), ("day", day), ("levelLabel", levelLabel), ("levelValue", levelValue),
                 ("timeLabel", timeLabel), ("timeValue", timeValue), ("shardsLabel", shardsLabel),
                 ("shardsValue", shardsValue), ("takeLabel", takeLabel), ("takeValue", takeValue), ("next", next),

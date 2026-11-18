@@ -198,7 +198,15 @@ namespace MinersIdle.Game
             _permanent = permanent;
             Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas, caverna {state.Cave}; dia {permanent.Day}, " +
                       $"{NumberFormatter.Format(permanent.RedShards)} lascas vermelhas.");
-            Begin(Seed, state);
+            PendingRest = save.LoadedRest;
+            Begin(Seed, state, resting: PendingRest.HasValue);
+            if (PendingRest.HasValue)
+            {
+                // D-275: fechou descansando, abre descansando: a tela do descanso de novo, sem offline (o jogo estava parado).
+                _awaySinceUtc = UtcNow;
+                NotifyRested(PendingRest.Value);
+                return;
+            }
             // O offline desde a última gravação (save v5); um save até a v4 não tem hora: nada na primeira abertura.
             if (save.LoadedSavedAtUtc.HasValue) ReturnFromAway(save.LoadedSavedAtUtc.Value);
         }
@@ -229,6 +237,11 @@ namespace MinersIdle.Game
         OfflineReport ApplyAway(double seconds)
         {
             if (Simulation == null) return default;
+            if (IsResting)
+            {
+                _awaySinceUtc = UtcNow; // D-275: descansando, o tempo fora não conta
+                return default;
+            }
             var report = Simulation.ApplyOffline(seconds, offlineNoticeSeconds);
             LastOffline = report;
             _awaySinceUtc = UtcNow;
@@ -255,7 +268,7 @@ namespace MinersIdle.Game
         }
 
         /// <summary>Refaz o mapa com a semente dada, <b>mantendo o progresso</b> (o "Reiniciar" do debug, M4).</summary>
-        public void StartNew(ulong seed) => Begin(seed, Simulation?.State ?? new GameState());
+        public void StartNew(ulong seed) => Begin(seed, Simulation?.State ?? new GameState(), IsResting);
 
         /// <summary>
         /// Troca o balanço e recomeça do zero com a mesma semente, <b>sem apagar o save</b>. Usado pelos testes de tela que
@@ -264,6 +277,7 @@ namespace MinersIdle.Game
         public void UseRules(MiningRulesAsset asset)
         {
             rules = asset != null ? asset : throw new ArgumentNullException(nameof(asset));
+            PendingRest = null;
             Begin(Seed, new GameState());
         }
 
@@ -282,7 +296,7 @@ namespace MinersIdle.Game
             {
                 Debug.LogException(e, this);
             }
-            Begin(Seed, Simulation?.State ?? new GameState());
+            Begin(Seed, Simulation?.State ?? new GameState(), IsResting);
         }
 
         /// <summary>
@@ -290,7 +304,11 @@ namespace MinersIdle.Game
         /// save não é apagado: a run nova o substitui na próxima gravação. As melhorias permanentes ficam, e a Picareta já
         /// começa com a Alma dos Anões, como depois de um descanso (mas o dia não avança nem entram lascas vermelhas).
         /// </summary>
-        public void RestartRun() => Begin(RunSeed(), NewRun());
+        public void RestartRun()
+        {
+            PendingRest = null;
+            Begin(RunSeed(), NewRun());
+        }
 
         /// <summary>
         /// Descansar (Marco 8b, D-137): leva as lascas vermelhas pendentes para o banco, avança o dia e começa a run nova
@@ -303,11 +321,42 @@ namespace MinersIdle.Game
             var summary = Simulation?.Rest(force);
             if (summary == null) return null;
 
+            // M9d (D-265): a run nova fica montada, mas parada, até o INICIAR (StartRun); as permanentes se compram nela.
+            PendingRest = summary;
+            Begin(RunSeed(), NewRun(), resting: true);
+            SaveNow();
+            NotifyRested(summary.Value);
+            return summary;
+        }
+
+        /// <summary>Descansando (M9d, D-265): a run nova está parada, esperando o INICIAR.</summary>
+        public bool IsResting => Simulation != null && Simulation.IsResting;
+
+        /// <summary>O resumo do dia do descanso na tela (M9d); <c>null</c> numa run em andamento.</summary>
+        public RestSummary? PendingRest { get; private set; }
+
+        /// <summary>
+        /// O INICIAR (M9d, D-265): a run nova começa agora, montada de novo com as permanentes compradas no descanso (a Alma
+        /// dos Anões, a Promoção, o Atalho), numa fila nova. <c>false</c> se não está descansando.
+        /// </summary>
+        public bool StartRun()
+        {
+            if (!IsResting) return false;
+            PendingRest = null;
             Begin(RunSeed(), NewRun());
             SaveNow();
-            try { Rested?.Invoke(summary.Value); }
+            try { RunStarted?.Invoke(); }
             catch (Exception e) { Debug.LogException(e, this); }
-            return summary;
+            return true;
+        }
+
+        /// <summary>A run nova começou no INICIAR (M9d).</summary>
+        public event Action RunStarted;
+
+        void NotifyRested(RestSummary summary)
+        {
+            try { Rested?.Invoke(summary); }
+            catch (Exception e) { Debug.LogException(e, this); }
         }
 
         GameState NewRun() => Simulation != null ? Simulation.Permanents.NewRun(Economy()) : new GameState();
@@ -316,7 +365,7 @@ namespace MinersIdle.Game
 
         void ApplyCalculation(CalculationChoice choice) => _calculation = choice;
 
-        MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth);
+        MiningRules CurrentRules() => rules.ToRules(_calculation.PickaxeCaveGrowth, _calculation.CrystalSpacing);
         EconomyRules Economy() => rules.ToEconomy(_calculation.PickaxeStep, _calculation.PickaxeCaveGrowth);
 
         /// <summary>
@@ -329,6 +378,7 @@ namespace MinersIdle.Game
         {
             _save?.Delete();
             _permanent = new PermanentState();
+            PendingRest = null;
             Begin(RunSeed(), new GameState());
             SaveNow();
             Debug.Log("[Save] Save apagado: jogo novo no nível 1.");
@@ -341,7 +391,7 @@ namespace MinersIdle.Game
             try
             {
                 DateTime now = UtcNow;
-                _save.Save(Simulation.State, _permanent, now);
+                _save.Save(Simulation.State, _permanent, now, IsResting ? PendingRest : null);
                 _awaySinceUtc = now;
             }
             catch (Exception e)
@@ -350,7 +400,8 @@ namespace MinersIdle.Game
             }
         }
 
-        void Begin(ulong seed, GameState state)
+        /// <param name="resting">A run nova, parada até o INICIAR (M9d, D-265).</param>
+        void Begin(ulong seed, GameState state, bool resting = false)
         {
             if (rules == null)
             {
@@ -371,6 +422,7 @@ namespace MinersIdle.Game
                 // Reiniciar run, descanso, reabrir).
                 ComboStacking = _calculation.ComboStacking,
                 AutoAdvance = _autoAdvance,
+                IsResting = resting,
             };
             if (_arrivalStrike.HasValue) Simulation.ArrivalStrike = _arrivalStrike.Value;
             Simulation.UpgradePurchased += OnUpgradePurchased;

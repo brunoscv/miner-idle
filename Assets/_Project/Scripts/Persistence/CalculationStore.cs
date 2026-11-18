@@ -23,6 +23,9 @@ namespace MinersIdle.Persistence
         public bool comboHighestOnly;
         /// <summary>O ritmo lento do cristal raro (M9b E4, D-226: 2%). Arquivo antigo, sem o campo: <c>false</c>, os 15% do GDD.</summary>
         public bool rareSlow;
+        /// <summary>A distância entre cristais do DBG (M9d, D-277), em unidades. Arquivo antigo, sem o campo: a do balanço.</summary>
+        public bool hasCrystalSpacing;
+        public double crystalSpacing;
     }
 
     /// <summary>

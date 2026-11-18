@@ -26,6 +26,16 @@ namespace MinersIdle.Core
         /// (D-169). Só se compra com o Treinar no limite (GDD v7: nível 10).
         /// </summary>
         InternPromotion,
+        /// <summary>
+        /// Dedo Fogoso (GDD v8.2 §4.2, D-248): soma efeito × nível no dano do crítico (0,5: ×1,5 → ×2,0 no nível 1), junto
+        /// com o excedente da chance acima de 100% (D-249). Só o anão (o estagiário não tem crítico, D-167).
+        /// </summary>
+        FieryFinger,
+        /// <summary>
+        /// Atalho (GDD v8.2 §4.2, D-252, D-277): tira efeito × nível metros da distância entre cristais (0,5 m: de 3 m a
+        /// 0,5 m no nível 5). Nos fins da lista do enum para não mudar o índice das outras.
+        /// </summary>
+        Shortcut,
     }
 
     /// <summary>
@@ -99,7 +109,17 @@ namespace MinersIdle.Core
         /// <param name="restLevel">O nível a partir do qual dá para descansar (GDD v7: 10, D-152). 0 desliga o descanso.</param>
         /// <param name="lines">Uma linha por <see cref="PermanentId"/>, na ordem do enum; <c>null</c> = desligada.</param>
         public PermanentRules(int restLevel, RedShardTable redShards, params UpgradeDefinition[] lines)
+            : this(restLevel, redShards, 0, lines)
         {
+        }
+
+        /// <param name="promotionTrainingLevel">
+        /// O nível do Treinar que a Promoção pede (GDD v8.2: 5); 0 = o Treinar no limite (o GDD v7, D-169).
+        /// </param>
+        public PermanentRules(int restLevel, RedShardTable redShards, int promotionTrainingLevel, params UpgradeDefinition[] lines)
+        {
+            if (promotionTrainingLevel < 0) throw new ArgumentOutOfRangeException(nameof(promotionTrainingLevel));
+            PromotionTrainingLevel = promotionTrainingLevel;
             if (restLevel < 0) throw new ArgumentOutOfRangeException(nameof(restLevel));
             RestLevel = restLevel;
             RedShards = redShards ?? throw new ArgumentNullException(nameof(redShards));
@@ -112,6 +132,9 @@ namespace MinersIdle.Core
 
         /// <summary>O nível a partir do qual o botão Descansar aparece (D-152). 0 = sem descanso.</summary>
         public int RestLevel { get; }
+
+        /// <summary>O nível do Treinar que a Promoção pede; 0 = o limite do Treinar (D-169).</summary>
+        public int PromotionTrainingLevel { get; }
 
         public bool IsRestEnabled => RestLevel > 0;
 

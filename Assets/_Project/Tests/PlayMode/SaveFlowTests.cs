@@ -104,6 +104,13 @@ namespace MinersIdle.Tests
             Assert.That(permanent.LevelOf(PermanentId.MountainBlood), Is.EqualTo(1));
             Assert.That(runner.Simulation.State.Cave, Is.EqualTo(1), "a run de amanhã");
             Assert.That(runner.Simulation.Permanents.DamageMultiplier, Is.EqualTo(1.1).Within(1e-9), "o efeito volta junto");
+            Assert.That(runner.IsResting, Is.True, "M9d (save v9): reabre descansando, no resumo do dia");
+            Assert.That(runner.PendingRest?.Level, Is.EqualTo(12));
+            Assert.That(UnityEngine.Object.FindAnyObjectByType<DaySummaryScreen>().IsOpen, Is.True);
+            Assert.That(runner.StartRun(), Is.True);
+
+            yield return OpenGameWithSave(r => runner = r);
+            Assert.That(runner.IsResting, Is.False, "depois do COMEÇAR, reabre jogando");
 
             runner.ResetProgress();
             yield return OpenGameWithSave(r => runner = r);

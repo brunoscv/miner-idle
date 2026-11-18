@@ -65,6 +65,19 @@ namespace MinersIdle.Core
         /// <summary>Dedos Nervosos: chance de crítico a mais, no golpe e no toque (D-158).</summary>
         public double CritBonus => Effect(PermanentId.NervousFingers);
 
+        /// <summary>Dedo Fogoso: o que soma no dano do crítico (M9d; GDD v8.2: +0,5 por nível).</summary>
+        public double CritDamageBonus => Effect(PermanentId.FieryFinger);
+
+        /// <summary>Unidades do mundo por metro: 1 m = 2 unidades (D-58, D-252).</summary>
+        public const double UnitsPerMeter = 2;
+
+        /// <summary>
+        /// A distância entre um cristal e o seguinte na fila, em unidades (M9d, D-252, D-277): a do balanço (GDD v8.2: 3 m)
+        /// menos o Atalho (0,5 m por nível). Nunca abaixo de um décimo da do balanço (o v8 para em 0,5 m, bem acima).
+        /// </summary>
+        public double CrystalSpacing(MiningRules rules) =>
+            Math.Max(rules.MinCrystalSpacing * 0.1, rules.MinCrystalSpacing - Effect(PermanentId.Shortcut) * UnitsPerMeter);
+
         /// <summary>
         /// Os cristais que o andar <paramref name="floor"/> pede para o Próximo Andar (GDD v8, D-239): <c>andar × 10</c>
         /// menos a Memória (5 por nível), no mínimo 0 (aí a barra já nasce cheia).
@@ -89,14 +102,19 @@ namespace MinersIdle.Core
         /// O nível que a linha de que esta depende precisa ter para ela abrir (a Promoção pede o Treinar no limite, D-169);
         /// 0 numa linha que não espera outra.
         /// </summary>
-        public int RequiredLevel(PermanentId id) =>
-            id == PermanentId.InternPromotion ? Rules.Get(PermanentId.InternTraining).MaxLevel : 0;
+        public int RequiredLevel(PermanentId id)
+        {
+            if (id != PermanentId.InternPromotion) return 0;
+            int max = Rules.Get(PermanentId.InternTraining).MaxLevel;
+            // GDD v8.2: a Promoção pede o Treinar no 5 (M9d); no v7, no limite (D-169).
+            return Rules.PromotionTrainingLevel > 0 ? Math.Min(Rules.PromotionTrainingLevel, max) : max;
+        }
 
         public bool IsLocked(PermanentId id)
         {
             if (id != PermanentId.InternPromotion) return false;
             var training = Rules.Get(PermanentId.InternTraining);
-            return !training.IsEnabled || EffectiveLevel(PermanentId.InternTraining) < training.MaxLevel;
+            return !training.IsEnabled || EffectiveLevel(PermanentId.InternTraining) < RequiredLevel(id);
         }
 
         /// <summary>O que a próxima compra custa em lascas vermelhas, ou <c>null</c> no limite (ou com a linha desligada).</summary>

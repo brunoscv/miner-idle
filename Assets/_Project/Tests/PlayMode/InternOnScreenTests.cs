@@ -77,6 +77,7 @@ namespace MinersIdle.Tests
             Assert.That(InternShown, Is.True);
 
             _runner.Rest(force: true);
+            _runner.StartRun(); // M9d: a run nova começa no COMEÇAR
             yield return Frames();
             Assert.That(Simulation.IsInternHired, Is.False);
             Assert.That(InternShown, Is.False, "sem a Promoção, ele vai embora no descanso");
@@ -91,6 +92,7 @@ namespace MinersIdle.Tests
             Assert.That(InternShown, Is.False, "a Promoção vale na run seguinte");
 
             _runner.Rest(force: true);
+            _runner.StartRun(); // M9d: a run nova começa no COMEÇAR
             yield return Frames();
             Assert.That(InternShown, Is.True, "a run nova já começa com ele (D-169)");
         }

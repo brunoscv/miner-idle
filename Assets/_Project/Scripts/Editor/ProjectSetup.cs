@@ -104,6 +104,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV7AdBoost();
             EnsureGddV8Balance();
             EnsureGddV8FloorMilestones();
+            EnsureGddV8RestShop();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -685,6 +686,28 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log($"[Setup] Valores do GDD v8 criados em {GddV8BalancePath} (M9c E1).");
+        }
+
+        /// <summary>
+        /// M9d (GDD v8.2 §4.2, D-248, D-252, D-277): as duas permanentes novas — Dedo Fogoso, <c>10 + 2^(n−1)</c>, +0,5 no
+        /// dano do crítico, até o 10; Atalho, <c>50 + 2^(n−1)</c>, −0,5 m entre cristais, até o 5 —, a Promoção pedindo o
+        /// Treinar no 5 e os cristais a <b>3 m</b> (6 unidades) um do outro, no lugar de 1 m. Só preenche se o Dedo Fogoso
+        /// ainda estiver desligado: um ajuste feito à mão no Inspector fica.
+        /// </summary>
+        static void EnsureGddV8RestShop()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            if (serialized.FindProperty("fieryFinger.maxLevel").intValue != 0) return;
+            SetLine(serialized, "fieryFinger", 10, 2, 10, 0.5, CostFormula.OffsetExponential);
+            SetLine(serialized, "shortcut", 50, 2, 5, 0.5, CostFormula.OffsetExponential);
+            serialized.FindProperty("internPromotionTrainingLevel").intValue = 5;
+            serialized.FindProperty("minCrystalSpacing").doubleValue = 3 * Permanents.UnitsPerMeter;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8: Dedo Fogoso e Atalho, Promoção com o Treinar 5, cristais a 3 m (M9d, D-277).");
         }
 
         /// <summary>

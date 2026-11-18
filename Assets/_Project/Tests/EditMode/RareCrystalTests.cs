@@ -339,7 +339,7 @@ namespace MinersIdle.Tests
 
                 var loaded = new SaveService(store).Load(WithIntern(), out var status);
                 Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
-                Assert.That(File.ReadAllText(store.FilePath), Does.Match(@"""version"":\s*8"));
+                Assert.That(File.ReadAllText(store.FilePath), Does.Match(@"""version"":\s*9"));
                 Assert.That(loaded.RareWindow, Is.EqualTo(sim.RareWindow));
                 var reopened = Sim(state: loaded);
                 Assert.That(reopened.RareWindow.SecondsLeft, Is.EqualTo(18).Within(1e-9));

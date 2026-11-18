@@ -97,7 +97,7 @@ namespace MinersIdle.Core
             _internStats = ComputeInternStats();
             ArrivalStrike = rules.ArrivalStrike;
             _miner = new Miner();
-            _track = new CrystalTrack(rules);
+            _track = new CrystalTrack(rules) { Spacing = _permanents.CrystalSpacing(rules) };
             _track.SetCrystalValues(rules.CrystalHealthIn(_state.Cave), rules.CrystalRewardIn(_state.Cave));
             _track.RollRare = RollRare;
             _track.SpawnInitial(_miner.Distance);
@@ -319,6 +319,17 @@ namespace MinersIdle.Core
         /// </summary>
         public bool AutoAdvance { get; set; } = true;
 
+        /// <summary>
+        /// Descansando (M9d, D-265): a run nova está montada, mas <b>parada</b> até o INICIAR. O tempo não anda (nem o anão,
+        /// nem o estagiário, nem as cartas e bônus, nem o tempo do dia), o toque e as compras da run não valem, o offline
+        /// não conta (D-275) e as permanentes <b>só</b> se compram aqui (§4.2). Quem dirige a partida põe na criação e, no
+        /// INICIAR, monta outra sem ele (com as permanentes que o jogador comprou: a Alma, a Promoção, o Atalho).
+        /// </summary>
+        public bool IsResting { get; set; }
+
+        /// <summary>A distância entre cristais desta run, em unidades (com o Atalho, M9d).</summary>
+        public double CrystalSpacing => _track.Spacing;
+
         /// <summary>Se o avanço automático já existe (GDD v8: depois do andar 5, para sempre).</summary>
         public bool IsAutoAdvanceUnlocked => _rules.IsAutoAdvanceUnlocked(DeepestFloor);
 
@@ -355,6 +366,7 @@ namespace MinersIdle.Core
         public void Tick(double dt)
         {
             if (double.IsNaN(dt) || dt < 0) throw new ArgumentOutOfRangeException(nameof(dt), "O tempo não anda para trás.");
+            if (IsResting) return; // D-265: descansando, nada corre
 
             double remaining = dt;
             int steps = 0;
@@ -438,6 +450,7 @@ namespace MinersIdle.Core
         /// </summary>
         public OfflineReport ApplyOffline(double secondsAway, double noticeSeconds = 0)
         {
+            if (IsResting) return default; // D-275: descansando, o jogo está parado; nem o estagiário trabalha
             // A conta antes de o tempo dos bônus correr: a carta do raro que estava ativa vale para o estagiário até acabar
             // (D-181, D-190). A janela do raro não anda: espera o jogador (D-222).
             var report = OfflineMining.Compute(_rules, _economy, _state, _permanents, secondsAway, IsAutoAdvancing);
@@ -480,6 +493,7 @@ namespace MinersIdle.Core
         /// </summary>
         public PurchaseResult Purchase(UpgradeId id)
         {
+            if (IsResting) return PurchaseResult.Locked; // a run ainda não começou
             var result = Purchases.TryPurchase(_state, _economy, id, _rules, _permanents);
             if (result != PurchaseResult.Purchased) return result;
 
@@ -500,6 +514,7 @@ namespace MinersIdle.Core
         /// </summary>
         public bool Tap()
         {
+            if (IsResting) return false; // D-265: descansando
             if (_floorTransitionLeft > 0) return false; // descendo de andar (D-266): o toque não vale nem conta no combo
             if (!TakeTapSlot()) return false;
 
@@ -610,7 +625,7 @@ namespace MinersIdle.Core
         /// </summary>
         public RestSummary? Rest(bool force = false)
         {
-            if (_rested || (!force && !CanRest)) return null;
+            if (_rested || IsResting || (!force && !CanRest)) return null;
             _rested = true;
             return _permanents.Rest(_state);
         }
@@ -621,6 +636,7 @@ namespace MinersIdle.Core
         /// </summary>
         public PurchaseResult PurchasePermanent(PermanentId id)
         {
+            if (!IsResting) return PurchaseResult.Locked; // §4.2, D-265: só no descanso
             var result = _permanents.TryPurchase(id);
             if (result == PurchaseResult.Purchased) OnPermanentsChanged();
             return result;
@@ -649,8 +665,23 @@ namespace MinersIdle.Core
             OnPermanentsChanged();
         }
 
+        /// <summary>
+        /// Atalho do debug (DBG → Dia, M9d): um nível a mais na permanente, de graça; no limite, volta a 0. Devolve o nível
+        /// novo. Não respeita a trava da Promoção (é do debug).
+        /// </summary>
+        public int CyclePermanent(PermanentId id)
+        {
+            var line = _permanents.Rules.Get(id);
+            int level = _permanents.State.LevelOf(id);
+            int next = line.IsEnabled && level < line.MaxLevel ? level + 1 : 0;
+            _permanents.State.SetLevel(id, next);
+            OnPermanentsChanged();
+            return next;
+        }
+
         void OnPermanentsChanged()
         {
+            _track.Spacing = _permanents.CrystalSpacing(_rules); // o Atalho vale para os cristais que nascem depois
             _stats = ComputeStats();
             PermanentsChanged?.Invoke();
             StatsChanged?.Invoke(_stats);
@@ -1084,13 +1115,14 @@ namespace MinersIdle.Core
         /// O multiplicador do crítico: o das regras (GDD v8: ×1,5) e, acima de 100% de chance, +1 ponto por 1% a mais
         /// (D-249: 140% de chance → ×1,9).
         /// </summary>
-        double CritMultiplier(bool isTap) => _strike.CritMultiplier + Math.Max(0, CritChance(isTap) - 1);
+        double CritMultiplier(bool isTap) =>
+            _strike.CritMultiplier + _permanents.CritDamageBonus + Math.Max(0, CritChance(isTap) - 1); // Dedo Fogoso (M9d) e D-249
 
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id, _permanents);
 
         /// <summary>O que a aba das permanentes mostra da linha (Marco 8b, E4).</summary>
-        public PermanentPreview PreviewPermanent(PermanentId id) => PermanentPreview.For(_permanents, id);
+        public PermanentPreview PreviewPermanent(PermanentId id) => PermanentPreview.For(_permanents, id, shopOpen: IsResting);
 
         /// <summary>Resolve tudo o que vence agora, na ordem: nascimento, alvo (o primeiro da fila), golpe.</summary>
         void ProcessDueEvents()

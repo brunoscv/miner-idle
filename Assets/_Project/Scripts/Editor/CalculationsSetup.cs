@@ -47,6 +47,7 @@ namespace MinersIdle.EditorTools
                 changed |= EnsureWarningBack(debugPanel, existing);
                 changed |= EnsureComboStacking(menu, existing);
                 changed |= EnsureRareRhythm(menu, existing);
+                changed |= EnsureCrystalSpacing(menu, existing);
                 return RemoveRetiredButtons(debugPanel, menu, existing) || changed;
             }
 
@@ -94,7 +95,39 @@ namespace MinersIdle.EditorTools
                       "aviso do cálculo na tela (M8 E3b-3, D-143).");
             EnsureComboStacking(menu, panel);
             EnsureRareRhythm(menu, panel);
+            EnsureCrystalSpacing(menu, panel);
             return true;
+        }
+
+        const string CrystalSpacingName = "CrystalSpacing";
+
+        /// <summary>
+        /// M9d E1 (D-277): o botão "Distância" na grade do menu Cálculos (antes do Fechar): a distância entre cristais do
+        /// GDD (3 m) ⇄ 1 m. O rótulo mostra a distância em uso.
+        /// </summary>
+        static bool EnsureCrystalSpacing(Transform menu, CalculationsPanel panel)
+        {
+            var grid = menu.Find("Content/Buttons");
+            if (grid == null) return false;
+            bool changed = false;
+
+            var button = grid.Find(CrystalSpacingName);
+            if (button == null)
+            {
+                button = DebugPanelSetup.CreateButton(grid, CrystalSpacingName, "Distância: 3 m").transform;
+                var close = grid.Find("Close");
+                if (close != null) button.SetSiblingIndex(close.GetSiblingIndex());
+                changed = true;
+            }
+
+            var so = new SerializedObject(panel);
+            changed |= SetIfDifferent(so.FindProperty("crystalSpacing"), button.GetComponent<Button>());
+            changed |= SetIfEmpty(so.FindProperty("spacingFormat"), "Distância: {0} m");
+            changed |= SetIfEmpty(so.FindProperty("spacingChangedFormat"), " · distância {0} m");
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            if (changed) Debug.Log("[Setup] Painel de debug: botão \"Distância\" (3 m ⇄ 1 m) no menu Cálculos (M9d E1, D-277).");
+            return changed;
         }
 
         const string RareRhythmName = "RareRhythm";

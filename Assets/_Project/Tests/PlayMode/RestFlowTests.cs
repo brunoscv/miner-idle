@@ -144,6 +144,9 @@ namespace MinersIdle.Tests
             Assert.That(Simulation.Permanents.State.RedShards, Is.EqualTo(7), "o banco somou");
             Assert.That(Simulation.Permanents.State.Day, Is.EqualTo(2));
             Assert.That(_rest.IsShown, Is.False, "no nível 1 não tem Descansar");
+            Assert.That(_runner.IsResting, Is.True, "M9d (D-265): a run nova fica parada até o COMEÇAR");
+            Simulation.Tick(5);
+            Assert.That(Simulation.State.PlaySeconds, Is.EqualTo(0), "parada: o tempo do dia não anda");
 
             Assert.That(_summary.IsOpen, Is.True, "o resumo do dia");
             Assert.That(_summary.TitleText, Is.EqualTo("DIA 1 ENCERRADO"));
@@ -153,16 +156,24 @@ namespace MinersIdle.Tests
 
             ButtonAt(_summary, "Screen/Panel/Start").onClick.Invoke();
             Assert.That(_summary.IsOpen, Is.False, "COMEÇAR fecha");
+            Assert.That(_runner.IsResting, Is.False, "e a run começa");
+            Assert.That(Simulation.State.Cave, Is.EqualTo(1));
+            Simulation.Tick(1);
+            Assert.That(Simulation.State.PlaySeconds, Is.GreaterThan(0), "agora o tempo anda");
         }
 
+        /// <summary>M9d (D-265): o atalho do DBG pula o modal, mas para no resumo, com a run parada.</summary>
         [UnityTest]
-        public IEnumerator DebugRestNow_SkipsTheModalAndTheSummary()
+        public IEnumerator DebugRestNow_SkipsTheModal_AndStopsOnTheSummary()
         {
             yield return LoadGame();
             Simulation.SkipToCave(12);
             Assert.That(_runner.Rest(force: true), Is.Not.Null);
             Assert.That(_modal.IsOpen, Is.False);
-            Assert.That(_summary.IsOpen, Is.False, "o atalho do DBG não para no resumo");
+            Assert.That(_summary.IsOpen, Is.True, "a run nova espera o COMEÇAR");
+            Assert.That(_runner.IsResting, Is.True);
+            Assert.That(_runner.StartRun(), Is.True);
+            Assert.That(_summary.IsOpen, Is.False);
         }
 
         [UnityTest]

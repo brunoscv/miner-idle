@@ -58,6 +58,9 @@ namespace MinersIdle.Core
 
         internal void RaiseLevel(PermanentId id) => _levels[(int)id]++;
 
+        /// <summary>Atalho do debug (M9d): põe a linha num nível (sem custo; não passa de 0 para baixo).</summary>
+        internal void SetLevel(PermanentId id, int level) => _levels[(int)id] = Math.Max(0, level);
+
         internal void NextDay() => Day++;
         /// <summary>O jogador chegou ao andar <paramref name="floor"/>: o recorde sobe, nunca desce.</summary>
         internal void ReachFloor(int floor) => DeepestFloor = Math.Max(DeepestFloor, floor);

@@ -24,7 +24,14 @@ namespace MinersIdle.Core
             _crystals = new List<Crystal>(rules.MaxCrystals);
             _health = rules.CrystalHealth;
             _reward = rules.CrystalReward;
+            Spacing = rules.MinCrystalSpacing;
         }
+
+        /// <summary>
+        /// A distância entre um cristal e o seguinte (M9d): a do balanço, menos o Atalho (<see cref="Permanents.CrystalSpacing"/>).
+        /// Vale para os que nascem depois de mudar.
+        /// </summary>
+        public double Spacing { get; set; }
 
         /// <summary>
         /// Vida e lascas dos cristais que nascerem daqui em diante (M8: os da caverna atual). Os que já estão na fila não
@@ -60,7 +67,7 @@ namespace MinersIdle.Core
         public void SpawnInitial(double minerDistance)
         {
             for (int i = 0; i < _rules.InitialCrystals && !IsFull; i++)
-                Add(minerDistance + _rules.FirstCrystalDistance + i * _rules.MinCrystalSpacing);
+                Add(minerDistance + _rules.FirstCrystalDistance + i * Spacing);
         }
 
         /// <summary>
@@ -72,7 +79,7 @@ namespace MinersIdle.Core
             if (IsFull && !ignoreMax) return null;
 
             double at = minerDistance + _rules.SpawnDistance;
-            if (_crystals.Count > 0) at = Math.Max(at, _crystals[_crystals.Count - 1].Distance + _rules.MinCrystalSpacing);
+            if (_crystals.Count > 0) at = Math.Max(at, _crystals[_crystals.Count - 1].Distance + Spacing);
             return Add(at);
         }
 

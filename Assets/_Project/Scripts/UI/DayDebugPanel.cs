@@ -25,14 +25,24 @@ namespace MinersIdle.UI
         [SerializeField] Button restNow;
         [SerializeField] Button grantLevels;
         [SerializeField] Button resetPermanents;
+        [Tooltip("M9d E1: +1 nível no Atalho; no limite, volta ao 0.")]
+        [SerializeField] Button shortcut;
+        [Tooltip("Rótulo do botão do Atalho. {0} = nível, {1} = limite.")]
+        [SerializeField] string shortcutFormat;
 
         [SerializeField] TMP_Text summary;
         [Tooltip("{0} dia · {1} banco · {2} leva se descansar agora · {3} nível da run · {4}…{8} níveis de Memória, Sangue " +
-                 "da Montanha, Coração Ardente, Dedos Nervosos e Alma dos Anões")]
+                 "da Montanha, Coração Ardente, Dedos Nervosos e Alma dos Anões · {9} Dedo Fogoso · {10} Atalho")]
         [SerializeField, TextArea(2, 4)] string summaryFormat;
 
-        readonly object[] _args = new object[9];
+        readonly object[] _args = new object[11];
         float _refresh;
+        TMP_Text _shortcutLabel;
+
+        void Awake()
+        {
+            if (shortcut != null) _shortcutLabel = shortcut.GetComponentInChildren<TMP_Text>();
+        }
 
         void OnEnable()
         {
@@ -41,6 +51,7 @@ namespace MinersIdle.UI
             restNow.onClick.AddListener(RestNow);
             grantLevels.onClick.AddListener(GrantLevels);
             resetPermanents.onClick.AddListener(ResetPermanents);
+            if (shortcut != null) shortcut.onClick.AddListener(CycleShortcut);
             runner.SimulationStarted += OnSimulationStarted;
             Refresh();
         }
@@ -52,6 +63,7 @@ namespace MinersIdle.UI
             restNow.onClick.RemoveListener(RestNow);
             grantLevels.onClick.RemoveListener(GrantLevels);
             resetPermanents.onClick.RemoveListener(ResetPermanents);
+            if (shortcut != null) shortcut.onClick.RemoveListener(CycleShortcut);
             runner.SimulationStarted -= OnSimulationStarted;
         }
 
@@ -75,7 +87,17 @@ namespace MinersIdle.UI
             Refresh();
         }
 
-        /// <summary>Descansa agora, em qualquer nível e sem modal: o dia avança e a run recomeça.</summary>
+        /// <summary>
+        /// O Atalho (M9d E1, D-277): +1 nível, de graça e fora do descanso; no limite, volta ao 0. A distância vale para os
+        /// cristais que nascem depois.
+        /// </summary>
+        public void CycleShortcut()
+        {
+            runner.Simulation?.CyclePermanent(PermanentId.Shortcut);
+            Refresh();
+        }
+
+        /// <summary>Descansa agora, em qualquer nível e sem modal: o dia avança e o resumo abre, com a run parada (M9d).</summary>
         public void RestNow()
         {
             runner.Rest(force: true);
@@ -110,7 +132,11 @@ namespace MinersIdle.UI
             _args[6] = permanents.State.LevelOf(PermanentId.BurningHeart);
             _args[7] = permanents.State.LevelOf(PermanentId.NervousFingers);
             _args[8] = permanents.State.LevelOf(PermanentId.DwarfSoul);
+            _args[9] = permanents.State.LevelOf(PermanentId.FieryFinger);
+            _args[10] = permanents.State.LevelOf(PermanentId.Shortcut);
             summary.text = string.Format(summaryFormat, _args);
+            if (_shortcutLabel != null && !string.IsNullOrEmpty(shortcutFormat))
+                _shortcutLabel.text = string.Format(shortcutFormat, _args[10], permanents.Rules.Get(PermanentId.Shortcut).MaxLevel);
         }
     }
 }

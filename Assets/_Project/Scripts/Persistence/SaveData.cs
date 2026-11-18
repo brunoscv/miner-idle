@@ -25,7 +25,7 @@ namespace MinersIdle.Persistence
     [Serializable]
     public sealed class SaveData
     {
-        public const int CurrentVersion = 8;
+        public const int CurrentVersion = 9;
 
         /// <summary>A primeira versão com os números do GDD v8 (M9c E1): as de antes abrem numa run nova (D-263).</summary>
         public const int FirstV8Version = 8;
@@ -60,6 +60,12 @@ namespace MinersIdle.Persistence
 
         // Versão 7 (M9b, E4): a janela do cristal raro esperando o jogador (D-222). Um save até a 6 abre sem janela.
         public SavedRareWindow rareWindow = new SavedRareWindow();
+
+        /// <summary>
+        /// Save v9 (M9d, D-275): o jogador fechou o jogo descansando, antes do INICIAR. Abre de novo na tela do descanso,
+        /// com o resumo do dia, sem offline. Até a 8 não há: abre numa run em andamento, como antes.
+        /// </summary>
+        public SavedRest rest = new SavedRest();
     }
 
     /// <summary>
@@ -104,6 +110,19 @@ namespace MinersIdle.Persistence
         public int level;
         /// <summary>O andar em que o jogador deixou o jogo (M9c E4; 0 nos saves de antes = sem descida).</summary>
         public int fromLevel;
+    }
+
+    /// <summary>O descanso pendente (save v9, M9d): o resumo do dia que estava na tela.</summary>
+    [Serializable]
+    public sealed class SavedRest
+    {
+        public bool resting;
+        public int day;
+        public int level;
+        public double playSeconds;
+        public double shardsEarned;
+        public double redShardsGained;
+        public double redShardsBank;
     }
 
     /// <summary>A parte permanente do save (Marco 8b): banco de lascas vermelhas, dia e níveis das permanentes, pelo nome.</summary>

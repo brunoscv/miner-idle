@@ -379,6 +379,7 @@ namespace MinersIdle.Tests
             var permanent = new PermanentState();
             var sim = Sim(permanent: permanent);
             sim.AddRedShards(2000);
+            sim.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             Assert.That(sim.PurchasePermanent(PermanentId.InternPromotion), Is.EqualTo(PurchaseResult.Locked));
             Assert.That(sim.PreviewPermanent(PermanentId.InternPromotion).State, Is.EqualTo(UpgradeButtonState.Locked));
 

@@ -84,6 +84,17 @@ namespace MinersIdle.UI
         [Tooltip("Somado ao aviso com o ritmo lento. {0} = a chance dele.")]
         [SerializeField] string rareSlowChangedFormat;
 
+        [Header("Distância entre cristais (M9d E1, D-277)")]
+        [Tooltip("O botão \"Distância\": a do GDD (3 m) ⇄ 1 m.")]
+        [SerializeField] Button crystalSpacing;
+        [Tooltip("Rótulo do botão. {0} = a distância em uso, em metros.")]
+        [SerializeField] string spacingFormat;
+        [Tooltip("Somado ao aviso com a distância fora do GDD. {0} = metros.")]
+        [SerializeField] string spacingChangedFormat;
+
+        /// <summary>A outra distância do botão, em metros (D-277: 3 m ⇄ 1 m).</summary>
+        public const double AltSpacingMeters = 1;
+
         [SerializeField] Color defaultColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         [Tooltip("O aviso quando algo saiu do GDD (D-143: âmbar).")]
         [SerializeField] Color changedColor = new Color32(0xFF, 0xB3, 0x2E, 0xFF);
@@ -92,7 +103,7 @@ namespace MinersIdle.UI
         const float DisabledLabelAlpha = 0.35f;
 
         readonly StringBuilder _warning = new StringBuilder();
-        TMP_Text _growthLabel, _stepLabel, _stackingLabel, _rareLabel;
+        TMP_Text _growthLabel, _stepLabel, _stackingLabel, _rareLabel, _spacingLabel;
         TMP_Text[] _tuningLabels;
         float _refresh;
 
@@ -102,6 +113,7 @@ namespace MinersIdle.UI
             if (stepValue != null) _stepLabel = stepValue.GetComponentInChildren<TMP_Text>();
             if (comboStacking != null) _stackingLabel = comboStacking.GetComponentInChildren<TMP_Text>();
             if (rareRhythm != null) _rareLabel = rareRhythm.GetComponentInChildren<TMP_Text>();
+            if (crystalSpacing != null) _spacingLabel = crystalSpacing.GetComponentInChildren<TMP_Text>();
             _tuningLabels = new[]
             {
                 growthMinus.GetComponentInChildren<TMP_Text>(), _growthLabel, growthPlus.GetComponentInChildren<TMP_Text>(),
@@ -121,6 +133,7 @@ namespace MinersIdle.UI
             stepPlus.onClick.AddListener(RaiseStep);
             if (comboStacking != null) comboStacking.onClick.AddListener(ToggleComboStacking);
             if (rareRhythm != null) rareRhythm.onClick.AddListener(ToggleRareRhythm);
+            if (crystalSpacing != null) crystalSpacing.onClick.AddListener(ToggleCrystalSpacing);
             runner.SimulationStarted += OnSimulationStarted;
             Refresh();
         }
@@ -137,6 +150,7 @@ namespace MinersIdle.UI
             stepPlus.onClick.RemoveListener(RaiseStep);
             if (comboStacking != null) comboStacking.onClick.RemoveListener(ToggleComboStacking);
             if (rareRhythm != null) rareRhythm.onClick.RemoveListener(ToggleRareRhythm);
+            if (crystalSpacing != null) crystalSpacing.onClick.RemoveListener(ToggleCrystalSpacing);
             runner.SimulationStarted -= OnSimulationStarted;
         }
 
@@ -189,6 +203,20 @@ namespace MinersIdle.UI
             runner.UseCalculation(runner.Calculation.WithRareRhythm(next));
         }
 
+        /// <summary>A distância entre cristais do balanço em uso (sem o Atalho), em metros.</summary>
+        public double SpacingMeters =>
+            (runner.Calculation.CrystalSpacing ?? (Asset != null ? Asset.MinCrystalSpacing : 0)) / Permanents.UnitsPerMeter;
+
+        /// <summary>
+        /// O botão "Distância" (M9d E1, D-277): a do GDD (3 m) ⇄ 1 m, mantendo o progresso. Vale para os cristais que
+        /// nascem depois; o Atalho continua tirando a parte dele.
+        /// </summary>
+        public void ToggleCrystalSpacing()
+        {
+            double? next = runner.Calculation.CrystalSpacing.HasValue ? null : AltSpacingMeters * Permanents.UnitsPerMeter;
+            runner.UseCalculation(runner.Calculation.WithCrystalSpacing(next));
+        }
+
         void SetGrowth(double growth)
         {
             if (!Tunable) return;
@@ -226,6 +254,10 @@ namespace MinersIdle.UI
             if (_rareLabel != null && !string.IsNullOrEmpty(rareRhythmFormat))
                 _rareLabel.text = string.Format(rareRhythmFormat, NumberFormatter.FormatPercent(rareChance));
 
+            bool spacingChanged = choice.CrystalSpacing.HasValue;
+            if (_spacingLabel != null && !string.IsNullOrEmpty(spacingFormat))
+                _spacingLabel.text = string.Format(spacingFormat, NumberFormatter.Format(SpacingMeters));
+
             RefreshPickaxe();
 
             if (warning == null) return;
@@ -236,6 +268,8 @@ namespace MinersIdle.UI
             if (highestOnly) _warning.Append(stackingChangedFormat);
             if (rareSlow && !string.IsNullOrEmpty(rareSlowChangedFormat))
                 _warning.AppendFormat(rareSlowChangedFormat, NumberFormatter.FormatPercent(rareChance));
+            if (spacingChanged && !string.IsNullOrEmpty(spacingChangedFormat))
+                _warning.AppendFormat(spacingChangedFormat, NumberFormatter.Format(SpacingMeters));
             warning.text = _warning.ToString();
             warning.color = choice.IsDefault ? defaultColor : changedColor;
         }

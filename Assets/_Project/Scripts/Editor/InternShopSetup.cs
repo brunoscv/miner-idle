@@ -97,6 +97,11 @@ namespace MinersIdle.EditorTools
                                         "Dano dele {0}", "", ShopCatalog.EffectStyle.ChancePercent);
                 changed |= AddPermanent(permanents, PermanentId.InternPromotion, "Promoção", "Começa a run contratado",
                                         "Começa a run contratado", "Pede o Treinar no {0}", ShopCatalog.EffectStyle.Number);
+                // M9d E1 (GDD v8.2 §4.2): o Dedo Fogoso logo depois dos Dedos Nervosos e o Atalho antes da Promoção.
+                changed |= AddPermanent(permanents, PermanentId.FieryFinger, "Dedo Fogoso", "Dano crítico +{0} » +{1}",
+                                        "Dano crítico +{0}", "", ShopCatalog.EffectStyle.ChancePercent, PermanentId.NervousFingers);
+                changed |= AddPermanent(permanents, PermanentId.Shortcut, "Atalho", "Distância −{0} m » −{1} m",
+                                        "Distância −{0} m", "", ShopCatalog.EffectStyle.Number, PermanentId.InternTraining);
                 for (int i = 0; i < permanents.arraySize; i++)
                 {
                     var entry = permanents.GetArrayElementAtIndex(i);
@@ -110,7 +115,7 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
-            Debug.Log("[Setup] Estagiário na loja: a linha de compra, a aba ESTAGIÁRIO e Treinar/Promoção (M7, E3, D-174).");
+            Debug.Log("[Setup] Permanentes na loja: Treinar/Promoção (M7, E3, D-174) e Dedo Fogoso/Atalho (M9d E1).");
         }
 
         static bool MarkLevelFromOne(SerializedProperty entries, UpgradeId id)
@@ -147,14 +152,18 @@ namespace MinersIdle.EditorTools
             entry.FindPropertyRelative("frame").objectReferenceValue = artFrom?.FindPropertyRelative("frame").objectReferenceValue;
         }
 
+        /// <param name="after">A linha que vem antes desta; <c>null</c> (ou não achada) = no fim da lista.</param>
         static bool AddPermanent(SerializedProperty entries, PermanentId id, string title, string effect, string maxed,
-                                 string locked, ShopCatalog.EffectStyle style)
+                                 string locked, ShopCatalog.EffectStyle style, PermanentId? after = null)
         {
-            for (int i = 0; i < entries.arraySize; i++)
-                if ((PermanentId)entries.GetArrayElementAtIndex(i).FindPropertyRelative("permanent").enumValueIndex == id)
-                    return false;
-
             int index = entries.arraySize;
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var existing = (PermanentId)entries.GetArrayElementAtIndex(i).FindPropertyRelative("permanent").enumValueIndex;
+                if (existing == id) return false;
+                if (after.HasValue && existing == after.Value) index = i + 1;
+            }
+
             entries.InsertArrayElementAtIndex(index);
             var entry = entries.GetArrayElementAtIndex(index);
             entry.FindPropertyRelative("permanent").enumValueIndex = (int)id;

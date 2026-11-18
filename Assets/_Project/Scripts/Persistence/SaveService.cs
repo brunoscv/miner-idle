@@ -47,6 +47,12 @@ namespace MinersIdle.Persistence
         public DateTime? LoadedSavedAtUtc { get; private set; }
 
         /// <summary>
+        /// O descanso que estava na tela quando o save foi gravado (save v9, M9d, D-275): o jogo abre nele, parado, sem
+        /// offline. <c>null</c> numa run em andamento, sem save ou até a versão 8.
+        /// </summary>
+        public RestSummary? LoadedRest { get; private set; }
+
+        /// <summary>
         /// Carrega o progresso, com os níveis cortados nos limites de <paramref name="economy"/> e a caverna nas
         /// <paramref name="caveCount"/> do balanço ativo.
         /// </summary>
@@ -64,6 +70,7 @@ namespace MinersIdle.Persistence
             if (permanentRules == null) throw new ArgumentNullException(nameof(permanentRules));
             permanent = new PermanentState();
             LoadedSavedAtUtc = null;
+            LoadedRest = null;
 
             // O principal; estragado ou faltando, o backup (M9, E3); os dois ruins, jogo novo.
             string text = ReadSafely(_store.Read, "o save", out bool readFailed);
@@ -157,6 +164,11 @@ namespace MinersIdle.Persistence
 
             if (data.version >= 5 && data.savedAtUtcTicks > DateTime.MinValue.Ticks && data.savedAtUtcTicks <= DateTime.MaxValue.Ticks)
                 LoadedSavedAtUtc = new DateTime(data.savedAtUtcTicks, DateTimeKind.Utc);
+            var rest = data.rest;
+            if (data.version >= 9 && rest != null && rest.resting)
+                LoadedRest = new RestSummary(Math.Max(1, rest.day), Math.Max(1, rest.level), Math.Max(0, rest.playSeconds),
+                                             Math.Max(0, rest.shardsEarned), Math.Max(0, rest.redShardsGained),
+                                             Math.Max(0, rest.redShardsBank));
 
             if (data.version < SaveData.FirstV8Version)
             {
@@ -243,7 +255,8 @@ namespace MinersIdle.Persistence
         /// A parte permanente (Marco 8b). Sem ela, grava zerada: quem joga sempre passa a dele (o <c>MiningRunner</c>).
         /// </param>
         /// <param name="savedAtUtc">A hora da gravação (save v5, M9), do relógio do jogo; sem ela, o save vai sem hora.</param>
-        public void Save(GameState state, PermanentState permanent = null, DateTime? savedAtUtc = null)
+        /// <param name="rest">O descanso na tela, antes do INICIAR (save v9, M9d); <c>null</c> numa run em andamento.</param>
+        public void Save(GameState state, PermanentState permanent = null, DateTime? savedAtUtc = null, RestSummary? rest = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
 
@@ -283,6 +296,16 @@ namespace MinersIdle.Persistence
                 data.permanent.deepestFloor = permanent.DeepestFloor;
                 foreach (var id in PermanentLines)
                     data.permanent.levels.Add(new SavedLevel { upgrade = id.ToString(), level = permanent.LevelOf(id) });
+            }
+
+            if (rest.HasValue)
+            {
+                var r = rest.Value;
+                data.rest = new SavedRest
+                {
+                    resting = true, day = r.Day, level = r.Level, playSeconds = r.PlaySeconds, shardsEarned = r.ShardsEarned,
+                    redShardsGained = r.RedShardsGained, redShardsBank = r.RedShardsBank,
+                };
             }
 
             _store.Write(JsonUtility.ToJson(data, prettyPrint: true));

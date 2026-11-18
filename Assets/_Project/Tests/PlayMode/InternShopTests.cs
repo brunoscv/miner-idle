@@ -125,6 +125,7 @@ namespace MinersIdle.Tests
             yield return LoadGame();
             if (!Simulation.Permanents.Rules.IsRestEnabled) Assert.Ignore("Sem permanentes no balanço ativo.");
             Simulation.AddRedShards(200);
+            Simulation.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             _shop.OpenPermanents();
 
             var train = PermanentRow(PermanentId.InternTraining);
@@ -133,21 +134,21 @@ namespace MinersIdle.Tests
             Assert.That(train.EffectText, Is.EqualTo("Dano dele +0% » +10%"));
             Assert.That(train.LevelText, Is.EqualTo("nv 0/10"));
             Assert.That(train.CanBuy, Is.True);
-            Assert.That(promotion.CanBuy, Is.False, "espera o Treinar no limite");
-            Assert.That(promotion.EffectText, Is.EqualTo("Pede o Treinar no 10"));
+            Assert.That(promotion.CanBuy, Is.False, "espera o Treinar no 5 (GDD v8.2, M9d)");
+            Assert.That(promotion.EffectText, Is.EqualTo("Pede o Treinar no 5"));
             Assert.That(promotion.ButtonText, Is.EqualTo("50"));
 
-            // As 7 cabem acima do VOLTAR (D-174): cada linha pede 40 px. (A altura que ela recebe depende da tela do
-            // teste em batch, que é pequena; o que a E3 muda é o que a linha pede.)
+            // Linhas de 40 px (D-174). Com as 9 do M9d, elas passam do lugar das 6 de 46 acima do VOLTAR: a lista rola.
             Assert.That(promotion.GetComponent<LayoutElement>().preferredHeight, Is.EqualTo(40f), "linhas de 40 px");
-            Assert.That(_shop.PermanentRows.Count * (40f + 3f), Is.LessThanOrEqualTo(6 * (46f + 3f) + 8f),
-                        "as 7 de 40 ocupam o lugar das 6 de 46 (mais a folga até o VOLTAR)");
+            Assert.That(_shop.PermanentRows.Count * (40f + 3f), Is.GreaterThan(6 * (46f + 3f) + 8f), "9 não cabem sem rolar");
+            var scroll = promotion.GetComponentInParent<ScrollRect>();
+            Assert.That(scroll, Is.Not.Null, "a lista das permanentes rola (M9d E1)");
+            Assert.That(scroll.content, Is.SameAs(promotion.transform.parent), "a rolagem move a lista inteira");
 
-            for (int i = 0; i < 10; i++) Simulation.GrantPermanentLevel(PermanentId.InternTraining);
-            Assert.That(train.IsMaxed, Is.True);
-            Assert.That(train.transform.GetSiblingIndex(), Is.EqualTo(train.transform.parent.childCount - 1), "no fim");
+            for (int i = 0; i < 5; i++) Simulation.GrantPermanentLevel(PermanentId.InternTraining);
+            Assert.That(train.IsMaxed, Is.False);
             Assert.That(promotion.EffectText, Is.EqualTo("Começa a run contratado"));
-            Assert.That(promotion.CanBuy, Is.True, "com o Treinar no 10, acende");
+            Assert.That(promotion.CanBuy, Is.True, "com o Treinar no 5, acende");
 
             Click(promotion);
             Assert.That(Simulation.Permanents.State.LevelOf(PermanentId.InternPromotion), Is.EqualTo(1));

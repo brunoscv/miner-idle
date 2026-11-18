@@ -77,6 +77,28 @@ namespace MinersIdle.Tests
             Assert.That(_runner.Simulation.Permanents.State, Is.SameAs(permanent), "as permanentes passam para a run nova");
             Assert.That(permanent.RedShards, Is.EqualTo(7));
             Assert.That(permanent.Day, Is.EqualTo(2));
+            Assert.That(_runner.IsResting, Is.True, "M9d: a run nova espera o COMEÇAR");
+        }
+
+        /// <summary>M9d E1 (D-277): o Atalho, +1 nível por toque e de volta ao 0 no limite; a distância muda na hora.</summary>
+        [UnityTest]
+        public IEnumerator Shortcut_CyclesTheLevel_AndTheSpacing()
+        {
+            yield return Load();
+            double spacing = _runner.Simulation.CrystalSpacing;
+            Assert.That(spacing, Is.EqualTo(6), "GDD v8.2: 3 m = 6 unidades");
+
+            Click("Shortcut");
+            Assert.That(_runner.Simulation.Permanents.State.LevelOf(PermanentId.Shortcut), Is.EqualTo(1));
+            Assert.That(_runner.Simulation.CrystalSpacing, Is.EqualTo(5), "2,5 m");
+            var label = _panel.transform.Find("DayMenu/Content/Buttons/Shortcut").GetComponentInChildren<TMP_Text>();
+            Assert.That(label.text, Is.EqualTo("Atalho 1/5"));
+
+            for (int i = 0; i < 4; i++) Click("Shortcut");
+            Assert.That(_runner.Simulation.CrystalSpacing, Is.EqualTo(1), "0,5 m no 5");
+            Click("Shortcut");
+            Assert.That(_runner.Simulation.Permanents.State.LevelOf(PermanentId.Shortcut), Is.EqualTo(0), "volta ao 0");
+            Assert.That(_runner.Simulation.CrystalSpacing, Is.EqualTo(6));
         }
 
         [UnityTest]

@@ -169,8 +169,8 @@ namespace MinersIdle.Tests
 
         const int Caves = 10;
 
-        /// <summary>O arquivo gravado na versão 8.</summary>
-        const string VersionEight = "\"version\":\\s*8";
+        /// <summary>O arquivo gravado na versão atual (9 desde o M9d E1: o descanso na tela).</summary>
+        const string VersionNine = "\"version\":\\s*9";
 
         /// <summary>O balanço com a descida, sem melhorias à venda (o Mapa saiu no v8, D-256).</summary>
         static EconomyRules NoShop()
@@ -213,7 +213,7 @@ namespace MinersIdle.Tests
             Assert.That(loaded.ShardsEarned, Is.EqualTo(state.ShardsEarned).And.GreaterThan(0));
             Assert.That(loaded.ReachedHeart, Is.False);
             Assert.That(back.DeepestFloor, Is.EqualTo(4), "o recorde vai junto (M9c E1)");
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionEight), "save v8 (M9c E1)");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionNine), "save v9 (M9d E1)");
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace MinersIdle.Tests
             Assert.That(permanent.DeepestFloor, Is.EqualTo(1), "a v1 não tinha andar");
 
             _save.Save(state, permanent);
-            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionEight), "regravado na versão nova");
+            Assert.That(File.ReadAllText(_store.FilePath), Does.Match(VersionNine), "regravado na versão nova");
         }
 
         /// <summary>
@@ -325,9 +325,11 @@ namespace MinersIdle.Tests
             var sim = new MiningSimulation(Rules(), new SeededRandom(1), economy: Prototype(),
                                            permanents: new Permanents(V7Permanents(), permanent));
             sim.AddRedShards(40);
+            sim.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             sim.PurchasePermanent(PermanentId.MountainBlood); // 11
             sim.PurchasePermanent(PermanentId.MountainBlood); // 12
             sim.PurchasePermanent(PermanentId.DwarfSoul);     // 11
+            sim.IsResting = false;
             sim.Rest(force: true);                            // dia 2
             return permanent;
         }
@@ -629,6 +631,43 @@ namespace MinersIdle.Tests
             Assert.That(File.Exists(_store.BackupPath), Is.False);
             _save.Load(Prototype(), out var status);
             Assert.That(status, Is.EqualTo(SaveLoadStatus.NewGame), "Apagar save não deixa o backup voltar");
+        }
+
+        // ── O descanso na tela (M9d E1, D-265, D-275) ───────────────────────────────────────────────────────────
+
+        [Test]
+        public void Version9_KeepsTheRestOnScreen_AndARunningGameSavesWithout()
+        {
+            var rest = new RestSummary(3, 25, 1234, 5000, 40, 90);
+            _save.Save(new GameState(), PlayedPermanent(), null, rest);
+
+            _save.Load(Prototype(), V7Permanents(), out _, out var status);
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(_save.LoadedRest.HasValue, Is.True, "reabre descansando, com o resumo do dia");
+            var back = _save.LoadedRest.Value;
+            Assert.That(back.Day, Is.EqualTo(3));
+            Assert.That(back.Level, Is.EqualTo(25));
+            Assert.That(back.PlaySeconds, Is.EqualTo(1234));
+            Assert.That(back.ShardsEarned, Is.EqualTo(5000));
+            Assert.That(back.RedShardsGained, Is.EqualTo(40));
+            Assert.That(back.RedShardsBank, Is.EqualTo(90));
+
+            _save.Save(new GameState(), PlayedPermanent());
+            _save.Load(Prototype(), V7Permanents(), out _, out _);
+            Assert.That(_save.LoadedRest.HasValue, Is.False, "uma run em andamento não guarda descanso");
+        }
+
+        [Test]
+        public void Version8_OpensWithoutRest()
+        {
+            WriteSave("{ \"version\": 8, \"shards\": 77.0, \"cave\": 5, " +
+                      "\"rest\": { \"resting\": true, \"day\": 2, \"level\": 10 } }");
+
+            var state = _save.Load(Prototype(), V7Permanents(), out _, out var status, 10);
+
+            Assert.That(status, Is.EqualTo(SaveLoadStatus.Loaded));
+            Assert.That(state.Shards, Is.EqualTo(77));
+            Assert.That(_save.LoadedRest.HasValue, Is.False, "o descanso na tela só existe da versão 9 em diante");
         }
     }
 }

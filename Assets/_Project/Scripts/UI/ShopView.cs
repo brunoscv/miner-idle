@@ -166,7 +166,15 @@ namespace MinersIdle.UI
             Refresh();
         }
 
-        public void Close() => screen.SetActive(false);
+        public void Close()
+        {
+            if (!screen.activeSelf) return;
+            screen.SetActive(false);
+            Closed?.Invoke();
+        }
+
+        /// <summary>A loja fechou (M9d: aberta do descanso, o resumo volta por cima).</summary>
+        public event System.Action Closed;
 
         public void SelectTab(Tab tab)
         {

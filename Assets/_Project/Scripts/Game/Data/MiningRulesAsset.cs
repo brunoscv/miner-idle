@@ -28,6 +28,9 @@ namespace MinersIdle.Game
         [SerializeField] int minCrystals = 4;
         [Tooltip("Espaço mínimo entre dois cristais da fila (D-60).")]
         [SerializeField] double minCrystalSpacing = 2;
+
+        /// <summary>A distância entre cristais do balanço, em unidades (GDD v8.2: 3 m = 6, D-277).</summary>
+        public double MinCrystalSpacing => minCrystalSpacing;
         [Tooltip("O cristal novo nasce no fim da fila, a pelo menos esta distância à frente do anão: fora da tela (D-60).")]
         [SerializeField] double spawnDistance = 12;
 
@@ -183,6 +186,12 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues internTraining = new UpgradeLineValues(10, 2, 0, 0.1, CostFormula.OffsetExponential);
         [Tooltip("Promoção do Estagiário (M7): compra única; a run já começa com ele. Só com o Treinar no limite (GDD v7: 50).")]
         [SerializeField] UpgradeLineValues internPromotion = new UpgradeLineValues(50, 1, 0, 1);
+        [Tooltip("O nível do Treinar que a Promoção pede (GDD v8.2: 5). 0 = o Treinar no limite (GDD v7, D-169).")]
+        [SerializeField] int internPromotionTrainingLevel;
+        [Tooltip("Dedo Fogoso (M9d). Efeito: soma no dano do crítico por nível (GDD v8.2: 0,5, até o nível 10). 0 níveis desliga.")]
+        [SerializeField] UpgradeLineValues fieryFinger = new UpgradeLineValues(10, 2, 0, 0.5, CostFormula.OffsetExponential);
+        [Tooltip("Atalho (M9d). Efeito: metros a menos entre cristais por nível (D-252: 0,5, até o nível 5; 1 m = 2 unidades). 0 níveis desliga.")]
+        [SerializeField] UpgradeLineValues shortcut = new UpgradeLineValues(50, 2, 0, 0.5, CostFormula.OffsetExponential);
 
         /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos não valem no Multiply (v5).</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
@@ -197,9 +206,10 @@ namespace MinersIdle.Game
         public double PickaxeStep => pickaxe.Effect;
 
         /// <param name="pickaxeCaveGrowth">A taxa trocada no DBG → Cálculos (E3b-3); <c>null</c> = a do asset.</param>
-        public MiningRules ToRules(double? pickaxeCaveGrowth = null) => new MiningRules(
+        /// <param name="crystalSpacing">A distância entre cristais trocada no DBG → Cálculos (M9d, D-277); <c>null</c> = a do asset.</param>
+        public MiningRules ToRules(double? pickaxeCaveGrowth = null, double? crystalSpacing = null) => new MiningRules(
             initialCrystals, firstCrystalDistance, maxCrystals, spawnInterval,
-            minCrystalSpacing, spawnDistance,
+            crystalSpacing ?? minCrystalSpacing, spawnDistance,
             crystalHealth, crystalReward,
             damage, hitInterval,
             walkSpeed, miningRange,
@@ -218,9 +228,10 @@ namespace MinersIdle.Game
             var table = new RedShardTable(restLevel, redShardMilestoneStep, redShardMilestone, redShardBigMilestoneFrom,
                                           redShardBigMilestone, redShardPerLevel);
             // Na ordem do PermanentId.
-            return new PermanentRules(restLevel, table, memory.ToDefinition(), mountainBlood.ToDefinition(),
+            return new PermanentRules(restLevel, table, internPromotionTrainingLevel, memory.ToDefinition(), mountainBlood.ToDefinition(),
                                       burningHeart.ToDefinition(), nervousFingers.ToDefinition(), dwarfSoul.ToDefinition(),
-                                      internTraining.ToDefinition(), internPromotion.ToDefinition());
+                                      internTraining.ToDefinition(), internPromotion.ToDefinition(), fieryFinger.ToDefinition(),
+                                      shortcut.ToDefinition());
         }
 
         /// <summary>A chance do raro no padrão e no ritmo lento (para o rótulo do DBG → Cálculos).</summary>

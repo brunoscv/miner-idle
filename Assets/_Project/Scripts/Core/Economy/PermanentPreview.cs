@@ -46,14 +46,18 @@ namespace MinersIdle.Core
         /// <summary>Linha desligada no balanço ativo (limite 0, o GDD v5): some da aba.</summary>
         public bool IsEnabled => MaxLevel > 0;
 
-        public static PermanentPreview For(Permanents permanents, PermanentId id)
+        /// <param name="shopOpen">
+        /// Se dá para comprar agora (M9d, D-265, §4.2: só no descanso). Fora dele, a linha mostra o que tem, com o preço
+        /// apagado.
+        /// </param>
+        public static PermanentPreview For(Permanents permanents, PermanentId id, bool shopOpen = true)
         {
             var line = permanents.Rules.Get(id);
             int level = permanents.EffectiveLevel(id);
             double? cost = permanents.NextCost(id);
             var state = cost == null ? UpgradeButtonState.Maxed
                 : permanents.IsLocked(id) ? UpgradeButtonState.Locked
-                : Purchases.CanAfford(permanents.State.RedShards, cost.Value) ? UpgradeButtonState.Purchasable
+                : shopOpen && Purchases.CanAfford(permanents.State.RedShards, cost.Value) ? UpgradeButtonState.Purchasable
                 : UpgradeButtonState.NotEnoughShards;
             double current = line.Effect * level;
             double next = cost == null ? current : line.Effect * (level + 1);

@@ -35,7 +35,8 @@ namespace MinersIdle.Tests
             _runner = Object.FindAnyObjectByType<MiningRunner>();
             _shop = Object.FindAnyObjectByType<ShopView>();
             Assert.That(_shop, Is.Not.Null);
-            Assert.That(_shop.PermanentRows.Count, Is.EqualTo(7), "as 5 do anão e as 2 do estagiário, M7 (rode o setup do projeto)");
+            Assert.That(_shop.PermanentRows.Count, Is.EqualTo(9),
+                        "as 5 do anão, as 2 do estagiário (M7) e o Dedo Fogoso e o Atalho (M9d; rode o setup do projeto)");
             if (!Simulation.Permanents.Rules.IsRestEnabled)
                 Assert.Ignore("O balanço ativo não tem permanentes (rode o setup do projeto: GDD v7).");
         }
@@ -69,6 +70,7 @@ namespace MinersIdle.Tests
         public IEnumerator BuyingMountainBlood_TakesElevenFromTheBank_AndTheDamageRisesTenPercentRightAway()
         {
             yield return LoadGame();
+            Simulation.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             Simulation.AddRedShards(30);
             double damage = Simulation.Stats.Damage;
             _shop.OpenPermanents();
@@ -90,6 +92,7 @@ namespace MinersIdle.Tests
         public IEnumerator BuyButton_IsOffWithoutEnoughRedShards()
         {
             yield return LoadGame();
+            Simulation.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             Simulation.AddRedShards(10);
             _shop.OpenPermanents();
             Assert.That(Row(PermanentId.MountainBlood).CanBuy, Is.False, "10 não paga 11");
@@ -108,6 +111,7 @@ namespace MinersIdle.Tests
             // GDD v8 (D-239): a Memória vai ao nível 100, custo 10 + 2^(n−1); o total é 1.000 + 2^100 − 1 (os últimos níveis
             // são impagáveis no jogo; aqui o DBG dá as lascas).
             double total = 1000 + System.Math.Pow(2, 100) - 1;
+            Simulation.IsResting = true; // M9d (§4.2): as permanentes só se compram descansando
             Simulation.AddRedShards(total * 2);
             _shop.OpenPermanents();
             var memory = Row(PermanentId.Memory);
@@ -124,17 +128,21 @@ namespace MinersIdle.Tests
             Assert.That(memory.EffectText, Is.EqualTo("Andar −500 cristais"), "−5 por nível (D-239)");
             Assert.That(memory.transform.GetSiblingIndex(), Is.EqualTo(memory.transform.parent.childCount - 1), "no fim");
             Assert.That(Row(PermanentId.MountainBlood).transform.GetSiblingIndex(), Is.EqualTo(0), "as outras sobem");
-            Assert.That(Row(PermanentId.DwarfSoul).transform.GetSiblingIndex(), Is.EqualTo(3));
+            Assert.That(Row(PermanentId.DwarfSoul).transform.GetSiblingIndex(), Is.EqualTo(4), "depois do Dedo Fogoso (M9d)");
         }
 
         [UnityTest]
-        public IEnumerator ShopBadge_LightsUpWithAPermanentToBuy_AndTheTabShowsIt()
+        public IEnumerator ShopBadge_LightsUpWithAPermanentToBuy_OnlyWhileResting()
         {
             yield return LoadGame();
             Assert.That(_shop.IsBadgeShown, Is.False, "no começo, nada para comprar");
 
             Simulation.AddRedShards(11);
-            Assert.That(_shop.IsBadgeShown, Is.True, "o \"!\" da LOJA acende com uma permanente");
+            Assert.That(_shop.IsBadgeShown, Is.False, "D-276: no meio da run as permanentes são só consulta, sem \"!\"");
+
+            Simulation.IsResting = true;
+            Simulation.AddRedShards(1);
+            Assert.That(_shop.IsBadgeShown, Is.True, "descansando, o \"!\" da LOJA acende com uma permanente");
             _shop.Open();
             Assert.That(_shop.IsPermanentsTabBadgeShown, Is.True, "e o da aba das permanentes");
             Assert.That(_shop.IsRunTabBadgeShown, Is.False, "a da run está aberta");
@@ -160,6 +168,32 @@ namespace MinersIdle.Tests
             Assert.That(_shop.ActiveTab, Is.EqualTo(ShopView.Tab.Permanents));
             Assert.That(_shop.RedBalanceText, Is.EqualTo("7"), "o banco depois do descanso");
             Assert.That(Row(PermanentId.Memory).CanBuy, Is.False, "7 não paga 11");
+
+            // M9d: comprar e fechar a loja volta ao resumo, com o banco de agora; COMEÇAR inicia a run.
+            Simulation.AddRedShards(4);
+            Assert.That(Row(PermanentId.Memory).CanBuy, Is.True, "11 paga 11, descansando");
+            BuyButton(Row(PermanentId.Memory)).onClick.Invoke();
+            _shop.Close();
+            Assert.That(summary.IsOpen, Is.True, "fechar a loja volta ao resumo");
+            Assert.That(summary.BankText, Is.EqualTo("0"), "7 + 4 − 11");
+            summary.transform.Find("Screen/Panel/Start").GetComponent<Button>().onClick.Invoke();
+            Assert.That(_runner.IsResting, Is.False);
+            Assert.That(Simulation.Permanents.State.LevelOf(PermanentId.Memory), Is.EqualTo(1), "a compra vale na run nova");
+        }
+
+        /// <summary>M9d (§4.2, D-265): fora do descanso, as permanentes aparecem na LOJA, mas não se compram.</summary>
+        [UnityTest]
+        public IEnumerator OutsideTheRest_ThePermanentsShow_ButDontBuy()
+        {
+            yield return LoadGame();
+            Simulation.AddRedShards(100);
+            _shop.OpenPermanents();
+            var blood = Row(PermanentId.MountainBlood);
+            Assert.That(blood.CanBuy, Is.False, "só no descanso");
+            BuyButton(blood).onClick.Invoke();
+            Assert.That(Simulation.Permanents.State.RedShards, Is.EqualTo(100), "nada comprado");
+            Assert.That(Row(PermanentId.FieryFinger), Is.Not.Null, "o Dedo Fogoso na lista");
+            Assert.That(Row(PermanentId.Shortcut), Is.Not.Null, "o Atalho na lista");
         }
     }
 }

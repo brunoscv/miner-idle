@@ -89,6 +89,7 @@ namespace MinersIdle.Tests
             Assert.That(Simulation.IsInternHired, Is.False, "a Promoção vale na run seguinte");
 
             _runner.Rest(force: true);
+            _runner.StartRun(); // M9d: a run nova começa no COMEÇAR
             Assert.That(Simulation.IsInternHired, Is.True, "a run nova já começa com ele (D-169)");
             Assert.That(Simulation.InternStats.Damage, Is.EqualTo(10).Within(1e-9), "nível 1 (5) × Treinar 10");
 

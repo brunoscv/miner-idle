@@ -17,7 +17,7 @@ MonoBehaviour:
   maxCrystals: 12
   spawnInterval: 5
   minCrystals: 10
-  minCrystalSpacing: 2
+  minCrystalSpacing: 6
   spawnDistance: 12
   crystalHealth: 1
   crystalReward: 0.2
@@ -193,3 +193,16 @@ MonoBehaviour:
     costGrowth: 1
     maxLevel: 1
     effect: 1
+  internPromotionTrainingLevel: 5
+  fieryFinger:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 10
+    effect: 0.5
+  shortcut:
+    costFormula: 2
+    baseCost: 50
+    costGrowth: 2
+    maxLevel: 5
+    effect: 0.5

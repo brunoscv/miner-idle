@@ -172,7 +172,8 @@ namespace MinersIdle.Core
             // O relatório mostra o ritmo do andar de partida, sem cartas.
             double reward = rules.CrystalRewardIn(floor) * intern.OfflineRewardMultiplier;
             long hits = HitsPerCrystal(rules.CrystalHealthIn(floor), intern.Damage);
-            double perCrystal = SecondsPerCrystal(rules, hits, intern.HitInterval);
+            double spacing = permanents?.CrystalSpacing(rules) ?? rules.MinCrystalSpacing; // com o Atalho (M9d)
+            double perCrystal = SecondsPerCrystal(rules, hits, intern.HitInterval, spacing);
 
             // Trechos: cada pedaço de tempo com as mesmas cartas do raro (M9b E4, D-181, D-190) e no mesmo andar (M9c E4).
             // O tempo no meio de um cristal passa para o trecho seguinte.
@@ -206,7 +207,7 @@ namespace MinersIdle.Core
                 }
                 double floorReward = rules.CrystalRewardIn(floor) * intern.OfflineRewardMultiplier * multiplier;
                 long floorHits = HitsPerCrystal(rules.CrystalHealthIn(floor), intern.Damage * damage);
-                double floorPerCrystal = SecondsPerCrystal(rules, floorHits, intern.HitInterval / divisor);
+                double floorPerCrystal = SecondsPerCrystal(rules, floorHits, intern.HitInterval / divisor, spacing);
                 var stretch = Stretch(floorPerCrystal, floorReward, until - from, carried);
 
                 long missing = autoAdvance && floor < rules.CaveCount
@@ -263,10 +264,11 @@ namespace MinersIdle.Core
         /// intervalo. Espera (o jogo até a D-124): um intervalo antes de cada golpe. A1: o relógio enche correndo, até um
         /// intervalo.
         /// </summary>
-        public static double SecondsPerCrystal(MiningRules rules, long hits, double interval)
+        /// <param name="spacing">A distância entre cristais, com o Atalho (M9d); <c>null</c> = a do balanço.</param>
+        public static double SecondsPerCrystal(MiningRules rules, long hits, double interval, double? spacing = null)
         {
             if (rules == null) throw new ArgumentNullException(nameof(rules));
-            double run = rules.MinCrystalSpacing / rules.WalkSpeed;
+            double run = (spacing ?? rules.MinCrystalSpacing) / rules.WalkSpeed;
             switch (rules.ArrivalStrike)
             {
                 case ArrivalStrike.Immediate:

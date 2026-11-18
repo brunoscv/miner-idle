@@ -17,7 +17,6 @@ namespace MinersIdle.UI
     public sealed class RestScreen : MiningViewBase
     {
         [SerializeField] FeedbackTexts texts;
-        [SerializeField] DaySummaryScreen summary;
         [Tooltip("O fundo que escurece e o painel: ligado só com o modal aberto.")]
         [SerializeField] GameObject screen;
         [SerializeField] TMP_Text title;
@@ -109,12 +108,14 @@ namespace MinersIdle.UI
 
         public void Close() => screen.SetActive(false);
 
-        /// <summary>DESCANSAR: o descanso de verdade (a run nova começa por trás) e o resumo do dia por cima.</summary>
+        /// <summary>
+        /// DESCANSAR: o descanso de verdade (a run nova fica parada por trás, M9d). O resumo do dia abre pelo evento
+        /// <see cref="MiningRunner.Rested"/>.
+        /// </summary>
         public void Confirm()
         {
-            var result = runner.Rest();
             Close();
-            if (result.HasValue) summary.Open(result.Value);
+            runner.Rest();
         }
 
         void Refresh()

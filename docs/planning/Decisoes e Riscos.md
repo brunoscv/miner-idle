@@ -375,6 +375,7 @@ Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o 
 | **D-276** | **A aba das permanentes na LOJA durante a run (M9d P5):** continua, só para **consulta**: nível e efeito atual de cada linha, sem preço nem botão, e "Compre ao Descansar" no topo. O selo "!" da aba sai. Revê a D-155 na parte de comprar no meio da run. | M9d |
 | **D-277** | **A distância entre cristais é a do GDD já no M9d (P6):** **3 m**, e o Atalho tira 0,5 m por nível (D-252), em vez do 1 m de hoje (D-58). O começo fica mais lento até o Atalho; o DBG → Cálculos ganha um botão para comparar 1 m e 3 m. O ajuste fino vem com a câmera (Bloco G). | M9d |
 | **D-278** | **O HUD do v8 entra no M9d (P7):** só **lascas** e **lascas vermelhas** no HUD; o andar numa **barra vertical à esquerda** (§7.3, com o andar atual e o recorde), junto da coluna dos bônus; dano e velocidade (com o âmbar dos bônus) vão para o **topo da LOJA**. Com mockup antes (E0), numa etapa própria (E3). | M9d |
+| **D-279** | **Os dois fundos da tela do descanso no jogo (M9d E0, 2026-11-17; revê a D-273):** em vez de escolher pelo mockup, a E2 monta a tela com a **preta** e a **desfocada** e um botão no DBG para trocar entre elas; o Bruno escolhe vendo no jogo. Até a escolha, abre na preta. O HUD (E3) segue pelo mockup da E0. | M9d |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
