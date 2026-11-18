@@ -144,6 +144,7 @@ namespace MinersIdle.EditorTools
             changed |= CrystalSheetSetup.EnsureInScene(); // o raro dourado e DBG → Andar → Barra de vida e Estágios (M9f)
             changed |= HudV8Setup.EnsureInScene(); // o HUD do v8: depois da loja, do Descansar e da coluna dos bônus (M9d E3)
             changed |= BombSetup.EnsureInScene(); // a faixa da bomba, o voo e o DBG → Bomba (M9g): depois do Próximo Andar e do DBG
+            changed |= CameraV8Setup.EnsureInScene(); // a câmera do v8 e o DBG → Câmera → v8 / F1 (M9h, D-245), depois da F1 do corredor
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

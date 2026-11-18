@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MinersIdle.Presentation
 {
     /// <summary>
-    /// Enquadramento da câmera da descida (M6, D-50; desde o M1b, D-69): a câmera fica à frente do anão, acima dele,
-    /// olhando para baixo de modo que a fila de cristais apareça em coluna, sem esconder o anão. Valores de apresentação
+    /// Enquadramento da câmera da descida (M6, D-50; M1b, D-69; desde o M9h, a do GDD v8, D-245): a câmera fica à frente do
+    /// anão, acima dele, olhando para baixo de modo que a fila de cristais apareça em coluna, sem esconder o anão. Valores de apresentação
     /// (não são regra), ajustáveis no DBG.
     ///
     /// Coordenadas: a câmera está em (0, altura, 0) olhando para +z; o anão corre parado em (x, 0, distância), de frente
@@ -33,10 +33,25 @@ namespace MinersIdle.Presentation
         public float corridorWidth;
 
         /// <summary>
-        /// A câmera F1, escolhida pelo Bruno sobre prévias do jogo com arte (D-69, 2026-10-23). Supera a D-50 (2,4 m, 15°,
-        /// 4,8 m), em que os cristais da fila escondiam o anão.
+        /// A câmera do GDD v8.2 (§7.5, D-245; Marco 9h): inclinação 60°, 5,5 m de altura, 3 m até o anão (na horizontal: com
+        /// a altura, a câmera olha direto para ele) e campo de visão de 60°. Substitui a F1 como padrão do jogo. O anão fica
+        /// no meio da tela, menor que na F1, e embaixo dele aparecem de 3 m (9:16) a 3,6 m (9:20) de chão à frente.
         /// </summary>
-        public static DescentFraming Validated => new DescentFraming
+        public static DescentFraming GddV8 => new DescentFraming
+        {
+            height = 5.5f,
+            tilt = 60f,
+            distance = 3f,
+            fieldOfView = 60f,
+            corridorWidth = 3f,
+        };
+
+        /// <summary>
+        /// A câmera F1, escolhida pelo Bruno sobre prévias do jogo com arte (D-69, 2026-10-23). Supera a D-50 (2,4 m, 15°,
+        /// 4,8 m), em que os cristais da fila escondiam o anão. Foi o padrão até o Marco 9h; continua no DBG → Câmera para
+        /// comparar, e é a base do recuo (D-148), da névoa e do limite dos esteios.
+        /// </summary>
+        public static DescentFraming F1 => new DescentFraming
         {
             height = 3.6f,
             tilt = 30f,
@@ -45,12 +60,20 @@ namespace MinersIdle.Presentation
             corridorWidth = 3f,
         };
 
-        /// <summary>Os mesmos limites dos controles do simulador.</summary>
+        /// <summary>A câmera com que o jogo abre e para onde o "Padrão" do DBG volta: a do v8 (D-245).</summary>
+        public static DescentFraming Default => GddV8;
+
+        /// <summary>Se a câmera é a mesma de <paramref name="other"/> (altura, inclinação, distância e campo de visão).</summary>
+        public bool SameView(DescentFraming other) =>
+            Mathf.Abs(height - other.height) < 0.01f && Mathf.Abs(tilt - other.tilt) < 0.01f
+            && Mathf.Abs(distance - other.distance) < 0.01f && Mathf.Abs(fieldOfView - other.fieldOfView) < 0.01f;
+
+        /// <summary>Os limites dos controles do DBG (os do simulador, com espaço em volta da câmera do v8).</summary>
         public DescentFraming Clamped() => new DescentFraming
         {
             height = Mathf.Clamp(height, 0.8f, 9f),
-            tilt = Mathf.Clamp(tilt, 0f, 65f),
-            distance = Mathf.Clamp(distance, 3f, 12f),
+            tilt = Mathf.Clamp(tilt, 0f, 75f),
+            distance = Mathf.Clamp(distance, 1.5f, 12f),
             fieldOfView = Mathf.Clamp(fieldOfView, 30f, 85f),
             corridorWidth = Mathf.Clamp(corridorWidth, 2f, 5f),
         };

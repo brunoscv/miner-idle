@@ -135,7 +135,7 @@ namespace MinersIdle.EditorTools
             if (Mathf.Approximately(framing.FindPropertyRelative("height").floatValue, 2.4f)
                 && Mathf.Approximately(framing.FindPropertyRelative("tilt").floatValue, 15f))
             {
-                var f1 = DescentFraming.Validated;
+                var f1 = DescentFraming.F1;
                 framing.FindPropertyRelative("height").floatValue = f1.height;
                 framing.FindPropertyRelative("tilt").floatValue = f1.tilt;
                 framing.FindPropertyRelative("distance").floatValue = f1.distance;

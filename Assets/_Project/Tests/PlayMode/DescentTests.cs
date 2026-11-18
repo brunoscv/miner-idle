@@ -53,9 +53,9 @@ namespace MinersIdle.Tests
         }
 
         [Test]
-        public void ValidatedFraming_PutsTheDwarfAboveTheQueue()
+        public void F1Framing_PutsTheDwarfAboveTheQueue()
         {
-            var framing = DescentFraming.Validated;
+            var framing = DescentFraming.F1;
             const float aspect = DescentFraming.ReferenceAspect;
 
             Assert.That(framing.VerticalFieldOfView(aspect), Is.EqualTo(40f).Within(0.01f), "9:16: o campo de visão é o validado");
@@ -63,6 +63,34 @@ namespace MinersIdle.Tests
             Assert.That(framing.FromTop(0f, framing.distance, aspect), Is.EqualTo(0.64f).Within(0.01f), "pés (F1, D-69)");
             Assert.That(framing.GroundAhead(aspect), Is.EqualTo(1.98f).Within(0.05f), "chão à frente dos pés");
             Assert.That(framing.VerticalFieldOfView(9f / 20f), Is.GreaterThan(40f), "tela mais alta: mesma largura, mais altura");
+        }
+
+        /// <summary>
+        /// M9h (D-245): a câmera do GDD v8 (60°, 5,5 m, 3 m, 60°) olha direto para o anão, que fica no meio da tela, menor que
+        /// na F1; embaixo dele aparecem 3 m de chão numa tela 9:16 e ~3,6 m no Moto G75 (9:20), um cristal de cada vez no
+        /// espaçamento de 3 m (D-277). É a câmera com que o jogo abre.
+        /// </summary>
+        [Test]
+        public void GddV8Framing_PutsTheDwarfInTheMiddle_AndIsTheDefault()
+        {
+            var framing = DescentFraming.GddV8;
+            const float aspect = DescentFraming.ReferenceAspect;
+            const float phone = 9f / 20f;
+
+            Assert.That(DescentFraming.Default.SameView(framing), Is.True, "o jogo abre na câmera do v8");
+            Assert.That(framing.VerticalFieldOfView(aspect), Is.EqualTo(60f).Within(0.01f));
+            Assert.That(framing.FromTop(DescentFraming.DwarfHeight, framing.distance, aspect), Is.EqualTo(0.41f).Within(0.01f), "cabeça");
+            Assert.That(framing.FromTop(0f, framing.distance, aspect), Is.EqualTo(0.52f).Within(0.01f), "pés");
+            Assert.That(framing.GroundAhead(aspect), Is.EqualTo(3f).Within(0.05f), "chão à frente dos pés, 9:16");
+            Assert.That(framing.FromTop(DescentFraming.DwarfHeight, framing.distance, phone), Is.EqualTo(0.43f).Within(0.01f), "cabeça, 9:20");
+            Assert.That(framing.FromTop(0f, framing.distance, phone), Is.EqualTo(0.52f).Within(0.01f), "pés, 9:20");
+            Assert.That(framing.GroundAhead(phone), Is.EqualTo(3.56f).Within(0.05f), "chão à frente dos pés, 9:20");
+
+            var f1 = DescentFraming.F1;
+            float v8Size = framing.FromTop(0f, framing.distance, aspect) - framing.FromTop(DescentFraming.DwarfHeight, framing.distance, aspect);
+            float f1Size = f1.FromTop(0f, f1.distance, aspect) - f1.FromTop(DescentFraming.DwarfHeight, f1.distance, aspect);
+            Assert.That(v8Size, Is.LessThan(f1Size * 0.5f), "o anão fica com menos da metade da altura da F1");
+            Assert.That(framing.Clamped().SameView(framing), Is.True, "os limites do DBG não cortam a câmera do v8");
         }
 
         [UnityTest]
@@ -160,9 +188,9 @@ namespace MinersIdle.Tests
             Assert.That(allocations, Is.Zero, "desenhar a descida num quadro não aloca");
         }
 
-        /// <summary>M6 (E3): os controles da câmera da E1 vivem no DBG do jogo (D-61).</summary>
+        /// <summary>M6 (E3): os controles da câmera da E1 vivem no DBG do jogo (D-61). Desde o M9h o Padrão é a câmera do v8.</summary>
         [UnityTest]
-        public IEnumerator CameraPanel_ChangesTheFraming_AndResetsToValidated()
+        public IEnumerator CameraPanel_ChangesTheFraming_AndResetsToDefault()
         {
             yield return Load();
             var panel = Object.FindAnyObjectByType<DescentCameraPanel>();
@@ -175,14 +203,14 @@ namespace MinersIdle.Tests
 
             Click("Content/Rows/Row0/Plus"); // altura + 0,1
             Click("Content/Rows/Row1/Minus"); // inclinação − 1
-            var validated = DescentFraming.Validated;
+            var validated = DescentFraming.Default;
             Assert.That(_stage.Framing.height, Is.EqualTo(validated.height + 0.1f).Within(1e-5f));
             Assert.That(_stage.Framing.tilt, Is.EqualTo(validated.tilt - 1f).Within(1e-5f));
             Assert.That(_stage.SceneCamera.transform.localPosition.y, Is.EqualTo(validated.height + 0.1f).Within(1e-5f), "a câmera mudou na hora");
 
             Click("Content/Buttons/ResetFraming");
-            Assert.That(_stage.Framing.height, Is.EqualTo(DescentFraming.Validated.height));
-            Assert.That(_stage.Framing.tilt, Is.EqualTo(DescentFraming.Validated.tilt));
+            Assert.That(_stage.Framing.height, Is.EqualTo(DescentFraming.Default.height));
+            Assert.That(_stage.Framing.tilt, Is.EqualTo(DescentFraming.Default.tilt));
 
             Click("Content/Buttons/Resolution");
             Assert.That(_stage.InternalWidth, Is.EqualTo(360), "270 → 360");
@@ -202,7 +230,7 @@ namespace MinersIdle.Tests
             float lastFeet = float.MaxValue, lastGround = -1f;
             for (int i = 0; i < DescentCameraPanel.Setbacks.Length; i++)
             {
-                var framing = DescentFraming.Validated;
+                var framing = DescentFraming.F1;
                 framing.distance = DescentCameraPanel.SetbackDistance(i);
                 float head = framing.FromTop(DescentFraming.DwarfHeight, framing.distance, phone);
                 float feet = framing.FromTop(0f, framing.distance, phone);
@@ -227,6 +255,8 @@ namespace MinersIdle.Tests
             Assert.That(button, Is.Not.Null, "botão Recuo (rode o setup do projeto)");
             var label = button.GetComponentInChildren<TMPro.TMP_Text>();
             panel.Toggle();
+            _stage.Framing = DescentFraming.F1; // o recuo é uma ferramenta da F1 (D-148); o jogo abre na do v8 (M9h)
+            yield return null;
 
             float fogStart = Shader.GetGlobalFloat("_DescentFogStart");
             float fogEnd = Shader.GetGlobalFloat("_DescentFogEnd");
@@ -238,7 +268,7 @@ namespace MinersIdle.Tests
             {
                 button.GetComponent<Button>().onClick.Invoke();
                 Assert.That(_stage.Framing.distance, Is.EqualTo(expected[i]).Within(1e-4f));
-                float shift = expected[i] - DescentFraming.Validated.distance;
+                float shift = expected[i] - DescentFraming.F1.distance;
                 Assert.That(Shader.GetGlobalFloat("_DescentFogStart"), Is.EqualTo(fogStart + shift).Within(1e-4f), "a névoa recua junto");
                 Assert.That(Shader.GetGlobalFloat("_DescentFogEnd"), Is.EqualTo(fogEnd + shift).Within(1e-4f));
                 yield return null;
@@ -251,6 +281,47 @@ namespace MinersIdle.Tests
             Assert.That(label.text, Is.EqualTo("Recuo ?"), "fora dos recuos");
             button.GetComponent<Button>().onClick.Invoke();
             Assert.That(_stage.Framing.distance, Is.EqualTo(5f).Within(1e-4f), "fora dos recuos, volta ao primeiro");
+        }
+
+        /// <summary>
+        /// M9h: o jogo abre na câmera do v8 (D-245, o setup migra a cena); o botão Câmera troca para a F1 e volta, e o Padrão
+        /// volta para a do v8. A névoa chega 2 m mais perto na do v8, para o anão (a 3 m) ficar com a luz que tinha na F1.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CameraPanel_Preset_SwitchesBetweenV8AndF1()
+        {
+            yield return Load();
+            Assert.That(_stage.Framing.SameView(DescentFraming.GddV8), Is.True, "a cena abre na câmera do v8 (rode o setup do projeto)");
+            Assert.That(_stage.SceneCamera.transform.localPosition.y, Is.EqualTo(5.5f).Within(1e-4f));
+            Assert.That(_stage.SceneCamera.transform.localEulerAngles.x, Is.EqualTo(60f).Within(1e-3f));
+            Assert.That(_stage.FogShift, Is.EqualTo(-2f).Within(1e-4f), "a névoa acompanha o anão a 3 m");
+
+            var panel = Object.FindAnyObjectByType<DescentCameraPanel>();
+            var button = panel.transform.Find("Content/Buttons/Preset");
+            Assert.That(button, Is.Not.Null, "botão Câmera (rode o setup do projeto)");
+            var label = button.GetComponentInChildren<TMPro.TMP_Text>();
+            panel.Toggle();
+            yield return null;
+            Assert.That(panel.PresetLook, Is.EqualTo(0));
+            Assert.That(label.text, Is.EqualTo("Câmera v8"));
+
+            button.GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Assert.That(_stage.Framing.SameView(DescentFraming.F1), Is.True, "v8 → F1");
+            Assert.That(label.text, Is.EqualTo("Câmera F1"));
+            Assert.That(_stage.FogShift, Is.EqualTo(0f).Within(1e-4f));
+
+            panel.transform.Find("Content/Rows/Row1/Plus").GetComponent<Button>().onClick.Invoke(); // inclinação + 1
+            yield return null;
+            Assert.That(panel.PresetLook, Is.EqualTo(-1));
+            Assert.That(label.text, Is.EqualTo("Câmera ?"), "mexida no ±");
+
+            button.GetComponent<Button>().onClick.Invoke();
+            Assert.That(_stage.Framing.SameView(DescentFraming.GddV8), Is.True, "fora delas, volta para a do v8");
+
+            button.GetComponent<Button>().onClick.Invoke();
+            panel.transform.Find("Content/Buttons/ResetFraming").GetComponent<Button>().onClick.Invoke();
+            Assert.That(_stage.Framing.SameView(DescentFraming.GddV8), Is.True, "o Padrão é a câmera do v8");
         }
     }
 }

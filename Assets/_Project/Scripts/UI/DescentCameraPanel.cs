@@ -14,7 +14,7 @@ namespace MinersIdle.UI
     /// Controles da câmera da descida no DBG do jogo (M6, E3; D-61): os − e + da E1 para altura, inclinação, distância,
     /// campo de visão e largura do corredor (mais fáceis de acertar no celular que um slider), a intensidade dos efeitos
     /// (E4), Resolução (270/360/aparelho),
-    /// Padrão (F1, D-69) e Fechar. Uma linha mostra onde o anão fica na tela e quanto chão se vê à frente dele, para passar os
+    /// Padrão (a câmera do v8, D-245), Câmera (v8 ⇄ F1, para comparar; Marco 9h) e Fechar. Uma linha mostra onde o anão fica na tela e quanto chão se vê à frente dele, para passar os
     /// números adiante. Abre pelo botão "Câmera" do DBG e fica aberto com o DBG fechado, para ajustar olhando o jogo.
     /// Os textos (rótulos e modelos) ficam na cena. Só no Editor e em Development Build.
     /// </summary>
@@ -89,6 +89,10 @@ namespace MinersIdle.UI
         [SerializeField] Button setback;
         [Tooltip("Rótulo do botão do recuo para cada opção, na ordem de Setbacks, e mais um no fim para uma distância fora deles.")]
         [SerializeField] string[] setbackLabels;
+        [Tooltip("Troca a câmera entre a do v8 (D-245, o padrão) e a F1 (D-69), para comparar. Não fica salvo.")]
+        [SerializeField] Button preset;
+        [Tooltip("Rótulo do botão da câmera para cada opção, na ordem de Presets, e mais um no fim para uma câmera fora deles.")]
+        [SerializeField] string[] presetLabels;
 
         /// <summary>As opções do botão do golpe: quando sai o primeiro golpe (D-124) e se os efeitos estão ligados (D-125).</summary>
         static readonly (ArrivalStrike arrival, bool feel)[] StrikeLooks =
@@ -99,6 +103,9 @@ namespace MinersIdle.UI
         /// <summary>Os recuos do botão (D-148): quanto o anão fica mais longe da câmera que na F1 (0,2 = 20%).</summary>
         public static readonly float[] Setbacks = { 0f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f };
 
+        /// <summary>As câmeras do botão Câmera (Marco 9h): a do v8, que é o padrão, e a F1 de antes.</summary>
+        public static DescentFraming[] Presets => new[] { DescentFraming.GddV8, DescentFraming.F1 };
+
         UnityAction[] _minus;
         UnityAction[] _plus;
         float _refresh;
@@ -108,8 +115,22 @@ namespace MinersIdle.UI
         TMP_Text _strikeLabel;
         TMP_Text _moundLabel;
         TMP_Text _setbackLabel;
+        TMP_Text _presetLabel;
 
         public bool IsOpen => content.activeSelf;
+
+        /// <summary>A câmera em uso (índice de <see cref="Presets"/>), ou −1 se foi mexida no ± ou no recuo.</summary>
+        public int PresetLook
+        {
+            get
+            {
+                var framing = stage.Framing;
+                var presets = Presets;
+                for (int i = 0; i < presets.Length; i++)
+                    if (framing.SameView(presets[i])) return i;
+                return -1;
+            }
+        }
 
         /// <summary>O recuo em uso (índice de <see cref="Setbacks"/>), ou −1 se a distância não é nenhum deles.</summary>
         public int SetbackLook
@@ -123,8 +144,11 @@ namespace MinersIdle.UI
             }
         }
 
-        /// <summary>A distância da câmera ao anão no recuo <paramref name="look"/>, em metros (5 m da F1 × (1 + recuo)).</summary>
-        public static float SetbackDistance(int look) => Round(DescentFraming.Validated.distance * (1f + Setbacks[look]));
+        /// <summary>
+        /// A distância da câmera ao anão no recuo <paramref name="look"/>, em metros (5 m da F1 × (1 + recuo)). O recuo é uma
+        /// ferramenta da F1 (D-148): na câmera do v8 o botão mostra "Recuo ?" e o primeiro clique leva o anão aos 5 m.
+        /// </summary>
+        public static float SetbackDistance(int look) => Round(DescentFraming.F1.distance * (1f + Setbacks[look]));
 
         /// <summary>A opção do golpe em uso (índice de <see cref="StrikeLooks"/>), ou −1 se não é nenhuma delas.</summary>
         public int StrikeLook
@@ -162,6 +186,7 @@ namespace MinersIdle.UI
             if (strike != null) _strikeLabel = strike.GetComponentInChildren<TMP_Text>();
             if (mound != null) _moundLabel = mound.GetComponentInChildren<TMP_Text>();
             if (setback != null) _setbackLabel = setback.GetComponentInChildren<TMP_Text>();
+            if (preset != null) _presetLabel = preset.GetComponentInChildren<TMP_Text>();
             content.SetActive(false);
         }
 
@@ -182,6 +207,7 @@ namespace MinersIdle.UI
             if (strike != null) strike.onClick.AddListener(NextStrike);
             if (mound != null) mound.onClick.AddListener(NextMound);
             if (setback != null) setback.onClick.AddListener(NextSetback);
+            if (preset != null) preset.onClick.AddListener(NextPreset);
         }
 
         void OnDisable()
@@ -201,6 +227,7 @@ namespace MinersIdle.UI
             if (strike != null) strike.onClick.RemoveListener(NextStrike);
             if (mound != null) mound.onClick.RemoveListener(NextMound);
             if (setback != null) setback.onClick.RemoveListener(NextSetback);
+            if (preset != null) preset.onClick.RemoveListener(NextPreset);
         }
 
         void Update()
@@ -249,6 +276,18 @@ namespace MinersIdle.UI
             var framing = stage.Framing;
             framing.distance = SetbackDistance((SetbackLook + 1) % Setbacks.Length);
             stage.Framing = framing;
+            _refresh = 0f;
+        }
+
+        /// <summary>
+        /// Próxima câmera (Marco 9h): v8 → F1 → v8. Troca altura, inclinação, distância e campo de visão; a largura do
+        /// corredor fica. Fora delas (depois de um ± ou de um recuo), volta para a do v8.
+        /// </summary>
+        public void NextPreset()
+        {
+            var next = Presets[(PresetLook + 1) % Presets.Length];
+            next.corridorWidth = stage.Framing.corridorWidth;
+            stage.Framing = next;
             _refresh = 0f;
         }
 
@@ -336,6 +375,11 @@ namespace MinersIdle.UI
             if (setbackLook < 0) setbackLook = Setbacks.Length; // o rótulo de "fora dos recuos"
             if (_setbackLabel != null && setbackLabels != null && setbackLook < setbackLabels.Length)
                 _setbackLabel.text = setbackLabels[setbackLook];
+
+            int presetLook = PresetLook;
+            if (presetLook < 0) presetLook = Presets.Length; // o rótulo de "outra câmera"
+            if (_presetLabel != null && presetLabels != null && presetLook < presetLabels.Length)
+                _presetLabel.text = presetLabels[presetLook];
 
             readout.text = string.Format(readoutFormat,
                 Mathf.RoundToInt(head * 100f), Mathf.RoundToInt(feet * 100f), Mathf.RoundToInt((feet - head) * 100f),

@@ -76,6 +76,7 @@ namespace MinersIdle.Tests
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
             var runner = Object.FindAnyObjectByType<MiningRunner>();
+            stage.Framing = DescentFraming.F1; // o recuo é da F1 (D-148); o jogo abre na câmera do v8 (M9h)
             var framing = stage.Framing;
             float nearest = stage.NearestSupport;
             framing.distance = 9f;

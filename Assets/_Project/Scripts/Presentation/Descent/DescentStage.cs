@@ -114,7 +114,7 @@ namespace MinersIdle.Presentation
         [SerializeField] Camera screenCamera;
 
         [Tooltip("Câmera validada pelo Bruno (F1, D-69; antes D-50). Ajustável no DBG.")]
-        [SerializeField] DescentFraming framing = DescentFraming.Validated;
+        [SerializeField] DescentFraming framing = DescentFraming.Default;
 
         [Tooltip("Metros do corredor por unidade da regra (D-58).")]
         [SerializeField] float metersPerUnit = 0.5f;
@@ -637,7 +637,7 @@ namespace MinersIdle.Presentation
             set => internalWidth = Mathf.Max(0, value);
         }
 
-        public void ResetFraming() => Framing = DescentFraming.Validated;
+        public void ResetFraming() => Framing = DescentFraming.Default;
 
         void Awake()
         {
@@ -1156,8 +1156,8 @@ namespace MinersIdle.Presentation
             ApplyEdgeShade();
         }
 
-        /// <summary>Quanto a névoa recua (m): o mesmo que o anão está além dos 5 m da câmera F1.</summary>
-        public float FogShift => framing.distance - DescentFraming.Validated.distance;
+        /// <summary>Quanto a névoa recua (m): o mesmo que o anão está além dos 5 m da câmera F1 (na do v8, 3 m, ela chega 2 m mais perto).</summary>
+        public float FogShift => framing.distance - DescentFraming.F1.distance;
 
         /// <summary>
         /// A névoa conta da câmera; com o anão mais longe (o recuo do DBG, D-148, ou a Distância), ela recua junto, para o
@@ -1653,7 +1653,7 @@ namespace MinersIdle.Presentation
         /// anão: com o recuo (D-148) o anão vai para o fundo e os esteios entre ele e a câmera continuam lá.
         /// </summary>
         /// <summary>O esteio mais perto da câmera que é desenhado (m): 0,6 m além do anão na F1, ou do anão se ele estiver mais perto.</summary>
-        public float NearestSupport => Mathf.Min(framing.distance, DescentFraming.Validated.distance) + SupportClearance;
+        public float NearestSupport => Mathf.Min(framing.distance, DescentFraming.F1.distance) + SupportClearance;
 
         void LayoutPosts(double front)
         {
