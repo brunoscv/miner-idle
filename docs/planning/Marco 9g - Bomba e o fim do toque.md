@@ -62,6 +62,20 @@
   - a linha **Bomba** na tela do descanso.
 - O mockup propõe o tamanho mínimo do deslize (~60 px na tela de 270) e onde ele pode começar: em qualquer lugar do corredor, fora dos botões da interface.
 
+**Como ficou (2026-11-18):** o Editor estava aberto, então os mockups foram montados fora do Unity, sobre as capturas reais do M9e (interface) e do M9f (corredor e cristal), na escala da tela (1080×2400 = 270×480 ×4). As bombas dos mockups seguem a mesma regra do gerador do jogo.
+
+- **A arte:** `icon_bomb.png` em `Assets/_Project/Art/UI/` e o `.svg` em `ArtSource/ui/`. O `BombArtSetup` (no setup do projeto) gera `bombs.png`, com os 8 quadros de 48 px. Só o corpo muda de cor (as duas cores do corpo, nas linhas 15–31 do quadro); o contorno, o brilho, o pavio e a sombra ficam. As vermelhas são vermelhas; Dinamite (laranja), Pacote (couro), Caixa (oliva) e Barril (ouro) têm cor provisória (lista de ajustes, item 1). O `bombs.png` sai na primeira rodada do setup com o Editor fechado, e a arte entra no commit da E1 com os `.meta`.
+- `m9g-e0-bombas.png`: as 8 bombas, ampliadas, com os nomes.
+- `m9g-e0-barra.png` e `m9g-e0-tela.png`: o botão da bomba no vão do meio, entre o Descansar e o Próximo Andar, com a moldura do Próximo Andar.
+  - **Carregando:** a bomba apagada (cinza, meio transparente), o fundo do botão enchendo de baixo para cima em 5 s e os segundos que faltam embaixo.
+  - **Cheia:** a bomba acesa, com um contorno amarelo que pulsa e a setinha "→" embaixo.
+- `m9g-e0-deslize.png`, em três quadros:
+  1. **O deslize.** O rastro segue o dedo, com a faísca no fim. Vale em qualquer lugar do corredor (verde no mockup), fora da barra do andar, da coluna da direita e da barra de baixo. O mínimo é **60 px na tela de 270** (um pouco menos de um quarto da largura), só da esquerda para a direita.
+  2. **O voo.** A bomba sai do botão e faz um arco de 0,4 s até cada cristal da tela.
+  3. **A explosão** em cada um, com o número laranja (no mockup, "-10%" só para indicar; no jogo é o dano).
+  - O espaçamento é de 3 m, então quase sempre há um cristal na tela, às vezes dois (o próximo entrando por baixo). O mockup mostra dois.
+- `m9g-e0-descanso.png`: a linha **Bomba**, no molde das outras: o ícone da bomba atual, "nv 0/7", "Pequena 10% » 20%" e o preço (11 vermelhas na primeira compra). Fica entre o Atalho e a Promoção.
+
 ### E1 — A Bomba no núcleo (D-307, D-308, D-309, D-313, D-314)
 
 - `BombRules` no balanço do v8: as 8 bombas (nome e %), a carga de 5 s, o voo de 0,4 s e o **alcance** (`bombReach`). O alcance é medido nesta etapa: até onde a câmera de hoje mostra o corredor à frente do anão. Preenchidas pelo setup, como os anúncios.
@@ -138,7 +152,7 @@
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-18 (D-307…D-317) | P1, P4 e o toque mudados pelo Bruno |
-| E0 Mockups e a arte | ⏳ | — |
+| E0 Mockups e a arte | 🔍 aguardando o Bruno | mockups em `tools/ci/out/m9g-e0-*.png`; `bombs.png` sai no próximo setup com o Editor fechado |
 | E1 A Bomba no núcleo | ⏳ | — |
 | E2 O toque sai do jogo | ⏳ | — |
 | E3 Na tela | ⏳ | — |
