@@ -156,7 +156,7 @@
 - O "Bem-vindo de volta" com as horas extras.
 - **Testes PlayMode:** assistir, renovar e ver o maior; comprar o tier 2 e ver o 4º anúncio sumir; o raro nascer no andar 10 com o contador do DBG.
 
-**Como ficou (2026-11-18):** seguindo os mockups da E0. As capturas da cena de verdade estão em `tools/ci/out/m9e-e3-boost.png`, `m9e-e3-coluna.png` e `m9e-e3-raro-dourado.png`.
+**Como ficou (2026-11-18):** seguindo os mockups da E0. O Bruno confirmou as escolhas da E2 e da E3 no mesmo dia (D-292…D-296). As capturas da cena de verdade estão em `tools/ci/out/m9e-e3-boost.png`, `m9e-e3-coluna.png` e `m9e-e3-raro-dourado.png`.
 
 - **O menu do Boost (P6).**
   - No v8, o botão AD da coluna da direita abre o painel **BOOST**. Continua com a TV e "AD", como no mockup. No v7, o AD de antes segue igual.

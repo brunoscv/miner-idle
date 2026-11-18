@@ -388,6 +388,11 @@ Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o 
 | **D-289** | **Bônus longos na coluna (M9e P7):** o mesmo ícone com o anel que esvazia e o tempo em "1h20", "19m" e, no último minuto, "45s"; um ícone por anúncio ativo, com o maior bônus dele; o toque abre o detalhe. | M9e |
 | **D-290** | **Sai o AD de velocidade (M9e P8):** o ×2,5 no golpe por 30 s (D-227…D-235) e o âmbar da VELOCIDADE na LOJA saem; o código do bônus de velocidade fica, sem uso, até a Bomba (Bloco E). | M9e |
 | **D-291** | **A sessão longa do M9e vai para os testes longos do fim (M9e P9),** como a D-282; o marco fecha com a E3. | M9e |
+| **D-292** | **(2026-11-18) O anúncio do Boost vale também para o estagiário com o jogo aberto** (M9e E2): dano e lascas dele; o crítico não (D-167). É a leitura da D-246 para o online. | M9e |
+| **D-293** | **(2026-11-18) Os raros do offline (D-284) seguem o intervalo do contador** (60 s; o do DBG também vale), só com o estagiário contratado e a partir do andar 10. A carta sorteada vale só para ele e só lá fora: não volta com o jogador, e o contador da run não anda. | M9e |
+| **D-294** | **(2026-11-18) Os testes PlayMode do AD de velocidade (`AdFlowTests`) ficam ignorados no balanço do v8** (o AD saiu, D-290); continuam valendo no v7. O fluxo novo é medido pelos `BoostFlowTests`. | M9e |
+| **D-295** | **(2026-11-18) O botão da coluna continua com a TV e "AD"** (como o mockup da E0), e não "BOOST" com o raio como dizia a P6; o toque abre o menu BOOST. Trocar é só o texto no catálogo e o ícone. | M9e |
+| **D-296** | **(2026-11-18) Ícones do M9e E3:** a carta Dano de Crítico ganha a estrela laranja do pacote Anvil (Icon332), no lugar do ícone do Crítico; o Raro Dourado (a linha do descanso e o anúncio do tier 2) usa o cristal da carta pintado de dourado (`Art/UI/icon_golden_rare.png`). | M9e |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
