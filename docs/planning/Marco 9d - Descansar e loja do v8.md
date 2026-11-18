@@ -128,6 +128,21 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 - O âmbar dos bônus vai junto para o lugar novo.
 - **Testes PlayMode:** o HUD atualiza com as lascas e as vermelhas; a barra do andar acompanha a descida e o recorde.
 
+**Como ficou (2026-11-18, mockup aprovado na D-281):**
+
+- **No alto, só LASCAS e VERMELHAS.** O painel VERMELHAS é uma cópia do LASCAS, com o rubi do Descansar; o número é o banco das permanentes e muda a cada descanso e compra.
+- **A barra do andar** (`FloorBar`, objeto `FloorBar` na cena Game), à esquerda, do HUD até acima do DBG:
+  - do andar 1, em cima, ao último (100), embaixo, com um trecho de cor por bioma (10 andares cada);
+  - em âmbar, o que já se desceu nesta run;
+  - a seta com a etiqueta do andar de agora;
+  - um traço branco com o número no recorde (some quando o recorde é o andar de agora);
+  - tracinhos nos andares que liberam algo, tirados das regras: 5 (avanço automático e estagiário), 10 (raro) e 20 (offline maior). O 50 do mockup não entrou, porque nenhuma regra libera nada nele.
+  - Os trechos e os tracinhos se refazem quando o DBG → Cálculo troca o jogo.
+- **Os bônus** passam para o lado da barra, depois da etiqueta do andar, para a seta não passar por cima deles.
+- **DANO e VELOCIDADE** mudam para uma faixa no alto da LOJA, acima das abas, com o âmbar dos bônus (D-216, D-231); o resto da LOJA desce o tanto da faixa. São os mesmos painéis do HUD, trocados de lugar, e o `HudView` continua dono dos números.
+- **DBG:** a barra acompanha os atalhos que já existem (DBG → Andar: Próximo andar, Recorde) e some com o DBG → Efeitos → Esconder HUD.
+- **Testes:** `HudV8Tests` (novo: o HUD só com as lascas e o rubi nas vermelhas; as vermelhas acompanham o banco; a barra acompanha a descida e o recorde; DANO e VELOCIDADE no alto da LOJA, acima das abas); o `HudSkinTests` procura os painéis nos lugares novos.
+
 ### E4 — Sessão longa e celular
 
 - `LongSessionTests`: descansa pelo botão, espera o ZZZ, compra na tela do descanso (com o jogo parado: a foto antes e depois do tempo passar é a mesma), toca INICIAR e fecha e abre no meio do descanso.
@@ -153,7 +168,13 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
   5. Fechar o jogo e abrir: a mesma tela, sem o ZZZ, com as compras.
   6. **INICIAR**: andar 1, a run começa.
   7. DBG → Dia → **Descansar agora**: a tela abre direto, sem o ZZZ.
-- **E3:** o HUD novo, a barra do andar descendo junto com o Próximo Andar.
+- **E3:** antes, `Tools → Miners Idle → Projeto → Aplicar configuração do projeto`. Cena `Bootstrap`, Play:
+  1. No alto, só **LASCAS** e **VERMELHAS** (com o rubi). À esquerda, a barra do andar, com a seta e o "1".
+  2. Quebrar cristais até encher o **Próximo Andar** e descer: a seta desce e o âmbar acompanha.
+  3. DBG → Andar → **Recorde** (ou descer mais e descansar): o traço branco com o número aparece abaixo da seta.
+  4. Descansar e comprar: o número das **VERMELHAS** muda junto com o banco.
+  5. **LOJA:** DANO e VELOCIDADE no alto, acima das abas. Com um bônus de dano ou o AD valendo, o número fica âmbar ali.
+  6. Com um bônus ativo, os ícones aparecem ao lado da barra, sem cobrir a etiqueta do andar.
 - **E4:** a sessão longa é automática; no celular, o roteiro abaixo.
 
 ### Roteiro do Moto G75 (E4)
@@ -205,8 +226,8 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-17: P1…P7 com as recomendações (D-272…D-278) | — |
-| E0 Mockups | 🔄 mockups prontos em 2026-11-17; o fundo foi escolhido no jogo: a desfocada (D-279, D-280); o HUD aguarda a escolha | Ver "Como ficou" na E0 |
+| E0 Mockups | ✅ o fundo escolhido no jogo, a desfocada (D-279, D-280); o mockup do HUD aprovado em 2026-11-18 (D-281) | Ver "Como ficou" na E0 |
 | E1 Núcleo do descanso e permanentes novas | ✅ aprovada pelo Bruno em 2026-11-17 | Ver "Como ficou" na E1 |
-| E2 A tela do descanso | 🔄 pronta em 2026-11-17; fundo desfocado escolhido em 2026-11-18 (D-280); aguardando a aprovação do Bruno | Ver "Como ficou" na E2 |
-| E3 HUD do v8 | ⏳ | — |
+| E2 A tela do descanso | ✅ aprovada pelo Bruno em 2026-11-18, com o fundo desfocado (D-280, D-281) | Ver "Como ficou" na E2 |
+| E3 HUD do v8 | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E3 |
 | E4 Sessão longa e celular | ⏳ | — |

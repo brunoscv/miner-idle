@@ -33,12 +33,13 @@ namespace MinersIdle.Tests
             if (_safeArea.Find("AdButton") == null) Assert.Ignore("Sem o kit de madeira: HUD no graybox (D-65).");
         }
 
+        /// <summary>M9d E3 (D-278): LASCAS e VERMELHAS no HUD; DANO e VELOCIDADE no alto da LOJA, com a mesma pele.</summary>
         [Test]
         public void HudPanels_ShowNameOnTop_AndIconBesideValue()
         {
-            foreach (var name in new[] { "Lascas", "Dano", "Caverna", "Velocidade" })
+            foreach (var name in new[] { "Hud/Lascas", "Hud/Vermelhas", "Shop/Screen/Panel/Stats/Dano", "Shop/Screen/Panel/Stats/Velocidade" })
             {
-                var panel = _safeArea.Find("Hud/" + name);
+                var panel = _safeArea.Find(name);
                 Assert.That(panel.GetComponent<Image>().sprite, Is.Not.Null, name);
                 Assert.That(panel.Find("Row/Icon").GetComponent<Image>().sprite, Is.Not.Null, name);
                 Assert.That(panel.Find("Row/Value").GetComponent<TMP_Text>(), Is.Not.Null, name);

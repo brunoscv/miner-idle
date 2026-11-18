@@ -6,14 +6,17 @@ using UnityEngine;
 namespace MinersIdle.UI
 {
     /// <summary>
-    /// HUD superior (S02): LASCAS, DANO, CAVERNA e VELOCIDADE. Os rótulos ficam na cena (dados); aqui só os valores, todos
-    /// pelo <see cref="NumberFormatter"/>. DANO e VELOCIDADE são os atributos atuais (com melhorias, M3). Atualiza por
-    /// evento, nunca por quadro. M5: LASCAS pulsa quando a lasca voadora chega; o HUD treme nos marcos do combo.
+    /// Os números da partida: LASCAS e VERMELHAS no HUD do alto, o andar na etiqueta da barra do andar e DANO e VELOCIDADE
+    /// no alto da LOJA (M9d E3, D-278: o HUD do v8 só tem as lascas). Os rótulos ficam na cena (dados); aqui só os valores,
+    /// todos pelo <see cref="NumberFormatter"/>. DANO e VELOCIDADE são os atributos atuais (com melhorias, M3). Atualiza
+    /// por evento, nunca por quadro. M5: LASCAS pulsa quando a lasca voadora chega; o HUD treme nos marcos do combo.
     /// M9b (E2, D-216): o DANO já vem com os bônus de dano e fica âmbar enquanto houver algum.
     /// </summary>
     public sealed class HudView : MiningViewBase
     {
         [SerializeField] TMP_Text shardsValue;
+        [Tooltip("As lascas vermelhas, o banco das permanentes (M9d E3).")]
+        [SerializeField] TMP_Text redShardsValue;
         [SerializeField] TMP_Text damageValue;
         [SerializeField] TMP_Text caveValue;
         [SerializeField] TMP_Text speedValue;
@@ -39,6 +42,8 @@ namespace MinersIdle.UI
 
         /// <summary>O texto de LASCAS na tela (para testes).</summary>
         public string ShardsText => shardsValue.text;
+        /// <summary>O texto de VERMELHAS na tela (para testes).</summary>
+        public string RedShardsText => redShardsValue != null ? redShardsValue.text : null;
         /// <summary>Os textos de DANO e VELOCIDADE na tela (para testes).</summary>
         public string DamageText => damageValue.text;
         public string SpeedText => speedValue.text;
@@ -78,6 +83,7 @@ namespace MinersIdle.UI
             simulation.StatsChanged += OnStatsChanged;
             simulation.ComboMilestone += OnComboMilestone;
             simulation.CaveChanged += OnCaveChanged;
+            simulation.PermanentsChanged += OnPermanentsChanged;
         }
 
         protected override void Unsubscribe(MiningSimulation simulation)
@@ -86,6 +92,7 @@ namespace MinersIdle.UI
             simulation.StatsChanged -= OnStatsChanged;
             simulation.ComboMilestone -= OnComboMilestone;
             simulation.CaveChanged -= OnCaveChanged;
+            simulation.PermanentsChanged -= OnPermanentsChanged;
         }
 
         void Update()
@@ -111,9 +118,16 @@ namespace MinersIdle.UI
             OnShardsChanged(simulation.State.Shards);
             OnStatsChanged(simulation.Stats);
             OnCaveChanged(simulation.State.Cave);
+            OnPermanentsChanged();
         }
 
         void OnCaveChanged(int cave) => caveValue.text = NumberFormatter.Format(cave);
+
+        void OnPermanentsChanged()
+        {
+            if (redShardsValue != null && Simulation != null)
+                redShardsValue.text = NumberFormatter.FormatShards(Simulation.Permanents.State.RedShards);
+        }
 
         void OnShardsChanged(double shards) => shardsValue.text = NumberFormatter.FormatShards(shards);
 

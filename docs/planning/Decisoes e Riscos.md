@@ -377,6 +377,7 @@ Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o 
 | **D-278** | **O HUD do v8 entra no M9d (P7):** só **lascas** e **lascas vermelhas** no HUD; o andar numa **barra vertical à esquerda** (§7.3, com o andar atual e o recorde), junto da coluna dos bônus; dano e velocidade (com o âmbar dos bônus) vão para o **topo da LOJA**. Com mockup antes (E0), numa etapa própria (E3). | M9d |
 | **D-279** | **Os dois fundos da tela do descanso no jogo (M9d E0, 2026-11-17; revê a D-273):** em vez de escolher pelo mockup, a E2 monta a tela com a **preta** e a **desfocada** e um botão no DBG para trocar entre elas; o Bruno escolhe vendo no jogo. Até a escolha, abre na preta. O HUD (E3) segue pelo mockup da E0. | M9d |
 | **D-280** | **O fundo da tela do descanso é o jogo desfocado (M9d E2, 2026-11-18, escolha do Bruno vendo os dois no jogo; fecha a D-279):** a tela abre com a foto desfocada do corredor; a preta (a do GDD §4.2) fica no DBG → Dia → Fundo, para comparar, e é o que aparece quando a foto não sai (sem placa de vídeo). | M9d |
+| **D-281** | **A E2 do M9d e o mockup do HUD do v8 aprovados (2026-11-18, Bruno: "Aprovo os dois"):** a tela do descanso fica como está (com o fundo desfocado, D-280) e a E3 segue o mockup da E0: LASCAS e VERMELHAS no alto, a barra do andar à esquerda com os bônus ao lado, DANO e VELOCIDADE no alto da LOJA. | M9d |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 

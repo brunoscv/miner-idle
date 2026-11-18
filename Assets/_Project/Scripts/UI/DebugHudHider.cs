@@ -54,8 +54,9 @@ namespace MinersIdle.UI
                 if (debugRoot != null && button.transform.IsChildOf(debugRoot)) continue;
                 HideObject(button.gameObject);
             }
-            // O HUD do alto (LASCAS, DANO, CAVERNA, VELOCIDADE).
+            // O HUD do alto (LASCAS e VERMELHAS) e a barra do andar à esquerda (M9d E3).
             foreach (var hud in FindObjectsByType<HudView>(FindObjectsInactive.Include)) HideObject(hud.gameObject);
+            foreach (var bar in FindObjectsByType<FloorBar>(FindObjectsInactive.Include)) HideObject(bar.gameObject);
             // A janela do cristal raro: o fundo escuro e o painel (sem raycast escondido, os toques passam para o jogo).
             foreach (var window in FindObjectsByType<RareWindowView>(FindObjectsInactive.Include))
                 if (window.Screen != null) HideObject(window.Screen);

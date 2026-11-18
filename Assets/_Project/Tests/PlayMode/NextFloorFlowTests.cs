@@ -92,13 +92,22 @@ namespace MinersIdle.Tests
             Assert.That(TheButton.interactable, Is.False, "na transição, nada");
         }
 
+        /// <summary>
+        /// P9: o jogo diz "andar", nunca "caverna". Desde o M9d E3 (D-278) o andar está na etiqueta da barra à esquerda,
+        /// e nenhum texto do HUD fala em caverna.
+        /// </summary>
         [UnityTest]
         public IEnumerator Hud_SaysFloor()
         {
             yield return Load();
             var hud = Object.FindAnyObjectByType<HudView>();
-            var label = hud.transform.Find("Caverna/Label").GetComponent<TMP_Text>();
-            Assert.That(label.text, Is.EqualTo("ANDAR"), "P9 (rode o setup do projeto)");
+            foreach (var text in hud.GetComponentsInChildren<TMP_Text>(true))
+                Assert.That(text.text.ToUpperInvariant(), Does.Not.Contain("CAVERNA"), "P9 (rode o setup do projeto)");
+            var bar = Object.FindAnyObjectByType<FloorBar>();
+            Assert.That(bar, Is.Not.Null, "a barra do andar (M9d E3)");
+            var tag = bar.transform.Find("Track/Marker/Tag/Value").GetComponent<TMP_Text>();
+            Assert.That(tag.text, Is.EqualTo(_runner.Simulation.State.Cave.ToString()), "o andar na etiqueta da seta");
+            Assert.That(hud.CaveText, Is.EqualTo(tag.text));
         }
 
         [UnityTest]
