@@ -1,5 +1,7 @@
 # Marco 9d — Descansar e loja do v8
 
+> **M9d aprovado em 2026-11-18 (D-282):** E0–E3 ✅; a E4 (sessão longa e celular) vai para os testes longos do fim.
+>
 > Plano de 2026-11-17, **aprovado no mesmo dia: P1…P7 com as recomendações (D-272…D-278)**. É o **Bloco C** da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, depois do [Marco 9c](Marco%209c%20-%20Andares%20e%20numeros%20do%20v8.md) (aprovado em 2026-11-17, D-271). Base: GDD v8.2 §4.2 (melhorias permanentes) e §7.3–7.4 (interface), D-248, D-252 e o pedido do Bruno na **D-265**.
 >
 > **O M9b E6 continua parado:** a sessão longa dele mede o combo, que sai no Bloco F.
@@ -145,6 +147,8 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 
 ### E4 — Sessão longa e celular
 
+> **D-282:** esta etapa vai para os **testes longos do fim**, junto da E6 do M9b. O `LongSessionTests` já passa pela tela do descanso desde a E2 (pulando o ZZZ); o que falta está abaixo.
+
 - `LongSessionTests`: descansa pelo botão, espera o ZZZ, compra na tela do descanso (com o jogo parado: a foto antes e depois do tempo passar é a mesma), toca INICIAR e fecha e abre no meio do descanso.
 - **Moto G75** com o roteiro abaixo (ou pulado, como na D-271, se você preferir).
 
@@ -229,5 +233,5 @@ Ficam **como estão**: o toque e o combo (Bloco F), a Bomba e a permanente dela 
 | E0 Mockups | ✅ o fundo escolhido no jogo, a desfocada (D-279, D-280); o mockup do HUD aprovado em 2026-11-18 (D-281) | Ver "Como ficou" na E0 |
 | E1 Núcleo do descanso e permanentes novas | ✅ aprovada pelo Bruno em 2026-11-17 | Ver "Como ficou" na E1 |
 | E2 A tela do descanso | ✅ aprovada pelo Bruno em 2026-11-18, com o fundo desfocado (D-280, D-281) | Ver "Como ficou" na E2 |
-| E3 HUD do v8 | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E3 |
-| E4 Sessão longa e celular | ⏳ | — |
+| E3 HUD do v8 | ✅ aprovada pelo Bruno em 2026-11-18 (D-282) | Ver "Como ficou" na E3 |
+| E4 Sessão longa e celular | ⏭️ nos testes longos do fim (D-282), com a E6 do M9b | — |
