@@ -227,8 +227,9 @@
 | Etapa | Estado | Notas |
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-18: P1…P9 com as recomendações (D-283…D-291) | — |
-| E0 Mockups | 🔄 prontos em 2026-11-18, aguardando o Bruno | Ver "Como ficou" na E0 |
-| E1 O raro do v8 | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E1 |
-| E2 Os anúncios e o offline | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E2 |
-| E3 Na tela | 🔄 pronta em 2026-11-18, aguardando o teste do Bruno | Ver "Como ficou" na E3 |
+| E0 Mockups | ✅ 2026-11-18 | Ver "Como ficou" na E0 |
+| E1 O raro do v8 | ✅ 2026-11-18 | Ver "Como ficou" na E1 |
+| E2 Os anúncios e o offline | ✅ 2026-11-18 | Ver "Como ficou" na E2 |
+| E3 Na tela | ✅ 2026-11-18 | Ver "Como ficou" na E3 |
+| **Marco** | ✅ **aprovado em 2026-11-18 (D-297)** | As melhorias que o Bruno notou vão para a [lista de ajustes do v8](Ajustes%20do%20v8%20-%20lista.md) (D-298) |
 | E4 Sessão longa e celular | ⏭️ nos testes longos do fim (D-291) | — |

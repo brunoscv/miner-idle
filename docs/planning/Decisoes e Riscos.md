@@ -393,6 +393,8 @@ Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o 
 | **D-294** | **(2026-11-18) Os testes PlayMode do AD de velocidade (`AdFlowTests`) ficam ignorados no balanço do v8** (o AD saiu, D-290); continuam valendo no v7. O fluxo novo é medido pelos `BoostFlowTests`. | M9e |
 | **D-295** | **(2026-11-18) O botão da coluna continua com a TV e "AD"** (como o mockup da E0), e não "BOOST" com o raio como dizia a P6; o toque abre o menu BOOST. Trocar é só o texto no catálogo e o ícone. | M9e |
 | **D-296** | **(2026-11-18) Ícones do M9e E3:** a carta Dano de Crítico ganha a estrela laranja do pacote Anvil (Icon332), no lugar do ícone do Crítico; o Raro Dourado (a linha do descanso e o anúncio do tier 2) usa o cristal da carta pintado de dourado (`Art/UI/icon_golden_rare.png`). | M9e |
+| **D-297** | **O M9e aprovado (2026-11-18, Bruno: "já consigo ver bons resultados"):** E0 a E3 aprovadas como estão; a E4 (sessão longa e celular) fica nos testes longos do fim (D-291). | M9e |
+| **D-298** | **Processo próprio para o GDD v8 (2026-11-18, pedido do Bruno):** os blocos do v8 que faltam (B, E com F, G) são implementados em sequência, marco atrás de marco, cada um ainda com plano aprovado antes do código. As melhorias que o Bruno notar nos testes **não interrompem** o marco da vez: vão para a [lista de ajustes do v8](Ajustes%20do%20v8%20-%20lista.md), junto com as que o Claude sugerir, e viram um **marco só de ajustes no fim**, depois de todos os blocos e antes dos testes longos (D-282, D-291). Erro que quebra o jogo continua sendo corrigido na hora. | v8 |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
