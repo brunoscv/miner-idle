@@ -16,31 +16,83 @@
 4. Um ajuste novo que aparecer durante o marco entra na lista; entra neste marco se for alta, senão fica para depois dos testes longos.
 5. O marco fecha quando a lista estiver feita ou adiada com o Bruno, e a suíte de testes (sem as sessões longas) estiver verde.
 
-## A lista hoje (2026-11-18)
+## A lista (fechada em 2026-11-19)
 
-| # | De | Onde | Ajuste | Prioridade sugerida |
-|---|---|---|---|---|
-| — | Bruno | M9e e outros | as "algumas melhorias" que você viu (a anotar) | — |
-| 1 | Claude | Bomba (M9g) | arte própria do tier 2 (Dinamite, Pacote, Caixa, Barril); hoje o `icon_bomb` recolorido (D-315). **Depende do seu desenho** | média |
-| 2 | Claude | Câmera de 60° (M9h) | os esteios somem de uma vez 0,6 m atrás do anão: o arco some no meio da tela. Sumir aos poucos | média |
-| 3 | Claude | Câmera de 60° (M9h) | a metade de cima mostra ~9 m de corredor já minerado e vazio: marca das quebras, cacos, poeira | baixa |
-| 4 | Claude | Transição de andar (D-327) | os cantos de cima escurecem quando a câmera sobe; só se incomodar | baixa |
-| 5 | Claude | DBG → Câmera (M9h) | o "Recuo" é da F1 e na câmera do v8 leva a uma câmera misturada: tirar ou contar da câmera em uso | baixa (só DBG) |
+A [lista](Ajustes%20do%20v8%20-%20lista.md) tem 18 linhas: 5 do Claude (2026-11-18) e as 13 do Bruno (2026-11-19). Duas já estão respondidas pelo GDD e uma é ideia:
+
+- **#8 (Bruno 3), cristais distantes no começo:** é do GDD. São 3 m entre cristais, e o **Atalho**, comprado no descanso, tira 0,5 m por nível (D-252, D-277, D-325). Como pedido, desconsiderado.
+- **#14 (Bruno 9), a Velocidade no alto da tela:** é do GDD v8. O HUD mostra só lascas e vermelhas (§7), e Dano e Velocidade foram para a LOJA (D-281). Nada a fazer.
+- **#16 (Bruno 11), bônus do último golpe da bomba:** fica registrada como **ideia**, para o Bruno conversar com o Apellon. Não entra no marco.
+
+| Prioridade | Linhas | Por quê |
+|---|---|---|
+| **Alta** | #6 barra do andar, #7 bônus à direita, #9 botões do HUD, #11 texto da transição, #13 modais, #10 apagar save e versão | o jogador vê toda hora; a versão do save protege os testes de agora |
+| **Média** | #12 ícones do Apellon, #15 Descansar apagado, #17 voltar do Android, #18 bomba por botão | aparecem às vezes ou são opção |
+| **Baixa** | #2 esteios, #3 corredor vazio, #4 cantos da transição, #5 recuo do DBG | acabamento da câmera nova e do DBG |
+| Espera arte | #1 bombas do tier 2 | depende do desenho |
 
 ## Etapas
 
-### E0 — A lista fechada e ordenada
+Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovado antes do código.
 
-- O Bruno manda as melhorias dele (pode ser em texto solto: "no descanso, X"; "a barra do andar, Y"). O Claude escreve cada uma na lista com o lugar do jogo, propõe a prioridade e agrupa por lugar.
-- Para ajuste de tela, o mockup vem antes do código, como nos blocos.
-- **Pronto quando:** a lista tem prioridade em todas as linhas e as etapas E1… estão escritas aqui.
+### E1 — HUD e coluna da direita (#9, #7, #15, #12 da coluna)
 
-### E1… — definidas na E0
+- **LASCAS e VERMELHAS:** mais altura nos painéis, para o texto não encostar na borda de dentro (proposta: +4 px na tela de 270, 2 em cima e 2 embaixo).
+- **AD (Boost):** a mesma folga embaixo.
+- **LOJA e AJUSTES:** saem do fundo preto. O mockup mostra as duas opções lado a lado (o fundo das lascas e o do AD); o DBG ganha um botão para trocar no jogo, e você escolhe vendo.
+- **Ícones da coluna:** `icon_settings`, `icon_shop` e `icon_boost` do Apellon no lugar dos de hoje.
+- **Bônus (#7):** a coluna dos bônus vai para a **direita, abaixo do AJUSTES**, crescendo para baixo.
+- **Descansar (#15):** sempre na barra de baixo. Antes do andar 10 (o `restLevel` do v8), **apagado**, com um cadeado e "Andar 10" embaixo; tocar mostra um aviso curto ("Descanse a partir do andar 10"). A escada (Próximo Andar) e a bomba já aparecem sempre.
+
+### E2 — Barra do andar, escada e transição (#6, #12, #11)
+
+- **Barra do andar:** **~40% menor** na altura. A borda `cave_meter` do Apellon por cima (12×128 px no desenho, 24×256 no PNG), a seta `cave_meter_arrow` no lugar da nossa marca do andar, e as cores dos andares de hoje pintadas por cima do resto de fundo amarelo dentro da borda.
+- **Próximo Andar:** a **escada** (`stair`, 64×64) no lugar da seta.
+- **Texto da transição (#11):** três propostas no mockup, todas com o texto ~2× maior:
+  - **A, placa de madeira:** "ANDAR 12" numa placa pendurada, no estilo do mockup do jogo, com o nome da caverna embaixo;
+  - **B, faixa:** uma faixa escura atravessando a tela, com o número grande e as bordas douradas das janelas do jogo;
+  - **C, modal:** o quadro dos modais do jogo, com o título "ANDAR 12" e o nome da caverna.
+
+  Recomendação: **A**, porque conversa com a mina de madeira (D-05) e não parece uma janela que pede toque.
+
+### E3 — Modais (#13)
+
+- Em todos os modais (descanso, LOJA, AJUSTES, raro, Boost, anúncio, offline, apagar save): **título mais alto** e o **X maior**, com área de toque de pelo menos 32 px na tela de 270. Mockup de um modal antes, e o mesmo padrão nos outros pelo setup.
+
+### E4 — Apagar save e versão do save (#10)
+
+- **Conferir o Apagar save:** um teste PlayMode que joga um pouco (compras, estagiário, descanso, permanentes, offline pendente), apaga pelo AJUSTES e confere que **tudo** voltou ao começo, inclusive o backup (`save.json.bak`). Os **ajustes** (som, tremor, avanço automático) continuam, como manda a D-200 (P2).
+- **Versão do save (agora, para os testes):** o save grava a versão do app (a do build). Ao abrir um save de **versão mais velha** que a do app, aparece um modal: "Versão nova do jogo — para ver tudo o que mudou, recomendamos recomeçar.", com **RECOMEÇAR** (apaga, como o Apagar save) e **CONTINUAR** (P1).
+- **Para produção (só o desenho, sem código):** uma seção no plano com o caminho: migrar o save de versão em versão (o save já tem número de versão, hoje 10) em vez de recomeçar, e um "o que há de novo" na primeira abertura depois de atualizar.
+
+### E5 — Voltar do Android e a bomba por botão (#17, #18)
+
+- **Voltar (#17):** o primeiro toque no Voltar mostra um aviso curto ("Toque de novo para sair"); o segundo, em até 2 s, abre o modal **"Sair do jogo?"** com o que o estagiário rende fora (as horas de offline de agora, ou o aviso de que ele não está contratado), **SAIR** e **FICAR**. SAIR grava o save e fecha o app. Com um modal aberto, o Voltar fecha o modal primeiro.
+- **Bomba por botão (#18):** nos AJUSTES, **"Bomba: Deslizar / Tocar"**. No modo Tocar, um toque na bomba cheia lança. Padrão **Deslizar** (D-310, P4). Fica salvo com os ajustes.
+
+### E6 — O resto dos ícones e a câmera nova (#12, #2–#5)
+
+- **De-para dos ícones:** uma tabela com cada ícone do jogo e o candidato da pasta do Apellon (`icon_cave`, `icon_crystal`, `icon_crystal_red`, `icon_pickaxe`, `icon_speed`, `ui_button_rest`, `ui_rectangle`, `tab`, `tab_open`, `name_shop`, `loading`), para você aprovar antes de trocar.
+- **Câmera nova:** os esteios somem aos poucos (#2); o corredor de trás ganha as marcas das quebras (#3, se der tempo); os cantos da transição (#4) e o recuo do DBG (#5).
+
+### E7 — Suíte de testes
+
+- EditMode e PlayMode sem as sessões longas, tudo verde (como em 2026-11-18). Os `AdFlowTests` continuam pendentes.
+
+## Perguntas
+
+| | Pergunta | Recomendação |
+|---|---|---|
+| P1 | Save de versão mais velha: modal com escolha ou recomeçar sozinho? | **Modal com RECOMEÇAR e CONTINUAR** |
+| P2 | O Apagar save zera também os ajustes (som, tremor, avanço automático)? | **Não** (D-200: ficam) |
+| P3 | Texto da transição: placa, faixa ou modal? | **A, a placa**, decidida no mockup |
+| P4 | Bomba por botão: o padrão continua Deslizar? | **Sim** (D-310) |
+| P5 | A ordem das etapas: E1 HUD → E2 barra e transição → E3 modais → E4 save → E5 Android e bomba → E6 ícones e câmera | **Esta ordem**: o que se vê primeiro, o save logo depois |
 
 ## Como testar (Bruno)
 
-- **E0:** ler a lista ordenada e as etapas neste plano e aprovar a ordem.
-- **E1…:** cada etapa traz o seu passo a passo aqui, como nos outros marcos.
+- **E0:** ler a lista e este plano e responder P1…P5.
+- **E1…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
 
 ## Critério de pronto
 
@@ -58,5 +110,12 @@
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 📝 escrito em 2026-11-18 | espera a lista do Bruno |
-| E0 A lista fechada | ⏳ espera as melhorias do Bruno | 5 sugestões do Claude já na lista |
+| Plano | 📝 escrito em 2026-11-18, etapas em 2026-11-19 | espera P1…P5 |
+| E0 A lista fechada | 🔶 as 18 linhas com prioridade e as etapas (2026-11-19) | espera P1…P5 |
+| E1 HUD e coluna da direita | ⏳ | mockup primeiro |
+| E2 Barra do andar, escada e transição | ⏳ | mockup primeiro |
+| E3 Modais | ⏳ | mockup primeiro |
+| E4 Apagar save e versão | ⏳ | |
+| E5 Voltar do Android e bomba por botão | ⏳ | |
+| E6 Ícones e câmera nova | ⏳ | de-para para aprovar |
+| E7 Suíte de testes | ⏳ | sem as sessões longas |
