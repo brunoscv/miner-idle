@@ -135,7 +135,24 @@ namespace MinersIdle.Tests
             if (!simulation.HasBomb) Assert.Ignore("Sem bomba no balanço ativo (rode o setup do projeto).");
             _runner.TimeScale = 0f; // só os Tick do teste andam
 
+            // Uma bomba de aquecimento na fila cheia do aquecimento: com o alcance de 3,5 m (D-324) ela cai em vários
+            // cristais juntos, mais do que as bombas do começo, e os efeitos crescem até esse tamanho (pool, não custo).
             yield return AvoidRareTarget();
+            simulation.FillBomb();
+            int InReach()
+            {
+                int count = 0;
+                foreach (var crystal in simulation.Crystals)
+                    if (crystal.Distance - simulation.Miner.Distance <= simulation.Bombs.Reach + 1e-9) count++;
+                return count;
+            }
+            int warmTargets = InReach();
+            simulation.ThrowBomb();
+            int warmLanded = AllocationsAndEvents(() => simulation.Tick(simulation.BombFlightLeft + 1e-6), out int warmEvents);
+            yield return Settle();
+
+            yield return AvoidRareTarget();
+            int targets = InReach();
             int thrown = AllocationsAndEvents(() =>
             {
                 simulation.FillBomb();
@@ -158,6 +175,7 @@ namespace MinersIdle.Tests
                 () => _tapInput.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), out int screenEvents);
             _runner.TimeScale = 1f;
 
+            Debug.Log($"[Alloc] bomba de aquecimento em {warmTargets} cristal(is), chega {warmLanded} ({warmEvents} quebras); medida em {targets}");
             Debug.Log($"[Alloc] bomba sai {thrown} · chega {landed} · crítico {critical} · toque na tela {screenTap} " +
                       $"(quebras e nascimentos: {thrownEvents} · {landedEvents} · {criticalEvents} · {screenEvents})");
             Assert.That(thrown, Is.LessThanOrEqualTo(MaxAllocsPerEvent * thrownEvents), "a bomba sai (o voo começa)");

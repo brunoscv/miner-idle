@@ -101,6 +101,7 @@ namespace MinersIdle.Tests
             Assert.That(Simulation.IsBombCharged, Is.True, "o jogo abre com a bomba cheia (D-313)");
             double fraction = Simulation.BombFraction;
             Assert.That(fraction, Is.EqualTo(0.1).Within(1e-9), "a Pequena, de graça: 10% (D-240)");
+            Assert.That(Simulation.Bombs.Reach, Is.EqualTo(7).Within(1e-9), "7 un = 3,5 m, o que a câmera de 60° mostra (D-324)");
 
             // Com 3 m entre cristais (D-277), o alvo costuma ser o único no alcance, e o golpe do anão pode quebrá-lo no
             // meio do voo (D-308): um segundo cristal no alcance, que o anão não bate, garante onde a bomba cair.

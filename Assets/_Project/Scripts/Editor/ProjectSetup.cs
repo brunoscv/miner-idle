@@ -107,6 +107,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV8RareCrystal();
             EnsureGddV8Ads();
             EnsureGddV8Bomb();
+            EnsureGddV8BombReach();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -740,7 +741,7 @@ namespace MinersIdle.EditorTools
 
         /// <summary>
         /// M9g E1 (GDD v8 §2.1; D-240, D-255, D-307, D-308): as 8 bombas (10%, 20%, 30%, 40%, 50%, 60%, 70% e 100% da vida
-        /// máxima), a carga de 5 s, o voo de 0,4 s, o alcance de 4 un e a linha Bomba no descanso, 7 compras a 10 + 2^(n−1)
+        /// máxima), a carga de 5 s, o voo de 0,4 s, o alcance de 7 un (3,5 m, D-324) e a linha Bomba no descanso, 7 compras a 10 + 2^(n−1)
         /// lascas vermelhas. Só preenche se as bombas estiverem vazias: um ajuste feito à mão fica.
         /// </summary>
         static void EnsureGddV8Bomb()
@@ -755,12 +756,33 @@ namespace MinersIdle.EditorTools
             for (int i = 0; i < fractions.Length; i++) list.GetArrayElementAtIndex(i).doubleValue = fractions[i];
             serialized.FindProperty("bombChargeSeconds").doubleValue = 5;
             serialized.FindProperty("bombFlightSeconds").doubleValue = 0.4;
-            serialized.FindProperty("bombReach").doubleValue = 4;
+            serialized.FindProperty("bombReach").doubleValue = BombReachV8;
             SetLine(serialized, "bomb", 10, 2, 7, 1, CostFormula.OffsetExponential);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
-            Debug.Log("[Setup] GDD v8: as 8 bombas, carga de 5 s, voo de 0,4 s, alcance de 4 un e a linha Bomba (M9g E1).");
+            Debug.Log("[Setup] GDD v8: as 8 bombas, carga de 5 s, voo de 0,4 s, alcance de 7 un e a linha Bomba (M9g E1, D-324).");
+        }
+
+        /// <summary>O alcance da bomba na câmera do v8: 7 un = 3,5 m (D-324, M9h).</summary>
+        const double BombReachV8 = 7;
+
+        /// <summary>
+        /// M9h (D-324): o balanço do v8 que ainda tem o alcance do M9g (4 un = 2 m, a câmera F1) passa para 7 un (3,5 m), o
+        /// que a câmera de 60° mostra. Outro valor posto à mão fica.
+        /// </summary>
+        static void EnsureGddV8BombReach()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV8BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var reach = serialized.FindProperty("bombReach");
+            if (reach == null || serialized.FindProperty("bombFractions").arraySize == 0 || reach.doubleValue != 4) return;
+            reach.doubleValue = BombReachV8;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8: alcance da bomba 4 → 7 un (3,5 m, a câmera de 60°; M9h, D-324).");
         }
 
         static void SetCards(SerializedProperty list, double seconds, params (RareCard card, double value)[] cards)

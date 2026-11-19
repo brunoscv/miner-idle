@@ -38,11 +38,11 @@ Prévias em `tools/ci/out/`:
 - `m9h-e0-comparacao.png`: F1 e v8 lado a lado, 9:20 e 9:16.
 - `m9h-e1-tudo.png`: o jogo na câmera nova (a cena aberta, com o estagiário, logo depois da bomba, a transição de andar subindo e chegando, e o andar 2).
 
-## As perguntas (esperam o Bruno)
+## As perguntas (P1 respondida; P2…P4 esperam o Bruno)
 
 | | Pergunta | Recomendação |
 |---|---|---|
-| **P1** | O **alcance da bomba**: a D-319 diz 4 m, mas o jogo usa **2 m** (`bombReach` = 4 unidades). A tela agora mostra 3,0 m (9:16) a 3,56 m (9:20) à frente, então hoje um cristal **visível** entre 2 m e 3,5 m não leva a bomba. | **3,5 m (7 un)**: cobre o que o Moto G75 mostra e não pega cristal escondido numa tela 9:16 além de meio metro. Alternativa: os 4 m da D-319 (8 un), que pegam um pouco além da borda. |
+| **P1** | O **alcance da bomba**: a D-319 dizia 4 m, mas o jogo usava **2 m** (`bombReach` = 4 un). A tela agora mostra 3,0 m (9:16) a 3,56 m (9:20) à frente. | ✅ **3,5 m (7 un)** — resposta do Bruno, **D-324** (2026-11-18). |
 | **P2** | A **distância entre cristais** (D-277, 3 m): com a câmera nova, um cristal fica à vista de cada vez. | **Manter 3 m**: com o Atalho (0,5 m no nível 5) chegam a 7 cristais na tela, que é o "quase colado" da D-241. |
 | **P3** | O **tamanho do anão**: ele cai para menos da metade da altura na tela. A arte continua nítida (o render é de 270 px de largura, D-14), mas os detalhes do rosto quase somem. | **Ficar assim** e decidir no Moto G75. Se pedir mais anão, o ajuste mais barato é o campo de visão (55° ainda mostra 2,8 m à frente), sem mudar a D-245 sem registro. |
 | **P4** | A **transição de andar B** (D-268) sobe a câmera mais 4 m: a 9,5 m ela vê por cima das paredes, e os cantos de cima ficam escuros. | **Deixar**: é só durante o cartão escuro e o desfoque; se incomodar, entra na lista de ajustes (paredes mais altas só na transição). |
@@ -64,7 +64,7 @@ Prévias em `tools/ci/out/`:
 
 ### E2 — Os ajustes das respostas
 
-- P1: o `bombReach` no `Balance_GDD_v8` (via `EnsureGddV8Bomb`, em unidades: 3,5 m = 7 un) e no `MiningRulesAsset`, com o teste do alcance; a D-319 corrigida para dizer o valor em metros e em unidades.
+- P1 ✅ (D-324): `bombReach` = **7 un** (3,5 m). O `EnsureGddV8BombReach` troca o 4 do M9g no `Balance_GDD_v8` (outro valor posto à mão fica), o `EnsureGddV8Bomb` e o padrão do `MiningRulesAsset` já nascem com 7. `BombFlowTests` confere os 7 un. O `AllocationTests` da bomba ganhou uma bomba de aquecimento na fila cheia (a primeira chegada com o alcance novo fazia 1 alocação, uma vez só).
 - P2–P4: só se as respostas pedirem mudança.
 
 ### E3 — Celular
@@ -115,7 +115,7 @@ Prévias em `tools/ci/out/`:
 | Plano | 📝 escrito em 2026-11-18, P1…P4 esperam o Bruno | números da câmera já decididos (D-245) |
 | E0 Prévias | ✅ feita | `tools/ci/out/m9h-e0-comparacao.png`, `m9h-e1-tudo.png` |
 | E1 A câmera do v8 como padrão | 🔶 feita, espera o teste do Bruno | setup aplicado na cena; testes PlayMode da câmera, do corredor, dos biomas, da cena, do andar, da rachadura e do estagiário passando (suíte toda verde em 2026-11-18, ver abaixo) |
-| E2 Os ajustes das respostas | ⏳ espera P1…P4 | |
+| E2 Os ajustes das respostas | 🔶 P1 feita (D-324); P2…P4 esperam | EditMode 523/523; PlayMode da bomba, alocação, andar, rachadura, cena e descanso passando |
 | E3 Celular | ➡️ testes longos do fim | |
 
 **Rodada de testes (2026-11-18, pedido do Bruno; sem a sessão longa):** EditMode **523/523**; PlayMode **173 passando, 2 pulados** (os dois `AdFlowTests` do anúncio antigo, ignorados desde o M9e, continuam pendentes), 0 falhas, sem o `LongSessionTests`. Quatro testes estavam quebrados e foram corrigidos para medir o comportamento de agora:

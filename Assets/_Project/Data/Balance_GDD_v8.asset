@@ -166,7 +166,7 @@ MonoBehaviour:
   - 1
   bombChargeSeconds: 5
   bombFlightSeconds: 0.4
-  bombReach: 4
+  bombReach: 7
   restLevel: 10
   redShardMilestoneStep: 10
   redShardMilestone: 5

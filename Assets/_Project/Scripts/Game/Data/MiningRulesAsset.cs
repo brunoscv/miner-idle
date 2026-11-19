@@ -163,9 +163,9 @@ namespace MinersIdle.Game
         [SerializeField] double bombChargeSeconds = 5;
         [Tooltip("Segundos da bomba no ar; o dano entra na chegada (D-308: 0,4).")]
         [SerializeField] double bombFlightSeconds = 0.4;
-        [Tooltip("Até onde, à frente do anão, a bomba atinge os cristais, em un (D-307: os da tela). 4 un = 2 m: uma tela 9:16 " +
-                 "mostra 1,98 m de chão à frente do anão na câmera F1; a 9:20, 2,43 m.")]
-        [SerializeField] double bombReach = 4;
+        [Tooltip("Até onde, à frente do anão, a bomba atinge os cristais, em un (D-307: os da tela; 2 un = 1 m). D-324: 7 un = " +
+                 "3,5 m, o que a câmera de 60° mostra (3,0 m numa tela 9:16, 3,56 m a 9:20).")]
+        [SerializeField] double bombReach = 7;
 
         [Header("Dia e melhorias permanentes (Marco 8b; custo em lascas vermelhas, D-158)")]
         [Tooltip("Nível a partir do qual o Descansar aparece e as lascas vermelhas começam (D-138, D-152). GDD v7: 10. 0 desliga.")]
