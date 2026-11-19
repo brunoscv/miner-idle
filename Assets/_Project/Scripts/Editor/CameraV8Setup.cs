@@ -25,6 +25,9 @@ namespace MinersIdle.EditorTools
             changed |= DescentSetup.EnsureCameraCycleButton(PresetButton, "preset", "presetLabels", PresetLabels, 0,
                                                             "Botão \"Câmera v8 / F1\" no DBG → Câmera (M9h, D-245).");
             changed |= RenameResetButton();
+            // O botão novo nasce depois da fonte do jogo (UiSkinSetup): leva a fonte pixel aqui mesmo.
+            var panel = Object.FindAnyObjectByType<DescentCameraPanel>(FindObjectsInactive.Include);
+            changed |= panel != null && UiSkinSetup.ApplyGameFont(panel.transform.Find("Content/Buttons/" + PresetButton)) > 0;
             return changed;
         }
 

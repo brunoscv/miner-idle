@@ -12,7 +12,7 @@
 
 - **D-245:** inclinação 60°, altura 5,5 m, 3 m até o anão, campo de visão 60°. Substitui o enquadramento de frente da D-52 (e a F1 da D-69).
 - **D-252, D-277:** 3 m entre cristais no começo, e o Atalho tira 0,5 m por nível. "O ajuste fino vem com a câmera" (P2).
-- **D-319:** a bomba atinge os cristais até **4 m** à frente do anão, medidos na F1. "Reajustado com a câmera do Bloco G" (D-307) — P1.
+- **D-319:** a bomba atinge os cristais até **4 m** à frente do anão, medidos na F1. "Reajustado com a câmera do Bloco G" (D-307) — P1. **Achado de 2026-11-18:** no código o `bombReach` é **4 unidades = 2 m** (2 un = 1 m, D-58), não 4 m; o tooltip do `MiningRulesAsset` diz isso, a D-319 diz 4 m.
 
 ## Como a câmera foi lida
 
@@ -42,7 +42,7 @@ Prévias em `tools/ci/out/`:
 
 | | Pergunta | Recomendação |
 |---|---|---|
-| **P1** | O **alcance da bomba** (D-319, hoje 4 m): a tela agora mostra 3,0 m (9:16) a 3,56 m (9:20) à frente. Com 4 m, um cristal fora da tela, logo abaixo da borda, ainda leva a bomba. | **3,5 m**: cobre o que o Moto G75 mostra e não pega cristal escondido numa tela 9:16 além de meio metro. Alternativa: deixar 4 m (a bomba pega um pouco além da borda, e ninguém vê). |
+| **P1** | O **alcance da bomba**: a D-319 diz 4 m, mas o jogo usa **2 m** (`bombReach` = 4 unidades). A tela agora mostra 3,0 m (9:16) a 3,56 m (9:20) à frente, então hoje um cristal **visível** entre 2 m e 3,5 m não leva a bomba. | **3,5 m (7 un)**: cobre o que o Moto G75 mostra e não pega cristal escondido numa tela 9:16 além de meio metro. Alternativa: os 4 m da D-319 (8 un), que pegam um pouco além da borda. |
 | **P2** | A **distância entre cristais** (D-277, 3 m): com a câmera nova, um cristal fica à vista de cada vez. | **Manter 3 m**: com o Atalho (0,5 m no nível 5) chegam a 7 cristais na tela, que é o "quase colado" da D-241. |
 | **P3** | O **tamanho do anão**: ele cai para menos da metade da altura na tela. A arte continua nítida (o render é de 270 px de largura, D-14), mas os detalhes do rosto quase somem. | **Ficar assim** e decidir no Moto G75. Se pedir mais anão, o ajuste mais barato é o campo de visão (55° ainda mostra 2,8 m à frente), sem mudar a D-245 sem registro. |
 | **P4** | A **transição de andar B** (D-268) sobe a câmera mais 4 m: a 9,5 m ela vê por cima das paredes, e os cantos de cima ficam escuros. | **Deixar**: é só durante o cartão escuro e o desfoque; se incomodar, entra na lista de ajustes (paredes mais altas só na transição). |
@@ -64,7 +64,7 @@ Prévias em `tools/ci/out/`:
 
 ### E2 — Os ajustes das respostas
 
-- P1: o `bombReach` no `Balance_GDD_v8` (via `EnsureGddV8Bomb`) e no `MiningRulesAsset`, com o teste do alcance.
+- P1: o `bombReach` no `Balance_GDD_v8` (via `EnsureGddV8Bomb`, em unidades: 3,5 m = 7 un) e no `MiningRulesAsset`, com o teste do alcance; a D-319 corrigida para dizer o valor em metros e em unidades.
 - P2–P4: só se as respostas pedirem mudança.
 
 ### E3 — Celular
@@ -114,8 +114,12 @@ Prévias em `tools/ci/out/`:
 |---|---|---|
 | Plano | 📝 escrito em 2026-11-18, P1…P4 esperam o Bruno | números da câmera já decididos (D-245) |
 | E0 Prévias | ✅ feita | `tools/ci/out/m9h-e0-comparacao.png`, `m9h-e1-tudo.png` |
-| E1 A câmera do v8 como padrão | 🔶 feita, espera o teste do Bruno | setup aplicado na cena; testes PlayMode da câmera, do corredor, dos biomas, da cena, do andar, da rachadura e do estagiário passando (64 de 65; a falha é a de baixo) |
+| E1 A câmera do v8 como padrão | 🔶 feita, espera o teste do Bruno | setup aplicado na cena; testes PlayMode da câmera, do corredor, dos biomas, da cena, do andar, da rachadura e do estagiário passando (suíte toda verde em 2026-11-18, ver abaixo) |
 | E2 Os ajustes das respostas | ⏳ espera P1…P4 | |
 | E3 Celular | ➡️ testes longos do fim | |
 
-**Achado fora do marco:** `BombFlowTests.SwipingRight_WithTheBombFull_Throws_AndEveryCrystalInReachLosesTheFraction` falha também no commit `4d5ecaa` (sem a câmera nova): "a bomba caiu em algum cristal", com a lista vazia. Fica para a rodada de testes do fim (o Bruno roda e corrige os testes no fim).
+**Rodada de testes (2026-11-18, pedido do Bruno; sem a sessão longa):** EditMode **523/523**; PlayMode **173 passando, 2 pulados** (os dois `AdFlowTests` do anúncio antigo, ignorados desde o M9e, continuam pendentes), 0 falhas, sem o `LongSessionTests`. Quatro testes estavam quebrados e foram corrigidos para medir o comportamento de agora:
+- `UiFontTests`: o botão "Câmera v8 / F1" nascia depois da fonte do jogo, com a fonte padrão. O `CameraV8Setup` agora passa a fonte pixel nele (`UiSkinSetup.ApplyGameFont`).
+- `DebugPanelTests.Menus_OpenOneAtATime_AndHoldTheirShortcuts` (quebrado desde o M9g): a lista dos menus do DBG ganhou a **Bomba**.
+- `AllocationTests.BombCriticalAndScreenTap_DoNotAllocate` (desde o M9g): o primeiro toque do teste criava o evento do ponteiro e as listas do raycast (9 alocações, crescimento único); o teste agora aquece com um toque e mede o seguinte (0).
+- `BombFlowTests.SwipingRight_..._LosesTheFraction` (desde o M9g): com 3 m entre cristais e o alcance de 2 m, só o alvo cabia no alcance, e o golpe do anão o quebrava durante o voo, então a bomba caía no vazio. O teste põe um segundo cristal no alcance antes do deslize. O valor do alcance é a P1.

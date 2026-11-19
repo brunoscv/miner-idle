@@ -150,6 +150,10 @@ namespace MinersIdle.Tests
             _runner.ForceCritical = false;
             yield return Settle();
 
+            // O primeiro toque cria o evento do ponteiro e as listas do raycast da interface: é crescimento, como o dos
+            // pools no aquecimento, não custo do toque. O que se mede é o toque seguinte.
+            _tapInput.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f));
+            yield return Settle();
             int screenTap = AllocationsAndEvents(
                 () => _tapInput.TapAt(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f)), out int screenEvents);
             _runner.TimeScale = 1f;

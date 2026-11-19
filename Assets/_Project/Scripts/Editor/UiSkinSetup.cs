@@ -260,6 +260,17 @@ namespace MinersIdle.EditorTools
             return skinned || changed > 0;
         }
 
+        /// <summary>
+        /// A fonte do jogo nos textos de <paramref name="node"/> e abaixo dele, para o que um setup cria depois desta etapa
+        /// (o botão Câmera v8 / F1 do M9h). Devolve quantos textos mudaram.
+        /// </summary>
+        internal static int ApplyGameFont(Transform node)
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(GameFontPath);
+            if (font == null || node == null) return 0;
+            return ApplyFont(node, font, AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(NumbersFontPath));
+        }
+
         static int ApplyFont(Transform node, TMP_FontAsset font, TMP_FontAsset numbers)
         {
             if (System.Array.IndexOf(KeepOldFont, node.name) >= 0) return 0;

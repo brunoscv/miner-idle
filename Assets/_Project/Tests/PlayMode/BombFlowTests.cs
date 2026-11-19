@@ -102,7 +102,12 @@ namespace MinersIdle.Tests
             double fraction = Simulation.BombFraction;
             Assert.That(fraction, Is.EqualTo(0.1).Within(1e-9), "a Pequena, de graça: 10% (D-240)");
 
-            Assert.That(CrystalsInReach(), Is.Not.Empty);
+            // Com 3 m entre cristais (D-277), o alvo costuma ser o único no alcance, e o golpe do anão pode quebrá-lo no
+            // meio do voo (D-308): um segundo cristal no alcance, que o anão não bate, garante onde a bomba cair.
+            var target = Simulation.Miner.Target;
+            Assert.That(target, Is.Not.Null);
+            Simulation.SpawnCrystalAt(System.Math.Min(target.Distance + 0.5, Simulation.Miner.Distance + Simulation.Bombs.Reach));
+            Assert.That(CrystalsInReach().Count, Is.GreaterThanOrEqualTo(2), "dois cristais no alcance");
             var healthBefore = Simulation.Crystals.ToDictionary(c => c, c => c.Health);
             var hits = new Dictionary<Crystal, double>();
             var landed = new List<Crystal>();
