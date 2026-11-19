@@ -70,6 +70,12 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 ### E3 — Modais (#13)
 
 - Em todos os modais (descanso, LOJA, AJUSTES, raro, Boost, anúncio, offline, apagar save): **título mais alto** e o **X maior**, com área de toque de pelo menos 32 px na tela de 270. Mockup de um modal antes, e o mesmo padrão nos outros pelo setup.
+- **O que o mockup mostrou (2026-11-19):** `tools/ci/out/m9i-e3-mockup-hoje.png` (os cinco modais de hoje), `m9i-e3-mockup-novo.png` (a proposta nos cinco) e `m9i-e3-mockup-detalhe.png` (a barra do AJUSTES a 2×, com a área de toque do X tracejada), sobre capturas reais.
+  - **Hoje:** a barra do título é a faixa da janela do kit de madeira, com **8 px** de altura na tela de 270; o título tem 8,25 px; só o AJUSTES tem X, de 16 px. LOJA e Boost fecham pelo VOLTAR embaixo; o Descansar, pelo CONTINUAR.
+  - **Proposta:** a faixa com **20 px** (a mesma madeira, esticada no desenho), o título em **11 px** (o próximo tamanho da Pixelify que fica nítido) e o **X de 24 px** (o `icon_close` a 1,5×: no G75 são 6 px de aparelho por pixel de arte, sem distorcer), com **área de toque de 32 px**. O texto da direita (LASCAS na LOJA, DIA no Descansar) fica do mesmo tamanho, antes do X.
+  - **A janela cresce 12 px:** para baixo nos modais do meio da tela; o raro, preso em cima da bomba, cresce para cima; a LOJA, que já vai do HUD ao VOLTAR, fica do mesmo tamanho e a lista perde 12 px (ela rola).
+  - **X onde hoje não há:** LOJA, Boost e Descansar ganham o X no canto, e o botão de baixo (VOLTAR, CONTINUAR) continua: o X é o lugar que o jogador procura, o botão grande é o mais fácil de alcançar com o polegar. O **raro não ganha X**: enquanto a escolha corre, não há o que fechar (o FECHAR aparece depois, como hoje). Anúncio, offline e apagar save seguem o mesmo padrão da barra; o X entra só onde já existe um jeito de fechar sem escolher.
+  - Os nomes desenhados pelo Apellon (`name_settings`, `name_shop`) existem só para AJUSTES e LOJA: ficam de fora, para os títulos serem todos iguais.
 
 ### E4 — Apagar save e versão do save (#10)
 
@@ -142,8 +148,8 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 | Plano | ✅ aprovado em 2026-11-19 (D-329…D-333) | P1…P5 com as recomendações |
 | E0 A lista fechada | ✅ 18 linhas com prioridade e as etapas | |
 | E1 HUD e coluna da direita | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, pode seguir") | opção A (D-334) |
-| E2 Barra do andar, escada e transição | 🔶 feita (D-335), espera o seu teste | testes da barra, do Próximo Andar e da transição verdes |
-| E3 Modais | ⏳ | mockup primeiro |
+| E2 Barra do andar, escada e transição | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | placa A (D-335) |
+| E3 Modais | 🔶 mockup pronto, esperando a aprovação | barra de 20 px, título 11 px, X de 24 px |
 | E4 Apagar save e versão | ⏳ | |
 | E5 Voltar do Android e bomba por botão | ⏳ | |
 | E6 Ícones e câmera nova | ⏳ | de-para para aprovar |
