@@ -1,6 +1,6 @@
 # Marco 9h — Câmera de 60°
 
-> Plano de 2026-11-18, escrito junto com a E0 e a E1, a pedido do Bruno ("pode fazer a implementação do bloco g"). Os números da câmera já estavam decididos (D-245), então a E1 só troca o padrão e deixa a F1 no DBG para comparar. **As perguntas P1…P4 esperam o Bruno**; até lá, nenhum valor de regra mudou. É o **Bloco G**, o último da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, e vem depois do [Marco 9g](Marco%209g%20-%20Bomba%20e%20o%20fim%20do%20toque.md) (aprovado em 2026-11-18, D-323). Segue o processo do v8 (D-298): as melhorias vistas nos testes vão para a [lista de ajustes](Ajustes%20do%20v8%20-%20lista.md). Base: GDD v8.2 §7.5 e as decisões D-245, D-252, D-277 e D-319.
+> Plano de 2026-11-18, escrito junto com a E0 e a E1, a pedido do Bruno ("pode fazer a implementação do bloco g"). Os números da câmera já estavam decididos (D-245), então a E1 só troca o padrão e deixa a F1 no DBG para comparar. As perguntas P1…P4 foram respondidas no mesmo dia: o alcance da bomba passou a 3,5 m (D-324) e as outras ficaram com as recomendações (D-325…D-327). É o **Bloco G**, o último da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, e vem depois do [Marco 9g](Marco%209g%20-%20Bomba%20e%20o%20fim%20do%20toque.md) (aprovado em 2026-11-18, D-323). Segue o processo do v8 (D-298): as melhorias vistas nos testes vão para a [lista de ajustes](Ajustes%20do%20v8%20-%20lista.md). Base: GDD v8.2 §7.5 e as decisões D-245, D-252, D-277 e D-319.
 
 ## Objetivo
 
@@ -38,14 +38,14 @@ Prévias em `tools/ci/out/`:
 - `m9h-e0-comparacao.png`: F1 e v8 lado a lado, 9:20 e 9:16.
 - `m9h-e1-tudo.png`: o jogo na câmera nova (a cena aberta, com o estagiário, logo depois da bomba, a transição de andar subindo e chegando, e o andar 2).
 
-## As perguntas (P1 respondida; P2…P4 esperam o Bruno)
+## As perguntas (respondidas em 2026-11-18)
 
 | | Pergunta | Recomendação |
 |---|---|---|
 | **P1** | O **alcance da bomba**: a D-319 dizia 4 m, mas o jogo usava **2 m** (`bombReach` = 4 un). A tela agora mostra 3,0 m (9:16) a 3,56 m (9:20) à frente. | ✅ **3,5 m (7 un)** — resposta do Bruno, **D-324** (2026-11-18). |
-| **P2** | A **distância entre cristais** (D-277, 3 m): com a câmera nova, um cristal fica à vista de cada vez. | **Manter 3 m**: com o Atalho (0,5 m no nível 5) chegam a 7 cristais na tela, que é o "quase colado" da D-241. |
-| **P3** | O **tamanho do anão**: ele cai para menos da metade da altura na tela. A arte continua nítida (o render é de 270 px de largura, D-14), mas os detalhes do rosto quase somem. | **Ficar assim** e decidir no Moto G75. Se pedir mais anão, o ajuste mais barato é o campo de visão (55° ainda mostra 2,8 m à frente), sem mudar a D-245 sem registro. |
-| **P4** | A **transição de andar B** (D-268) sobe a câmera mais 4 m: a 9,5 m ela vê por cima das paredes, e os cantos de cima ficam escuros. | **Deixar**: é só durante o cartão escuro e o desfoque; se incomodar, entra na lista de ajustes (paredes mais altas só na transição). |
+| **P2** | A **distância entre cristais** (D-277, 3 m): com a câmera nova, um cristal fica à vista de cada vez. | ✅ **Manter 3 m** (recomendação aceita, **D-325**): com o Atalho no nível 5 (0,5 m) chegam a 7 cristais na tela, o "quase colado" da D-241. |
+| **P3** | O **tamanho do anão**: ele cai para menos da metade da altura na tela (11% contra 27%). | ✅ **Fica assim** e se confere no Moto G75 nos testes longos (**D-326**). Se pedir mais anão, o campo de visão (55° ainda mostra 2,8 m à frente), com decisão registrada. |
+| **P4** | A **transição de andar B** (D-268) sobe a câmera mais 4 m: a 9,5 m ela vê por cima das paredes, e os cantos de cima ficam escuros. | ✅ **Deixar** (**D-327**): só aparece no cartão escuro e no desfoque; se incomodar, vai para a lista de ajustes. |
 
 ## Etapas
 
@@ -65,7 +65,7 @@ Prévias em `tools/ci/out/`:
 ### E2 — Os ajustes das respostas
 
 - P1 ✅ (D-324): `bombReach` = **7 un** (3,5 m). O `EnsureGddV8BombReach` troca o 4 do M9g no `Balance_GDD_v8` (outro valor posto à mão fica), o `EnsureGddV8Bomb` e o padrão do `MiningRulesAsset` já nascem com 7. `BombFlowTests` confere os 7 un. O `AllocationTests` da bomba ganhou uma bomba de aquecimento na fila cheia (a primeira chegada com o alcance novo fazia 1 alocação, uma vez só).
-- P2–P4: só se as respostas pedirem mudança.
+- P2–P4 ✅ (D-325…D-327): as recomendações aceitas, sem mudança no código.
 
 ### E3 — Celular
 
@@ -86,7 +86,7 @@ Prévias em `tools/ci/out/`:
 ## Critério de pronto
 
 - O jogo abre na câmera da D-245, a F1 continua no DBG para comparar.
-- P1…P4 respondidas; o alcance da bomba registrado com a câmera nova.
+- P1…P4 respondidas (D-324…D-327); o alcance da bomba registrado com a câmera nova. ✅
 - Testes da câmera passando; o celular nos testes longos do fim.
 
 ## Riscos
@@ -112,10 +112,10 @@ Prévias em `tools/ci/out/`:
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 📝 escrito em 2026-11-18, P1…P4 esperam o Bruno | números da câmera já decididos (D-245) |
+| Plano | ✅ P1…P4 respondidas em 2026-11-18 (D-324…D-327) | números da câmera já decididos (D-245) |
 | E0 Prévias | ✅ feita | `tools/ci/out/m9h-e0-comparacao.png`, `m9h-e1-tudo.png` |
 | E1 A câmera do v8 como padrão | 🔶 feita, espera o teste do Bruno | setup aplicado na cena; testes PlayMode da câmera, do corredor, dos biomas, da cena, do andar, da rachadura e do estagiário passando (suíte toda verde em 2026-11-18, ver abaixo) |
-| E2 Os ajustes das respostas | 🔶 P1 feita (D-324); P2…P4 esperam | EditMode 523/523; PlayMode da bomba, alocação, andar, rachadura, cena e descanso passando |
+| E2 Os ajustes das respostas | ✅ feita | P1 = alcance de 3,5 m (D-324); P2…P4 sem mudança no código (D-325…D-327) |
 | E3 Celular | ➡️ testes longos do fim | |
 
 **Rodada de testes (2026-11-18, pedido do Bruno; sem a sessão longa):** EditMode **523/523**; PlayMode **173 passando, 2 pulados** (os dois `AdFlowTests` do anúncio antigo, ignorados desde o M9e, continuam pendentes), 0 falhas, sem o `LongSessionTests`. Quatro testes estavam quebrados e foram corrigidos para medir o comportamento de agora:
