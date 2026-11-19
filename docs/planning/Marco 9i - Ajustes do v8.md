@@ -39,8 +39,13 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 
 - **LASCAS e VERMELHAS:** mais altura nos painéis, para o texto não encostar na borda de dentro (proposta: +4 px na tela de 270, 2 em cima e 2 embaixo).
 - **AD (Boost):** a mesma folga embaixo.
-- **LOJA e AJUSTES:** saem do fundo preto. O mockup mostra as duas opções lado a lado (o fundo das lascas e o do AD); o DBG ganha um botão para trocar no jogo, e você escolhe vendo.
+- **LOJA e AJUSTES:** saem do fundo preto. O DBG ganha um botão para trocar entre as opções no jogo, e você escolhe vendo.
 - **Ícones da coluna:** `icon_settings`, `icon_shop` e `icon_boost` do Apellon no lugar dos de hoje.
+- **O que o mockup mostrou (2026-11-19):** os três ícones do Apellon já vêm **num tile de botão** laranja (96 px no PNG, pixel de 2 px: **48 px de arte, 1:1 na tela de 270**), com o desenho em cima e espaço para o rótulo embaixo. Por isso as duas opções do mockup ficaram:
+  - **A, o tile do Apellon inteiro:** o tile é o botão, o rótulo em marrom escuro na parte de baixo; os três botões iguais (o AD também). A coluna fica uns 30 px mais alta na tela de 270.
+  - **B, a moldura de hoje:** o fundo das lascas na LOJA e no AJUSTES, o AD como está, e só o desenho do Apellon (sem o laranja do tile).
+
+  Recomendação: **A**, porque é o botão como o Apellon desenhou, na escala certa, e a coluna fica de uma cor só. Mockup: `tools/ci/out/m9i-e1-mockup.png` (e `-coluna.png`, o detalhe).
 - **Bônus (#7):** a coluna dos bônus vai para a **direita, abaixo do AJUSTES**, crescendo para baixo.
 - **Descansar (#15):** sempre na barra de baixo. Antes do andar 10 (o `restLevel` do v8), **apagado**, com um cadeado e "Andar 10" embaixo; tocar mostra um aviso curto ("Descanse a partir do andar 10"). A escada (Próximo Andar) e a bomba já aparecem sempre.
 
@@ -79,7 +84,7 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 
 - EditMode e PlayMode sem as sessões longas, tudo verde (como em 2026-11-18). Os `AdFlowTests` continuam pendentes.
 
-## Perguntas
+## Perguntas (aprovadas em 2026-11-19, D-329…D-333)
 
 | | Pergunta | Recomendação |
 |---|---|---|
@@ -110,9 +115,9 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 
 | Etapa | Estado | Notas |
 |---|---|---|
-| Plano | 📝 escrito em 2026-11-18, etapas em 2026-11-19 | espera P1…P5 |
-| E0 A lista fechada | 🔶 as 18 linhas com prioridade e as etapas (2026-11-19) | espera P1…P5 |
-| E1 HUD e coluna da direita | ⏳ | mockup primeiro |
+| Plano | ✅ aprovado em 2026-11-19 (D-329…D-333) | P1…P5 com as recomendações |
+| E0 A lista fechada | ✅ 18 linhas com prioridade e as etapas | |
+| E1 HUD e coluna da direita | 🔶 mockup pronto, esperando a escolha A/B | |
 | E2 Barra do andar, escada e transição | ⏳ | mockup primeiro |
 | E3 Modais | ⏳ | mockup primeiro |
 | E4 Apagar save e versão | ⏳ | |
