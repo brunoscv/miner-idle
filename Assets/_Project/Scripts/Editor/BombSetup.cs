@@ -18,14 +18,15 @@ namespace MinersIdle.EditorTools
     static class BombSetup
     {
         const string ArtFolder = "Assets/_Project/Art/UI/Bomb/";
-        const string RootName = "BombSlider";
+        internal const string RootName = "BombSlider";
         const string TrackStyleName = "TrackStyle";
         const string UnlockStyleName = "UnlockStyle";
         const string FlightName = "BombFlight";
 
         /// <summary>Faixa no centro, logo acima da barra de baixo (y 12 a 48), com 4 px de folga.</summary>
-        const float SliderBottom = 52f;
-        const float TrackWidth = 191f, TrackHeight = 45f;
+        // M9i E7 (D-340): a faixa desceu para o fundo (era 52) e os botões de baixo ficam em cima dela.
+        internal const float SliderBottom = 12f;
+        internal const float TrackWidth = 191f, TrackHeight = 45f;
         const float UnlockHeight = 35f;
 
         const string ReadyLabel = "ARRASTE";

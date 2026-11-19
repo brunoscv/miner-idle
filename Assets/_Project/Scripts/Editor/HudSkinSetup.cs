@@ -46,12 +46,16 @@ namespace MinersIdle.EditorTools
         internal static readonly Color DisabledLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
         static readonly Color TextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
-        // A barra de baixo (Marco 8b, D-152; M9c E2, D-269): Descansar à esquerda, Próximo Andar à direita, cada um sempre
-        // no seu lado, do mesmo tamanho, e o centro livre para a Bomba. O RestSetup e o NextFloorSetup usam estas medidas.
-        internal const float BarButtonWidth = 94f; // M9c E2 (D-269): o centro fica para a Bomba
+        // A barra de baixo (Marco 8b, D-152; M9c E2, D-269): Descansar à esquerda, Próximo Andar à direita, do mesmo tamanho.
+        // M9i E7 (D-340): a faixa da bomba foi para o fundo e os dois botões ficam em cima dela, juntos no meio, com a
+        // largura exata da faixa (94 + 3 + 94 = 191). O RestSetup, o NextFloorSetup e o BottomBarV8Setup usam estas medidas.
+        internal const float BarButtonWidth = 94f; // M9c E2 (D-269)
         internal const float BarButtonHeight = 36f;
-        internal const float BarMargin = 6f;
-        internal const float BarBottom = 12f;
+        internal const float BarButtonGap = 3f;    // entre os dois botões (M9i E7)
+        internal const float BarGapAboveBomb = 6f; // da faixa da bomba aos botões (M9i E7, P6)
+        internal const float BarBottom = BombSetup.SliderBottom + BombSetup.TrackHeight + BarGapAboveBomb; // 63
+        /// <summary>O alto do conjunto de baixo (faixa da bomba e botões), contado do fundo: 99 na tela de 270.</summary>
+        internal const float BarTop = BarBottom + BarButtonHeight;
         internal const float BarLabelSize = ValueSize;
         internal const float BarLineSpacing = -8f;
         /// <summary>Âmbar sobre a madeira (D-110): destaca o botão dos outros da coluna.</summary>
@@ -420,14 +424,28 @@ namespace MinersIdle.EditorTools
 
         static Sprite SettingsIcon() => Load(SettingsIconPath) ?? Load(Wood("icons/icon_settings"));
 
-        /// <summary>Um botão da barra de baixo no seu lado (D-152).</summary>
-        internal static void PlaceOnTheBar(RectTransform rect, bool right)
+        /// <summary>
+        /// Um botão da barra de baixo no seu lado (D-152). M9i E7 (D-340): presos ao meio da tela, cada um de um lado do
+        /// vão de 3 px, em cima da faixa da bomba. Devolve se mudou algo (o BottomBarV8Setup leva as cenas antigas).
+        /// </summary>
+        internal static bool PlaceOnTheBar(RectTransform rect, bool right)
         {
-            var corner = right ? Vector2.right : Vector2.zero;
-            rect.anchorMin = rect.anchorMax = rect.pivot = corner;
-            rect.anchoredPosition = new Vector2(right ? -BarMargin : BarMargin, BarBottom);
-            rect.sizeDelta = new Vector2(BarButtonWidth, BarButtonHeight);
+            var anchor = new Vector2(0.5f, 0f);
+            var pivot = new Vector2(right ? 0f : 1f, 0f);
+            var position = new Vector2(right ? BarButtonGap / 2f : -BarButtonGap / 2f, BarBottom);
+            var size = new Vector2(BarButtonWidth, BarButtonHeight);
+            if (rect.anchorMin == anchor && rect.anchorMax == anchor && rect.pivot == pivot &&
+                rect.anchoredPosition == position && rect.sizeDelta == size)
+                return false;
+            rect.anchorMin = rect.anchorMax = anchor;
+            rect.pivot = pivot;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            return true;
         }
+
+        /// <summary>A borda esquerda do Descansar, contada do meio da tela (M9i E7): −95,5 na tela de 270.</summary>
+        internal const float BarLeftFromCenter = -BarButtonGap / 2f - BarButtonWidth;
 
         /// <summary>AD e AJUSTES (D-67): aparecem já, abaixo da LOJA, e ao tocar mostram "Em breve".</summary>
         static bool EnsureComingSoon(Transform safeArea, string name, string title, int slot, Sprite icon, Sprite normal,

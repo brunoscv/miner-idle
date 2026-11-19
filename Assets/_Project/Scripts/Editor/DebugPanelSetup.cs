@@ -41,9 +41,10 @@ namespace MinersIdle.EditorTools
         const float ContentHeight = 264f;
         // Marco 8b (E3, mockup aprovado): o DBG e o aviso do cálculo ficam acima da barra de baixo (Descansar e PASSAR).
         // M9g (E0, mockups do deslize): sobem de novo, acima da faixa da bomba (y 52 a 97); antes, y 54 e o painel em 74.
-        static readonly Vector2 TogglePosition = new Vector2(6f, 100f);
-        internal static readonly Vector2 WarningPosition = new Vector2(40f, 100f);
-        const float ContentBottom = 120f;
+        // M9i E7 (D-340): a faixa foi para o fundo e o alto do conjunto de baixo passou de 97 para 99; sobem 2 px junto.
+        static readonly Vector2 TogglePosition = new Vector2(6f, 102f);
+        internal static readonly Vector2 WarningPosition = new Vector2(40f, 102f);
+        const float ContentBottom = 122f;
         const float TopBand = 0.70f;      // estatísticas e diagnóstico acima disto
         const float ButtonsBand = 0.53f;  // botões abaixo disto (7 fileiras); melhorias no meio
 

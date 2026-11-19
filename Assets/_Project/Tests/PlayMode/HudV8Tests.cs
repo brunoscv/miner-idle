@@ -59,8 +59,9 @@ namespace MinersIdle.Tests
         }
 
         /// <summary>
-        /// M9i E2 (D-335): a barra é a borda do Apellon, centrada no vão entre o HUD e a faixa da bomba (97 px de baixo,
-        /// na referência 270): o mesmo vão em cima e embaixo.
+        /// M9i E2 (D-335): a barra é a borda do Apellon, centrada no vão entre o HUD e o conjunto de baixo: o mesmo vão em
+        /// cima e embaixo. Desde a M9i E7 (D-340) o alto do conjunto são os botões em cima da faixa da bomba (99 px de
+        /// baixo, na referência 270; era o alto da faixa, 97).
         /// </summary>
         [Test]
         public void FloorBar_IsTheApellonMeter_CenteredBetweenTheHudAndTheBomb()
@@ -75,7 +76,7 @@ namespace MinersIdle.Tests
             ((RectTransform)_hud.transform).GetWorldCorners(corners);
             float hudBottom = corners[0].y;
             safe.GetWorldCorners(corners);
-            float bombTop = corners[0].y + 97f * scale;
+            float bombTop = corners[0].y + 99f * scale;
             float above = (hudBottom - barTop) / scale, below = (barBottom - bombTop) / scale;
             // Na tela do batch (640×480, deitada) o vão fica negativo: a barra é mais alta que o espaço. Centrada, os
             // dois lados continuam iguais; no celular (9:16, 9:20) os dois são positivos.

@@ -34,8 +34,10 @@ namespace MinersIdle.EditorTools
         const float BarWidth = 24f, BarHeight = 256f;
         const float InsetSide = 8f, InsetTop = 6f, InsetBottom = 8f;
         const float HudBottom = 46f;   // o HUD (M9i E1)
-        const float BombTop = 97f;     // a faixa da bomba, contada de baixo (BombSetup: 52 + 45)
-        // Centrada no vão entre os dois: o centro fica (BombTop − HudBottom)/2 acima do meio da tela (25,5 → 26 px).
+        // O alto do conjunto de baixo, contado de baixo: era a faixa da bomba (52 + 45 = 97); desde a M9i E7 (D-340), os
+        // botões em cima dela (12 + 45 + 6 + 36 = 99).
+        const float BombTop = HudSkinSetup.BarTop;
+        // Centrada no vão entre os dois: o centro fica (BombTop − HudBottom)/2 acima do meio da tela (26,5 → 26 px).
         static readonly float BarCenterOffset = Mathf.Round((BombTop - HudBottom) / 2f);
         const float ArrowWidth = 11f, ArrowHeight = 15f; // a seta a 1 px por pixel de arte (22×30 no PNG)
         const float ArrowLeft = InsetSide - 1f;          // a ponta encosta na borda da barra

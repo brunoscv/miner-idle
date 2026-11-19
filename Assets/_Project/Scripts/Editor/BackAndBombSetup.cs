@@ -27,7 +27,8 @@ namespace MinersIdle.EditorTools
         const string TextsPath = "Assets/_Project/Data/FeedbackTexts.asset";
         const string TapReady = "TOQUE";
 
-        // O aviso: como o do Descansar trancado (HudColumnV8Setup), no meio, acima da faixa da bomba.
+        // O aviso: como o do Descansar trancado (HudColumnV8Setup), no meio, acima do conjunto de baixo (a faixa da bomba
+        // e, desde a M9i E7, os botões em cima dela: alto em 99).
         const float NoticeWidth = 150f;
         const float NoticeHeight = 18f;
         const float NoticeBottom = 104f;

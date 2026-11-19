@@ -63,6 +63,25 @@ namespace MinersIdle.EditorTools
         const float NoticeLabelSize = 33f / 4f;
         static readonly Color NoticeTextColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
 
+        /// <summary>
+        /// O aviso do Descansar trancado, 4 px acima do botão e encostado na borda esquerda dele. M9i E7 (D-340): o botão
+        /// saiu do canto e foi para cima da faixa da bomba; o aviso vai junto. Devolve se mudou algo.
+        /// </summary>
+        internal static bool PlaceRestNotice(RectTransform rect)
+        {
+            var anchor = new Vector2(0.5f, 0f);
+            var position = new Vector2(HudSkinSetup.BarLeftFromCenter, HudSkinSetup.BarTop + 4f);
+            var size = new Vector2(NoticeWidth, NoticeHeight);
+            if (rect.anchorMin == anchor && rect.anchorMax == anchor && rect.pivot == Vector2.zero &&
+                rect.anchoredPosition == position && rect.sizeDelta == size)
+                return false;
+            rect.anchorMin = rect.anchorMax = anchor;
+            rect.pivot = Vector2.zero;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            return true;
+        }
+
         public static bool EnsureInScene()
         {
             bool changed = EnsureSprites();
@@ -290,10 +309,7 @@ namespace MinersIdle.EditorTools
             var notice = new GameObject("Notice", typeof(RectTransform), typeof(Image));
             notice.transform.SetParent(container, false);
             var rect = (RectTransform)notice.transform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.zero;
-            rect.anchoredPosition = new Vector2(HudSkinSetup.BarMargin,
-                                                HudSkinSetup.BarBottom + HudSkinSetup.BarButtonHeight + 4f);
-            rect.sizeDelta = new Vector2(NoticeWidth, NoticeHeight);
+            PlaceRestNotice(rect);
             var image = notice.GetComponent<Image>();
             image.sprite = Load(UiSkinSetup.WoodFolder + "/panels/tooltip.png");
             image.type = Image.Type.Sliced;

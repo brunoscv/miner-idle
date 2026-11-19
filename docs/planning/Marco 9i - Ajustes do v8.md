@@ -131,7 +131,67 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 - **#4, os cantos escuros na transição:** fica como a **D-327** decidiu (só aparece no cartão escuro). Nada a fazer.
 - **#5, o "Recuo" no DBG → Câmera:** é da F1 (D-148). Proposta: **o botão só aparece com a câmera F1**; na do v8 ele some, em vez de mostrar "Recuo ?".
 
-### E7 — Suíte de testes
+### E7 — A bomba embaixo, Descansar e DESCER em cima (#19)
+
+Pedido do Bruno (2026-11-19): ao deslizar a bomba, o dedo esbarra nos botões de baixo. A faixa da bomba vai para o fundo, os dois botões sobem para cima dela, e os dois juntos ficam **exatamente da largura da faixa**.
+
+**É mudança geral do jogo, fora do botão do DBG** (Bruno, 2026-11-19): vale sempre, com a loja rápida da E8 ligada ou desligada, e vem antes dela.
+
+- **Hoje (tela de 270):** Descansar e Próximo andar a 12 px do fundo, 94×36 cada, um em cada canto (6 px da borda); a faixa da bomba, 191×45, centrada, de 52 a 97 px.
+- **Proposta:**
+  - a **faixa desce** para 12 px (de 12 a 57);
+  - os **dois botões sobem** para cima dela, com **6 px de vão** (de 63 a 99): 2 px a mais que o vão de hoje, para o polegar que sobe no fim do deslize (P6);
+  - **a largura casa sem mudar os botões:** 94 + 3 + 94 = 191. Os botões ficam do tamanho de hoje, só saem dos cantos e se juntam no meio, com 3 px entre eles; a borda de fora do Descansar e a do DESCER caem na borda da faixa (39,5 px de cada lado; o meio pixel já é o da faixa de hoje, e no G75 vira 2 px de aparelho).
+- **O que acompanha a troca:**
+  - o aviso "Descanse a partir do andar 10" (hoje 4 px acima dos botões) sobe junto com eles;
+  - o selo **AUTO**, que passa 5 px acima do Próximo andar, continua no canto dele, agora no vão de cima;
+  - a **barra do andar** centrada no vão (E2) contava até o topo da faixa (97): passa a contar até o topo dos botões (99); o centro arredondado continua em 26 px, então ela fica onde está;
+  - a **janela do raro** (presa a 118 px do fundo) e o "Toque de novo para sair" (104 px) ficam onde estão: os dois já estavam acima do conjunto;
+  - o **DBG** e o "Cálculo: GDD v8" continuam logo acima do conjunto (sobem 2 px, para y 102, e o painel aberto para 122).
+- **Risco a conferir no G75:** a faixa passa a ficar no fundo da tela, perto da barra de gestos do Android (deslizar ali troca de app). Conferir que arrastar a bomba não troca de app; se trocar, a margem de 12 px sobe.
+- **Mockup** sobre a captura real (9:16 e 9:20), aprovado antes do código, como nas outras etapas.
+- **No código:** um setup novo (roda por último, como o `HudColumnV8Setup`) move o que já está na cena: `Bomb` para o fundo, `Rest` e `NextFloor` para cima, o aviso do Descansar e a conta da barra do andar. Os setups antigos não mudam (cada um já checa se fez).
+- **Como ficou no código (2026-11-19, D-340):** o Bruno aprovou indo direto ao código, sem o mockup.
+  - As medidas moram no `HudSkinSetup` (`BarBottom` 63, `BarTop` 99, `BarButtonGap` 3, `BarGapAboveBomb` 6) e no `BombSetup` (`SliderBottom` 12). O `PlaceOnTheBar` prende os dois botões ao meio da tela, um de cada lado do vão de 3 px, e diz se mudou algo.
+  - `Editor/BottomBarV8Setup.cs` (roda por último) leva as cenas antigas: `Rest/RestButton`, `NextFloor/Bar`, `Rest/Notice` (o aviso do trancado, agora a 103 px e encostado na borda do Descansar) e o `BombSlider`.
+  - A barra do andar conta o vão até 99; o DBG sobe 2 px. O voo da bomba já saía do botão da faixa, então segue o lugar novo sozinho.
+  - O teste `HudV8Tests.FloorBar_IsTheApellonMeter_CenteredBetweenTheHudAndTheBomb` passa a medir o vão até 99.
+
+### E8 — A loja rápida, no DBG, para mostrar ao Apellon (#20)
+
+**Não está no GDD:** é uma proposta do Bruno para levar ao Apellon. Por isso tudo fica **atrás de um botão do DBG**; desligado, o jogo é exatamente o da E7.
+
+- **O botão:** `DBG → Loja → Loja rápida`, que troca entre **DESLIGADA → A → B → C**. A escolha fica lembrada entre aberturas (preferência do DBG, fora do save), para abrir o APK no G75 já na opção e mostrar ao Apellon (P9).
+- **Com a loja rápida ligada, a tela muda em três lugares:**
+  1. **A janela do raro sobe** até a altura do botão LOJA (o alto dela alinhado com o alto do tile, ~4 px abaixo do HUD) e fica **por cima de tudo**: a coluna da direita (LOJA, AD, AJUSTES, bônus) e a barra do andar ficam por baixo dela. A escolha do raro vira a prioridade da tela.
+  2. **A barra do andar volta para cima**, logo abaixo do HUD (a posição de antes do pedido de centralizar na E2), e não mais centrada no vão.
+  3. **A loja rápida aparece** logo acima do Descansar e do DESCER, com **a mesma largura de 191 px** da faixa e dos botões: as quatro melhorias da aba MELHORIAS (**Picareta, Velocidade, Mineração, Crítico**), sem as permanentes e sem o Estagiário.
+- **A LOJA não muda:** a aba MELHORIAS continua igual; a loja rápida é um atalho para as mesmas compras.
+- **O botão inteiro compra** (não só o preço, como na LOJA). Um toque, uma compra (P8). Mesmos custos e mesmos níveis da LOJA: nenhuma regra muda.
+- **Estados de cada botão:** aceso (dá para comprar); apagado com o preço cinza (falta lasca); "MÁX" (no limite). O toque num apagado não faz nada.
+- **Textos curtos, em dados:** o `ShopCatalog` ganha, por melhoria, um **nome curto** e um **efeito curto** (pt-BR, no asset), por exemplo "Dano 12 » 14", "1,20 s » 1,15 s", "Lascas 5 » 6", "5% » 6%". Os textos da LOJA não mudam.
+
+**As três opções (todas com 191 px de largura, centradas, 6 px acima dos botões):**
+
+| | Opção | Desenho | Altura | O que mostra |
+|---|---|---|---|---|
+| **A** | **Fileira de 4 tiles** | quatro tiles quadrados de 46×46 lado a lado (2 px entre eles), no laranja dos tiles do Apellon | 46 px | ícone grande, o nível ("Nv 12") e o preço com a lasca |
+| **B** | **Grade 2×2** | quatro botões de 94×30 em duas fileiras, nas **mesmas colunas** do Descansar e do DESCER (3 px entre eles) | 63 px | ícone à esquerda; nome curto e efeito curto ("Dano 12 » 14"); o preço embaixo |
+| **C** | **Faixa fina** | quatro fichas de 46×22 numa fileira só | 22 px | só o ícone e o preço; o nível num selinho no canto |
+
+A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos tapa a mina. Recomendação para mostrar primeiro ao Apellon: **B**, porque casa em coluna com os botões de baixo e é o único que diz o que a compra faz sem abrir a LOJA.
+
+- **Cabe na tela 9:16 (a mais baixa):** com a barra do andar de volta ao alto, ela termina a 176 px do fundo; o topo da loja rápida fica em 168 (B), 151 (A) ou 127 (C). No 9:20 do G75 sobra mais. O mockup confere também o cristal à frente do anão (não pode ficar coberto) e a coluna dos bônus, que cresce para baixo pela direita.
+- **O DBG** (botão e o "Cálculo: GDD v8") sai de cima da bomba quando a loja rápida está ligada: vai para cima da loja rápida, encostado na esquerda (o mockup confirma o lugar).
+- **Mockup das três opções** sobre a captura real (9:16 e 9:20), com o raro aberto e fechado, aprovado antes do código (P7).
+- **No código:**
+  - `QuickShopView` (UI), como a `ShopView`: escuta lascas e estatísticas pelo `MiningViewBase`, mostra a `UpgradePreview` e compra com `Purchase`. Nada no `Update`.
+  - Os três desenhos nascem pelo setup como três filhos (A, B, C), só um ligado, como os estilos da faixa da bomba.
+  - `QuickShopLayout` (UI): guarda as duas posições da janela do raro, da barra do andar e do DBG, e troca entre elas quando o DBG muda a opção. A janela do raro vai para o fim da hierarquia da `SafeArea` para ficar por cima da coluna.
+  - O núcleo não muda.
+  - Um teste PlayMode (roda com a suíte, na E9): comprar pela loja rápida faz o mesmo que pela LOJA (custo, nível, lascas), e o botão apagado não compra.
+
+### E9 — Suíte de testes
 
 - EditMode e PlayMode sem as sessões longas, tudo verde (como em 2026-11-18). Os `AdFlowTests` continuam pendentes.
 
@@ -144,6 +204,16 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 | P3 | Texto da transição: placa, faixa ou modal? | **A, a placa**, decidida no mockup |
 | P4 | Bomba por botão: o padrão continua Deslizar? | **Sim** (D-310) |
 | P5 | A ordem das etapas: E1 HUD → E2 barra e transição → E3 modais → E4 save → E5 Android e bomba → E6 ícones e câmera | **Esta ordem**: o que se vê primeiro, o save logo depois |
+
+### Perguntas da E7 e da E8 (aprovadas em 2026-11-19, D-340 e D-341)
+
+| | Pergunta | Recomendação |
+|---|---|---|
+| P6 | Vão entre a faixa da bomba e os botões: 4 px (como hoje) ou 6 px? | **6 px**: o polegar sobe no fim do deslize |
+| P7 | Loja rápida: mockup das três opções antes do código, ou direto no DBG? | **Mockup antes** (rápido, sobre a captura), depois as três no DBG |
+| P8 | Um toque compra um nível, ou segurar compra vários? | **Um toque, um nível.** Segurar fica para depois, se o Apellon gostar |
+| P9 | A opção do DBG fica lembrada ao fechar e abrir o jogo? | **Sim**, para abrir o APK já na opção que você quer mostrar |
+| P10 | Durante a escolha do raro, a loja rápida continua tocável? | **Sim**: a janela cobre o alto da tela; o de baixo segue o jogo, como hoje |
 
 ## Como testar (Bruno)
 
@@ -200,6 +270,16 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
   7. **Esteios:** olhar o corredor um tempo: o arco não some mais de uma vez no meio da tela. Os postes continuam até a borda de baixo e a viga se desfaz num pontilhado.
   8. **Recuo (#5):** `DBG → Câmera`: na câmera do v8 o botão Recuo não aparece; trocar para a F1 (botão da câmera): ele volta.
 
+- **E7 — A bomba embaixo, Descansar e DESCER em cima** (feita em 2026-11-19, D-340). Nada de menu ou cena novos.
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console: `[Setup] A bomba embaixo e o Descansar e o Próximo andar em cima dela…` e `[Setup] Botão DBG e aviso do cálculo acima da barra de baixo…`). Rodando de novo, as duas linhas não aparecem.
+  2. Abrir `Assets/_Project/Scenes/Game.unity` e dar Play (Game view em 9:16 e depois em 9:20).
+  3. **Embaixo:** a faixa da bomba encostada no fundo (12 px de margem). Logo acima, com um vão pequeno, Descansar e Próximo andar lado a lado no meio: a borda esquerda do Descansar alinhada com a borda esquerda da faixa, a direita do Próximo andar com a direita da faixa, e um fio de 3 px entre os dois.
+  4. **Deslizar a bomba** (com ela cheia, ou `DBG → Bomba`): o dedo sobe no fim do arrasto e não pega mais os botões.
+  5. **Descansar trancado:** no andar 1, tocar no Descansar: "Descanse a partir do andar 10" aparece logo acima do botão, encostado na borda esquerda dele.
+  6. **AUTO e DESCER:** `DBG → Andar → Encher a barra`: o DESCER acende e o selo AUTO fica no canto de cima do botão, sem bater em nada.
+  7. **O resto no lugar:** a barra do andar com o mesmo vão até o HUD e até os botões; o DBG logo acima do Descansar; Esc uma vez: "Toque de novo para sair" acima dos botões; `DBG → Bônus → Janela agora`: o raro acima dos botões, sem cobrir nenhum.
+  8. **No G75:** arrastar a bomba no fundo da tela não troca de app nem abre a barra de gestos do Android.
+
 ## Critério de pronto
 
 - Todos os ajustes de prioridade alta feitos; os outros feitos ou adiados com o Bruno (com o motivo na lista).
@@ -224,4 +304,6 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 | E4 Apagar save e versão | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-337 |
 | E5 Voltar do Android e bomba por toque | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-338 |
 | E6 Ícones e câmera nova | 🔶 feita em 2026-11-19, espera o seu teste | D-339 |
-| E7 Suíte de testes | ⏳ | sem as sessões longas |
+| E7 A bomba embaixo, botões em cima | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, segue") | D-340 |
+| E8 Loja rápida no DBG (A, B, C) | 🔶 mockup das três opções, espera a sua escolha | D-341, proposta para o Apellon |
+| E9 Suíte de testes | ⏳ | sem as sessões longas |
