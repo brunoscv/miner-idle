@@ -1,6 +1,6 @@
 # Marco 9h — Câmera de 60°
 
-> Plano de 2026-11-18, escrito junto com a E0 e a E1, a pedido do Bruno ("pode fazer a implementação do bloco g"). Os números da câmera já estavam decididos (D-245), então a E1 só troca o padrão e deixa a F1 no DBG para comparar. As perguntas P1…P4 foram respondidas no mesmo dia: o alcance da bomba passou a 3,5 m (D-324) e as outras ficaram com as recomendações (D-325…D-327). É o **Bloco G**, o último da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, e vem depois do [Marco 9g](Marco%209g%20-%20Bomba%20e%20o%20fim%20do%20toque.md) (aprovado em 2026-11-18, D-323). Segue o processo do v8 (D-298): as melhorias vistas nos testes vão para a [lista de ajustes](Ajustes%20do%20v8%20-%20lista.md). Base: GDD v8.2 §7.5 e as decisões D-245, D-252, D-277 e D-319.
+> **Aprovado em 2026-11-18 (D-328).** Plano de 2026-11-18, escrito junto com a E0 e a E1, a pedido do Bruno ("pode fazer a implementação do bloco g"). Os números da câmera já estavam decididos (D-245), então a E1 só troca o padrão e deixa a F1 no DBG para comparar. As perguntas P1…P4 foram respondidas no mesmo dia: o alcance da bomba passou a 3,5 m (D-324) e as outras ficaram com as recomendações (D-325…D-327). É o **Bloco G**, o último da [Análise do GDD v8](Analise%20-%20GDD%20v8.md) §5, e vem depois do [Marco 9g](Marco%209g%20-%20Bomba%20e%20o%20fim%20do%20toque.md) (aprovado em 2026-11-18, D-323). Segue o processo do v8 (D-298): as melhorias vistas nos testes vão para a [lista de ajustes](Ajustes%20do%20v8%20-%20lista.md). Base: GDD v8.2 §7.5 e as decisões D-245, D-252, D-277 e D-319.
 
 ## Objetivo
 
@@ -114,9 +114,9 @@ Prévias em `tools/ci/out/`:
 |---|---|---|
 | Plano | ✅ P1…P4 respondidas em 2026-11-18 (D-324…D-327) | números da câmera já decididos (D-245) |
 | E0 Prévias | ✅ feita | `tools/ci/out/m9h-e0-comparacao.png`, `m9h-e1-tudo.png` |
-| E1 A câmera do v8 como padrão | 🔶 feita, espera o teste do Bruno | setup aplicado na cena; testes PlayMode da câmera, do corredor, dos biomas, da cena, do andar, da rachadura e do estagiário passando (suíte toda verde em 2026-11-18, ver abaixo) |
+| E1 A câmera do v8 como padrão | ✅ aprovada em 2026-11-18 (D-328) | setup aplicado na cena; suíte toda verde em 2026-11-18 (ver abaixo) |
 | E2 Os ajustes das respostas | ✅ feita | P1 = alcance de 3,5 m (D-324); P2…P4 sem mudança no código (D-325…D-327) |
-| E3 Celular | ➡️ testes longos do fim | |
+| E3 Celular | ➡️ testes longos do fim | **M9h aprovado em 2026-11-18 (D-328)** |
 
 **Rodada de testes (2026-11-18, pedido do Bruno; sem a sessão longa):** EditMode **523/523**; PlayMode **173 passando, 2 pulados** (os dois `AdFlowTests` do anúncio antigo, ignorados desde o M9e, continuam pendentes), 0 falhas, sem o `LongSessionTests`. Quatro testes estavam quebrados e foram corrigidos para medir o comportamento de agora:
 - `UiFontTests`: o botão "Câmera v8 / F1" nascia depois da fonte do jogo, com a fonte padrão. O `CameraV8Setup` agora passa a fonte pixel nele (`UiSkinSetup.ApplyGameFont`).
