@@ -192,12 +192,32 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
 - **Cabe na tela 9:16 (a mais baixa):** com a barra do andar de volta ao alto, ela termina a 176 px do fundo; o topo da loja rápida fica em 168 (B), 151 (A) ou 127 (C). No 9:20 do G75 sobra mais. O mockup confere também o cristal à frente do anão (não pode ficar coberto) e a coluna dos bônus, que cresce para baixo pela direita.
 - **O DBG** (botão e o "Cálculo: GDD v8") sai de cima da bomba quando a loja rápida está ligada: vai para cima da loja rápida, encostado na esquerda (o mockup confirma o lugar).
 - **Mockup das três opções** sobre a captura real (9:16 e 9:20), com o raro aberto e fechado, aprovado antes do código (P7).
-- **No código:**
-  - `QuickShopView` (UI), como a `ShopView`: escuta lascas e estatísticas pelo `MiningViewBase`, mostra a `UpgradePreview` e compra com `Purchase`. Nada no `Update`.
-  - Os três desenhos nascem pelo setup como três filhos (A, B, C), só um ligado, como os estilos da faixa da bomba.
-  - `QuickShopLayout` (UI): guarda as duas posições da janela do raro, da barra do andar e do DBG, e troca entre elas quando o DBG muda a opção. A janela do raro vai para o fim da hierarquia da `SafeArea` para ficar por cima da coluna.
+- **O que o mockup mostrou (2026-11-19):** `tools/ci/out/m9i-e8-mockup-920.png` (a E7 e as três opções, no 9:20 do G75), `m9i-e8-mockup-raro.png` (as três com o raro aberto), `m9i-e8-mockup-916.png` (9:16) e `m9i-e8-mockup-detalhe.png` (os três a 4×). Feitos com as peças das capturas reais da E6 (o Editor estava aberto), o botão laranja do Apellon recortado do Descansar aceso e os ícones da LOJA; números ilustrativos, com 48 lascas (Picareta, Velocidade e Mineração acesas, Crítico apagado).
+  - **No 9:20 (G75)** as três cabem entre o cristal à frente do anão e os botões; a barra do andar no alto não encosta em nenhuma.
+  - **No 9:16** a loja rápida **cobre o cristal à frente do anão** nas opções A e B (a C quase não toca nele). A tela mais baixa é a que decide entre as três.
+  - **B é a mais apertada de texto:** "Dano 3 » 4" e o preço já quase se encostam. Com números grandes ("1,23K » 1,45K") o efeito tem de encolher sozinho (o TMP auto size, como nos botões do DBG) ou sair da linha.
+  - **O raro:** a janela, do alto da LOJA para baixo, cobre o anão nas duas proporções; a coluna da direita e a barra do andar aparecem só nas beiradas, por baixo dela.
+  - **Correção da P10:** hoje o escurecido do raro bloqueia os toques na tela toda, inclusive Descansar, DESCER e a bomba (não é "como hoje"). Para a loja rápida continuar tocável na escolha, ela fica **por cima do escurecido** (depois da janela do raro na hierarquia); a barra de baixo continua como hoje, bloqueada. É assim que o mockup mostra.
+- **A escolha e o retrabalho (Bruno, 2026-11-19):** fica **só a opção A** (a fileira de quatro), com estas mudanças, que substituem as três opções e as medidas acima:
+  - **Os cards no estilo dos tiles** de LOJA, AD e AJUSTES (o tile do Apellon sem o desenho, em 9-slice), com o ícone da LOJA em cima, "Nv n" e o preço com a lasca embaixo. **Texto branco**, como os nomes da coluna (#21); em letra grossa (a Press Start) só o essencial, o **preço**; o nível na Pixelify.
+  - **Como a LOJA:** sem lascas para a compra, o card fica **apagado** (o laranja a ×0,55, como o Descansar trancado, e o texto cinza); com as lascas, acende e compra no toque.
+  - **Mais largura e alinhamento:** com a loja rápida ligada, quatro colunas de **61 px com 6 entre elas** (262 px, de 4 a 266: a mesma borda de fora da coluna da direita). **Descansar** ocupa as duas primeiras colunas e **DESCER** as duas últimas: 128 px cada, **6 px entre eles** (eram 94 e 3). Os cards têm 61×58.
+  - **A faixa da bomba fica como está** (191 px, no fundo), sozinha embaixo.
+  - **O DBG** fica acima dos cards, à direita da barra do andar (no 9:16 a barra desce até 176 px do fundo e cobriria o botão).
+  - **Desligada, nada muda:** a E7 como está (os botões de 94 juntos na largura da faixa).
+  - Mockup: `tools/ci/out/m9i-e8-mockup2.png` (desligada, ligada no 9:20, com o raro e no 9:16) e `m9i-e8-mockup2-detalhe.png` (a 4×), sobre as capturas reais da E7. No 9:16 os cards ainda cobrem o cristal à frente do anão.
+- **Como ficou no código (2026-11-19, D-343):**
+  - `QuickShopView` (UI), como a `ShopView`: escuta lascas, estatísticas, andar e a janela do raro pelo `MiningViewBase`, mostra a `UpgradePreview` em cada `QuickShopCard` e compra com `Purchase`. Nada no `Update`. As quatro melhorias e o "Nv {0}" estão no `ShopCatalog` (`quickUpgrades`, `quickLevelFormat`); o ícone é o mesmo da LOJA.
+  - O card (`QuickShopCard`) é o próprio botão: aceso só com `Purchasable`; apagado, ×0,545 no tile, no ícone e na lasca, e o texto cinza (BEB4AA). A Picareta conta do 1, como na LOJA (D-207).
+  - **O raro por cima de tudo:** com a loja rápida ligada, a `RareWindow` passa para **logo depois da LOJA** na hierarquia da `SafeArea` (antes, ela vinha antes da LOJA): cobre a coluna e a barra, e os modais e o DBG, que vêm depois, continuam por cima dela. Desligada, volta ao lugar.
+  - **Os cards acima do escurecido do raro (P10):** a loja rápida tem um `Canvas` próprio, que só passa a ordenar sozinho (um acima) enquanto o raro está aberto. Fechado, ela fica no lugar dela, abaixo do painel da LOJA.
+  - `QuickShopLayout` (UI, no objeto `SafeArea/QuickShopLayout`): ao abrir guarda as posições da cena (as da E7) e troca para as poses "ligada" que o setup gravou: Descansar e DESCER (e o que está dentro deles, como a madeira acesa do DESCER) com 128, o aviso do Descansar trancado junto, a barra do andar no alto (4 px abaixo do HUD), o painel do raro a 50 px do alto e o DBG no alto, logo abaixo do HUD, encostado na coluna da direita (o botão de 184 a 214, o aviso do cálculo de 120 a 180). A escolha fica em `PlayerPrefs` (`dbg.quickShop`), fora do save; num build de lançamento não liga.
+  - `QuickShopSetup` (Editor, o último do setup): gera o import do `tile_blank.png` (o tile do AJUSTES sem a engrenagem, 9-slice), monta a loja rápida desligada e o botão `Loja rápida: não` no menu Loja do DBG, e recalcula as poses a cada rodada a partir da cena.
   - O núcleo não muda.
-  - Um teste PlayMode (roda com a suíte, na E9): comprar pela loja rápida faz o mesmo que pela LOJA (custo, nível, lascas), e o botão apagado não compra.
+  - `QuickShopTests` (PlayMode, 5 testes; os 4 primeiros verdes em 2026-11-19): desligada é a E7; ligada, os quatro cards e os botões de 128 (e desligar devolve tudo); o card compra como a LOJA (custo, nível, lascas) e apagado não compra; com o raro aberto, os cards ficam por cima e o raro acima da coluna.
+  - **O DBG no alto (Bruno, 2026-11-19, no teste):** acima dos cards, o botão ficava por baixo do painel aberto do DBG (que vai de 122 a 386 px do fundo) e não dava mais para fechar. Foi para o alto, a 50 px do topo, onde o painel aberto não chega nem no 9:16. Um teste a mais nos `QuickShopTests` confere que o botão fica fora do painel aberto e fecha.
+  - **Cuidado na suíte (E9):** deixar a loja rápida ligada no Editor muda as posições que os outros testes PlayMode medem (Descansar, barra do andar). Os `QuickShopTests` desligam no começo e devolvem a escolha no fim; para rodar a suíte, deixar `Loja rápida: não`.
+  - Capturas reais: `tools/ci/out/m9i-e8-real-desligada.png`, `-ligada.png`, `-ligada-andar12.png` e `-ligada-raro.png`.
 
 ### E9 — Suíte de testes
 
@@ -221,7 +241,7 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
 | P7 | Loja rápida: mockup das três opções antes do código, ou direto no DBG? | **Mockup antes** (rápido, sobre a captura), depois as três no DBG |
 | P8 | Um toque compra um nível, ou segurar compra vários? | **Um toque, um nível.** Segurar fica para depois, se o Apellon gostar |
 | P9 | A opção do DBG fica lembrada ao fechar e abrir o jogo? | **Sim**, para abrir o APK já na opção que você quer mostrar |
-| P10 | Durante a escolha do raro, a loja rápida continua tocável? | **Sim**: a janela cobre o alto da tela; o de baixo segue o jogo, como hoje |
+| P10 | Durante a escolha do raro, a loja rápida continua tocável? | **Sim**: a janela cobre o alto da tela e a loja rápida fica por cima do escurecido (o mockup mostrou que hoje o escurecido bloqueia a barra de baixo; ela continua assim) |
 
 ## Como testar (Bruno)
 
@@ -294,6 +314,17 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
   3. **Coluna:** LOJA, AD e AJUSTES com o nome branco e grosso, na mesma letra dos números de LASCAS e VERMELHAS.
   4. **Menu do AD:** tocar no AD. As quatro linhas mais altas, o nome do anúncio maior, o bônus e o detalhe legíveis e o ASSISTIR maior; "Anúncio grande" e "1h 20 min" sem se encostar. Assistir um: a linha mostra o "falta" embaixo do botão.
 
+- **E8 — A loja rápida no DBG** (feita em 2026-11-19, D-343). Nada de cena nova; um botão novo no DBG (`DBG → Loja → Loja rápida: não/sim`).
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console: `[Setup] Loja rápida no DBG (M9i E8, D-341)…` na primeira vez e `[Setup] Loja rápida: 11 poses "ligada"…`; rodando de novo, nenhuma das duas aparece).
+  2. Abrir `Assets/_Project/Scenes/Game.unity` e dar Play (Game view em 9:20 e depois em 9:16). **Desligada:** a tela da E7, sem nada novo.
+  3. `DBG → Loja → Loja rápida: não`: o botão vira `Loja rápida: sim` e a tela muda junto: quatro cards acima do Descansar e do DESCER (Picareta, Velocidade, Mineração, Crítico), Descansar e DESCER mais largos e separados, alinhados com os cards, a faixa da bomba igual no fundo, a barra do andar de volta ao alto e o DBG no alto, logo abaixo do HUD, ao lado da coluna da direita (com o aviso do cálculo à esquerda dele).
+  4. **Comprar:** no começo, sem lascas, os cards estão apagados (texto cinza) e o toque não faz nada. `DBG → Loja → +100 lascas` (ou minerar): os que dá para comprar acendem. Tocar num aceso: o nível sobe um ("Nv n"), o preço muda e as LASCAS descem o mesmo que na LOJA. Abrir a LOJA: os mesmos níveis.
+  5. **LOJA aberta:** o painel cobre os cards (eles ficam por baixo).
+  6. **Raro:** `DBG → Bônus → Janela agora`: a janela abre no alto, na altura da LOJA, por cima da coluna e da barra do andar. Os cards continuam acesos e tocáveis durante a escolha; o DBG também. **DBG:** com a loja rápida ligada, tocar em DBG abre o painel e tocar de novo fecha (o botão fica acima do painel aberto).
+  7. **Descansar trancado e DESCER:** no andar 1, tocar no Descansar: o aviso aparece acima dele. `DBG → Andar → Encher a barra`: o DESCER acende de ponta a ponta nos 128 px, com o AUTO no canto.
+  8. Parar e dar Play: a loja rápida continua ligada (fica lembrada). `DBG → Loja → Loja rápida: sim` desliga, e tudo volta à E7. **Deixar desligada antes de rodar a suíte de testes.**
+  9. **No G75 (para mostrar ao Apellon):** gerar o APK, ligar pelo DBG e fechar o app; ao abrir de novo, já começa com a loja rápida.
+
 ## Critério de pronto
 
 - Todos os ajustes de prioridade alta feitos; os outros feitos ou adiados com o Bruno (com o motivo na lista).
@@ -320,5 +351,5 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
 | E6 Ícones e câmera nova | 🔶 feita em 2026-11-19, espera o seu teste | D-339 |
 | E7 A bomba embaixo, botões em cima | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, segue") | D-340 |
 | E7, complemento: nomes da coluna e menu do AD | 🔶 feito em 2026-11-19, espera o seu teste | D-342 |
-| E8 Loja rápida no DBG (A, B, C) | 🔶 mockup das três opções, espera a sua escolha | D-341, proposta para o Apellon |
+| E8 Loja rápida no DBG | ✅ aprovada pelo Bruno em 2026-11-19 ("pode fechar essa implementação"), com o DBG no alto | D-341, D-343; proposta para o Apellon |
 | E9 Suíte de testes | ⏳ | sem as sessões longas |

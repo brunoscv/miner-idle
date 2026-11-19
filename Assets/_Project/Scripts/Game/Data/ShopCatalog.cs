@@ -126,6 +126,12 @@ namespace MinersIdle.Game
         [Tooltip("As linhas da aba das permanentes, na ordem da tabela do GDD (as que chegam ao limite descem para o fim).")]
         [SerializeField] PermanentEntry[] permanentEntries = Array.Empty<PermanentEntry>();
 
+        [Header("Loja rápida no DBG (M9i E8, D-341): a proposta para o Apellon")]
+        [Tooltip("O nível no card da loja rápida. {0} = nível (como na LOJA: a Picareta conta do 1).")]
+        [SerializeField] string quickLevelFormat = "Nv {0}";
+        [Tooltip("As melhorias da loja rápida, na ordem dos cards (só as da aba MELHORIAS).")]
+        [SerializeField] UpgradeId[] quickUpgrades = { UpgradeId.Pickaxe, UpgradeId.Speed, UpgradeId.Mining, UpgradeId.Critical };
+
         [Header("Aba do estagiário (M7, E3, D-170, D-174)")]
         [SerializeField] string internTabLabel;
         [Tooltip("As melhorias dele, na ordem da aba (só aparecem com ele contratado).")]
@@ -147,6 +153,16 @@ namespace MinersIdle.Game
         public System.Collections.Generic.IReadOnlyList<PermanentEntry> PermanentEntries => permanentEntries;
         public string InternTabLabel => internTabLabel;
         public System.Collections.Generic.IReadOnlyList<Entry> InternEntries => internEntries;
+        public string QuickLevelFormat => quickLevelFormat;
+        public System.Collections.Generic.IReadOnlyList<UpgradeId> QuickUpgrades => quickUpgrades ?? Array.Empty<UpgradeId>();
+
+        /// <summary>A linha da aba MELHORIAS de uma melhoria (null se ela não está na loja).</summary>
+        public Entry Find(UpgradeId upgrade)
+        {
+            foreach (var entry in entries)
+                if (entry != null && !entry.Locked && entry.Upgrade == upgrade) return entry;
+            return null;
+        }
 
         /// <summary>Um valor de efeito no estilo da linha (o único formatador da loja, nas duas abas).</summary>
         public string FormatValue(EffectStyle style, double value)

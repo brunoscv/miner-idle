@@ -225,6 +225,8 @@ MonoBehaviour:
     levelNames: []
     levelSheet: {fileID: 0}
     levelFrames: 0
+  quickLevelFormat: Nv {0}
+  quickUpgrades: 00000000010000000200000006000000i
   internTabLabel: "ESTAGI\xC1RIO"
   internEntries:
   - locked: 0

@@ -305,7 +305,15 @@ namespace MinersIdle.EditorTools
         static bool IsNumberText(Transform node) =>
             node.name == "Value" || node.name == "Balance" || node.name == "Seconds" ||
             (node.name == "Label" && node.parent != null && node.parent.name == "Buy") ||
-            IsColumnTileLabel(node);
+            IsColumnTileLabel(node) || IsQuickShopPrice(node);
+
+        /// <summary>
+        /// O preço nos cards da loja rápida (M9i E8, D-341): na Press Start, como o preço no Comprar da LOJA, no tamanho
+        /// que o <see cref="QuickShopSetup"/> deu (8, o da própria fonte).
+        /// </summary>
+        static bool IsQuickShopPrice(Transform node) =>
+            node.name == "Price" && node.parent != null && node.parent.parent != null &&
+            node.parent.parent.name.StartsWith(QuickShopSetup.CardPrefix);
 
         /// <summary>
         /// O nome nos tiles da coluna (LOJA, AD, AJUSTES): desde a M9i E7 (#21, pedido do Bruno), na letra grossa e branca

@@ -153,6 +153,7 @@ namespace MinersIdle.EditorTools
             changed |= IconsV8Setup.EnsureInScene(); // M9i E6: as peças do Apellon que faltavam (de-para, D-339)
             changed |= BottomBarV8Setup.EnsureInScene(); // M9i E7: a bomba embaixo, Descansar e Próximo andar em cima (D-340)
             changed |= BoostV8Setup.EnsureInScene(); // M9i E7 (#22): o menu do AD com linhas mais altas e letra maior
+            changed |= QuickShopSetup.EnsureInScene(); // M9i E8 (D-341): a loja rápida no DBG, a proposta para o Apellon
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }
