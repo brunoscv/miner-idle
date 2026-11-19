@@ -73,12 +73,15 @@ namespace MinersIdle.Tests
             var sim = Sim();
             sim.SkipToCave(9);
             Assert.That(sim.CanRest, Is.False, "D-152: o Descansar aparece a partir do 10");
+            Assert.That(sim.IsRestLocked, Is.True, "M9i E1: antes do 10, o botão fica apagado");
+            Assert.That(sim.RestLevel, Is.EqualTo(10));
             Assert.That(sim.PendingRedShards, Is.EqualTo(0));
             Assert.That(sim.Rest(), Is.Null);
             Assert.That(sim.NextLevelRedShards, Is.EqualTo(5), "o 10 daria 5");
 
             sim.SkipToNextCave();
             Assert.That(sim.CanRest, Is.True);
+            Assert.That(sim.IsRestLocked, Is.False);
             Assert.That(sim.PendingRedShards, Is.EqualTo(5));
             sim.SkipToNextCave();
             Assert.That(sim.PendingRedShards, Is.EqualTo(6));
@@ -104,6 +107,7 @@ namespace MinersIdle.Tests
             Assert.That(permanent.RedShards, Is.EqualTo(24));
             Assert.That(permanent.Day, Is.EqualTo(2));
             Assert.That(sim.CanRest, Is.False, "a run acabou");
+            Assert.That(sim.IsRestLocked, Is.False, "depois de descansar, nem trancado: a run acabou");
             Assert.That(sim.Rest(force: true), Is.Null, "não descansa duas vezes");
 
             var next = sim.Permanents.NewRun(sim.Economy);
@@ -130,6 +134,7 @@ namespace MinersIdle.Tests
             var sim = new MiningSimulation(Rules(), new SeededRandom(7), economy: V7());
             sim.SkipToCave(50);
             Assert.That(sim.CanRest, Is.False, "o jogo até o GDD v5");
+            Assert.That(sim.IsRestLocked, Is.False, "sem descanso no balanço, não há botão");
             Assert.That(sim.PendingRedShards, Is.EqualTo(0));
         }
 

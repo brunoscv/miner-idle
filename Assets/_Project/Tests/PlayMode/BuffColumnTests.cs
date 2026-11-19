@@ -131,6 +131,10 @@ namespace MinersIdle.Tests
             yield return Open();
             GrantCard(RareCard.Damage);
             double seconds = GrantCard(RareCard.Shards);
+            // M9i E1: a coluna desceu para baixo do AJUSTES; na tela do batch (640×480, deitada) o ícone ficaria fora
+            // da tela. O teste mede o toque no ícone, não o lugar da coluna: sobe ela para dentro da tela.
+            var root = (RectTransform)_column.transform;
+            root.anchoredPosition = new Vector2(root.anchoredPosition.x, -60f);
             yield return null;
             var shards = _column.SlotAt(1);
 

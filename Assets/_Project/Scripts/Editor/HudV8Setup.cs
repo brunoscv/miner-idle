@@ -266,6 +266,7 @@ namespace MinersIdle.EditorTools
         static bool MoveBuffColumn(Transform safeArea)
         {
             if (!(safeArea.Find("BuffColumn") is RectTransform column)) return false;
+            if (column.anchorMin.x >= 1f) return false; // M9i E1: já foi para a direita (HudColumnV8Setup)
             if (Mathf.Approximately(column.anchoredPosition.x, BuffLeft)) return false;
             column.anchoredPosition = new Vector2(BuffLeft, column.anchoredPosition.y);
             EditorUtility.SetDirty(column);

@@ -47,7 +47,9 @@ namespace MinersIdle.Tests
             foreach (var gone in new[] { "Dano", "Caverna", "Velocidade" })
                 Assert.That(hud.Find(gone), Is.Null, gone + " saiu do HUD (D-278)");
 
-            // O ícone das VERMELHAS é o do Descansar (o cristal tingido de vermelho), não o roxo das LASCAS.
+            // O ícone das VERMELHAS é o do Descansar (o cristal tingido de vermelho), não o roxo das LASCAS. No 10 o
+            // Descansar abre (antes dele mostra o cadeado, M9i E1).
+            Simulation.SkipToCave(10);
             var ruby = _safeArea.Find("Rest/RestButton/Icon")?.GetComponent<UnityEngine.UI.Image>();
             var icon = hud.Find("Vermelhas/Row/Icon")?.GetComponent<UnityEngine.UI.Image>();
             if (ruby != null && icon != null) Assert.That(icon.color, Is.EqualTo(ruby.color), "o rubi");

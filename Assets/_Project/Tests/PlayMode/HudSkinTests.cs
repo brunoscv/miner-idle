@@ -95,7 +95,35 @@ namespace MinersIdle.Tests
             Assert.That(ad.GetComponent<ComingSoonButton>(), Is.Null, "AD abre o anúncio desde o M9b (E5)");
             Assert.That(ad.Find("Notice"), Is.Null);
             Assert.That(ad.GetComponent<AdButtonView>(), Is.Not.Null);
-            Assert.That(ad.Find("Icon")?.GetComponent<Image>().sprite, Is.Not.Null, "a TV (D-233)");
+        }
+
+        /// <summary>M9i E1 (D-334): LOJA, AD e AJUSTES são os tiles do Apellon, com o nome dentro e sem os ícones de antes.</summary>
+        [Test]
+        public void SideButtons_AreTheApellonTiles_WithTheNameInside()
+        {
+            foreach (var name in new[] { "Shop/ShopButton", "AdButton", "SettingsButton" })
+            {
+                var button = _safeArea.Find(name);
+                var sprite = button.GetComponent<Image>().sprite;
+                Assert.That(sprite, Is.Not.Null, name);
+                Assert.That(sprite.name, Does.StartWith("tile_"), name);
+                Assert.That(button.Find("Label").gameObject.activeSelf, Is.True, name + ": o nome no tile");
+                foreach (Transform child in button)
+                    if (child.name == "Icon") Assert.That(child.gameObject.activeSelf, Is.False, name + ": o desenho já está no tile");
+            }
+        }
+
+        /// <summary>M9i E1 (#7): a coluna dos bônus fica à direita, embaixo do AJUSTES, no meio da coluna dos botões.</summary>
+        [Test]
+        public void BuffColumn_SitsUnderTheSettingsButton()
+        {
+            var buffs = (RectTransform)_safeArea.Find("BuffColumn");
+            var settings = (RectTransform)_safeArea.Find("SettingsButton");
+            var buffsBox = buffs.Corners();
+            var settingsBox = settings.Corners();
+            Assert.That(buffsBox[1].y, Is.LessThan(settingsBox[0].y), "começa abaixo do AJUSTES");
+            float buffsCenter = (buffsBox[0].x + buffsBox[2].x) / 2f, settingsCenter = (settingsBox[0].x + settingsBox[2].x) / 2f;
+            Assert.That(buffsCenter, Is.EqualTo(settingsCenter).Within(1f), "no meio da coluna");
         }
 
         [Test]
@@ -104,6 +132,16 @@ namespace MinersIdle.Tests
             var shopRoot = _safeArea.Find("Shop");
             Assert.That(_safeArea.Find("AdButton").GetSiblingIndex(), Is.LessThan(shopRoot.GetSiblingIndex()));
             Assert.That(_safeArea.Find("SettingsButton").GetSiblingIndex(), Is.LessThan(shopRoot.GetSiblingIndex()));
+        }
+    }
+
+    static class RectCorners
+    {
+        public static Vector3[] Corners(this RectTransform rect)
+        {
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            return corners;
         }
     }
 }

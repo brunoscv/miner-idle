@@ -755,6 +755,15 @@ namespace MinersIdle.Core
         /// </summary>
         public bool CanRest => !_rested && _permanents.Rules.IsRestEnabled && _state.Cave >= _permanents.Rules.RestLevel;
 
+        /// <summary>
+        /// O Descansar ainda trancado (M9i E1, #15): o balanço tem descanso, a run não descansou e ainda não chegou ao andar
+        /// do descanso (<see cref="RestLevel"/>). A barra mostra o botão apagado, com o andar que falta.
+        /// </summary>
+        public bool IsRestLocked => !_rested && _permanents.Rules.IsRestEnabled && _state.Cave < _permanents.Rules.RestLevel;
+
+        /// <summary>O andar a partir do qual dá para descansar (v8: 10).</summary>
+        public int RestLevel => _permanents.Rules.RestLevel;
+
         /// <summary>Esta run já terminou num descanso (<see cref="Rest"/>); quem a dirige começa outra.</summary>
         public bool HasRested => _rested;
 

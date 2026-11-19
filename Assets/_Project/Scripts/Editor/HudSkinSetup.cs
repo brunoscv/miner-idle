@@ -340,6 +340,8 @@ namespace MinersIdle.EditorTools
             var ad = safeArea.Find("AdButton") as RectTransform;
             var settings = safeArea.Find("SettingsButton") as RectTransform;
             if (shop == null || ad == null || settings == null) return false;
+            // M9i E1 (D-334): a coluna já usa os tiles do Apellon; os botões gerados de antes não voltam.
+            if (HudColumnV8Setup.HasTile(shop)) return false;
 
             bool changed = false;
             changed |= ArtButton(shop, Load(ShopButtonPath));

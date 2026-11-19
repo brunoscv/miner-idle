@@ -430,6 +430,7 @@ Perguntas em [Análise - GDD v8](Analise%20-%20GDD%20v8.md) §4. O Apellon é o 
 | **D-331** | **O Apagar save não zera os ajustes (M9i P2):** confirma a D-200: som, tremor e avanço automático ficam no `settings.json`. O resto do progresso, com o backup, zera. | M9i |
 | **D-332** | **O texto da transição de andar numa placa de madeira (M9i P3):** "ANDAR N" ~2× maior numa placa pendurada, com o nome da caverna embaixo; o mockup da E2 confirma (faixa e modal ficam como alternativas). | M9i |
 | **D-333** | **A bomba por botão é opção, com Deslizar como padrão (M9i P4):** nos AJUSTES, "Bomba: Deslizar / Tocar"; Tocar lança com um toque na bomba cheia. Deslizar continua o padrão (D-310). Fica salvo com os ajustes. | M9i |
+| **D-334** | **A coluna da direita com o tile do Apellon (M9i E1, 2026-11-19, Bruno: "A, tile do Apellon"):** LOJA, AD e AJUSTES viram os tiles `icon_shop`, `icon_boost` e `icon_settings` inteiros (48 px de arte, 1:1 na tela de 270), com o nome em marrom escuro na parte de baixo do tile. Com a escolha feita no mockup, o botão do DBG para trocar o fundo (previsto no plano) não é feito. | M9i |
 
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 

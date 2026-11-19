@@ -38,6 +38,8 @@ Todo asset de terceiros usado no jogo, com autor, origem e licença. Os packs cu
 | Arte de abertura (splash) | Bruno Carvalho | `Assets/_Project/Art/Splash/Splash.jpg` |
 | Anão e animações (corrida, mineração; PixelLab) e as variações de cor | Bruno Carvalho | `Assets/_Project/Art/Character` |
 | Cristais da fila (glass, sapphire, yellow; glass_rare guardado) | Bruno Carvalho | `Assets/_Project/Art/Crystals` |
-| Botões LOJA e AJUSTES (ícone e nome) | Bruno Carvalho | `Assets/_Project/Art/UI` (fontes SVG em `ArtSource/`) |
+| Botões LOJA e AJUSTES (ícone e nome; fora de uso desde o M9i, D-334) | Bruno Carvalho | `Assets/_Project/Art/UI` (fontes SVG em `ArtSource/`) |
+| Tiles da coluna da direita (`tile_shop`, `tile_boost`, `tile_settings`, M9i E1, D-334) | Apellon | `Assets/_Project/Art/UI` |
+| Cadeado do Descansar trancado (`icon_lock`, M9i E1) | gerado no projeto | `Assets/_Project/Art/UI` |
 | Chão da caverna 1 (tiles `tileset_ground_01`…`04` e a transição `01_02`; desenhados à mão, D-90) | Bruno Carvalho | `Assets/_Project/Art/Tile` (fontes SVG em `ArtSource/tiles/`) |
 | Esteio de madeira (`mine_wood`, D-91; `mine_wood_lamp` nos esteios com lampião, D-102), tiles de pedra, buraco e transição, e os chãos das 10 cavernas derivados deles por troca de paleta (`Art/Tile/Biomes`, D-102) | Apellon | `Assets/_Project/Art/Corridor`, `Assets/_Project/Art/Tile` |

@@ -39,6 +39,10 @@ namespace MinersIdle.Game
         [Header("Descansar (Marco 8b, E3, D-151…D-154)")]
         [Tooltip("O botão da barra de baixo, o do modal e o da tela do coração.")]
         [SerializeField] string restLabel;
+        [Tooltip("M9i E1 (#15): embaixo do nome, no botão apagado. {0} = o andar do descanso.")]
+        [SerializeField] string restLockedFormat;
+        [Tooltip("M9i E1 (#15): o aviso ao tocar no botão apagado. {0} = o andar do descanso.")]
+        [SerializeField] string restLockedNotice;
         [SerializeField] string restTitle;
         [Tooltip("{0} = o dia de agora.")]
         [SerializeField] string dayFormat;
@@ -136,6 +140,8 @@ namespace MinersIdle.Game
         public string HeartContinue => heartContinue;
 
         public string RestLabel => restLabel;
+        public string RestLockedFormat => restLockedFormat;
+        public string RestLockedNotice => restLockedNotice;
         public string RestTitle => restTitle;
         public string DayFormat => dayFormat;
         public string RestLevelLabel => restLevelLabel;

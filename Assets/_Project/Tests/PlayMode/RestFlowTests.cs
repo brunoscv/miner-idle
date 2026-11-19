@@ -70,14 +70,35 @@ namespace MinersIdle.Tests
             Assert.That(restLevel, Is.EqualTo(10), "GDD v7");
 
             Simulation.SkipToCave(9);
-            Assert.That(_rest.IsShown, Is.False, "no nível 9 ainda não");
+            Assert.That(_rest.IsShown, Is.True, "M9i E1 (#15): o botão já aparece antes do 10");
+            Assert.That(_rest.IsLocked, Is.True, "no nível 9, trancado");
+            Assert.That(_rest.CountText, Is.EqualTo("ANDAR 10"), "o andar que falta no lugar das lascas");
 
             Simulation.SkipToCave(10);
-            Assert.That(_rest.IsShown, Is.True, "no 10 aparece");
+            Assert.That(_rest.IsShown, Is.True, "no 10 abre");
+            Assert.That(_rest.IsLocked, Is.False);
             Assert.That(_rest.CountText, Is.EqualTo("5"));
 
             Simulation.SkipToCave(11);
             Assert.That(_rest.CountText, Is.EqualTo("6"));
+        }
+
+        [UnityTest]
+        public IEnumerator LockedRestButton_ShowsTheNotice_AndDoesNotOpenTheModal()
+        {
+            yield return LoadGame();
+            Simulation.SkipToCave(3);
+            Assert.That(_rest.IsLocked, Is.True);
+            Assert.That(_rest.IsNoticeShown, Is.False);
+
+            ButtonAt(_rest, "RestButton").onClick.Invoke();
+            Assert.That(_rest.IsNoticeShown, Is.True, "M9i E1: o toque no trancado mostra o aviso");
+            Assert.That(_modal.IsOpen, Is.False, "e não abre o modal");
+
+            Simulation.SkipToCave(10);
+            Assert.That(_rest.IsNoticeShown, Is.False, "abriu: o aviso some");
+            ButtonAt(_rest, "RestButton").onClick.Invoke();
+            Assert.That(_modal.IsOpen, Is.True, "aberto, o toque abre o modal");
         }
 
         [UnityTest]
@@ -143,7 +164,7 @@ namespace MinersIdle.Tests
             Assert.That(Simulation.State.Shards, Is.EqualTo(0));
             Assert.That(Simulation.Permanents.State.RedShards, Is.EqualTo(7), "o banco somou");
             Assert.That(Simulation.Permanents.State.Day, Is.EqualTo(2));
-            Assert.That(_rest.IsShown, Is.False, "no nível 1 não tem Descansar");
+            Assert.That(_rest.IsLocked, Is.True, "no nível 1 o Descansar volta a ficar trancado (M9i E1)");
             Assert.That(_runner.IsResting, Is.True, "M9d (D-265): a run nova fica parada até o COMEÇAR");
             Simulation.Tick(5);
             Assert.That(Simulation.State.PlaySeconds, Is.EqualTo(0), "parada: o tempo do dia não anda");

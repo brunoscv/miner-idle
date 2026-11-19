@@ -46,6 +46,8 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
   - **B, a moldura de hoje:** o fundo das lascas na LOJA e no AJUSTES, o AD como está, e só o desenho do Apellon (sem o laranja do tile).
 
   Recomendação: **A**, porque é o botão como o Apellon desenhou, na escala certa, e a coluna fica de uma cor só. Mockup: `tools/ci/out/m9i-e1-mockup.png` (e `-coluna.png`, o detalhe).
+- **Escolha (2026-11-19, D-334):** **A, o tile do Apellon.** Com a escolha feita no mockup, o botão do DBG para trocar o fundo não é feito.
+- **Como ficou no código:** `Editor/HudColumnV8Setup.cs` (roda por último no setup) aumenta o HUD, troca os três botões pelos tiles (`Art/UI/tile_shop.png`, `tile_boost.png`, `tile_settings.png`, cópias dos PNGs do Apellon), leva a coluna dos bônus para a direita e dá ao `RestButton` o jeito trancado (`Art/UI/icon_lock.png`, um cadeado de 8×10 px de arte desenhado aqui; textos `restLockedFormat` e `restLockedNotice` nos `FeedbackTexts`). O núcleo ganhou `MiningSimulation.IsRestLocked` e `RestLevel`.
 - **Bônus (#7):** a coluna dos bônus vai para a **direita, abaixo do AJUSTES**, crescendo para baixo.
 - **Descansar (#15):** sempre na barra de baixo. Antes do andar 10 (o `restLevel` do v8), **apagado**, com um cadeado e "Andar 10" embaixo; tocar mostra um aviso curto ("Descanse a partir do andar 10"). A escada (Próximo Andar) e a bomba já aparecem sempre.
 
@@ -97,7 +99,16 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 ## Como testar (Bruno)
 
 - **E0:** ler a lista e este plano e responder P1…P5.
-- **E1…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
+- **E1 — HUD e coluna da direita** (feita em 2026-11-19, D-334). Nada de menu ou cena novos: o setup monta tudo na cena Game.
+  1. Abrir o Unity e rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console, as linhas `[Setup]` com "M9i E1").
+  2. Abrir a cena `Assets/_Project/Scenes/Game.unity` e dar Play (Game view em 9:16 ou 9:20).
+  3. **HUD:** LASCAS e VERMELHAS um pouco mais altas, o nome e o número sem encostar na borda de dentro.
+  4. **Coluna da direita:** LOJA, AD e AJUSTES são os tiles do Apellon, com o nome em marrom embaixo do desenho. Tocar em cada um: a LOJA abre, o AD abre o menu do Boost, o AJUSTES abre a tela; o botão escurece no toque. O "!" da LOJA continua no canto.
+  5. **Bônus:** `DBG → Bônus → AD curto` (ou uma carta do raro). O ícone aparece à direita, embaixo do AJUSTES, com o tempo embaixo dele; tocar no ícone abre o detalhe à esquerda.
+  6. **Descansar trancado:** no andar 1, o Descansar está na barra, cinza, com o cadeado e "ANDAR 10". Tocar: aparece "Descanse a partir do andar 10" acima do botão por ~1,6 s, e o modal não abre.
+  7. `DBG → Andar → Ir ao andar` até o 10: o Descansar acende (madeira, o rubi e as vermelhas). Tocar abre o modal como antes.
+  8. Descansar e COMEÇAR: na run nova (andar 1), o Descansar volta a ficar trancado.
+- **E2…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
 
 ## Critério de pronto
 
@@ -117,7 +128,7 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-19 (D-329…D-333) | P1…P5 com as recomendações |
 | E0 A lista fechada | ✅ 18 linhas com prioridade e as etapas | |
-| E1 HUD e coluna da direita | 🔶 mockup pronto, esperando a escolha A/B | |
+| E1 HUD e coluna da direita | 🔶 feita (D-334, opção A), espera o seu teste | testes do Descansar, da coluna e dos bônus verdes |
 | E2 Barra do andar, escada e transição | ⏳ | mockup primeiro |
 | E3 Modais | ⏳ | mockup primeiro |
 | E4 Apagar save e versão | ⏳ | |

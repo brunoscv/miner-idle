@@ -26,6 +26,8 @@ MonoBehaviour:
   heartBodyFormat: "Voc\xEA desceu os 100 andares.\n\nTempo de jogo: {0}\nLascas coletadas: {1}"
   heartContinue: CONTINUAR
   restLabel: DESCANSAR
+  restLockedFormat: ANDAR {0}
+  restLockedNotice: Descanse a partir do andar {0}
   restTitle: DESCANSAR
   dayFormat: DIA {0}
   restLevelLabel: "Andar alcan\xE7ado"
