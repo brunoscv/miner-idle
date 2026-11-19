@@ -132,6 +132,24 @@ namespace MinersIdle.UI
             }
         }
 
+        /// <summary>
+        /// Se a câmera é a F1 (altura, inclinação e campo de visão dela; a distância é a do recuo). Só nela o botão do
+        /// recuo aparece (M9i E6, #5).
+        /// </summary>
+        public bool IsF1Camera
+        {
+            get
+            {
+                var framing = stage.Framing;
+                var f1 = DescentFraming.F1;
+                return Mathf.Abs(framing.height - f1.height) < 0.01f && Mathf.Abs(framing.tilt - f1.tilt) < 0.01f
+                       && Mathf.Abs(framing.fieldOfView - f1.fieldOfView) < 0.01f;
+            }
+        }
+
+        /// <summary>Se o botão do recuo está na tela (para testes).</summary>
+        public bool IsSetbackShown => setback != null && setback.gameObject.activeSelf;
+
         /// <summary>O recuo em uso (índice de <see cref="Setbacks"/>), ou −1 se a distância não é nenhum deles.</summary>
         public int SetbackLook
         {
@@ -371,6 +389,9 @@ namespace MinersIdle.UI
 
             if (_moundLabel != null && moundLabels != null && stage.MoundLook < moundLabels.Length)
                 _moundLabel.text = moundLabels[stage.MoundLook];
+            // M9i E6 (#5): o recuo é da F1 (D-148); nas outras câmeras o botão some, em vez de mostrar "Recuo ?".
+            bool setbackApplies = IsF1Camera;
+            if (setback != null && setback.gameObject.activeSelf != setbackApplies) setback.gameObject.SetActive(setbackApplies);
             int setbackLook = SetbackLook;
             if (setbackLook < 0) setbackLook = Setbacks.Length; // o rótulo de "fora dos recuos"
             if (_setbackLabel != null && setbackLabels != null && setbackLook < setbackLabels.Length)

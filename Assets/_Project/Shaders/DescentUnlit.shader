@@ -15,6 +15,7 @@ Shader "MinersIdle/DescentUnlit"
         _EdgeShade ("Sombra do canto (meia largura; alcance m; força; eixo 0 chão / 1 parede)", Vector) = (0, 1, 0, 0)
         _Mound ("Montinho das beiras (meia largura; largura m; altura m; força da luz)", Vector) = (0, 1, 0, 0)
         _MoundShape ("Forma do montinho (0 arco ∩ / 1 platô; lateral do platô; arredondado das quinas)", Vector) = (0, 0.3, 0.6, 0)
+        _BeamFade ("Viga sumindo (quanto 0–1; linhas da viga no topo; largura e altura da textura)", Vector) = (0, 0, 1, 1)
     }
 
     SubShader
@@ -45,6 +46,7 @@ Shader "MinersIdle/DescentUnlit"
                 float4 _EdgeShade;
                 float4 _Mound;
                 float4 _MoundShape;
+                float4 _BeamFade;
             CBUFFER_END
 
             // Degraus da sombra do canto: poucos, como numa paleta de pixel art.
@@ -114,6 +116,14 @@ Shader "MinersIdle/DescentUnlit"
             {
                 half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
                 clip(color.a - _Cutoff);
+                if (_BeamFade.x > 0)
+                {
+                    // M9i E6 (#2): a viga do esteio (as linhas de cima da textura) some num pontilhado de pixels da arte,
+                    // não da tela: o "transparente" do pixel art, sem sair do corte por alfa.
+                    float2 texel = floor(input.uv * _BeamFade.zw);
+                    if (_BeamFade.w - texel.y <= _BeamFade.y)
+                        clip(1 - _BeamFade.x - Bayer4(texel));
+                }
                 if (_EdgeShade.x > 0)
                 {
                     // Distância até o canto: no chão, até a parede mais perto; na parede, a altura acima do chão.

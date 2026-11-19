@@ -67,6 +67,15 @@ namespace MinersIdle.Presentation
         /// (D-148) o limite fica onde está: os esteios continuam perto da câmera, agora também na frente do anão.
         /// </summary>
         const float SupportClearance = 0.6f;
+        /// <summary>
+        /// M9i E6 (#2): na câmera que olha de cima (a do v8), o corte acima cai no meio da tela. Ali os postes passam (ficam
+        /// nas bordas) e a viga some num pontilhado ao longo destes metros antes do corte, em vez de o arco sumir de uma vez.
+        /// </summary>
+        public const float BeamFadeMeters = 1.5f;
+        /// <summary>A viga do <c>mine_wood</c>: as 12 linhas de cima do desenho, em todas as alturas do esteio.</summary>
+        const int SupportBeamRows = 12;
+        /// <summary>A partir desta inclinação a câmera olha de cima e os esteios passam com a viga sumindo (a do v8, 60°).</summary>
+        const float LooksDownTilt = 45f;
         /// <summary>Largura do poste no desenho do esteio (12 dos 96 px do <c>mine_wood</c>).</summary>
         const float SupportPostFraction = 12f / 96f;
 
@@ -1655,6 +1664,16 @@ namespace MinersIdle.Presentation
         /// <summary>O esteio mais perto da câmera que é desenhado (m): 0,6 m além do anão na F1, ou do anão se ele estiver mais perto.</summary>
         public float NearestSupport => Mathf.Min(framing.distance, DescentFraming.F1.distance) + SupportClearance;
 
+        /// <summary>Se a câmera olha de cima (a do v8): os esteios perto da câmera ficam, com a viga sumindo (M9i E6, #2).</summary>
+        public bool SupportsPassBelow => framing.tilt >= LooksDownTilt;
+
+        /// <summary>
+        /// Quanto a viga do esteio a <paramref name="z"/> metros da câmera já sumiu: 0 além do corte; até 1 no
+        /// <see cref="BeamFadeMeters"/> antes dele, na câmera do v8. Na F1 o esteio antes do corte nem é desenhado.
+        /// </summary>
+        public float BeamFadeAt(float z) =>
+            SupportsPassBelow ? Mathf.Clamp01((NearestSupport - z) / BeamFadeMeters) : 0f;
+
         void LayoutPosts(double front)
         {
             float halfWidth = framing.corridorWidth * 0.5f;
@@ -1672,6 +1691,7 @@ namespace MinersIdle.Presentation
             float lampX = -size.x * 0.5f + size.x * SupportPostFraction + lampSize * 0.5f;
             float lampY = size.y - lampDrop - lampSize;
             float nearest = NearestSupport;
+            bool passBelow = SupportsPassBelow;
             double first = Math.Ceiling((front - CorridorFar) / PostSpacing) * PostSpacing;
 
             for (int i = 0; i < PostSlots; i++)
@@ -1686,13 +1706,16 @@ namespace MinersIdle.Presentation
                 }
 
                 bool inFront = z < nearest;
+                // Na câmera do v8 o esteio antes do corte fica, com a viga sumindo; na F1 ele some (cobria o anão).
+                bool hidden = inFront && !passBelow;
                 if (sprite || inFront)
                     _postsLeft[i].Visible = _postsRight[i].Visible = _beams[i].Visible = false;
                 long postIndex = (long)Math.Round(k / PostSpacing);
                 bool lampHere = lampEvery > 0 && (postIndex % lampEvery + lampEvery) % lampEvery == 0;
-                if (sprite && !inFront)
+                if (sprite && !hidden)
                 {
                     _supports[i].SetTexture(lampSprites && lampHere ? supportLampTexture : supportArt);
+                    _supports[i].SetBeamFade(BeamFadeAt(z), SupportBeamRows);
                     _supports[i].Place(new Vector3(0f, 0f, z), size);
                 }
                 else _supports[i].Visible = false;
@@ -1708,7 +1731,7 @@ namespace MinersIdle.Presentation
 
                 if (looseLamp)
                 {
-                    if (lampHere && !inFront)
+                    if (lampHere && !hidden)
                     {
                         _lanterns[i].SetTexture(lampTexture);
                         _lanterns[i].Place(new Vector3(lampX, lampY, z - 0.03f), lampScale);

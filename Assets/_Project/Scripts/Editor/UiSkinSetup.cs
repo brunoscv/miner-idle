@@ -111,7 +111,8 @@ namespace MinersIdle.EditorTools
             // Os sprites do M9i que têm outro PPU ou borda são configurados pelo setup de cada etapa (sem isso, os dois
             // setups desfaziam um ao outro a cada rodada).
             foreach (var path in Pngs(ProjectIconsFolder))
-                if (!FloorV8Setup.Owns(path) && path != ModalV8Setup.WindowPath) changed += ConfigureSprite(path, Vector4.zero);
+                if (!FloorV8Setup.Owns(path) && path != ModalV8Setup.WindowPath && !IconsV8Setup.Owns(path))
+                    changed += ConfigureSprite(path, Vector4.zero);
             if (File.Exists(CrystalIconPath)) changed += ConfigureSprite(CrystalIconPath, Vector4.zero);
 
             if (changed > 0) Debug.Log($"[Setup] Sprites de UI configurados (pixel art): {changed}.");

@@ -208,12 +208,15 @@ namespace MinersIdle.Presentation
         static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         static readonly int BaseMapSTId = Shader.PropertyToID("_BaseMap_ST");
+        static readonly int BeamFadeId = Shader.PropertyToID("_BeamFade");
 
         readonly MeshRenderer _renderer;
         readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
         Texture _texture;
         int _frame = -1;
         Color _color = Color.white;
+        float _beamFade;
+        int _beamRows;
         bool _visible = true;
 
         public Transform Transform { get; }
@@ -267,6 +270,22 @@ namespace MinersIdle.Presentation
             Apply();
         }
 
+        /// <summary>
+        /// M9i E6 (#2): quanto as <paramref name="rows"/> linhas de cima da textura (a viga do esteio) já sumiram, de 0 a 1,
+        /// num pontilhado de pixels da arte. 0 = inteira.
+        /// </summary>
+        public void SetBeamFade(float fade, int rows)
+        {
+            fade = Mathf.Clamp01(fade);
+            if (Mathf.Approximately(fade, _beamFade) && rows == _beamRows) return;
+            _beamFade = fade;
+            _beamRows = rows;
+            Apply();
+        }
+
+        /// <summary>O quanto a viga já sumiu (para testes).</summary>
+        public float BeamFade => _beamFade;
+
         public void SetColor(Color color)
         {
             if (color == _color) return;
@@ -289,6 +308,8 @@ namespace MinersIdle.Presentation
         {
             if (_texture != null) _block.SetTexture(BaseMapId, _texture);
             _block.SetColor(BaseColorId, _color);
+            if (_texture != null)
+                _block.SetVector(BeamFadeId, new Vector4(_beamFade, _beamRows, _texture.width, _texture.height));
             _renderer.SetPropertyBlock(_block);
         }
     }

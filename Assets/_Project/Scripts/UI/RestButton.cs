@@ -41,6 +41,13 @@ namespace MinersIdle.UI
         [SerializeField] TMP_Text noticeText;
         [SerializeField, Min(0.1f)] float noticeSeconds = 1.6f;
 
+        [Header("Trancado no jeito do DESCER (M9i E6)")]
+        [Tooltip("O cadeado amarelo e os dois textos nas medidas do DESCER; só aparece trancado. Aberto, o botão fica como era.")]
+        [SerializeField] GameObject lockedContent;
+        [SerializeField] TMP_Text lockedTitle;
+        [Tooltip("\"ANDAR 10\": o andar do descanso.")]
+        [SerializeField] TMP_Text lockedFloor;
+
         double _shownCount = -1;
         ButtonState _state = (ButtonState)(-1);
         Sprite _openIcon;
@@ -58,11 +65,16 @@ namespace MinersIdle.UI
         /// <summary>Se o aviso do botão trancado está na tela (para testes).</summary>
         public bool IsNoticeShown => notice != null && notice.activeSelf;
 
-        public string CountText => count.text;
+        /// <summary>A linha de baixo que está na tela: as lascas (aberto) ou o andar do descanso (trancado).</summary>
+        public string CountText => IsLocked && lockedFloor != null ? lockedFloor.text : count.text;
+
+        /// <summary>Se o trancado está no jeito do DESCER: o cadeado amarelo e os textos dele (M9i E6).</summary>
+        public bool IsLockedContentShown => lockedContent != null && lockedContent.activeSelf;
 
         void Awake()
         {
             label.text = texts.RestLabel;
+            if (lockedTitle != null) lockedTitle.text = texts.RestLabel;
             _openLabelColor = label.color;
             _openCountColor = count.color;
             if (icon != null)
@@ -168,9 +180,18 @@ namespace MinersIdle.UI
             }
             label.color = locked ? lockedTextColor : _openLabelColor;
             count.color = locked ? lockedTextColor : _openCountColor;
+            if (lockedContent != null)
+            {
+                // M9i E6: trancado, o cadeado e os textos no jeito do DESCER; o ícone, o nome e as lascas de antes somem.
+                lockedContent.SetActive(locked);
+                if (icon != null) icon.gameObject.SetActive(!locked);
+                label.gameObject.SetActive(!locked);
+                count.gameObject.SetActive(!locked);
+            }
             if (locked)
             {
                 count.text = string.Format(texts.RestLockedFormat, restLevel);
+                if (lockedFloor != null) lockedFloor.text = count.text;
                 if (noticeText != null) noticeText.text = string.Format(texts.RestLockedNotice, restLevel);
             }
         }

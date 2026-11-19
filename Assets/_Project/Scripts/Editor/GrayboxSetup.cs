@@ -150,6 +150,7 @@ namespace MinersIdle.EditorTools
             changed |= ModalV8Setup.EnsureInScene(); // M9i E3: os modais com o título mais alto e o X maior
             changed |= VersionNoticeSetup.EnsureInScene(); // M9i E4: o aviso de versão nova (depois da E3: copia a janela já pronta)
             changed |= BackAndBombSetup.EnsureInScene(); // M9i E5: o Voltar do Android, o "Sair do jogo?" e a bomba por toque
+            changed |= IconsV8Setup.EnsureInScene(); // M9i E6: as peças do Apellon que faltavam (de-para, D-339)
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

@@ -33,8 +33,11 @@ namespace MinersIdle.Tests
             }
         }
 
+        /// <summary>
+        /// Na F1 (o DBG → Câmera), nenhum esteio entre a câmera e o anão: ali o arco cobria o anão inteiro (M1b).
+        /// </summary>
         [UnityTest]
-        public IEnumerator Supports_AreNeverBetweenTheCameraAndTheDwarf()
+        public IEnumerator Supports_OnTheF1_AreNeverBetweenTheCameraAndTheDwarf()
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
                 GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
@@ -42,6 +45,8 @@ namespace MinersIdle.Tests
 
             var stage = Object.FindAnyObjectByType<DescentStage>();
             var runner = Object.FindAnyObjectByType<MiningRunner>();
+            stage.Framing = DescentFraming.F1;
+            Assert.That(stage.SupportsPassBelow, Is.False);
             runner.TimeScale = 20f;
 
             int seen = 0;
@@ -61,6 +66,47 @@ namespace MinersIdle.Tests
                 }
             }
             if (seen == 0) Assert.Ignore("Sem o esteio em sprite (pack fora do git, D-65).");
+        }
+
+        /// <summary>
+        /// M9i E6 (#2, D-339): na câmera do v8, que olha de cima, o corte dos esteios cai no meio da tela. Ali o esteio
+        /// passa: inteiro além do corte, com a viga sumindo num pontilhado no 1,5 m antes dele, e só os postes depois.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Supports_OnTheV8Camera_PassBelow_WithTheBeamFading()
+        {
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(
+                GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+
+            var stage = Object.FindAnyObjectByType<DescentStage>();
+            var runner = Object.FindAnyObjectByType<MiningRunner>();
+            Assert.That(stage.Framing.SameView(DescentFraming.GddV8), Is.True, "o jogo abre na câmera do v8");
+            Assert.That(stage.SupportsPassBelow, Is.True);
+            float nearest = stage.NearestSupport;
+            Assert.That(stage.BeamFadeAt(nearest + 1f), Is.EqualTo(0f), "além do corte, inteiro");
+            Assert.That(stage.BeamFadeAt(nearest - DescentStage.BeamFadeMeters * 0.5f), Is.EqualTo(0.5f).Within(1e-4f));
+            Assert.That(stage.BeamFadeAt(nearest - DescentStage.BeamFadeMeters - 0.1f), Is.EqualTo(1f), "depois, só os postes");
+            runner.TimeScale = 20f;
+
+            var block = new MaterialPropertyBlock();
+            int seen = 0, passing = 0;
+            for (int frame = 0; frame < 120; frame++)
+            {
+                yield return null;
+                foreach (Transform child in stage.transform)
+                {
+                    if (child.name != "Support" || !child.TryGetComponent<MeshRenderer>(out var renderer) || !renderer.enabled) continue;
+                    seen++;
+                    float z = child.localPosition.z;
+                    renderer.GetPropertyBlock(block);
+                    float fade = block.GetVector("_BeamFade").x;
+                    Assert.That(fade, Is.EqualTo(stage.BeamFadeAt(z)).Within(1e-3f), "a viga some conforme a distância");
+                    if (z < nearest) passing++;
+                }
+            }
+            if (seen == 0) Assert.Ignore("Sem o esteio em sprite (pack fora do git, D-65).");
+            Assert.That(passing, Is.GreaterThan(0), "esteios passando entre a câmera e o corte");
         }
 
         /// <summary>
@@ -128,7 +174,7 @@ namespace MinersIdle.Tests
         /// <summary>
         /// Esteio baixo (D-117): o jogo abre no de 3,0 m; o botão do DBG passa pelas alturas; nas baixas, o esteio fica
         /// abaixo da câmera (a viga pode aparecer) e cada um tem o seu lampião solto, num tamanho fixo, no poste da
-        /// esquerda, nunca na frente do anão.
+        /// esquerda; na F1, nunca na frente do anão (na do v8 ele passa junto com o esteio, D-339).
         /// </summary>
         [UnityTest]
         public IEnumerator ShortSupports_StayBelowTheCamera_WithASmallLooseLamp()
@@ -169,7 +215,10 @@ namespace MinersIdle.Tests
                             Assert.That(child.localPosition.x, Is.LessThan(0f), $"opção {look}: no poste da esquerda");
                             Assert.That(child.localPosition.y + child.localScale.y, Is.LessThan(stage.SupportHeight),
                                         $"opção {look}: abaixo da viga");
-                            Assert.That(child.localPosition.z, Is.GreaterThan(stage.Framing.distance), $"opção {look}: atrás do anão");
+                            // Na F1 o lampião nunca passa na frente do anão; na câmera do v8 (D-339) o esteio passa por
+                            // baixo e o lampião vai junto, preso ao poste da esquerda (fora do anão, o x < 0 acima).
+                            if (!stage.SupportsPassBelow)
+                                Assert.That(child.localPosition.z, Is.GreaterThan(stage.Framing.distance), $"opção {look}: atrás do anão");
                         }
                     }
                     Assert.That(lampsNow, Is.EqualTo(supports), $"opção {look}: um lampião em cada esteio (D-117)");

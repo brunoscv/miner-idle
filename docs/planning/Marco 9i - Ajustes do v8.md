@@ -190,7 +190,15 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
   6. **Telas que seguram:** `DBG → Offline → Fora 10 min` e Esc: o "Bem-vindo de volta" fica (as lascas esperam o COLETAR). O mesmo no anúncio do AD e em `DBG → Offline → Aviso de versão`. No raro (`DBG → Bônus → Janela agora`), o Esc não fecha na escolha; depois de escolher, fecha.
   7. **Bomba:** AJUSTES → "Lançar a bomba" → tocar em DESLIZAR, que vira TOCAR. Fechar: a faixa diz "TOQUE" sem as setas. Com a bomba pronta, um toque em qualquer lugar da faixa lança. Voltar para DESLIZAR: só o arrastar lança, como antes. Parar e dar Play: o modo escolhido continua.
   8. **No G75:** o Voltar do aparelho (botão ou gesto) faz o mesmo que o Esc, e SAIR fecha o app; abrir de novo: o progresso está lá.
-- **E6:** traz o seu passo a passo aqui quando for feita.
+- **E6 — Os ícones do Apellon e a câmera nova** (feita em 2026-11-19, D-339). Nada de cena nova nem de menu novo.
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console: `[Setup] O cristal vermelho do Apellon nas VERMELHAS…`, `…Descansar e Próximo andar no botão laranja…`, `…barra de carregamento…: 2`, `…as marcas viram o ponto…`).
+  2. Abrir `Assets/_Project/Scenes/Game.unity` e dar Play. **HUD:** VERMELHAS com o cristal vermelho e azul do Apellon (não mais o roxo pintado).
+  3. **Barra de baixo:** Descansar trancado e Próximo andar no laranja apagado; conforme os cristais quebram, o Próximo andar acende da esquerda para a direita. **Descansar trancado:** o cadeado amarelo à esquerda, do tamanho da escada do DESCER, e "DESCANSAR" / "ANDAR 10" do tamanho de "DESCER" / "ANDAR n". `DBG → Andar → Ir ao andar` 10 ou mais: o Descansar acende, igual ao de antes (laranja, texto marrom, cristal vermelho); `DBG → Andar → Encher a barra`: DESCER todo aceso, com o texto marrom.
+  4. **Barra do andar:** as marcas dos andares que liberam algo viram pontinhos laranja ao lado da barra.
+  5. **Barras de tempo:** AD → assistir um anúncio: a barra dos 30 s com a moldura e o verde do Apellon. `DBG → Bônus → Janela agora`: a barra da escolha do raro, igual.
+  6. **Preço das permanentes:** descansar (andar 10 ou mais) e abrir a loja das permanentes: o preço com o cristal vermelho; o que não dá para comprar fica apagado.
+  7. **Esteios:** olhar o corredor um tempo: o arco não some mais de uma vez no meio da tela. Os postes continuam até a borda de baixo e a viga se desfaz num pontilhado.
+  8. **Recuo (#5):** `DBG → Câmera`: na câmera do v8 o botão Recuo não aparece; trocar para a F1 (botão da câmera): ele volta.
 
 ## Critério de pronto
 
@@ -215,5 +223,5 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 | E3 Modais | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-336 |
 | E4 Apagar save e versão | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-337 |
 | E5 Voltar do Android e bomba por toque | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-338 |
-| E6 Ícones e câmera nova | 📝 de-para e propostas da câmera esperando aprovação (2026-11-19) | |
+| E6 Ícones e câmera nova | 🔶 feita em 2026-11-19, espera o seu teste | D-339 |
 | E7 Suíte de testes | ⏳ | sem as sessões longas |
