@@ -157,6 +157,14 @@ Pedido do Bruno (2026-11-19): ao deslizar a bomba, o dedo esbarra nos botões de
   - A barra do andar conta o vão até 99; o DBG sobe 2 px. O voo da bomba já saía do botão da faixa, então segue o lugar novo sozinho.
   - O teste `HudV8Tests.FloorBar_IsTheApellonMeter_CenteredBetweenTheHudAndTheBomb` passa a medir o vão até 99.
 
+### E7, complemento — Os nomes da coluna e o menu do AD (#21, #22)
+
+Pedidos do Bruno no teste da E7 (2026-11-19, D-342), fora da loja rápida:
+
+- **#21, LOJA, AD e AJUSTES:** o nome no tile estava fino e marrom. Passa para a **letra dos números do HUD** (a Press Start, grossa, a mesma do 48 e do 12 em LASCAS e VERMELHAS), **branca**, em 6 px (a grade dela: "AJUSTES" cabe nos 48 px do tile). Apagado (o AD esperando), o cinza de antes.
+- **#22, o menu do AD:** as linhas passam de 38 para **52 px** e o ícone de 32 para 36; o nome do anúncio de 8,25 para **11 px**; a duração, o bônus e o detalhe de 7 para **8,25**; o **ASSISTIR** de 66×18 para **70×26**, com a letra em 11. A janela cresce para baixo (o alto fica onde está), de 248 para 305 px, e de 252 para **262** de largura, para "Anúncio grande" e "1h 20 min" não se encostarem.
+- **No código:** `UiSkinSetup.IsColumnTileLabel` (o nome dos três tiles leva a fonte dos números) e a cor branca no `HudColumnV8Setup`; `Editor/BoostV8Setup.cs` (novo, roda por último) refaz as linhas do menu. Capturas: `tools/ci/out/m9i-e7-real-andar4.png` e `m9i-e7-real-boost.png`.
+
 ### E8 — A loja rápida, no DBG, para mostrar ao Apellon (#20)
 
 **Não está no GDD:** é uma proposta do Bruno para levar ao Apellon. Por isso tudo fica **atrás de um botão do DBG**; desligado, o jogo é exatamente o da E7.
@@ -280,6 +288,12 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
   7. **O resto no lugar:** a barra do andar com o mesmo vão até o HUD e até os botões; o DBG logo acima do Descansar; Esc uma vez: "Toque de novo para sair" acima dos botões; `DBG → Bônus → Janela agora`: o raro acima dos botões, sem cobrir nenhum.
   8. **No G75:** arrastar a bomba no fundo da tela não troca de app nem abre a barra de gestos do Android.
 
+- **E7, complemento — Os nomes da coluna e o menu do AD** (feito em 2026-11-19, D-342). Nada de menu ou cena novos.
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console: `[Setup] LOJA, AD e AJUSTES com os tiles do Apellon…` e `[Setup] Menu do AD com as linhas de 52 px…`).
+  2. Abrir `Assets/_Project/Scenes/Game.unity` e dar Play.
+  3. **Coluna:** LOJA, AD e AJUSTES com o nome branco e grosso, na mesma letra dos números de LASCAS e VERMELHAS.
+  4. **Menu do AD:** tocar no AD. As quatro linhas mais altas, o nome do anúncio maior, o bônus e o detalhe legíveis e o ASSISTIR maior; "Anúncio grande" e "1h 20 min" sem se encostar. Assistir um: a linha mostra o "falta" embaixo do botão.
+
 ## Critério de pronto
 
 - Todos os ajustes de prioridade alta feitos; os outros feitos ou adiados com o Bruno (com o motivo na lista).
@@ -305,5 +319,6 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
 | E5 Voltar do Android e bomba por toque | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-338 |
 | E6 Ícones e câmera nova | 🔶 feita em 2026-11-19, espera o seu teste | D-339 |
 | E7 A bomba embaixo, botões em cima | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, segue") | D-340 |
+| E7, complemento: nomes da coluna e menu do AD | 🔶 feito em 2026-11-19, espera o seu teste | D-342 |
 | E8 Loja rápida no DBG (A, B, C) | 🔶 mockup das três opções, espera a sua escolha | D-341, proposta para o Apellon |
 | E9 Suíte de testes | ⏳ | sem as sessões longas |

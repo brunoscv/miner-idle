@@ -152,6 +152,7 @@ namespace MinersIdle.EditorTools
             changed |= BackAndBombSetup.EnsureInScene(); // M9i E5: o Voltar do Android, o "Sair do jogo?" e a bomba por toque
             changed |= IconsV8Setup.EnsureInScene(); // M9i E6: as peças do Apellon que faltavam (de-para, D-339)
             changed |= BottomBarV8Setup.EnsureInScene(); // M9i E7: a bomba embaixo, Descansar e Próximo andar em cima (D-340)
+            changed |= BoostV8Setup.EnsureInScene(); // M9i E7 (#22): o menu do AD com linhas mais altas e letra maior
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

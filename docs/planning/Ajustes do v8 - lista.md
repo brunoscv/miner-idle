@@ -33,3 +33,5 @@
 | 18 | 2026-11-19 | Bruno (13) | Ajustes | Opção do lançamento da bomba: **deslizar** (como hoje) ou **botão** | M9i E5 ✅ (D-338): DESLIZAR ou TOCAR nos AJUSTES |
 | 19 | 2026-11-19 | Bruno (14) | Barra de baixo | Inverter: a **faixa da bomba embaixo** e Descansar e DESCER em cima dela (o dedo esbarra nos botões ao deslizar); os dois botões juntos com a **largura da faixa** | M9i E7 ✅ (D-340) |
 | 20 | 2026-11-19 | Bruno (15) | Loja e raro | **Proposta para o Apellon, fora do GDD:** no DBG, a "loja rápida" com Picareta, Velocidade, Mineração e Crítico acima dos botões de baixo (o botão inteiro compra), o raro subindo até a LOJA por cima de tudo e a barra do andar de volta ao alto; três opções de desenho | M9i E8 ⏳ (D-341; alta: é para a conversa com o Apellon) |
+| 21 | 2026-11-19 | Bruno (16) | Coluna da direita | O nome em LOJA, AD e AJUSTES fino e escuro: **branco e grosso**, como os números de LASCAS e VERMELHAS | M9i E7, complemento 🔶 (D-342) |
+| 22 | 2026-11-19 | Bruno (17) | Menu do AD | As linhas achatadas, a letra pequena e o ASSISTIR pequeno: **linhas mais altas, letra e botão maiores** | M9i E7, complemento 🔶 (D-342) |

@@ -46,7 +46,8 @@ namespace MinersIdle.EditorTools
         const float ColumnTop = HudBottom + 4f;
         const float TileLabelTop = 30f; // a faixa do nome, na parte lisa de baixo do tile
         const float TileLabelHeight = 12f;
-        static readonly Color TileLabelColor = new Color32(0x3A, 0x20, 0x10, 0xFF);
+        // M9i E7 (#21): o nome branco, na letra dos números do HUD (o UiSkinSetup põe a fonte); era o marrom 3A2010.
+        static readonly Color TileLabelColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         static readonly Color PressedTint = new Color(0.72f, 0.72f, 0.72f, 1f);
 
         // Os bônus: centrados embaixo da coluna, os segundos embaixo de cada ícone.

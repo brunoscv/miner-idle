@@ -304,7 +304,16 @@ namespace MinersIdle.EditorTools
         /// </summary>
         static bool IsNumberText(Transform node) =>
             node.name == "Value" || node.name == "Balance" || node.name == "Seconds" ||
-            (node.name == "Label" && node.parent != null && node.parent.name == "Buy");
+            (node.name == "Label" && node.parent != null && node.parent.name == "Buy") ||
+            IsColumnTileLabel(node);
+
+        /// <summary>
+        /// O nome nos tiles da coluna (LOJA, AD, AJUSTES): desde a M9i E7 (#21, pedido do Bruno), na letra grossa e branca
+        /// dos números do HUD (LASCAS e VERMELHAS), no tamanho dela (6 px: "AJUSTES" cabe nos 48 px do tile).
+        /// </summary>
+        internal static bool IsColumnTileLabel(Transform node) =>
+            node.name == "Label" && node.parent != null &&
+            (node.parent.name == "ShopButton" || node.parent.name == "AdButton" || node.parent.name == "SettingsButton");
 
         internal static float SnapFontSize(float size) =>
             Mathf.Max(2f, Mathf.Round(size / FontPixelStep)) * FontPixelStep;
