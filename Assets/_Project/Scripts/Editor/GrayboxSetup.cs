@@ -147,6 +147,7 @@ namespace MinersIdle.EditorTools
             changed |= CameraV8Setup.EnsureInScene(); // a câmera do v8 e o DBG → Câmera → v8 / F1 (M9h, D-245), depois da F1 do corredor
             changed |= HudColumnV8Setup.EnsureInScene(); // M9i E1: o HUD mais alto, os tiles do Apellon, os bônus à direita, o Descansar trancado
             changed |= FloorV8Setup.EnsureInScene(); // M9i E2: a barra do Apellon centrada, a escada no DESCER, a placa da transição
+            changed |= ModalV8Setup.EnsureInScene(); // M9i E3: os modais com o título mais alto e o X maior
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

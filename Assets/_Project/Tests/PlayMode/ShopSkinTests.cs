@@ -79,7 +79,8 @@ namespace MinersIdle.Tests
         public void ShopWindow_UsesTheWoodWindow_AndBackIsBigEnoughToTouch()
         {
             var panel = _shop.transform.Find("Screen/Panel");
-            Assert.That(panel.GetComponent<Image>().sprite.name, Is.EqualTo("window"));
+            // M9i E3 (D-336): a mesma janela de madeira, com a faixa do título de 20 px.
+            Assert.That(panel.GetComponent<Image>().sprite.name, Is.EqualTo("window_title"));
             Assert.That(((RectTransform)panel.Find("Back")).sizeDelta.y, Is.GreaterThanOrEqualTo(30f));
         }
     }

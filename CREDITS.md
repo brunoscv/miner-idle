@@ -41,6 +41,7 @@ Todo asset de terceiros usado no jogo, com autor, origem e licença. Os packs cu
 | Botões LOJA e AJUSTES (ícone e nome; fora de uso desde o M9i, D-334) | Bruno Carvalho | `Assets/_Project/Art/UI` (fontes SVG em `ArtSource/`) |
 | Tiles da coluna da direita (`tile_shop`, `tile_boost`, `tile_settings`, M9i E1, D-334) | Apellon | `Assets/_Project/Art/UI` |
 | Cadeado do Descansar trancado (`icon_lock`, M9i E1) | gerado no projeto | `Assets/_Project/Art/UI` |
+| Janela com a faixa do título de 20 px (`window_title`, M9i E3, D-336) | derivada da `window` do Pixel UI Kit (tema wood) | `Assets/_Project/Art/UI` |
 | Barra do andar (`floor_meter`), a seta (`floor_arrow`) e a escada (`icon_stair`), M9i E2, D-335 | Apellon | `Assets/_Project/Art/UI` |
 | Placa da transição (`plate_wood`, a madeira do tile do Apellon sem o desenho), a corda e o prego (`rope`, `nail`), M9i E2 | derivada do Apellon; corda e prego gerados no projeto | `Assets/_Project/Art/UI` |
 | Chão da caverna 1 (tiles `tileset_ground_01`…`04` e a transição `01_02`; desenhados à mão, D-90) | Bruno Carvalho | `Assets/_Project/Art/Tile` (fontes SVG em `ArtSource/tiles/`) |

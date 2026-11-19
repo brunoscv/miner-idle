@@ -127,7 +127,16 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
   5. `DBG → Andar → Encher a barra`: o Próximo Andar vira DESCER, com a escada do Apellon no lugar da seta.
   6. Tocar em DESCER: no escuro da transição, a placa de madeira pendurada por duas cordas, com "ANDAR n" e o nome do bioma; ela aparece e some junto com o texto.
   7. Ir até o andar 11 (bioma novo) e conferir a placa com o nome do bioma novo.
-- **E3…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
+- **E3 — Modais** (feita em 2026-11-19, D-336). Nada de menu ou cena novos.
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console, a linha `[Setup]` "Modais com a barra do título de 20 px…: 10 janelas"; rodando de novo, ela não aparece mais).
+  2. Abrir `Assets/_Project/Scenes/Game.unity` e dar Play.
+  3. **AJUSTES:** a barra do título mais alta, "AJUSTES" maior e o X de 24 px; tocar no X (e também um pouco fora do desenho, a área de toque é de 32 px) fecha. Em CRÉDITOS, o mesmo X; em APAGAR SAVE, a confirmação com a barra nova (sem X: CANCELAR fecha).
+  4. **LOJA:** "LOJA" e o saldo na barra nova, o X depois do saldo; o X fecha, o VOLTAR continua fechando. A lista rola até o Estagiário.
+  5. **AD (Boost):** a barra nova e o X; o X e o VOLTAR fecham.
+  6. **Descansar:** `DBG → Andar → Ir ao andar` até 10 ou mais, tocar em DESCANSAR: barra nova, "DIA n" antes do X; o X e o CONTINUAR fecham sem descansar.
+  7. **Raro:** `DBG → Bônus → Janela agora` (o atalho do raro): a janela cresce para cima, o cristal e "CRISTAL RARO!" na barra nova, sem X.
+  8. **Offline e anúncio:** `DBG → Offline → Fora 10 min` (o "Bem-vindo de volta") e ASSISTIR num anúncio do AD: as duas janelas com a barra nova.
+- **E4…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
 
 ## Critério de pronto
 
@@ -149,7 +158,7 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 | E0 A lista fechada | ✅ 18 linhas com prioridade e as etapas | |
 | E1 HUD e coluna da direita | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, pode seguir") | opção A (D-334) |
 | E2 Barra do andar, escada e transição | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | placa A (D-335) |
-| E3 Modais | 🔶 mockup pronto, esperando a aprovação | barra de 20 px, título 11 px, X de 24 px |
+| E3 Modais | 🔶 feita (D-336), espera o seu teste | `ModalV8Tests` e os testes da LOJA, AJUSTES, Boost, descanso, raro e offline verdes |
 | E4 Apagar save e versão | ⏳ | |
 | E5 Voltar do Android e bomba por botão | ⏳ | |
 | E6 Ícones e câmera nova | ⏳ | de-para para aprovar |

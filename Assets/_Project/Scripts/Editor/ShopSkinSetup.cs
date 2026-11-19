@@ -239,6 +239,7 @@ namespace MinersIdle.EditorTools
             if (panel == null || window == null) return false;
 
             var image = panel.GetComponent<Image>();
+            if (image.sprite == Load(ModalV8Setup.WindowPath)) return false; // M9i E3: a barra nova já está aplicada
             var title = panel.Find("Title").GetComponent<TMP_Text>();
             if (image.sprite == window && Mathf.Approximately(title.fontSize, TitleSize)) return false;
             image.sprite = window;

@@ -71,6 +71,10 @@ namespace MinersIdle.EditorTools
 
         static Sprite Load(string path) => AssetDatabase.LoadAssetAtPath<Sprite>(path);
 
+        /// <summary>Os sprites que este setup configura (PPU 16, a placa com borda): o setup da UI deixa eles de fora.</summary>
+        internal static bool Owns(string path) =>
+            path == MeterPath || path == ArrowPath || path == StairPath || path == PlatePath || path == RopePath || path == NailPath;
+
         // ── Os sprites ───────────────────────────────────────────────────────────────────────────────────────────
 
         static bool EnsureSprites()
