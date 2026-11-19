@@ -61,6 +61,11 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
   - **C, modal:** o quadro dos modais do jogo, com o título "ANDAR 12" e o nome da caverna.
 
   Recomendação: **A**, porque conversa com a mina de madeira (D-05) e não parece uma janela que pede toque.
+- **O que o mockup mostrou (2026-11-19):** `tools/ci/out/m9i-e2-mockup-barra.png` (com o detalhe em `-barra-detalhe.png`) e `m9i-e2-mockup-transicao.png`, sobre capturas reais.
+  - **Barra:** a `cave_meter` a 2 px de tela por pixel de arte: **24×256 px na tela de 270** (hoje são ~18×470 no 9:20 do G75, então fica ~45% menor; no 9:16, ~27%). A 1 px por pixel de arte ela teria só 128 px, pequena demais para ler os 10 biomas. Por dentro, o miolo de 4 px de arte recebe o âmbar até o andar de agora e as cores dos biomas por cima do amarelo; a seta `cave_meter_arrow` na mesma escala aponta o andar, com a etiqueta do número ao lado.
+  - **Escada:** a `stair` a 1 px por pixel de arte (32×32 na tela de 270, como os tiles) no lugar da seta do DESCER. O desenho do Apellon já traz uma setinha vermelha ao lado da escada.
+  - **Transição:** hoje o "ANDAR 13" tem ~5 px de altura na tela de 270. As três opções usam ~16 px (o título) e ~8 px (o bioma), no mesmo lugar do cartão de hoje (58% da altura): **A**, uma placa com a madeira dos tiles do Apellon pendurada por duas cordas; **B**, uma faixa escura com bordas âmbar de lado a lado; **C**, o quadro de madeira dos modais.
+- **Ajustes do Bruno no mockup (2026-11-19):** a barra "muito top"; a placa A, com o texto como está, mas maior, perto do tamanho do quadro C (176×60 px na tela de 270); a barra **centrada** no espaço livre entre o HUD e a faixa da bomba (o mesmo vão em cima e embaixo); a **seta** do andar do tamanho da marca antiga (1 px de tela por pixel de arte, metade da escala da barra: o triângulo fica com 7×9 px); a **escada** 25% menor (24×24 px: no G75, 4 px de aparelho por px de 270, ficam 3 px por pixel de arte, sem distorcer; 30% daria pixels tortos).
 
 ### E3 — Modais (#13)
 
@@ -108,7 +113,15 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
   6. **Descansar trancado:** no andar 1, o Descansar está na barra, cinza, com o cadeado e "ANDAR 10". Tocar: aparece "Descanse a partir do andar 10" acima do botão por ~1,6 s, e o modal não abre.
   7. `DBG → Andar → Ir ao andar` até o 10: o Descansar acende (madeira, o rubi e as vermelhas). Tocar abre o modal como antes.
   8. Descansar e COMEÇAR: na run nova (andar 1), o Descansar volta a ficar trancado.
-- **E2…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
+- **E2 — Barra do andar, escada e transição** (feita em 2026-11-19, D-335). Nada de menu ou cena novos.
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console, as linhas `[Setup]` com "M9i E2").
+  2. Abrir `Assets/_Project/Scenes/Game.unity` e dar Play (Game view em 9:16 e depois em 9:20).
+  3. **Barra:** à esquerda, a borda do Apellon, com o mesmo vão até o HUD e até a faixa da bomba (nas duas proporções). Por dentro, o âmbar até o andar de agora e as cores dos biomas; a setinha do Apellon aponta o andar, com o número ao lado.
+  4. `DBG → Andar → Ir ao andar` (5, 10, 20…): a seta e o âmbar descem; com o recorde acima do andar de agora, o traço branco do recorde aparece.
+  5. `DBG → Andar → Encher a barra`: o Próximo Andar vira DESCER, com a escada do Apellon no lugar da seta.
+  6. Tocar em DESCER: no escuro da transição, a placa de madeira pendurada por duas cordas, com "ANDAR n" e o nome do bioma; ela aparece e some junto com o texto.
+  7. Ir até o andar 11 (bioma novo) e conferir a placa com o nome do bioma novo.
+- **E3…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
 
 ## Critério de pronto
 
@@ -128,8 +141,8 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 |---|---|---|
 | Plano | ✅ aprovado em 2026-11-19 (D-329…D-333) | P1…P5 com as recomendações |
 | E0 A lista fechada | ✅ 18 linhas com prioridade e as etapas | |
-| E1 HUD e coluna da direita | 🔶 feita (D-334, opção A), espera o seu teste | testes do Descansar, da coluna e dos bônus verdes |
-| E2 Barra do andar, escada e transição | ⏳ | mockup primeiro |
+| E1 HUD e coluna da direita | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, pode seguir") | opção A (D-334) |
+| E2 Barra do andar, escada e transição | 🔶 feita (D-335), espera o seu teste | testes da barra, do Próximo Andar e da transição verdes |
 | E3 Modais | ⏳ | mockup primeiro |
 | E4 Apagar save e versão | ⏳ | |
 | E5 Voltar do Android e bomba por botão | ⏳ | |

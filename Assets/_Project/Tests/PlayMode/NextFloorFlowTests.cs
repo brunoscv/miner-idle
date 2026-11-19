@@ -92,6 +92,33 @@ namespace MinersIdle.Tests
             Assert.That(TheButton.interactable, Is.False, "na transição, nada");
         }
 
+        /// <summary>M9i E2 (D-332, D-335): o andar da transição aparece numa placa de madeira, que some junto com o texto.</summary>
+        [UnityTest]
+        public IEnumerator Transition_ShowsTheFloorOnTheWoodenPlate()
+        {
+            yield return Load();
+            var banner = Object.FindAnyObjectByType<MinersIdle.Presentation.CaveBanner>(FindObjectsInactive.Include);
+            Assert.That(banner, Is.Not.Null);
+            Assert.That(banner.PlatePartCount, Is.EqualTo(5), "a placa, duas cordas e dois pregos");
+
+            var simulation = _runner.Simulation;
+            simulation.FillFloorBar();
+            _runner.TimeScale = 1f; // a transição anda com o relógio do jogo
+            TheButton.onClick.Invoke();
+            Assert.That(simulation.State.Cave, Is.EqualTo(2));
+            float strongest = 0f;
+            float until = Time.realtimeSinceStartup + 4f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                yield return null;
+                if (!banner.IsShown) continue;
+                Assert.That(banner.PlateAlpha, Is.EqualTo(banner.Alpha).Within(1e-4f), "a placa acompanha o texto");
+                strongest = Mathf.Max(strongest, banner.Alpha);
+            }
+            Assert.That(strongest, Is.GreaterThan(0.5f), "o cartão do andar apareceu");
+            Assert.That(banner.Text, Does.StartWith("ANDAR 2"));
+        }
+
         /// <summary>
         /// P9: o jogo diz "andar", nunca "caverna". Desde o M9d E3 (D-278) o andar está na etiqueta da barra à esquerda,
         /// e nenhum texto do HUD fala em caverna.

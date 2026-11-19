@@ -55,6 +55,30 @@ namespace MinersIdle.Tests
             if (ruby != null && icon != null) Assert.That(icon.color, Is.EqualTo(ruby.color), "o rubi");
         }
 
+        /// <summary>
+        /// M9i E2 (D-335): a barra é a borda do Apellon, centrada no vão entre o HUD e a faixa da bomba (97 px de baixo,
+        /// na referência 270): o mesmo vão em cima e embaixo.
+        /// </summary>
+        [Test]
+        public void FloorBar_IsTheApellonMeter_CenteredBetweenTheHudAndTheBomb()
+        {
+            var bar = (RectTransform)_bar.transform;
+            Assert.That(bar.GetComponent<UnityEngine.UI.Image>().sprite.name, Is.EqualTo("floor_meter"));
+            var safe = (RectTransform)_safeArea;
+            float scale = safe.lossyScale.y;
+            var corners = new Vector3[4];
+            bar.GetWorldCorners(corners);
+            float barTop = corners[1].y, barBottom = corners[0].y;
+            ((RectTransform)_hud.transform).GetWorldCorners(corners);
+            float hudBottom = corners[0].y;
+            safe.GetWorldCorners(corners);
+            float bombTop = corners[0].y + 97f * scale;
+            float above = (hudBottom - barTop) / scale, below = (barBottom - bombTop) / scale;
+            // Na tela do batch (640×480, deitada) o vão fica negativo: a barra é mais alta que o espaço. Centrada, os
+            // dois lados continuam iguais; no celular (9:16, 9:20) os dois são positivos.
+            Assert.That(above, Is.EqualTo(below).Within(1.5f), "o mesmo vão em cima e embaixo");
+        }
+
         [Test]
         public void RedShards_FollowTheBank()
         {

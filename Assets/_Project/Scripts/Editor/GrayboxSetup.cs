@@ -146,6 +146,7 @@ namespace MinersIdle.EditorTools
             changed |= BombSetup.EnsureInScene(); // a faixa da bomba, o voo e o DBG → Bomba (M9g): depois do Próximo Andar e do DBG
             changed |= CameraV8Setup.EnsureInScene(); // a câmera do v8 e o DBG → Câmera → v8 / F1 (M9h, D-245), depois da F1 do corredor
             changed |= HudColumnV8Setup.EnsureInScene(); // M9i E1: o HUD mais alto, os tiles do Apellon, os bônus à direita, o Descansar trancado
+            changed |= FloorV8Setup.EnsureInScene(); // M9i E2: a barra do Apellon centrada, a escada no DESCER, a placa da transição
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

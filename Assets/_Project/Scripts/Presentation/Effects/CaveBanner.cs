@@ -21,6 +21,8 @@ namespace MinersIdle.Presentation
         [SerializeField] DescentStage stage;
         [SerializeField] Camera worldCamera;
         [SerializeField] TextMeshPro label;
+        [Tooltip("M9i E2 (D-332): a placa de madeira atrás do texto (a placa, as cordas, os pregos). Some junto com o texto.")]
+        [SerializeField] SpriteRenderer[] plate = new SpriteRenderer[0];
         [Tooltip("Altura da faixa na tela (0 = base, 1 = topo).")]
         [SerializeField, Range(0f, 1f)] float screenHeight = 0.66f;
 
@@ -35,6 +37,15 @@ namespace MinersIdle.Presentation
 
         /// <summary>O texto da faixa (para testes).</summary>
         public string Text => label.text;
+
+        /// <summary>A transparência do texto agora (para testes).</summary>
+        public float Alpha => label.alpha;
+
+        /// <summary>Quantas peças a placa tem (M9i E2: a placa, duas cordas e dois pregos).</summary>
+        public int PlatePartCount => plate.Length;
+
+        /// <summary>A transparência da placa agora (para testes): −1 sem placa.</summary>
+        public float PlateAlpha => plate.Length > 0 && plate[0] != null ? plate[0].color.a : -1f;
 
         void Awake() => label.gameObject.SetActive(false);
 
@@ -61,7 +72,7 @@ namespace MinersIdle.Presentation
             // Bioma novo: entra no escuro, quando ele troca. Mesmo bioma (GDD v7, D-129): não escurece, entra na hora.
             _age = newBiome ? -DescentStage.CaveFadeSeconds * 0.5f : 0f;
             label.gameObject.SetActive(true);
-            label.alpha = 0f;
+            SetAlpha(0f);
         }
 
         /// <summary>
@@ -73,7 +84,7 @@ namespace MinersIdle.Presentation
             if (!label.gameObject.activeSelf) label.gameObject.SetActive(true);
             _held = true;
             _heldHeight = height;
-            label.alpha = Mathf.Clamp01(alpha);
+            SetAlpha(Mathf.Clamp01(alpha));
             Place(height);
         }
 
@@ -89,6 +100,19 @@ namespace MinersIdle.Presentation
             }
             // Segue do ponto do sumiço que corresponde à transparência de agora.
             _age = FadeInSeconds + HoldSeconds + (1f - label.alpha) * FadeOutSeconds;
+        }
+
+        /// <summary>A transparência do texto e da placa juntos.</summary>
+        void SetAlpha(float alpha)
+        {
+            label.alpha = alpha;
+            for (int i = 0; i < plate.Length; i++)
+            {
+                if (plate[i] == null) continue;
+                var color = plate[i].color;
+                color.a = alpha;
+                plate[i].color = color;
+            }
         }
 
         void Place(float height)
@@ -119,7 +143,7 @@ namespace MinersIdle.Presentation
                 : _age < FadeInSeconds ? _age / FadeInSeconds
                 : _age < FadeInSeconds + HoldSeconds ? 1f
                 : 1f - (_age - FadeInSeconds - HoldSeconds) / FadeOutSeconds;
-            label.alpha = alpha;
+            SetAlpha(alpha);
             Place(screenHeight);
         }
     }
