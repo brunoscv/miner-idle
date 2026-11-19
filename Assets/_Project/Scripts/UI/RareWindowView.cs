@@ -17,7 +17,7 @@ namespace MinersIdle.UI
     /// (D-223). O tempo e a regra são do Núcleo (<see cref="MiningSimulation.RareWindow"/>); aqui só se desenha. Textos no
     /// <see cref="BuffCatalog"/>.
     /// </summary>
-    public sealed class RareWindowView : MiningViewBase
+    public sealed class RareWindowView : MiningViewBase, IBackHandler
     {
         /// <summary>Uma carta da janela: a moldura, o ícone, o nome, o efeito, a duração e para quem vale.</summary>
         [Serializable]
@@ -122,6 +122,14 @@ namespace MinersIdle.UI
 
         /// <summary>FECHAR depois do sorteio.</summary>
         public void Close() => Simulation?.CloseRareWindow();
+
+        /// <summary>M9i E5: o Voltar do Android (na escolha, fica; depois dela, fecha como o FECHAR).</summary>
+        public bool HandleBack()
+        {
+            if (!IsOpen) return false;
+            Close(); // na escolha, não fecha (a simulação recusa)
+            return true;
+        }
 
         void Update()
         {

@@ -1,4 +1,5 @@
 using MinersIdle.Core;
+using MinersIdle.Game;
 using MinersIdle.Presentation;
 using TMPro;
 using UnityEngine;
@@ -44,6 +45,10 @@ namespace MinersIdle.UI
         [SerializeField] Sprite starOn, starOff;
         [Tooltip("\"ARRASTE\", com a bomba cheia e o botão no começo.")]
         [SerializeField] TMP_Text readyText;
+        [Tooltip("M9i E5 (#18): os AJUSTES dizem se a bomba lança deslizando (fábrica) ou com um toque na faixa.")]
+        [SerializeField] GameSettings settings;
+        [Tooltip("No lugar do \"ARRASTE\" no modo de toque.")]
+        [SerializeField] string tapReadyText;
         [Tooltip("Os segundos até encher.")]
         [SerializeField] TMP_Text secondsText;
         [Tooltip("{0} = segundos que faltam, arredondados para cima.")]
@@ -63,6 +68,8 @@ namespace MinersIdle.UI
         float _grabOffset;
         float _knobX;          // posição do centro do botão na faixa (local)
         int _shownSeconds = -1;
+        string _swipeReadyText;
+        bool _shownTap;
         int _shownBomb = -1;
         bool _shownCharged;
         bool _hasShown;
@@ -79,6 +86,12 @@ namespace MinersIdle.UI
         /// <summary>O botão que o dedo pega e a faixa em que ele anda (para os testes acharem onde tocar).</summary>
         public RectTransform Knob => knob;
         public RectTransform Track => track;
+
+        /// <summary>M9i E5: no modo de toque, um toque na faixa com a bomba cheia lança (sem deslizar).</summary>
+        public bool TapMode => settings != null && settings.BombTap;
+
+        /// <summary>O texto de "pronta" de agora ("ARRASTE" ou "TOQUE").</summary>
+        public string ReadyText => readyText != null ? readyText.text : "";
 
         float HalfKnob => knob.rect.width * 0.5f;
         float MinX => track.rect.xMin + inset + HalfKnob;
@@ -102,6 +115,11 @@ namespace MinersIdle.UI
         public void OnPointerDown(PointerEventData eventData)
         {
             if (!CanGrab()) return;
+            if (TapMode)
+            {
+                Tap();
+                return;
+            }
             var camera = eventData.pressEventCamera;
             var area = knob.rect;
             area.xMin -= grabPadding; area.xMax += grabPadding; area.yMin -= grabPadding; area.yMax += grabPadding;
@@ -117,7 +135,7 @@ namespace MinersIdle.UI
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (!_dragging) return;
+            if (!_dragging || TapMode) return;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(track, eventData.position, eventData.pressEventCamera, out var local))
                 return;
             DragTo(local.x - _grabOffset);
@@ -141,6 +159,19 @@ namespace MinersIdle.UI
             Launches++;
             Refresh();
             return true;
+        }
+
+        /// <summary>
+        /// M9i E5 (#18): o toque na faixa, no modo de toque. O botão corre até o fim (a mesma volta do deslize) e a bomba é
+        /// lançada. Devolve se lançou.
+        /// </summary>
+        public bool Tap()
+        {
+            if (!TapMode || !CanGrab()) return false;
+            _dragging = true;
+            bool launched = DragTo(MaxX);
+            _dragging = false; // sem cristal no alcance, o botão volta sozinho
+            return launched;
         }
 
         /// <summary>O deslize inteiro, do começo ao fim (atalho dos testes): devolve se lançou.</summary>
@@ -193,15 +224,22 @@ namespace MinersIdle.UI
             if (!has) return;
 
             bool charged = simulation.IsBombCharged && !simulation.IsBombInFlight;
-            if (!_hasShown || charged != _shownCharged)
+            bool tap = TapMode;
+            if (!_hasShown || charged != _shownCharged || tap != _shownTap)
             {
                 _shownCharged = charged;
+                _shownTap = tap;
+                if (readyText != null)
+                {
+                    _swipeReadyText ??= readyText.text;
+                    readyText.text = tap && !string.IsNullOrEmpty(tapReadyText) ? tapReadyText : _swipeReadyText;
+                }
                 if (knobImage != null) knobImage.sprite = charged ? knobOn : knobOff;
                 if (cartImage != null) cartImage.sprite = charged ? cartOn : cartOff;
                 if (bomb != null) bomb.color = charged ? Color.white : bombChargingColor;
                 if (star != null) star.sprite = charged ? starOn : starOff;
                 if (secondsText != null) secondsText.gameObject.SetActive(!charged);
-                if (chevrons != null) chevrons.gameObject.SetActive(charged);
+                if (chevrons != null) chevrons.gameObject.SetActive(charged && !tap); // as setas chamam o deslize
             }
             if (readyText != null)
             {
@@ -232,7 +270,7 @@ namespace MinersIdle.UI
                 fill.fillAmount = !charged ? (float)simulation.BombCharge
                                 : fillFollowsKnob ? Mathf.InverseLerp(track.rect.xMin, track.rect.xMax, _knobX) : 1f;
 
-            if (charged && chevrons != null)
+            if (charged && !tap && chevrons != null)
             {
                 // As setas pulsam, para chamar o dedo.
                 float pulse = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 6f);

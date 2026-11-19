@@ -83,6 +83,22 @@ namespace MinersIdle.Game
         }
 
         /// <summary>
+        /// M9i E5 (#18): a bomba cheia lança com um toque na faixa; desligado (fábrica), com o deslize do M9g (D-310).
+        /// </summary>
+        public bool BombTap
+        {
+            get => _data.bombTap;
+            set
+            {
+                if (value == _data.bombTap) return;
+                _data.bombTap = value;
+                _dirty = true;
+                Flush();
+                Notify();
+            }
+        }
+
+        /// <summary>
         /// Liga o arquivo dos ajustes e abre com o que está nele (chamado pelo <c>GameBootstrap</c>). Sem arquivo, ou com um
         /// ilegível, ficam os de fábrica.
         /// </summary>

@@ -15,7 +15,7 @@ namespace MinersIdle.UI
     /// <see cref="MiningSimulation.WatchAd"/>. Como a loja, escurece e bloqueia o mapa sem pausar a mineração; o anúncio
     /// abre por cima e o menu continua aberto embaixo, para ver o RENOVAR. Textos no <see cref="BuffCatalog"/>.
     /// </summary>
-    public sealed class BoostScreen : MiningViewBase
+    public sealed class BoostScreen : MiningViewBase, IBackHandler
     {
         [SerializeField] BuffCatalog catalog;
         [Tooltip("Quem mostra o anúncio: um componente que implementa IRewardedAd (hoje o SimulatedAdScreen).")]
@@ -73,6 +73,14 @@ namespace MinersIdle.UI
         }
 
         public void Close() => screen.SetActive(false);
+
+        /// <summary>M9i E5: o Voltar do Android (fecha o Boost).</summary>
+        public bool HandleBack()
+        {
+            if (!IsOpen) return false;
+            Close();
+            return true;
+        }
 
         /// <summary>ASSISTIR / RENOVAR de uma linha: o anúncio abre; a recompensa é o anúncio <paramref name="kind"/>.</summary>
         public void Watch(AdKind kind)

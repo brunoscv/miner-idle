@@ -14,7 +14,7 @@ namespace MinersIdle.UI
     /// é da simulação) e abre o resumo do dia. Como a loja, escurece e bloqueia o mapa, mas não pausa a mineração
     /// (REQ-UI-04): os números acompanham a run enquanto ele está aberto. Textos em dados.
     /// </summary>
-    public sealed class RestScreen : MiningViewBase
+    public sealed class RestScreen : MiningViewBase, IBackHandler
     {
         [SerializeField] FeedbackTexts texts;
         [Tooltip("O fundo que escurece e o painel: ligado só com o modal aberto.")]
@@ -107,6 +107,14 @@ namespace MinersIdle.UI
         }
 
         public void Close() => screen.SetActive(false);
+
+        /// <summary>M9i E5: o Voltar do Android (fecha o Descansar, sem descansar).</summary>
+        public bool HandleBack()
+        {
+            if (!IsOpen) return false;
+            Close();
+            return true;
+        }
 
         /// <summary>
         /// DESCANSAR: o descanso de verdade (a run nova fica parada por trás, M9d). O ZZZ e a tela do descanso abrem pelo

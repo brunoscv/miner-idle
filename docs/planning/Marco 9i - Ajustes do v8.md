@@ -100,7 +100,7 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 5. **Save do futuro.** Um save gravado por um app mais novo (o jogador voltou para uma versão velha) continua abrindo o backup, como hoje; nunca apaga.
 6. **Na nuvem (depois do lançamento):** o save local continua o principal; o da nuvem entra só como cópia, com a mesma versão do save e a mesma migração.
 
-### E5 — Voltar do Android e a bomba por botão (#17, #18)
+### E5 — Voltar do Android e a bomba por toque (#17, #18)
 
 - **Voltar (#17):** o primeiro toque no Voltar mostra um aviso curto ("Toque de novo para sair"); o segundo, em até 2 s, abre o modal **"Sair do jogo?"** com o que o estagiário rende fora (as horas de offline de agora, ou o aviso de que ele não está contratado), **SAIR** e **FICAR**. SAIR grava o save e fecha o app. Com um modal aberto, o Voltar fecha o modal primeiro.
 - **Bomba por botão (#18):** nos AJUSTES, **"Bomba: Deslizar / Tocar"**. No modo Tocar, um toque na bomba cheia lança. Padrão **Deslizar** (D-310, P4). Fica salvo com os ajustes.
@@ -160,7 +160,16 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
   4. Jogar um pouco (comprar, contratar o estagiário, descer uns andares), `DBG → Offline → Aviso de versão` e tocar em RECOMEÇAR: tudo volta ao andar 1, sem lascas, sem estagiário, dia 1, sem vermelhas nem permanentes; os AJUSTES (som, tremor) ficam como estavam.
   5. **Apagar save:** jogar de novo, AJUSTES → APAGAR SAVE → APAGAR: o mesmo começo do zero.
   6. **No G75:** com o APK desta etapa, o save de lá é de antes da E4, então o aviso aparece na primeira abertura. Gerando outro APK depois, o aviso aparece de novo (o build novo tem a hora nova); CONTINUAR segue com o save.
-- **E5…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
+- **E5 — Voltar do Android e a bomba por toque** (feita em 2026-11-19, D-338). Nada de cena nova nem de menu novo; uma linha nova nos AJUSTES. No Editor, a tecla **Esc** faz o papel do Voltar.
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console: `[Setup] "Sair do jogo?"…`, `[Setup] Voltar: 11 telas respondem a ele.` e `[Setup] A bomba obedece aos AJUSTES…`).
+  2. Abrir `Assets/_Project/Scenes/Game.unity`, dar Play e clicar na janela Game (para ela receber o teclado).
+  3. **Sair:** apertar Esc uma vez: embaixo, acima da bomba, "Toque de novo para sair", que some em 2 s. Esperar sumir e apertar de novo: só o aviso volta. Apertar duas vezes seguidas: abre "SAIR DO JOGO?". Sem estagiário, o texto diz que nada é minerado com o jogo fechado; Esc ou FICAR fecham.
+  4. Contratar o estagiário (LOJA, ou o DBG) e repetir: o texto diz "até 4 h de offline" (as horas de agora). No Editor, SAIR grava e não fecha nada (o `Application.Quit` só fecha o app no celular).
+  5. **Fechar telas:** abrir a LOJA e apertar Esc: fecha, sem aviso. O mesmo no AD, no AJUSTES (com a confirmação do APAGAR SAVE aberta, o primeiro Esc só cancela; nos CRÉDITOS, só fecha os créditos) e no Descansar (`DBG → Andar → Ir ao andar` 10 ou mais).
+  6. **Telas que seguram:** `DBG → Offline → Fora 10 min` e Esc: o "Bem-vindo de volta" fica (as lascas esperam o COLETAR). O mesmo no anúncio do AD e em `DBG → Offline → Aviso de versão`. No raro (`DBG → Bônus → Janela agora`), o Esc não fecha na escolha; depois de escolher, fecha.
+  7. **Bomba:** AJUSTES → "Lançar a bomba" → tocar em DESLIZAR, que vira TOCAR. Fechar: a faixa diz "TOQUE" sem as setas. Com a bomba pronta, um toque em qualquer lugar da faixa lança. Voltar para DESLIZAR: só o arrastar lança, como antes. Parar e dar Play: o modo escolhido continua.
+  8. **No G75:** o Voltar do aparelho (botão ou gesto) faz o mesmo que o Esc, e SAIR fecha o app; abrir de novo: o progresso está lá.
+- **E6:** traz o seu passo a passo aqui quando for feita.
 
 ## Critério de pronto
 
@@ -183,7 +192,7 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 | E1 HUD e coluna da direita | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, pode seguir") | opção A (D-334) |
 | E2 Barra do andar, escada e transição | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | placa A (D-335) |
 | E3 Modais | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-336 |
-| E4 Apagar save e versão | 🔶 feita (D-337), espera o seu teste | `SaveVersionTests` (7), `AppVersionTests` e os testes do save, dos AJUSTES, do offline e do DBG verdes |
-| E5 Voltar do Android e bomba por botão | ⏳ | |
+| E4 Apagar save e versão | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-337 |
+| E5 Voltar do Android e bomba por toque | 🔶 feita em 2026-11-19, espera o seu teste | D-338 |
 | E6 Ícones e câmera nova | ⏳ | de-para para aprovar |
 | E7 Suíte de testes | ⏳ | sem as sessões longas |

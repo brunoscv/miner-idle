@@ -13,7 +13,7 @@ namespace MinersIdle.UI
     /// RECOMEÇAR apaga o save, como o Apagar save dos AJUSTES (os ajustes ficam, D-200); CONTINUAR segue com o save, que
     /// passa a levar a versão de agora e não avisa mais. DBG → Offline → "Aviso de versão" abre o aviso a qualquer hora.
     /// </summary>
-    public sealed class VersionNoticeScreen : MiningViewBase
+    public sealed class VersionNoticeScreen : MiningViewBase, IBackHandler
     {
         [SerializeField] FeedbackTexts texts;
         [SerializeField] GameObject screen;
@@ -69,6 +69,12 @@ namespace MinersIdle.UI
             numbers.text = string.Format(texts.VersionNumbersFormat,
                                          string.IsNullOrEmpty(saved) ? texts.VersionUnknown : saved, runner.AppVersion);
             screen.SetActive(true);
+        }
+
+        /// <summary>M9i E5: o Voltar do Android (fica: pede RECOMEÇAR ou CONTINUAR).</summary>
+        public bool HandleBack()
+        {
+            return IsOpen;
         }
 
         /// <summary>RECOMEÇAR: o jogo do zero, como o Apagar save (a partida nova fecha o aviso).</summary>

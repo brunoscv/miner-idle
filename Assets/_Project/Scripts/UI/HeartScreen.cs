@@ -14,7 +14,7 @@ namespace MinersIdle.UI
     /// Marco 8b (E3, D-157): ao lado de CONTINUAR, DESCANSAR (quando dá para descansar) fecha a tela e abre o modal do
     /// descanso.
     /// </summary>
-    public sealed class HeartScreen : MiningViewBase
+    public sealed class HeartScreen : MiningViewBase, IBackHandler
     {
         [SerializeField] FeedbackTexts texts;
         [Tooltip("O fundo que escurece e o painel: ligado só com a tela aberta.")]
@@ -96,6 +96,14 @@ namespace MinersIdle.UI
         }
 
         public void Close() => screen.SetActive(false);
+
+        /// <summary>M9i E5: o Voltar do Android (fecha a tela do coração).</summary>
+        public bool HandleBack()
+        {
+            if (!IsOpen) return false;
+            Close();
+            return true;
+        }
 
         void Rest()
         {

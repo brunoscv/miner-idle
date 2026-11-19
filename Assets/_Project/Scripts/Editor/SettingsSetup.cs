@@ -58,6 +58,7 @@ namespace MinersIdle.EditorTools
             changed |= EnsureDebugReference(settings);
             changed |= EnsureScreen(settings);
             changed |= EnsureAutoAdvanceRow();
+            changed |= EnsureBombRow();
             changed |= EnsureEffectsRunner();
             changed |= EnsureThinFill();
             changed |= EnsureHudButton();
@@ -224,6 +225,49 @@ namespace MinersIdle.EditorTools
             GrayboxSetup.SetReferences(view, ("autoAdvanceLabel", label), ("autoAdvanceButton", toggle),
                 ("autoAdvanceLocked", locked));
             Debug.Log("[Setup] AJUSTES: a linha \"Avanço automático\", travada até o andar 5 (M9c E3, P6).");
+            return true;
+        }
+
+        const float BombButtonWidth = 64f;
+        const float BombButtonHeight = 16f;
+
+        /// <summary>
+        /// M9i E5 (#18): a linha "Lançar a bomba" depois do Avanço automático, com um botão de madeira que troca DESLIZAR e
+        /// TOCAR (os dois nomes cabem; um interruptor não diria qual é qual).
+        /// </summary>
+        static bool EnsureBombRow()
+        {
+            var view = Object.FindAnyObjectByType<SettingsScreen>(FindObjectsInactive.Include);
+            if (view == null) return false;
+            var serialized = new SerializedObject(view);
+            if (serialized.FindProperty("bombButton").objectReferenceValue != null) return false;
+            var auto = serialized.FindProperty("autoAdvanceButton").objectReferenceValue as Button;
+            var autoRow = auto != null ? auto.transform.parent : null;
+            var inset = autoRow != null ? autoRow.parent : null;
+            if (inset == null) return false;
+            _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
+
+            var row = Block(inset, "BombMode", RowHeight);
+            row.SetSiblingIndex(autoRow.GetSiblingIndex() + 1);
+            var label = Label(row, RowPad);
+            var go = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(row, false);
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(-RowPad, 0f);
+            rect.sizeDelta = new Vector2(BombButtonWidth, BombButtonHeight);
+            var image = go.GetComponent<Image>();
+            image.sprite = Load(Wood("buttons/button_large_normal"));
+            image.type = Image.Type.Sliced;
+            var button = go.GetComponent<Button>();
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.SpriteSwap;
+            button.spriteState = new SpriteState { pressedSprite = Load(Wood("buttons/button_large_pressed")) };
+            var value = Text(go.transform, "Label", SmallText, AmberText, TextAlignmentOptions.Center, _font);
+            Stretch(value.rectTransform);
+
+            GrayboxSetup.SetReferences(view, ("bombLabel", label), ("bombButton", button), ("bombValue", value));
+            Debug.Log("[Setup] AJUSTES: a linha \"Lançar a bomba\" com DESLIZAR e TOCAR (M9i E5, #18).");
             return true;
         }
 

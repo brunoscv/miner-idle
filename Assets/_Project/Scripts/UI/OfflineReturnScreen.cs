@@ -17,7 +17,7 @@ namespace MinersIdle.UI
     /// (<see cref="MiningSimulation.OfflineReturnChanged"/>, inclusive pelo DBG → Offline). Como a loja, escurece e bloqueia
     /// o mapa sem pausar a mineração. Textos em dados.
     /// </summary>
-    public sealed class OfflineReturnScreen : MiningViewBase
+    public sealed class OfflineReturnScreen : MiningViewBase, IBackHandler
     {
         [SerializeField] FeedbackTexts texts;
         [Tooltip("O fundo que escurece e o painel: ligado só com uma volta para coletar.")]
@@ -105,6 +105,12 @@ namespace MinersIdle.UI
         {
             runner.CollectOffline();
             screen.SetActive(false);
+        }
+
+        /// <summary>M9i E5: o Voltar do Android (fica: as lascas esperam o COLETAR).</summary>
+        public bool HandleBack()
+        {
+            return IsOpen;
         }
 
         void Show(OfflineReturn pending)

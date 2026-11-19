@@ -18,7 +18,7 @@ namespace MinersIdle.UI
     /// pausar a mineração. Fechar grava os ajustes (o volume só é gravado aqui, não a cada passo do deslizador). Textos em
     /// dados.
     /// </summary>
-    public sealed class SettingsScreen : MonoBehaviour
+    public sealed class SettingsScreen : MonoBehaviour, IBackHandler
     {
         /// <summary>Passos do deslizador: de 5% em 5%.</summary>
         public const int VolumeSteps = 20;
@@ -47,6 +47,10 @@ namespace MinersIdle.UI
         [SerializeField] Button autoAdvanceButton;
         [Tooltip("No lugar do botão até o marco: \"Andar 5\".")]
         [SerializeField] TMP_Text autoAdvanceLocked;
+        [Tooltip("M9i E5 (#18): a linha \"Bomba\", com o botão que troca DESLIZAR e TOCAR.")]
+        [SerializeField] TMP_Text bombLabel;
+        [SerializeField] Button bombButton;
+        [SerializeField] TMP_Text bombValue;
         [SerializeField] Color labelColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         [SerializeField] Color lockedLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
         [Space]
@@ -90,6 +94,7 @@ namespace MinersIdle.UI
         public bool IsAutoAdvanceLocked => autoAdvanceLocked.gameObject.activeSelf;
         public string AutoAdvanceLockedText => autoAdvanceLocked.text;
         public string CreditsText => creditsList.text;
+        public string BombText => bombValue != null ? bombValue.text : "";
 
         void Awake()
         {
@@ -98,6 +103,7 @@ namespace MinersIdle.UI
             shakeLabel.text = texts.SettingsShakeLabel;
             vibrationLabel.text = texts.SettingsVibrationLabel;
             if (autoAdvanceLabel != null) autoAdvanceLabel.text = texts.SettingsAutoAdvanceLabel;
+            if (bombLabel != null) bombLabel.text = texts.SettingsBombLabel;
             creditsLabel.text = texts.SettingsCredits;
             deleteLabel.text = texts.SettingsDeleteSave;
             confirmTitle.text = texts.DeleteTitle;
@@ -125,6 +131,7 @@ namespace MinersIdle.UI
             shakeButton.onClick.AddListener(ToggleShake);
             vibrationButton.onClick.AddListener(ToggleVibration);
             if (autoAdvanceButton != null) autoAdvanceButton.onClick.AddListener(ToggleAutoAdvance);
+            if (bombButton != null) bombButton.onClick.AddListener(ToggleBombTap);
             creditsButton.onClick.AddListener(OpenCredits);
             deleteButton.onClick.AddListener(AskDelete);
             cancelButton.onClick.AddListener(CancelDelete);
@@ -143,6 +150,7 @@ namespace MinersIdle.UI
             shakeButton.onClick.RemoveListener(ToggleShake);
             vibrationButton.onClick.RemoveListener(ToggleVibration);
             if (autoAdvanceButton != null) autoAdvanceButton.onClick.RemoveListener(ToggleAutoAdvance);
+            if (bombButton != null) bombButton.onClick.RemoveListener(ToggleBombTap);
             creditsButton.onClick.RemoveListener(OpenCredits);
             deleteButton.onClick.RemoveListener(AskDelete);
             cancelButton.onClick.RemoveListener(CancelDelete);
@@ -176,6 +184,9 @@ namespace MinersIdle.UI
         public void ToggleVibration() => settings.Vibration = !settings.Vibration;
         public void ToggleAutoAdvance() => settings.AutoAdvance = !settings.AutoAdvance;
 
+        /// <summary>M9i E5 (#18): DESLIZAR ⇄ TOCAR.</summary>
+        public void ToggleBombTap() => settings.BombTap = !settings.BombTap;
+
         public void OpenCredits()
         {
             screen.SetActive(false);
@@ -193,6 +204,16 @@ namespace MinersIdle.UI
         public void AskDelete() => confirm.SetActive(true);
 
         public void CancelDelete() => confirm.SetActive(false);
+
+        /// <summary>M9i E5: o Voltar do Android (a confirmação cancela, os Créditos voltam aos AJUSTES, os AJUSTES fecham).</summary>
+        public bool HandleBack()
+        {
+            if (IsConfirmOpen) { CancelDelete(); return true; }
+            if (IsCreditsOpen) { CloseCredits(); return true; }
+            if (!IsOpen) return false;
+            Close();
+            return true;
+        }
 
         /// <summary>APAGAR da confirmação: o progresso volta ao nível 1, os ajustes ficam, e a tela fecha no jogo novo.</summary>
         public void ConfirmDelete()
@@ -218,6 +239,7 @@ namespace MinersIdle.UI
             ((Image)shakeButton.targetGraphic).sprite = settings.ScreenShake ? toggleOn : toggleOff;
             ((Image)vibrationButton.targetGraphic).sprite = settings.Vibration ? toggleOn : toggleOff;
             RefreshAutoAdvance();
+            if (bombValue != null) bombValue.text = settings.BombTap ? texts.SettingsBombTap : texts.SettingsBombSwipe;
         }
 
         /// <summary>

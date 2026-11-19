@@ -86,6 +86,16 @@ MonoBehaviour:
   versionUnknown: anterior
   versionRestart: "RECOME\xC7AR"
   versionContinue: CONTINUAR
+  backAgainNotice: Toque de novo para sair
+  exitTitle: SAIR DO JOGO?
+  exitInternFormat: "O estagi\xE1rio continua minerando com o jogo fechado: at\xE9 {0} de offline."
+  exitNoIntern: "Sem o estagi\xE1rio, nada \xE9 minerado com o jogo fechado. Ele aparece na LOJA."
+  exitSaved: O progresso fica salvo.
+  exitStay: FICAR
+  exitLeave: SAIR
+  settingsBombLabel: "Lan\xE7ar a bomba"
+  settingsBombSwipe: DESLIZAR
+  settingsBombTap: TOCAR
   credits:
   - header: 1
     text: Jogo

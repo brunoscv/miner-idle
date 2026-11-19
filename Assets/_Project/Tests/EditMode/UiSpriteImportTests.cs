@@ -17,6 +17,9 @@ namespace MinersIdle.Tests
         const string Icons = "Assets/_Vendor/AssetStore/AnvilRpgIcons";
         const string ProjectIcons = "Assets/_Project/Art/UI";
 
+        static readonly string[] WorldSprites =
+            { "floor_meter.png", "floor_arrow.png", "icon_stair.png", "plate_wood.png", "rope.png", "nail.png" };
+
         [TestCase(Wood)]
         [TestCase(Fantasy)]
         [TestCase(Icons)]
@@ -36,7 +39,9 @@ namespace MinersIdle.Tests
                 Assert.That(importer.filterMode, Is.EqualTo(FilterMode.Point), path);
                 Assert.That(importer.textureCompression, Is.EqualTo(TextureImporterCompression.Uncompressed), path);
                 Assert.That(importer.mipmapEnabled, Is.False, path);
-                Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(100f), path);
+                // M9i E2 (D-335): a placa, a corda, o prego, a escada e a barra do andar ficam no mundo, na PPU 16 dele (D-14).
+                float ppu = System.Array.IndexOf(WorldSprites, Path.GetFileName(path)) >= 0 ? 16f : 100f;
+                Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(ppu), path);
             }
         }
 

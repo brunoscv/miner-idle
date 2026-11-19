@@ -133,6 +133,18 @@ namespace MinersIdle.Game
         [SerializeField] string versionUnknown;
         [SerializeField] string versionRestart;
         [SerializeField] string versionContinue;
+        [Header("M9i E5: o Voltar do Android e a bomba por toque")]
+        [SerializeField] string backAgainNotice;
+        [SerializeField] string exitTitle;
+        [Tooltip("{0} = o tempo de offline que o estagiário minera (\"6 h\").")]
+        [TextArea, SerializeField] string exitInternFormat;
+        [TextArea, SerializeField] string exitNoIntern;
+        [SerializeField] string exitSaved;
+        [SerializeField] string exitStay;
+        [SerializeField] string exitLeave;
+        [SerializeField] string settingsBombLabel;
+        [SerializeField] string settingsBombSwipe;
+        [SerializeField] string settingsBombTap;
         [Tooltip("A lista dos Créditos, do CREDITS.md: um título de grupo e as linhas dele, na ordem.")]
         [SerializeField] CreditLine[] credits = new CreditLine[0];
 
@@ -212,6 +224,16 @@ namespace MinersIdle.Game
         public string VersionUnknown => versionUnknown;
         public string VersionRestart => versionRestart;
         public string VersionContinue => versionContinue;
+        public string BackAgainNotice => backAgainNotice;
+        public string ExitTitle => exitTitle;
+        public string ExitInternFormat => exitInternFormat;
+        public string ExitNoIntern => exitNoIntern;
+        public string ExitSaved => exitSaved;
+        public string ExitStay => exitStay;
+        public string ExitLeave => exitLeave;
+        public string SettingsBombLabel => settingsBombLabel;
+        public string SettingsBombSwipe => settingsBombSwipe;
+        public string SettingsBombTap => settingsBombTap;
         public IReadOnlyList<CreditLine> Credits => credits;
     }
 

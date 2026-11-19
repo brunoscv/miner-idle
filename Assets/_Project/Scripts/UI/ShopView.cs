@@ -22,7 +22,7 @@ namespace MinersIdle.UI
     /// M7, E3 (D-170, D-174): a 3ª aba, ESTAGIÁRIO, à direita das outras e só com ele contratado: as melhorias dele, com o
     /// saldo de lascas no alto. Na aba da run, a compra única já feita (o Estagiário contratado) desce para o fim.
     /// </summary>
-    public sealed class ShopView : MiningViewBase
+    public sealed class ShopView : MiningViewBase, IBackHandler
     {
         public enum Tab { Run, Permanents, Intern }
 
@@ -176,6 +176,14 @@ namespace MinersIdle.UI
         }
 
         public void Close() => screen.SetActive(false);
+
+        /// <summary>M9i E5: o Voltar do Android (fecha a LOJA).</summary>
+        public bool HandleBack()
+        {
+            if (!IsOpen) return false;
+            Close();
+            return true;
+        }
 
         public void SelectTab(Tab tab)
         {

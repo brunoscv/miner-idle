@@ -20,6 +20,9 @@ namespace MinersIdle.Persistence
         public bool vibration = true;
         /// <summary>O avanço automático do Próximo Andar (M9c E3, P6): ligado de fábrica; só vale depois do andar 5.</summary>
         public bool autoAdvance = true;
+
+        /// <summary>M9i E5 (#18): a bomba lança com um toque (senão, deslizando, como desde o M9g). Fábrica: deslizar.</summary>
+        public bool bombTap;
     }
 
     /// <summary>

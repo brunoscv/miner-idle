@@ -15,7 +15,7 @@ namespace MinersIdle.UI
     /// mapa sem pausar a mineração (D-227). Não vai para o save: fechar o app no meio perde o anúncio. Textos no
     /// <see cref="BuffCatalog"/>.
     /// </summary>
-    public sealed class SimulatedAdScreen : MonoBehaviour, IRewardedAd
+    public sealed class SimulatedAdScreen : MonoBehaviour, IRewardedAd, IBackHandler
     {
         [SerializeField] MiningRunner runner;
         [SerializeField] BuffCatalog catalog;
@@ -91,6 +91,12 @@ namespace MinersIdle.UI
         }
 
         /// <summary>Atalho do debug "Pular espera" (D-234): o RECOMPENSA já.</summary>
+        /// <summary>M9i E5: o Voltar do Android (fica: o anúncio segue até o fim).</summary>
+        public bool HandleBack()
+        {
+            return IsShowing;
+        }
+
         public void SkipWait()
         {
             if (!IsShowing) return;

@@ -18,7 +18,7 @@ namespace MinersIdle.UI
     /// <see cref="MiningRunner.Rested"/>; quando o descanso foi o atalho do DBG ou o jogo reabriu descansando, sem o ZZZ.
     /// Os números do dia vêm do <see cref="RestSummary"/>; o banco, das permanentes. Textos em dados.
     /// </summary>
-    public sealed class RestShopScreen : MiningViewBase
+    public sealed class RestShopScreen : MiningViewBase, IBackHandler
     {
         public enum Background { Black, Blurred }
 
@@ -151,6 +151,12 @@ namespace MinersIdle.UI
                 AnimateZzz();
             }
             else ShowPanel();
+        }
+
+        /// <summary>M9i E5: o Voltar do Android (fica: a tela do descanso segue pelos botões dela).</summary>
+        public bool HandleBack()
+        {
+            return IsOpen;
         }
 
         public void Close()
