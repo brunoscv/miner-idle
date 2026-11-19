@@ -29,5 +29,5 @@
 | 14 | 2026-11-19 | Bruno (9) | HUD | "A Velocidade saiu do alto da tela": **é do GDD v8** — o HUD mostra só lascas e vermelhas (§7); Dano e Velocidade foram para a LOJA (D-281) | respondido |
 | 15 | 2026-11-19 | Bruno (10) | Barra de baixo | O **Descansar** sempre na tela, apagado ("indisponível") antes do andar 10, para o jogador saber o que existe; o mesmo vale para os outros elementos (escada, barra, bomba) | M9i E1 ✅ |
 | 16 | 2026-11-19 | Bruno (11) | Bomba | **Ideia, não ajuste:** um bônus para quem dá o **último golpe** no cristal com a bomba — uma disputa entre o anão e o jogador; em andares de muita vida, puxa a compra das bombas maiores. Para o Bruno conversar com o Apellon | ideia |
-| 17 | 2026-11-19 | Bruno (12) | Android | **Voltar duas vezes** para sair: modal "Sair do jogo?" com o que o estagiário rende offline | M9i E5 🔶 (D-338) |
-| 18 | 2026-11-19 | Bruno (13) | Ajustes | Opção do lançamento da bomba: **deslizar** (como hoje) ou **botão** | M9i E5 🔶 (D-338): DESLIZAR ou TOCAR nos AJUSTES |
+| 17 | 2026-11-19 | Bruno (12) | Android | **Voltar duas vezes** para sair: modal "Sair do jogo?" com o que o estagiário rende offline | M9i E5 ✅ (D-338) |
+| 18 | 2026-11-19 | Bruno (13) | Ajustes | Opção do lançamento da bomba: **deslizar** (como hoje) ou **botão** | M9i E5 ✅ (D-338): DESLIZAR ou TOCAR nos AJUSTES |

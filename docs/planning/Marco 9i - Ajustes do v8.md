@@ -107,8 +107,29 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 
 ### E6 — O resto dos ícones e a câmera nova (#12, #2–#5)
 
-- **De-para dos ícones:** uma tabela com cada ícone do jogo e o candidato da pasta do Apellon (`icon_cave`, `icon_crystal`, `icon_crystal_red`, `icon_pickaxe`, `icon_speed`, `ui_button_rest`, `ui_rectangle`, `tab`, `tab_open`, `name_shop`, `loading`), para você aprovar antes de trocar.
-- **Câmera nova:** os esteios somem aos poucos (#2); o corredor de trás ganha as marcas das quebras (#3, se der tempo); os cantos da transição (#4) e o recuo do DBG (#5).
+**O levantamento (2026-11-19).** Comparei a pasta do Apellon (`Downloads\svg`, desenhada pixel a pixel em SVG) com o que a cena e os catálogos usam. Quase tudo dele **já está no jogo**: o cristal das lascas, a picareta, a velocidade, a bomba (na LOJA e na faixa: a da faixa é o mesmo desenho), a escada, a barra e a seta do andar, os três tiles, o esteio, o lampião, os cristais e o chão. Sobram estas peças, e o de-para é sobre elas:
+
+| # | Peça do Apellon | Onde entra | Hoje | Proposta |
+|---|---|---|---|---|
+| 1 | `icon_crystal_red` (cristal vermelho com azul) | VERMELHAS no HUD, saldo da LOJA, Descansar (aberto), modal do descanso, loja das permanentes | o cristal roxo das lascas pintado de vermelho | **Entra** |
+| 2 | `ui_button_rest` (botão laranja, 130×66) | os dois botões de baixo: **Descansar** e **Próximo andar / DESCER**, em 9-slice no tamanho de hoje (94×36) | o botão de madeira escura do kit | **Entra.** Aceso: laranja com o texto em marrom, como os tiles. Trancado (Descansar antes do 10) e enchendo (Próximo andar): o laranja apagado, e o que já encheu acende |
+| 3 | `loading` (moldura com o verde) | as barras de tempo: os 30 s do anúncio e os 30 s da escolha do raro (212 e 186 × 12 px; o desenho do Apellon tem os mesmos 12 px de altura) | a barra do kit de madeira | **Entra** |
+| 4 | `cave_meter_t` (ponto laranja de 3×3) | as marcas dos andares que liberam algo, ao lado da barra do andar | tracinhos cinza de 4×1 | **Entra** |
+| 5 | `ui_rectangle` (moldura laranja, fundo azul-acinzentado) | a etiqueta do andar ao lado da seta | caixa escura com o número em âmbar | **Opcional; recomendo não:** o azul-acinzentado tira o contraste do número e destoa da coluna |
+| 6 | `tab` / `tab_open` (gaveta lateral com 5 vagas) | não tem lugar no jogo de hoje: parece uma gaveta que sai da borda e abre com 5 espaços (a coluna dos bônus?) | — | **Fica de fora:** é recurso novo, não ícone; perguntar ao Apellon para que foi pensada |
+| 7 | `icon_cave` (montanha) | o HUD do v8 não mostra mais a caverna (§7, D-281) | — | **Fica de fora** |
+| 8 | `name_shop`, `name_settings` | os títulos dos modais são texto, todos iguais (E3) | — | **Fica de fora** |
+
+**Ainda sem desenho do Apellon** (ficam como estão; é a lista para pedir a ele): o ícone do AD (`icon_ad`), o raio dos bônus (`icon_bolt`), o X (`icon_close`), o alto-falante dos AJUSTES, o selo "!", os ícones da LOJA e das permanentes do pacote Anvil RPG (13), os dos bônus, o raro dourado (`icon_golden_rare`) e a picareta dupla.
+
+**Mockups:** `tools/ci/out/m9i-e6-mockup-andar1.png` (Descansar trancado, Próximo andar enchendo), `m9i-e6-mockup-andar12.png` (os dois acesos, com a etiqueta opcional do #5), `m9i-e6-mockup-barras.png` e `m9i-e6-depara.png` (as peças). Feitos por cima das capturas reais; a captura no jogo (`TempHudCaptureTests.CaptureIconMockup`) fica para quando o Editor estiver fechado.
+
+**A câmera nova (#2–#5):**
+
+- **#2, os esteios:** hoje o esteio mais perto da câmera que é desenhado fica 0,6 m além do anão da F1 (5,6 m da câmera), porque na F1 ele cobria o anão. Na câmera do v8 esse corte cai no meio da tela, e o arco aparece ou some de uma vez ali. Proposta: **os postes passam sempre** (ficam nas bordas, não cobrem o anão nem os cristais) e **a viga some aos poucos** no último 1,5 m antes do corte, num **pontilhado de pixels** (o shader do corredor já recorta por alfa; o pontilhado é o jeito pixel art de "transparência", sem fila de transparentes). Alternativa: o arco inteiro some no pontilhado.
+- **#3, o corredor atrás do anão:** pede desenho (marca da quebra, cacos). **Recomendo não fazer agora:** vai para a lista de pedidos ao Apellon.
+- **#4, os cantos escuros na transição:** fica como a **D-327** decidiu (só aparece no cartão escuro). Nada a fazer.
+- **#5, o "Recuo" no DBG → Câmera:** é da F1 (D-148). Proposta: **o botão só aparece com a câmera F1**; na do v8 ele some, em vez de mostrar "Recuo ?".
 
 ### E7 — Suíte de testes
 
@@ -193,6 +214,6 @@ Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build 
 | E2 Barra do andar, escada e transição | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | placa A (D-335) |
 | E3 Modais | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-336 |
 | E4 Apagar save e versão | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-337 |
-| E5 Voltar do Android e bomba por toque | 🔶 feita em 2026-11-19, espera o seu teste | D-338 |
-| E6 Ícones e câmera nova | ⏳ | de-para para aprovar |
+| E5 Voltar do Android e bomba por toque | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-338 |
+| E6 Ícones e câmera nova | 📝 de-para e propostas da câmera esperando aprovação (2026-11-19) | |
 | E7 Suíte de testes | ⏳ | sem as sessões longas |
