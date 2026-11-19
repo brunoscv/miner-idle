@@ -148,6 +148,7 @@ namespace MinersIdle.EditorTools
             changed |= HudColumnV8Setup.EnsureInScene(); // M9i E1: o HUD mais alto, os tiles do Apellon, os bônus à direita, o Descansar trancado
             changed |= FloorV8Setup.EnsureInScene(); // M9i E2: a barra do Apellon centrada, a escada no DESCER, a placa da transição
             changed |= ModalV8Setup.EnsureInScene(); // M9i E3: os modais com o título mais alto e o X maior
+            changed |= VersionNoticeSetup.EnsureInScene(); // M9i E4: o aviso de versão nova (depois da E3: copia a janela já pronta)
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }

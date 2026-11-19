@@ -82,6 +82,23 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 - **Conferir o Apagar save:** um teste PlayMode que joga um pouco (compras, estagiário, descanso, permanentes, offline pendente), apaga pelo AJUSTES e confere que **tudo** voltou ao começo, inclusive o backup (`save.json.bak`). Os **ajustes** (som, tremor, avanço automático) continuam, como manda a D-200 (P2).
 - **Versão do save (agora, para os testes):** o save grava a versão do app (a do build). Ao abrir um save de **versão mais velha** que a do app, aparece um modal: "Versão nova do jogo — para ver tudo o que mudou, recomendamos recomeçar.", com **RECOMEÇAR** (apaga, como o Apagar save) e **CONTINUAR** (P1).
 - **Para produção (só o desenho, sem código):** uma seção no plano com o caminho: migrar o save de versão em versão (o save já tem número de versão, hoje 10) em vez de recomeçar, e um "o que há de novo" na primeira abertura depois de atualizar.
+- **Como ficou no código (2026-11-19, D-337):**
+  - **A versão do app:** cada build grava `0.1.0.AAMMDDhhmm` (a versão do projeto e a data e a hora do build) no `Application.version`; no fim do build a versão volta para `0.1.0`, e o `ProjectSettings` não muda no git. No Editor a versão é `0.1.0`. Assim todo APK novo é mais novo que o anterior, sem ninguém lembrar de subir número.
+  - **No save:** o campo `appVersion` vai em cada gravação. O número do save continua 10: um save sem o campo (de antes da E4) abre igual, com a versão vazia, que conta como mais velha. A comparação é por partes numéricas (`AppVersion.IsOlder`).
+  - **O aviso:** `VersionNoticeScreen`, uma cópia da confirmação do Apagar save (a mesma janela da E3), logo acima do "Bem-vindo de volta". Mostra "Seu save: x · Jogo: y" ("anterior" para um save sem versão). RECOMEÇAR é o mesmo `ResetProgress` do Apagar save (os ajustes ficam, D-200); CONTINUAR grava o save na hora, já com a versão nova, e o aviso não volta. Um jogo novo ou um save desta versão não avisa.
+  - **DBG → Offline → "Aviso de versão"** abre o aviso a qualquer hora (os botões funcionam de verdade).
+  - **O Apagar save** já apagava tudo e o backup; o teste novo confirma, jogando um pouco de tudo antes (recorde, descanso, permanentes, compra, estagiário, offline esperando o COLETAR).
+
+### O save em produção (desenho, sem código)
+
+Hoje o aviso sugere recomeçar porque o jogo ainda muda os números de um build para o outro. Na loja, ninguém pode perder o progresso por atualizar. O caminho:
+
+1. **Migrar sempre, nunca recomeçar.** Cada mudança no que o save guarda sobe o número do save (hoje 10) e ganha uma migração no `SaveService`, como já é feito da 1 à 10: o campo novo nasce com um valor que não estraga o jogo, o campo que saiu é lido uma última vez e convertido. Um teste EditMode por versão abre um save de exemplo daquela versão (guardado em `Tests/EditMode/Saves/`) e confere o resultado.
+2. **Mudança de balanço não apaga o save.** Se uma regra muda (custo, vida, recompensa), o save guarda o estado (níveis, andar, lascas), e os números são recalculados com as regras novas ao abrir. Quando uma mudança deixaria o jogador muito acima ou abaixo da curva, a migração compensa (por exemplo, devolve lascas de um nível que ficou mais caro), em vez de recomeçar.
+3. **Versão do app separada da versão do save.** A versão do app (`0.1.0.AAMMDDhhmm` hoje; na loja, `1.2.0` e o `versionCode` que só cresce) serve para o "o que há de novo"; a do save, para a migração.
+4. **"O que há de novo".** Na primeira abertura com a versão do app mais nova que a do save, um modal com as novidades daquela versão (texto em dados, pt-BR), com um único botão OK. Abre depois do "Bem-vindo de volta". Substitui o aviso de recomeçar.
+5. **Save do futuro.** Um save gravado por um app mais novo (o jogador voltou para uma versão velha) continua abrindo o backup, como hoje; nunca apaga.
+6. **Na nuvem (depois do lançamento):** o save local continua o principal; o da nuvem entra só como cópia, com a mesma versão do save e a mesma migração.
 
 ### E5 — Voltar do Android e a bomba por botão (#17, #18)
 
@@ -136,7 +153,14 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
   6. **Descansar:** `DBG → Andar → Ir ao andar` até 10 ou mais, tocar em DESCANSAR: barra nova, "DIA n" antes do X; o X e o CONTINUAR fecham sem descansar.
   7. **Raro:** `DBG → Bônus → Janela agora` (o atalho do raro): a janela cresce para cima, o cristal e "CRISTAL RARO!" na barra nova, sem X.
   8. **Offline e anúncio:** `DBG → Offline → Fora 10 min` (o "Bem-vindo de volta") e ASSISTIR num anúncio do AD: as duas janelas com a barra nova.
-- **E4…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
+- **E4 — Apagar save e versão do save** (feita em 2026-11-19, D-337). Nada de cena nova; um botão novo no DBG.
+  1. Rodar `Tools → Miners Idle → Projeto → Aplicar configuração do projeto` (no Console, as linhas `[Setup]` do aviso de versão e do "Aviso de versão" no menu Offline).
+  2. Abrir `Assets/_Project/Scenes/Game.unity` e dar Play. **Na primeira vez, o aviso "VERSÃO NOVA" aparece sozinho:** o save do Editor é de antes da E4, sem versão ("Seu save: anterior · Jogo: 0.1.0"). Tocar em CONTINUAR: o jogo segue com o seu progresso. Parar e dar Play de novo: o aviso não volta.
+  3. `DBG → Offline → Aviso de versão`: o aviso abre. CONTINUAR fecha sem mudar nada.
+  4. Jogar um pouco (comprar, contratar o estagiário, descer uns andares), `DBG → Offline → Aviso de versão` e tocar em RECOMEÇAR: tudo volta ao andar 1, sem lascas, sem estagiário, dia 1, sem vermelhas nem permanentes; os AJUSTES (som, tremor) ficam como estavam.
+  5. **Apagar save:** jogar de novo, AJUSTES → APAGAR SAVE → APAGAR: o mesmo começo do zero.
+  6. **No G75:** com o APK desta etapa, o save de lá é de antes da E4, então o aviso aparece na primeira abertura. Gerando outro APK depois, o aviso aparece de novo (o build novo tem a hora nova); CONTINUAR segue com o save.
+- **E5…E6:** cada etapa traz o seu passo a passo aqui quando for feita.
 
 ## Critério de pronto
 
@@ -158,8 +182,8 @@ Cada etapa de tela começa com **mockup** sobre captura real (270×480), aprovad
 | E0 A lista fechada | ✅ 18 linhas com prioridade e as etapas | |
 | E1 HUD e coluna da direita | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, pode seguir") | opção A (D-334) |
 | E2 Barra do andar, escada e transição | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | placa A (D-335) |
-| E3 Modais | 🔶 feita (D-336), espera o seu teste | `ModalV8Tests` e os testes da LOJA, AJUSTES, Boost, descanso, raro e offline verdes |
-| E4 Apagar save e versão | ⏳ | |
+| E3 Modais | ✅ aprovada pelo Bruno em 2026-11-19 ("Aprovada, segue") | D-336 |
+| E4 Apagar save e versão | 🔶 feita (D-337), espera o seu teste | `SaveVersionTests` (7), `AppVersionTests` e os testes do save, dos AJUSTES, do offline e do DBG verdes |
 | E5 Voltar do Android e bomba por botão | ⏳ | |
 | E6 Ícones e câmera nova | ⏳ | de-para para aprovar |
 | E7 Suíte de testes | ⏳ | sem as sessões longas |

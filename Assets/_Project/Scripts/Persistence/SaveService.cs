@@ -41,6 +41,18 @@ namespace MinersIdle.Persistence
         }
 
         /// <summary>
+        /// A versão do app que grava (M9i E4, D-337): vai em cada save. Começa com a do <c>Application.version</c>; os
+        /// testes trocam.
+        /// </summary>
+        public string AppVersion { get; set; } = Application.version;
+
+        /// <summary>
+        /// A versão do app que gravou o save carregado (M9i E4): vazia num save de antes da E4; <c>null</c> sem save ou com
+        /// um save ruim (jogo novo).
+        /// </summary>
+        public string LoadedAppVersion { get; private set; }
+
+        /// <summary>
         /// A hora (UTC) em que o save carregado foi gravado (save v5, M9): de onde o offline conta. <c>null</c> sem save,
         /// com um save ruim ou até a versão 4 (sem hora: nenhum offline na primeira abertura).
         /// </summary>
@@ -71,12 +83,14 @@ namespace MinersIdle.Persistence
             permanent = new PermanentState();
             LoadedSavedAtUtc = null;
             LoadedRest = null;
+            LoadedAppVersion = null;
 
             // O principal; estragado ou faltando, o backup (M9, E3); os dois ruins, jogo novo.
             string text = ReadSafely(_store.Read, "o save", out bool readFailed);
             if (TryParse(text, out var data, out string why))
             {
                 status = SaveLoadStatus.Loaded;
+                LoadedAppVersion = data.appVersion ?? "";
                 return Restore(data, economy, permanentRules, caveCount, out permanent);
             }
 
@@ -92,6 +106,7 @@ namespace MinersIdle.Persistence
             {
                 Debug.LogWarning("[Save] Abrindo o backup (o save de uma gravação antes).");
                 status = SaveLoadStatus.LoadedBackup;
+                LoadedAppVersion = data.appVersion ?? "";
                 return Restore(data, economy, permanentRules, caveCount, out permanent);
             }
 
@@ -265,6 +280,7 @@ namespace MinersIdle.Persistence
             var data = new SaveData
             {
                 savedAtUtcTicks = savedAtUtc?.ToUniversalTime().Ticks ?? 0,
+                appVersion = AppVersion ?? "",
                 shards = state.Shards, hits = state.Hits, breaks = state.Breaks,
                 cave = state.Cave, caveBreaks = state.CaveBreaks, playSeconds = state.PlaySeconds,
                 shardsEarned = state.ShardsEarned, reachedHeart = state.ReachedHeart,

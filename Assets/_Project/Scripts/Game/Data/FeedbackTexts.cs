@@ -124,6 +124,15 @@ namespace MinersIdle.Game
         [SerializeField] string deleteConfirm;
         [SerializeField] string creditsTitle;
         [SerializeField] string creditsBack;
+        [Header("M9i E4: o aviso de versão nova (D-337)")]
+        [SerializeField] string versionTitle;
+        [TextArea, SerializeField] string versionBody;
+        [Tooltip("{0} = a versão do save, {1} = a do app.")]
+        [SerializeField] string versionNumbersFormat;
+        [Tooltip("No lugar da versão de um save de antes da E4, que não guardava a versão.")]
+        [SerializeField] string versionUnknown;
+        [SerializeField] string versionRestart;
+        [SerializeField] string versionContinue;
         [Tooltip("A lista dos Créditos, do CREDITS.md: um título de grupo e as linhas dele, na ordem.")]
         [SerializeField] CreditLine[] credits = new CreditLine[0];
 
@@ -197,6 +206,12 @@ namespace MinersIdle.Game
         public string DeleteConfirm => deleteConfirm;
         public string CreditsTitle => creditsTitle;
         public string CreditsBack => creditsBack;
+        public string VersionTitle => versionTitle;
+        public string VersionBody => versionBody;
+        public string VersionNumbersFormat => versionNumbersFormat;
+        public string VersionUnknown => versionUnknown;
+        public string VersionRestart => versionRestart;
+        public string VersionContinue => versionContinue;
         public IReadOnlyList<CreditLine> Credits => credits;
     }
 

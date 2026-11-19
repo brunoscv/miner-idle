@@ -196,6 +196,10 @@ namespace MinersIdle.Game
             Debug.Log($"[Save] {status}: {NumberFormatter.Format(state.Shards)} lascas, caverna {state.Cave}; dia {permanent.Day}, " +
                       $"{NumberFormatter.Format(permanent.RedShards)} lascas vermelhas.");
             PendingRest = save.LoadedRest;
+            IsSaveFromOlderApp = (status == SaveLoadStatus.Loaded || status == SaveLoadStatus.LoadedBackup)
+                                 && Persistence.AppVersion.IsOlder(save.LoadedAppVersion, save.AppVersion);
+            if (IsSaveFromOlderApp)
+                Debug.Log($"[Save] Save da versão \"{save.LoadedAppVersion}\", app na \"{save.AppVersion}\": aviso de versão nova.");
             Begin(Seed, state, resting: PendingRest.HasValue);
             if (PendingRest.HasValue)
             {
@@ -341,6 +345,26 @@ namespace MinersIdle.Game
         public RestSummary? PendingRest { get; private set; }
 
         /// <summary>
+        /// M9i E4 (D-337): o save carregado foi gravado por uma versão mais velha do app (ou de antes da E4, sem versão).
+        /// O <c>VersionNoticeScreen</c> mostra o aviso; RECOMEÇAR (<see cref="ResetProgress"/>) ou CONTINUAR
+        /// (<see cref="ContinueWithOlderSave"/>) apagam o aviso.
+        /// </summary>
+        public bool IsSaveFromOlderApp { get; private set; }
+
+        /// <summary>A versão do app que gravou o save carregado ("" sem versão; <c>null</c> sem save).</summary>
+        public string SavedAppVersion => _save?.LoadedAppVersion;
+
+        /// <summary>A versão do app de agora (a que vai nos saves).</summary>
+        public string AppVersion => _save != null ? _save.AppVersion : Application.version;
+
+        /// <summary>CONTINUAR no aviso de versão nova: segue com o save, que passa a levar a versão de agora.</summary>
+        public void ContinueWithOlderSave()
+        {
+            IsSaveFromOlderApp = false;
+            SaveNow();
+        }
+
+        /// <summary>
         /// O INICIAR (M9d, D-265): a run nova começa agora, montada de novo com as permanentes compradas no descanso (a Alma
         /// dos Anões, a Promoção, o Atalho), numa fila nova. <c>false</c> se não está descansando.
         /// </summary>
@@ -381,6 +405,7 @@ namespace MinersIdle.Game
         /// </summary>
         public void ResetProgress()
         {
+            IsSaveFromOlderApp = false;
             _save?.Delete();
             _permanent = new PermanentState();
             PendingRest = null;

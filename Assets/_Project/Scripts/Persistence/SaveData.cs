@@ -72,6 +72,13 @@ namespace MinersIdle.Persistence
 
         /// <summary>Save v10 (M9e E1, D-283): os segundos de run desde o último raro. Até a 9: 0 (o contador recomeça).</summary>
         public double rareTimer;
+
+        /// <summary>
+        /// M9i E4 (D-337): a versão do app que gravou (<c>Application.version</c>; no build, <c>0.1.0.AAMMDDhhmm</c>). Não muda
+        /// o número do save: um save sem ela (de antes da E4) abre igual, com a versão vazia, que conta como mais velha
+        /// (<see cref="AppVersion.IsOlder"/>), e o jogo mostra o aviso de versão nova.
+        /// </summary>
+        public string appVersion = "";
     }
 
     /// <summary>

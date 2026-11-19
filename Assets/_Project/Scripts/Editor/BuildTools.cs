@@ -50,6 +50,9 @@ namespace MinersIdle.EditorTools
             }
         }
 
+        /// <summary>A versão de um build: a do projeto e a data e a hora do build (<c>0.1.0.2611191530</c>).</summary>
+        internal static string StampedVersion(DateTime when) => $"{ProjectSetup.VersionName}.{when:yyMMddHHmm}";
+
         static string BuildAndroid(bool development, bool run = false)
         {
             ProjectSetup.ApplyBeforeBuild();
@@ -66,7 +69,20 @@ namespace MinersIdle.EditorTools
                           (run ? BuildOptions.AutoRunPlayer : BuildOptions.None),
             };
 
-            var report = BuildPipeline.BuildPlayer(options);
+            // M9i E4 (D-337): cada build leva a data e a hora na versão (0.1.0.AAMMDDhhmm), para o jogo saber que um save
+            // veio de um build mais velho. Volta para a versão do projeto no fim: o ProjectSettings não muda no git.
+            string stamped = StampedVersion(DateTime.Now);
+            PlayerSettings.bundleVersion = stamped;
+            BuildReport report;
+            try
+            {
+                report = BuildPipeline.BuildPlayer(options);
+            }
+            finally
+            {
+                PlayerSettings.bundleVersion = ProjectSetup.VersionName;
+            }
+            Debug.Log($"[Build] Versão {stamped}.");
             var summary = report.summary;
             Debug.Log($"[Build] {summary.result}, {summary.totalSize / (1024f * 1024f):0.0} MB, " +
                       $"{summary.totalTime.TotalSeconds:0} s, {summary.totalErrors} erro(s).");

@@ -80,6 +80,12 @@ MonoBehaviour:
   deleteConfirm: APAGAR
   creditsTitle: "CR\xC9DITOS"
   creditsBack: VOLTAR
+  versionTitle: "VERS\xC3O NOVA"
+  versionBody: "Vers\xE3o nova do jogo \u2014 para ver tudo o que mudou, recomendamos recome\xE7ar."
+  versionNumbersFormat: "Seu save: {0} \xB7 Jogo: {1}"
+  versionUnknown: anterior
+  versionRestart: "RECOME\xC7AR"
+  versionContinue: CONTINUAR
   credits:
   - header: 1
     text: Jogo
