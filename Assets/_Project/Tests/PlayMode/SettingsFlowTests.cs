@@ -120,6 +120,31 @@ namespace MinersIdle.Tests
         }
 
         [UnityTest]
+        public IEnumerator KeepScreenOn_IsOnByDefault_TurnsOff_AndSurvivesReopening()
+        {
+            // M9i #23 (D-344): de fábrica a tela não apaga; o interruptor devolve ao tempo de tela do aparelho.
+            yield return Load(withFiles: true);
+            Assert.That(_settings.KeepScreenOn, Is.True);
+            Assert.That(Screen.sleepTimeout, Is.EqualTo(SleepTimeout.NeverSleep));
+            OpenFromTheHud();
+            Assert.That(_screen.ShowsKeepScreenOn, Is.True);
+
+            Click("Screen/Panel/Inset/KeepScreenOn/Toggle");
+            Assert.That(_settings.KeepScreenOn, Is.False);
+            Assert.That(_screen.ShowsKeepScreenOn, Is.False);
+            Assert.That(Screen.sleepTimeout, Is.EqualTo(SleepTimeout.SystemSetting), "o aparelho volta ao tempo dele");
+            Click("Screen/Panel/Close");
+
+            yield return Load(withFiles: true);
+            Assert.That(_settings.KeepScreenOn, Is.False, "fica nos ajustes");
+            Assert.That(Screen.sleepTimeout, Is.EqualTo(SleepTimeout.SystemSetting));
+
+            OpenFromTheHud();
+            Click("Screen/Panel/Inset/KeepScreenOn/Toggle");
+            Assert.That(Screen.sleepTimeout, Is.EqualTo(SleepTimeout.NeverSleep), "ligar de novo");
+        }
+
+        [UnityTest]
         public IEnumerator DeleteSave_AsksFirst_ThenStartsAtLevelOne_AndKeepsTheSettings()
         {
             yield return Load(withFiles: true);

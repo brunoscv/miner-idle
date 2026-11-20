@@ -99,6 +99,23 @@ namespace MinersIdle.Game
         }
 
         /// <summary>
+        /// M9i #23 (D-344): a tela do aparelho fica acesa com o jogo aberto (fábrica: ligado). Desligado, o aparelho apaga
+        /// no tempo dele. Quem passa ao aparelho é o <c>SettingsEffects</c>.
+        /// </summary>
+        public bool KeepScreenOn
+        {
+            get => _data.keepScreenOn;
+            set
+            {
+                if (value == _data.keepScreenOn) return;
+                _data.keepScreenOn = value;
+                _dirty = true;
+                Flush();
+                Notify();
+            }
+        }
+
+        /// <summary>
         /// Liga o arquivo dos ajustes e abre com o que está nele (chamado pelo <c>GameBootstrap</c>). Sem arquivo, ou com um
         /// ilegível, ficam os de fábrica.
         /// </summary>
@@ -110,7 +127,8 @@ namespace MinersIdle.Game
             _data.effectsVolume = float.IsNaN(_data.effectsVolume) ? SettingsData.DefaultEffectsVolume : Mathf.Clamp01(_data.effectsVolume);
             _dirty = false;
             Debug.Log($"[Ajustes] Efeitos {Mathf.RoundToInt(_data.effectsVolume * 100f)}%, tremor {(_data.screenShake ? "ligado" : "desligado")}, " +
-                      $"vibração {(_data.vibration ? "ligada" : "desligada")}, avanço automático {(_data.autoAdvance ? "ligado" : "desligado")}" +
+                      $"vibração {(_data.vibration ? "ligada" : "desligada")}, avanço automático {(_data.autoAdvance ? "ligado" : "desligado")}, " +
+                      $"tela sempre acesa {(_data.keepScreenOn ? "ligada" : "desligada")}" +
                       (loaded == null ? " (de fábrica)." : "."));
             Notify();
         }

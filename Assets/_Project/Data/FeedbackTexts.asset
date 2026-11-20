@@ -96,6 +96,7 @@ MonoBehaviour:
   settingsBombLabel: "Lan\xE7ar a bomba"
   settingsBombSwipe: DESLIZAR
   settingsBombTap: TOCAR
+  settingsKeepScreenLabel: Tela sempre acesa
   credits:
   - header: 1
     text: Jogo

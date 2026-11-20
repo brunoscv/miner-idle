@@ -59,6 +59,7 @@ namespace MinersIdle.EditorTools
             changed |= EnsureScreen(settings);
             changed |= EnsureAutoAdvanceRow();
             changed |= EnsureBombRow();
+            changed |= EnsureKeepScreenRow();
             changed |= EnsureEffectsRunner();
             changed |= EnsureThinFill();
             changed |= EnsureHudButton();
@@ -268,6 +269,44 @@ namespace MinersIdle.EditorTools
 
             GrayboxSetup.SetReferences(view, ("bombLabel", label), ("bombButton", button), ("bombValue", value));
             Debug.Log("[Setup] AJUSTES: a linha \"Lançar a bomba\" com DESLIZAR e TOCAR (M9i E5, #18).");
+            return true;
+        }
+
+        /// <summary>
+        /// M9i #23 (D-344): a linha "Tela sempre acesa" depois de "Lançar a bomba", com o interruptor do Tremor e da
+        /// Vibração. O texto vai para o <see cref="FeedbackTexts"/>.
+        /// </summary>
+        static bool EnsureKeepScreenRow()
+        {
+            bool changed = false;
+            var texts = AssetDatabase.LoadAssetAtPath<FeedbackTexts>(TextsPath);
+            if (texts != null && string.IsNullOrEmpty(texts.SettingsKeepScreenLabel))
+            {
+                var textsSo = new SerializedObject(texts);
+                textsSo.FindProperty("settingsKeepScreenLabel").stringValue = "Tela sempre acesa";
+                textsSo.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(texts);
+                AssetDatabase.SaveAssets();
+                changed = true;
+            }
+
+            var view = Object.FindAnyObjectByType<SettingsScreen>(FindObjectsInactive.Include);
+            if (view == null) return changed;
+            var serialized = new SerializedObject(view);
+            if (serialized.FindProperty("keepScreenButton").objectReferenceValue != null) return changed;
+            var bomb = serialized.FindProperty("bombButton").objectReferenceValue as Button;
+            var bombRow = bomb != null ? bomb.transform.parent : null;
+            var inset = bombRow != null ? bombRow.parent : null;
+            if (inset == null) return changed;
+            _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.GameFontPath);
+            _numbers = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(UiSkinSetup.NumbersFontPath);
+
+            var row = Block(inset, "KeepScreenOn", RowHeight);
+            row.SetSiblingIndex(bombRow.GetSiblingIndex() + 1);
+            var label = Label(row, RowPad);
+            var toggle = Toggle(row);
+            GrayboxSetup.SetReferences(view, ("keepScreenLabel", label), ("keepScreenButton", toggle));
+            Debug.Log("[Setup] AJUSTES: a linha \"Tela sempre acesa\", ligada de fábrica (M9i #23, D-344).");
             return true;
         }
 

@@ -66,6 +66,18 @@ namespace MinersIdle.Tests
             Assert.That(loaded.screenShake, Is.False);
             Assert.That(loaded.effectsVolume, Is.EqualTo(0.8f), "sem o campo, o de fábrica");
             Assert.That(loaded.vibration, Is.True);
+            Assert.That(loaded.keepScreenOn, Is.True, "M9i #23: um arquivo antigo abre com a tela sempre acesa");
+        }
+
+        [Test]
+        public void KeepScreenOff_ComesBack()
+        {
+            Assert.That(new SettingsData().keepScreenOn, Is.True, "fábrica: ligada (D-344)");
+            _settings.Save(new SettingsData { keepScreenOn = false });
+
+            var loaded = new SettingsStore(new FileSaveStore(_dir, SettingsStore.FileName)).Load();
+
+            Assert.That(loaded.keepScreenOn, Is.False);
         }
 
         [Test]

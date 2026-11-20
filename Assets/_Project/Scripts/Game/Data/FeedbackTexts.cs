@@ -145,6 +145,8 @@ namespace MinersIdle.Game
         [SerializeField] string settingsBombLabel;
         [SerializeField] string settingsBombSwipe;
         [SerializeField] string settingsBombTap;
+        [Tooltip("M9i #23 (D-344): a linha dos AJUSTES que deixa a tela acesa com o jogo aberto.")]
+        [SerializeField] string settingsKeepScreenLabel;
         [Tooltip("A lista dos Créditos, do CREDITS.md: um título de grupo e as linhas dele, na ordem.")]
         [SerializeField] CreditLine[] credits = new CreditLine[0];
 
@@ -234,6 +236,7 @@ namespace MinersIdle.Game
         public string SettingsBombLabel => settingsBombLabel;
         public string SettingsBombSwipe => settingsBombSwipe;
         public string SettingsBombTap => settingsBombTap;
+        public string SettingsKeepScreenLabel => settingsKeepScreenLabel;
         public IReadOnlyList<CreditLine> Credits => credits;
     }
 

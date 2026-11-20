@@ -23,6 +23,12 @@ namespace MinersIdle.Persistence
 
         /// <summary>M9i E5 (#18): a bomba lança com um toque (senão, deslizando, como desde o M9g). Fábrica: deslizar.</summary>
         public bool bombTap;
+
+        /// <summary>
+        /// M9i #23 (D-344): a tela não apaga sozinha com o jogo aberto. Fábrica: ligado (um arquivo antigo, sem o campo,
+        /// abre ligado, como o jogo ficou desde a D-344).
+        /// </summary>
+        public bool keepScreenOn = true;
     }
 
     /// <summary>

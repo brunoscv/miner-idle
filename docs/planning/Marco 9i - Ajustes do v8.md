@@ -224,8 +224,8 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
 
 Pedido do Bruno (2026-11-19, D-344): com o jogo aberto, a tela do celular não apaga sozinha. Num idle a pessoa fica olhando a mina sem tocar, e o Android apagava a tela no tempo dele (30 s a 2 min).
 
-- **No código:** uma linha no `GameBootstrap.Awake`, junto da meta de quadros: `Screen.sleepTimeout = SleepTimeout.NeverSleep`. O Unity liga a flag de "manter a tela acesa" da janela do app, então só vale com o jogo na frente; em segundo plano ou fechado, o aparelho volta ao tempo de tela dele. Nenhuma regra muda.
-- **Sem opção nos AJUSTES por enquanto:** se a bateria pesar nos testes longos do G75, vira uma linha nos AJUSTES.
+- **No código:** `Screen.sleepTimeout = SleepTimeout.NeverSleep`. O Unity liga a flag de "manter a tela acesa" da janela do app, então só vale com o jogo na frente; em segundo plano ou fechado, o aparelho volta ao tempo de tela dele. Nenhuma regra muda.
+- **A linha nos AJUSTES (Bruno, 2026-11-19, depois do teste no G75):** "Tela sempre acesa", a última antes de CRÉDITOS e APAGAR SAVE, com o interruptor do Tremor e da Vibração, **ligada de fábrica**. Fica no `settings.json` (`keepScreenOn`, fora do save; Apagar save não mexe; um arquivo antigo, sem o campo, abre ligado). Quem aplica é o `SettingsEffects`, como o som e o tremor (desligada: `SleepTimeout.SystemSetting`, o tempo do aparelho); a linha do `GameBootstrap` saiu. A janela dos AJUSTES cresce 22 px. Testes: `SettingsStoreTests.KeepScreenOff_ComesBack` e o arquivo antigo, e `SettingsFlowTests.KeepScreenOn_IsOnByDefault_TurnsOff_AndSurvivesReopening` (verdes em 2026-11-19, com o resto de `SettingsFlowTests` e `BackAndBombTests`).
 - **Só no aparelho:** no Editor quem manda na tela é o PC; abrir a cena Game direto (sem a Bootstrap) pula esta linha, como pula o save.
 
 ### E9 — Suíte de testes
@@ -340,6 +340,8 @@ Pedido do Bruno (2026-11-19, D-344): com o jogo aberto, a tela do celular não a
   3. Abrir o jogo e não tocar em nada por mais que esse tempo: a tela continua acesa, com o anão minerando.
   4. Ir para a tela inicial do Android (o jogo fica em segundo plano) e esperar o mesmo tempo: a tela apaga como sempre.
   5. Voltar ao jogo: de novo, a tela não apaga sozinha.
+  6. **AJUSTES:** tocar em AJUSTES: a última linha antes de CRÉDITOS é "Tela sempre acesa", ligada. Desligar e esperar o tempo do aparelho sem tocar: a tela apaga como nos outros apps. Fechar e abrir o jogo: continua desligada. Ligar de novo: volta a não apagar.
+  7. No Editor dá para ver só a linha e o interruptor (a tela do PC não apaga por causa do Unity).
 
 ## Critério de pronto
 
@@ -368,5 +370,5 @@ Pedido do Bruno (2026-11-19, D-344): com o jogo aberto, a tela do celular não a
 | E7 A bomba embaixo, botões em cima | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, segue") | D-340 |
 | E7, complemento: nomes da coluna e menu do AD | 🔶 feito em 2026-11-19, espera o seu teste | D-342 |
 | E8 Loja rápida no DBG | ✅ aprovada pelo Bruno em 2026-11-19 ("pode fechar essa implementação"), com o DBG no alto | D-341, D-343; proposta para o Apellon |
-| Tela sempre acesa (#23) | ✅ aprovada pelo Bruno em 2026-11-19 no G75 ("Testei, commita") | D-344 |
+| Tela sempre acesa (#23) | ✅ aprovada pelo Bruno em 2026-11-19 no G75 ("Testei, commita"); a linha nos AJUSTES também, no G75 | D-344 |
 | E9 Suíte de testes | ⏳ | sem as sessões longas |

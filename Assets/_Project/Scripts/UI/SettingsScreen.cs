@@ -51,6 +51,9 @@ namespace MinersIdle.UI
         [SerializeField] TMP_Text bombLabel;
         [SerializeField] Button bombButton;
         [SerializeField] TMP_Text bombValue;
+        [Tooltip("M9i #23 (D-344): a linha \"Tela sempre acesa\", com o interruptor (fábrica: ligado).")]
+        [SerializeField] TMP_Text keepScreenLabel;
+        [SerializeField] Button keepScreenButton;
         [SerializeField] Color labelColor = new Color32(0xF5, 0xF7, 0xF8, 0xFF);
         [SerializeField] Color lockedLabelColor = new Color32(0xBE, 0xB4, 0xAA, 0xFF);
         [Space]
@@ -95,6 +98,7 @@ namespace MinersIdle.UI
         public string AutoAdvanceLockedText => autoAdvanceLocked.text;
         public string CreditsText => creditsList.text;
         public string BombText => bombValue != null ? bombValue.text : "";
+        public bool ShowsKeepScreenOn => keepScreenButton != null && ((Image)keepScreenButton.targetGraphic).sprite == toggleOn;
 
         void Awake()
         {
@@ -104,6 +108,7 @@ namespace MinersIdle.UI
             vibrationLabel.text = texts.SettingsVibrationLabel;
             if (autoAdvanceLabel != null) autoAdvanceLabel.text = texts.SettingsAutoAdvanceLabel;
             if (bombLabel != null) bombLabel.text = texts.SettingsBombLabel;
+            if (keepScreenLabel != null) keepScreenLabel.text = texts.SettingsKeepScreenLabel;
             creditsLabel.text = texts.SettingsCredits;
             deleteLabel.text = texts.SettingsDeleteSave;
             confirmTitle.text = texts.DeleteTitle;
@@ -132,6 +137,7 @@ namespace MinersIdle.UI
             vibrationButton.onClick.AddListener(ToggleVibration);
             if (autoAdvanceButton != null) autoAdvanceButton.onClick.AddListener(ToggleAutoAdvance);
             if (bombButton != null) bombButton.onClick.AddListener(ToggleBombTap);
+            if (keepScreenButton != null) keepScreenButton.onClick.AddListener(ToggleKeepScreenOn);
             creditsButton.onClick.AddListener(OpenCredits);
             deleteButton.onClick.AddListener(AskDelete);
             cancelButton.onClick.AddListener(CancelDelete);
@@ -151,6 +157,7 @@ namespace MinersIdle.UI
             vibrationButton.onClick.RemoveListener(ToggleVibration);
             if (autoAdvanceButton != null) autoAdvanceButton.onClick.RemoveListener(ToggleAutoAdvance);
             if (bombButton != null) bombButton.onClick.RemoveListener(ToggleBombTap);
+            if (keepScreenButton != null) keepScreenButton.onClick.RemoveListener(ToggleKeepScreenOn);
             creditsButton.onClick.RemoveListener(OpenCredits);
             deleteButton.onClick.RemoveListener(AskDelete);
             cancelButton.onClick.RemoveListener(CancelDelete);
@@ -186,6 +193,9 @@ namespace MinersIdle.UI
 
         /// <summary>M9i E5 (#18): DESLIZAR ⇄ TOCAR.</summary>
         public void ToggleBombTap() => settings.BombTap = !settings.BombTap;
+
+        /// <summary>M9i #23 (D-344): a tela sempre acesa, liga e desliga.</summary>
+        public void ToggleKeepScreenOn() => settings.KeepScreenOn = !settings.KeepScreenOn;
 
         public void OpenCredits()
         {
@@ -240,6 +250,8 @@ namespace MinersIdle.UI
             ((Image)vibrationButton.targetGraphic).sprite = settings.Vibration ? toggleOn : toggleOff;
             RefreshAutoAdvance();
             if (bombValue != null) bombValue.text = settings.BombTap ? texts.SettingsBombTap : texts.SettingsBombSwipe;
+            if (keepScreenButton != null)
+                ((Image)keepScreenButton.targetGraphic).sprite = settings.KeepScreenOn ? toggleOn : toggleOff;
         }
 
         /// <summary>
