@@ -6,7 +6,8 @@ using UnityEngine.SceneManagement;
 namespace MinersIdle.Game
 {
     /// <summary>
-    /// Ponto de entrada do app (cena Bootstrap): configura os quadros, carrega a cena Game e entrega a ela o save (M4) e
+    /// Ponto de entrada do app (cena Bootstrap): configura os quadros e a tela sempre acesa (M9i #23), carrega a cena Game
+    /// e entrega a ela o save (M4) e
     /// o arquivo dos AJUSTES (M9, E4).
     /// É aqui que a sessão é montada (CLAUDE.md: composição no GameBootstrap, sem singletons). Abrir a cena Game direto
     /// pula este passo: a partida roda sem save.
@@ -31,6 +32,9 @@ namespace MinersIdle.Game
         {
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = TargetFrameRate;
+            // A tela não apaga sozinha com o jogo aberto (M9i #23, D-344): num idle a pessoa fica olhando a mina sem tocar.
+            // Vale só com o app na frente: em segundo plano ou fechado, o aparelho volta ao tempo de tela dele.
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;
         }
 
         void Start()

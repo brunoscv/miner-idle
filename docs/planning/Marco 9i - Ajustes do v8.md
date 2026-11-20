@@ -220,6 +220,14 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
   - **Cuidado na suíte (E9):** deixar a loja rápida ligada no Editor muda as posições que os outros testes PlayMode medem (Descansar, barra do andar). Os `QuickShopTests` desligam no começo e devolvem a escolha no fim; para rodar a suíte, deixar `Loja rápida: não`.
   - Capturas reais: `tools/ci/out/m9i-e8-real-desligada.png`, `-ligada.png`, `-ligada-andar12.png` e `-ligada-raro.png`.
 
+### Tela sempre acesa (#23)
+
+Pedido do Bruno (2026-11-19, D-344): com o jogo aberto, a tela do celular não apaga sozinha. Num idle a pessoa fica olhando a mina sem tocar, e o Android apagava a tela no tempo dele (30 s a 2 min).
+
+- **No código:** uma linha no `GameBootstrap.Awake`, junto da meta de quadros: `Screen.sleepTimeout = SleepTimeout.NeverSleep`. O Unity liga a flag de "manter a tela acesa" da janela do app, então só vale com o jogo na frente; em segundo plano ou fechado, o aparelho volta ao tempo de tela dele. Nenhuma regra muda.
+- **Sem opção nos AJUSTES por enquanto:** se a bateria pesar nos testes longos do G75, vira uma linha nos AJUSTES.
+- **Só no aparelho:** no Editor quem manda na tela é o PC; abrir a cena Game direto (sem a Bootstrap) pula esta linha, como pula o save.
+
 ### E9 — Suíte de testes
 
 - EditMode e PlayMode sem as sessões longas, tudo verde (como em 2026-11-18). Os `AdFlowTests` continuam pendentes.
@@ -326,6 +334,13 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
   8. Parar e dar Play: a loja rápida continua ligada (fica lembrada). `DBG → Loja → Loja rápida: sim` desliga, e tudo volta à E7. **Deixar desligada antes de rodar a suíte de testes.**
   9. **No G75 (para mostrar ao Apellon):** gerar o APK, ligar pelo DBG e fechar o app; ao abrir de novo, já começa com a loja rápida.
 
+- **Tela sempre acesa (#23)** (feita em 2026-11-19, D-344). Nada de menu ou cena novos; só dá para ver no celular.
+  1. Gerar e instalar o APK: `Tools → Miners Idle → Build → Rodar no celular (Android)` (ou `bash tools/build/run-android.sh` no Terminal, com o Editor fechado).
+  2. No G75, conferir o tempo de tela do aparelho (Configurações → Tela → Tempo limite da tela; por exemplo, 30 s).
+  3. Abrir o jogo e não tocar em nada por mais que esse tempo: a tela continua acesa, com o anão minerando.
+  4. Ir para a tela inicial do Android (o jogo fica em segundo plano) e esperar o mesmo tempo: a tela apaga como sempre.
+  5. Voltar ao jogo: de novo, a tela não apaga sozinha.
+
 ## Critério de pronto
 
 - Todos os ajustes de prioridade alta feitos; os outros feitos ou adiados com o Bruno (com o motivo na lista).
@@ -353,4 +368,5 @@ A vai do mais visual, B do mais informativo (o "resumo" da LOJA), C do que menos
 | E7 A bomba embaixo, botões em cima | ✅ aprovada pelo Bruno em 2026-11-19 ("Testei, segue") | D-340 |
 | E7, complemento: nomes da coluna e menu do AD | 🔶 feito em 2026-11-19, espera o seu teste | D-342 |
 | E8 Loja rápida no DBG | ✅ aprovada pelo Bruno em 2026-11-19 ("pode fechar essa implementação"), com o DBG no alto | D-341, D-343; proposta para o Apellon |
+| Tela sempre acesa (#23) | ✅ aprovada pelo Bruno em 2026-11-19 no G75 ("Testei, commita") | D-344 |
 | E9 Suíte de testes | ⏳ | sem as sessões longas |
