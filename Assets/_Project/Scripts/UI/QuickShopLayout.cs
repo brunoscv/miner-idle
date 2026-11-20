@@ -13,7 +13,8 @@ namespace MinersIdle.UI
     /// <item>Descansar e DESCER ficam mais largos e alinhados com os cards (as poses "ligada" vêm do setup);</item>
     /// <item>a barra do andar volta para o alto e o DBG vai para cima dos cards;</item>
     /// <item>a janela do raro sobe até a altura da LOJA e fica por cima da coluna e da barra: ela passa para logo depois
-    /// da LOJA na hierarquia (os modais e o DBG, que vêm depois, continuam por cima dela).</item>
+    /// da LOJA na hierarquia (os modais e o DBG, que vêm depois, continuam por cima dela). O menu do AD sobe e vai para
+    /// depois da LOJA do mesmo jeito, para o tile da LOJA não cobrir o X dele.</item>
     /// </list>
     /// Desligada, tudo volta às poses que a cena tinha ao abrir. A escolha fica lembrada entre aberturas (P9), nas
     /// preferências do aparelho, fora do save; num build de lançamento ela nunca liga.
@@ -52,6 +53,8 @@ namespace MinersIdle.UI
         [SerializeField] Pose[] onPoses = Array.Empty<Pose>();
         [Tooltip("A janela do raro: com a loja rápida ligada, passa para logo depois de rareAbove (a LOJA, com o tile da coluna).")]
         [SerializeField] Transform rareWindow;
+        [Tooltip("O menu do AD: ligada, ele também sobe até a LOJA e passa para depois dela (o tile não cobre o X).")]
+        [SerializeField] Transform boostScreen;
         [SerializeField] Transform rareAbove;
         [Header("DBG")]
         [SerializeField] Button debugButton;
@@ -63,7 +66,8 @@ namespace MinersIdle.UI
         [SerializeField] string prefsKey = "dbg.quickShop";
 
         Pose[] _offPoses = Array.Empty<Pose>();
-        int _rareIndex = -1;
+        readonly System.Collections.Generic.List<(Transform target, int index)> _moved =
+            new System.Collections.Generic.List<(Transform, int)>();
 
         public bool IsOn { get; private set; }
 
@@ -111,24 +115,29 @@ namespace MinersIdle.UI
             var poses = on ? onPoses : _offPoses;
             foreach (var pose in poses) pose.Apply();
             if (quickShop != null && quickShop.activeSelf != on) quickShop.SetActive(on);
-            MoveRareWindow(on);
+            if (on)
+            {
+                // Cada um entra logo depois da LOJA: o raro primeiro, e o AD entre a LOJA e ele (o raro fica por cima).
+                MoveAboveTheShop(rareWindow);
+                MoveAboveTheShop(boostScreen);
+            }
+            else
+            {
+                // Volta na ordem contrária, cada um ao lugar que tinha quando saiu.
+                for (int i = _moved.Count - 1; i >= 0; i--) _moved[i].target.SetSiblingIndex(_moved[i].index);
+                _moved.Clear();
+            }
             if (debugLabel != null) debugLabel.text = string.Format(labelFormat, on ? yesName : noName);
         }
 
-        void MoveRareWindow(bool on)
+        /// <summary>Passa <paramref name="target"/> para logo depois da LOJA (<c>rareAbove</c>), se ainda vem antes dela.</summary>
+        void MoveAboveTheShop(Transform target)
         {
-            if (rareWindow == null || rareAbove == null || rareWindow.parent != rareAbove.parent) return;
-            if (on)
-            {
-                if (_rareIndex < 0) _rareIndex = rareWindow.GetSiblingIndex();
-                int above = rareAbove.GetSiblingIndex();
-                if (rareWindow.GetSiblingIndex() < above) rareWindow.SetSiblingIndex(above); // a LOJA sobe uma casa
-            }
-            else if (_rareIndex >= 0)
-            {
-                rareWindow.SetSiblingIndex(_rareIndex);
-                _rareIndex = -1;
-            }
+            if (target == null || rareAbove == null || target.parent != rareAbove.parent) return;
+            int above = rareAbove.GetSiblingIndex();
+            if (target.GetSiblingIndex() > above) return;
+            _moved.Add((target, target.GetSiblingIndex()));
+            target.SetSiblingIndex(above); // a LOJA sobe uma casa
         }
     }
 }

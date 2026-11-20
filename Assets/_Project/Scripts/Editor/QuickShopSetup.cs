@@ -69,6 +69,7 @@ namespace MinersIdle.EditorTools
             var safeArea = GameObject.Find("SafeArea")?.transform;
             if (safeArea == null) return changed;
             if (safeArea.Find(RootName) == null) changed |= Build(safeArea);
+            changed |= KeepBelowTheModals(safeArea);
             // As poses "ligada" saem da cena como ela está (desligada): conferidas em toda rodada.
             if (safeArea.Find(LayoutName)?.GetComponent<QuickShopLayout>() is QuickShopLayout layout)
                 changed |= UpdatePoses(layout, safeArea);
@@ -93,6 +94,25 @@ namespace MinersIdle.EditorTools
             var quickShop = BuildRow(safeArea, shop, runner, catalog, tile);
             BuildLayout(safeArea, quickShop, shop, rare, debugMenu);
             Debug.Log("[Setup] Loja rápida no DBG (M9i E8, D-341): quatro cards acima do Descansar e do DESCER, desligada.");
+            return true;
+        }
+
+        /// <summary>
+        /// A loja rápida (e o objeto das poses) logo antes da janela do raro na <c>SafeArea</c>: assim o menu do AD, a tela
+        /// do anúncio, a LOJA e os outros modais, que vêm depois, ficam por cima dos cards. Na primeira montagem ela ficava
+        /// antes da LOJA, mas depois do AD e do anúncio, e os cards apareciam por cima deles (Bruno, 2026-11-19). Com o
+        /// raro aberto, o Canvas dos cards os põe por cima do escurecido (P10). Devolve se mudou algo.
+        /// </summary>
+        static bool KeepBelowTheModals(Transform safeArea)
+        {
+            var quick = safeArea.Find(RootName);
+            var layout = safeArea.Find(LayoutName);
+            var rare = safeArea.Find("RareWindow");
+            if (quick == null || rare == null || quick.GetSiblingIndex() < rare.GetSiblingIndex()) return false;
+            quick.SetSiblingIndex(rare.GetSiblingIndex()); // o raro desce uma casa, logo depois dos cards
+            if (layout != null) layout.SetSiblingIndex(quick.GetSiblingIndex());
+            EditorUtility.SetDirty(safeArea.gameObject);
+            Debug.Log("[Setup] Loja rápida antes da janela do raro: o menu do AD, o anúncio e os modais ficam por cima dos cards (M9i E8).");
             return true;
         }
 
@@ -122,7 +142,7 @@ namespace MinersIdle.EditorTools
             // O Canvas próprio: com a janela do raro aberta, os cards ordenam por cima do escurecido dela (P10).
             var root = new GameObject(RootName, typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
             root.transform.SetParent(safeArea, false);
-            // Antes da LOJA: com ela aberta, o painel cobre os cards.
+            // Antes da LOJA (com ela aberta, o painel cobre os cards); o KeepBelowTheModals a leva para antes do raro.
             root.transform.SetSiblingIndex(shop.GetSiblingIndex());
             var rect = (RectTransform)root.transform;
             rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0f);
@@ -260,16 +280,40 @@ namespace MinersIdle.EditorTools
                 poses.Add(pose);
             }
 
+            // O menu do AD também sobe até a altura da LOJA (Bruno, 2026-11-19): no meio da tela, o VOLTAR ficava colado
+            // nos cards. No 9:20 do G75 sobram ~80 px entre o VOLTAR e os cards.
+            var boost = FindBoost();
+            if (boost != null && boost.transform.Find("Screen/Panel") is RectTransform boostPanel)
+            {
+                var pose = QuickShopLayout.Pose.Of(boostPanel);
+                pose.anchorMin = pose.anchorMax = pose.pivot = new Vector2(0.5f, 1f);
+                pose.anchoredPosition = new Vector2(0f, -RareTop);
+                poses.Add(pose);
+            }
+
             // O DBG sobe para o alto, logo abaixo do HUD, ao lado da coluna da direita (fora do painel aberto do DBG).
             if (safeArea.Find("DebugPanel/Toggle") is RectTransform toggle) poses.Add(TopLeft(toggle, DebugToggleLeft, DebugTop));
             if (safeArea.Find("DebugPanel/CalcWarning") is RectTransform warning) poses.Add(TopLeft(warning, DebugWarningLeft, DebugTop));
             return poses;
         }
 
+        static BoostScreen FindBoost() => Object.FindAnyObjectByType<BoostScreen>(FindObjectsInactive.Include);
+
         static bool UpdatePoses(QuickShopLayout layout, Transform safeArea)
         {
             var poses = OnPoses(safeArea);
             var so = new SerializedObject(layout);
+            // O menu do AD vai para depois da LOJA com a loja rápida ligada (o tile da LOJA cobria o X, Bruno, 2026-11-19).
+            var boostProperty = so.FindProperty("boostScreen");
+            var boost = FindBoost();
+            bool boostChanged = boost != null && boostProperty.objectReferenceValue != boost.transform;
+            if (boostChanged)
+            {
+                boostProperty.objectReferenceValue = boost.transform;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(layout);
+                Debug.Log("[Setup] Loja rápida: o menu do AD passa para depois da LOJA quando ligada (o X fica por cima do tile).");
+            }
             var array = so.FindProperty("onPoses");
             bool same = array.arraySize == poses.Count;
             for (int i = 0; same && i < poses.Count; i++)
@@ -283,7 +327,7 @@ namespace MinersIdle.EditorTools
                        && item.FindPropertyRelative("anchoredPosition").vector2Value == pose.anchoredPosition
                        && item.FindPropertyRelative("sizeDelta").vector2Value == pose.sizeDelta;
             }
-            if (same) return false;
+            if (same) return boostChanged;
 
             array.arraySize = poses.Count;
             for (int i = 0; i < poses.Count; i++)

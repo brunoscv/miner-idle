@@ -128,6 +128,32 @@ namespace MinersIdle.Tests
             Assert.That(content.gameObject.activeSelf, Is.False, "e fecha");
         }
 
+        [UnityTest]
+        public IEnumerator On_TheAdMenuGoesUpToTheShopTile()
+        {
+            // Bruno, 2026-11-19: no meio da tela, o VOLTAR do menu do AD ficava colado nos cards.
+            var boost = Object.FindAnyObjectByType<BoostScreen>(FindObjectsInactive.Include);
+            var panel = (RectTransform)boost.transform.Find("Screen/Panel");
+            var shopTile = (RectTransform)_safeArea.Find("Shop/ShopButton");
+            _layout.SetOn(true);
+            boost.Open();
+            yield return null;
+            Assert.That(Bounds(panel).yMax, Is.EqualTo(Bounds(shopTile).yMax).Within(0.01f), "o alto do AD no alto da LOJA");
+            Assert.That(boost.transform.GetSiblingIndex(), Is.GreaterThan(_view.transform.GetSiblingIndex()),
+                        "o AD aberto fica por cima dos cards");
+            Assert.That(_safeArea.Find("AdScreen").GetSiblingIndex(), Is.GreaterThan(_view.transform.GetSiblingIndex()),
+                        "e o anúncio também");
+            Assert.That(boost.transform.GetSiblingIndex(), Is.GreaterThan(shopTile.parent.GetSiblingIndex()),
+                        "o tile da LOJA não cobre o X do AD");
+
+            // Desligada, o AD volta ao lugar de antes na hierarquia.
+            boost.Close();
+            int shopIndex = shopTile.parent.GetSiblingIndex();
+            _layout.SetOn(false);
+            Assert.That(boost.transform.GetSiblingIndex(), Is.LessThan(shopTile.parent.GetSiblingIndex()));
+            Assert.That(shopTile.parent.GetSiblingIndex(), Is.Not.EqualTo(shopIndex), "a LOJA voltou para depois do AD");
+        }
+
         static Rect Bounds(RectTransform rect)
         {
             var corners = new Vector3[4];

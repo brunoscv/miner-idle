@@ -21241,13 +21241,13 @@ RectTransform:
   - {fileID: 742906366}
   - {fileID: 1811484109}
   - {fileID: 1927441534}
+  - {fileID: 1834386525}
+  - {fileID: 320594210}
   - {fileID: 598086244}
   - {fileID: 334841077}
   - {fileID: 1017245719}
   - {fileID: 398364563}
   - {fileID: 1261429367}
-  - {fileID: 1834386525}
-  - {fileID: 320594210}
   - {fileID: 1904785773}
   - {fileID: 407829533}
   - {fileID: 1674830142}
@@ -74514,6 +74514,12 @@ MonoBehaviour:
     pivot: {x: 0.5, y: 1}
     anchoredPosition: {x: 0, y: -50}
     sizeDelta: {x: 236, y: 226}
+  - target: {fileID: 2045907987}
+    anchorMin: {x: 0.5, y: 1}
+    anchorMax: {x: 0.5, y: 1}
+    pivot: {x: 0.5, y: 1}
+    anchoredPosition: {x: 0, y: -50}
+    sizeDelta: {x: 262, y: 305}
   - target: {fileID: 681867809}
     anchorMin: {x: 0, y: 1}
     anchorMax: {x: 0, y: 1}
@@ -74527,6 +74533,7 @@ MonoBehaviour:
     anchoredPosition: {x: 120, y: -50}
     sizeDelta: {x: 0, y: 16}
   rareWindow: {fileID: 598086244}
+  boostScreen: {fileID: 334841077}
   rareAbove: {fileID: 1904785773}
   debugButton: {fileID: 1623452926}
   debugLabel: {fileID: 1772062965}
