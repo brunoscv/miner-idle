@@ -27,6 +27,7 @@
 | Descoberta | [planning/Descoberta - Relatorio.md](planning/Descoberta%20-%20Relatorio.md) | Inventário, achados, contradições, lições dos projetos anteriores |
 | Requisitos | [design/Requisitos e Restricoes.md](design/Requisitos%20e%20Restricoes.md) | **IDs `REQ-*`** e restrições (rastreabilidade) |
 | Visão e MVP | [design/Visao e Escopo do MVP.md](design/Visao%20e%20Escopo%20do%20MVP.md) | Conceito, pilares, candidatos a sistema, **escopo do MVP** |
+| Balanceamento | [Guia de Balanceamento.md](Guia%20de%20Balanceamento.md) | **Onde ficam as fórmulas e os números**, como testar um ajuste e o mapa fórmula → funcionalidade |
 | Economia | [design/Economia e Progressao.md](design/Economia%20e%20Progressao.md) | Análise e método de calibração da economia |
 | Arte | [design/Direcao de Arte e Assets.md](design/Direcao%20de%20Arte%20e%20Assets.md) | Estilo, resolução, especificação e produção de assets |
 | Interface | [design/Interface - Telas.md](design/Interface%20-%20Telas.md) | Inventário de telas e UX |
