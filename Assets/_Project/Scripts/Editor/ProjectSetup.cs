@@ -53,14 +53,17 @@ namespace MinersIdle.EditorTools
         /// <summary>Os números do GDD v7 (D-130, D-133…D-136): o balanço do jogo da E3b do M8 ao M9b. Fica para comparação.</summary>
         public const string GddV7BalancePath = "Assets/_Project/Data/Balance_GDD_v7.asset";
 
-        /// <summary>Os números do GDD v8 (M9c E1, D-236…D-256): o balanço do jogo.</summary>
+        /// <summary>Os números do GDD v8.2 (M9c E1, D-236…D-256): o balanço do jogo do M9c ao M9i. Fica para comparação.</summary>
         public const string GddV8BalancePath = "Assets/_Project/Data/Balance_GDD_v8.asset";
 
+        /// <summary>Os números do GDD v8.4 (M9j, D-347, D-365…D-371): o balanço do jogo.</summary>
+        public const string GddV84BalancePath = "Assets/_Project/Data/Balance_GDD_v84.asset";
+
         /// <summary>
-        /// O balanço que o jogo usa: o GDD v8 desde o M9c (antes, o v7 pela D-130, o v5 pela D-103 e o protótipo). O seletor
-        /// de balanço do DBG saiu no v8 (D-256): os assets de antes ficam só para comparação.
+        /// O balanço que o jogo usa: o GDD v8.4 desde o M9j (antes, o v8.2 pelo M9c, o v7 pela D-130, o v5 pela D-103 e o
+        /// protótipo). O seletor de balanço do DBG saiu no v8 (D-256): os assets de antes ficam só para comparação.
         /// </summary>
-        public const string ActiveBalancePath = GddV8BalancePath;
+        public const string ActiveBalancePath = GddV84BalancePath;
 
         public const string PackageId = "com.brunocarvalho.minersidle";
         public const string VersionName = "0.1.0";
@@ -108,6 +111,9 @@ namespace MinersIdle.EditorTools
             EnsureGddV8Ads();
             EnsureGddV8Bomb();
             EnsureGddV8BombReach();
+            EnsureGddV84Balance(); // depois de todo o v8.2: a cópia leva o balanço inteiro (M9j)
+            EnsureGddV84Milestones();
+            EnsureGddV84NewPermanents();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -817,6 +823,101 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v8: marcos de andar — avanço automático e estagiário no 5, raro depois do 10 (M9c E3).");
+        }
+
+        /// <summary>
+        /// M9j E1 (GDD v8.4 §4.1, §4.2, §4.3; D-347, D-354, D-365): cria o <c>Balance_GDD_v84</c> a partir do v8.2 (vida,
+        /// lascas, bombas, raro e anúncios iguais) com a tabela de números nova. Melhorias da run: Picareta <c>5 × 1,5^n</c>
+        /// até o nível 200 (o dano não muda), Velocidade <c>10 × 3^n</c> de −0,01 s até 100, Mineração <c>10 × 2,5^n</c> de
+        /// +10% até 200, Crítico <c>10 × 2,5^n</c> de +1% até 50. Estagiário: 500, sem andar; Picareta <c>50 × 1,5^n</c>,
+        /// Velocidade <c>50 × 2,5^n</c> de −0,01 s e Mineração <c>50 × 2,5^n</c> de +10%, todas até 100. Permanentes:
+        /// Memória <c>10 + 1,1^n</c>; Sangue e Coração <c>10 + 1,5^n</c> de +100% até 40; Dedos Nervosos <c>10 + 1,5^n</c>;
+        /// Dedo Fogoso <c>10 + 1,5^n</c> de +0,05 até 40; Alma dos Anões <c>5 + 1,1^n</c> até 100; Treinar +100%; Atalho
+        /// <c>10 + 5^n</c>. O andar pede <c>andar × 5</c>; o avanço automático no 3. A Bomba fica para o bloco 4 (D-369) e a
+        /// Promoção sai no E2. Só cria se não existe: um ajuste feito à mão no Inspector fica.
+        /// </summary>
+        static void EnsureGddV84Balance()
+        {
+            if (File.Exists(GddV84BalancePath)) return;
+            if (!AssetDatabase.CopyAsset(GddV8BalancePath, GddV84BalancePath))
+            {
+                Debug.LogError($"[Setup] Não consegui copiar {GddV8BalancePath} para {GddV84BalancePath}.");
+                return;
+            }
+
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV84BalancePath);
+            var serialized = new SerializedObject(asset);
+            // Melhorias da run (anão). A Picareta sai da DamageScaled (D-245): o efeito 0 mantém o dano 1 + 1,2^nível.
+            SetLine(serialized, "pickaxe", 5, 1.5, 199, 0);
+            SetLine(serialized, "speed", 10, 3, 100, 0.01);
+            SetLine(serialized, "mining", 10, 2.5, 200, 0.1);
+            SetLine(serialized, "critical", 10, 2.5, 50, 0.01);
+            // Estagiário (D-354: sem andar). O efeito da Picareta dele (5, o dano no nível 1) não muda.
+            SetLine(serialized, "intern", 500, 1, 1, 1);
+            SetLine(serialized, "internPickaxe", 50, 1.5, 100, 5);
+            SetLine(serialized, "internSpeed", 50, 2.5, 100, 0.01);
+            SetLine(serialized, "internMining", 50, 2.5, 100, 0.1);
+            // Permanentes (lascas vermelhas).
+            SetLine(serialized, "memory", 10, 1.1, 100, 5, CostFormula.OffsetExponential);
+            SetLine(serialized, "mountainBlood", 10, 1.5, 40, 1, CostFormula.OffsetExponential);
+            SetLine(serialized, "burningHeart", 10, 1.5, 40, 1, CostFormula.OffsetExponential);
+            SetLine(serialized, "nervousFingers", 10, 1.5, 10, 0.05, CostFormula.OffsetExponential);
+            SetLine(serialized, "fieryFinger", 10, 1.5, 40, 0.05, CostFormula.OffsetExponential);
+            SetLine(serialized, "dwarfSoul", 5, 1.1, 100, 1, CostFormula.OffsetExponential);
+            SetLine(serialized, "internTraining", 10, 2, 10, 1, CostFormula.OffsetExponential);
+            SetLine(serialized, "shortcut", 10, 5, 5, 0.5, CostFormula.OffsetExponential);
+            // Andares e marcos (§4.3).
+            serialized.FindProperty("floorBreaks").intValue = 5;
+            serialized.FindProperty("autoAdvanceFloor").intValue = 3;
+            serialized.FindProperty("internFloor").intValue = 1;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Setup] Valores do GDD v8.4 criados em {GddV84BalancePath} (M9j E1, D-347).");
+        }
+
+        /// <summary>
+        /// M9j E2 (GDD v8.4 §4.3; D-367, D-370): os marcos 15 (todo dia começa com o estagiário), 45 (as lascas vermelhas
+        /// dobram) e 60 (−100 cristais em todo andar), e a Promoção sai (o marco do 15 faz o mesmo). Só preenche se o marco
+        /// do 15 ainda estiver em 0: um ajuste feito à mão fica.
+        /// </summary>
+        static void EnsureGddV84Milestones()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV84BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var internStart = serialized.FindProperty("internStartFloor");
+            if (internStart.intValue != 0) return;
+            internStart.intValue = 15;
+            serialized.FindProperty("redShardsDoubleFloor").intValue = 45;
+            serialized.FindProperty("floorDiscountFloor").intValue = 60;
+            serialized.FindProperty("floorDiscount").doubleValue = 100;
+            serialized.FindProperty("internPromotion.maxLevel").intValue = 0;
+            serialized.FindProperty("internPromotionTrainingLevel").intValue = 0;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8.4: marcos 15 (estagiário), 45 (vermelhas ×2) e 60 (−100 cristais); a Promoção sai (M9j E2, D-367).");
+        }
+
+        /// <summary>
+        /// M9j E3 (GDD v8.4 §4.2): as três permanentes novas — Tempo Curto <c>10 + 2^n</c>, −0,1 s no golpe, até o 10;
+        /// Bombardeador <c>15 + 5n</c>, −0,5 s na carga da bomba, até o 4; Olho Treinado <c>10 + 5n</c>, +100% de lascas
+        /// vermelhas, até o 10. Só preenche se o Tempo Curto ainda estiver desligado: um ajuste feito à mão fica.
+        /// </summary>
+        static void EnsureGddV84NewPermanents()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV84BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            if (serialized.FindProperty("shortTime.maxLevel").intValue != 0) return;
+            SetLine(serialized, "shortTime", 10, 2, 10, 0.1, CostFormula.OffsetExponential);
+            SetLine(serialized, "bomber", 15, 5, 4, 0.5, CostFormula.Linear);
+            SetLine(serialized, "trainedEye", 10, 5, 10, 1, CostFormula.Linear);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8.4: Tempo Curto, Bombardeador e Olho Treinado no descanso (M9j E3).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

@@ -253,6 +253,11 @@ namespace MinersIdle.EditorTools
                     return (Load(BoostSetup.GoldenIconPath), Frame("slot_rarity_legendary"));
                 // M9g E3 (D-314, D-315): a Bomba, o icon_bomb do Bruno na moldura dourada (lendário), como no mockup.
                 case PermanentId.Bomb: return (Load(BombArtSetup.SourcePath), Frame("slot_rarity_legendary"));
+                // M9j E3, provisórios até o desenho: Tempo Curto a poção azul (raro), Bombardeador a bola de fogo
+                // (épico), Olho Treinado o cristal vermelho em estrela (lendário).
+                case PermanentId.ShortTime: return (Icon(307), Frame("slot_rarity_rare"));
+                case PermanentId.Bomber: return (Icon(139), Frame("slot_rarity_epic"));
+                case PermanentId.TrainedEye: return (Icon(380), Frame("slot_rarity_legendary"));
                 default: return (null, null);
             }
         }

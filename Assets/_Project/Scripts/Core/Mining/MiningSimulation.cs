@@ -83,11 +83,11 @@ namespace MinersIdle.Core
             _rareRandom = rareRandom ?? new SeededRandom(RareFallbackSeed);
             RareRhythm = rareRhythm;
             _strike = strike ?? StrikeRules.NoCritical();
-            _bombCharge = _strike.Bombs.ChargeSeconds; // D-313: a run começa com a bomba cheia
             _state = state ?? new GameState();
             // Sem economia, o mínimo do intervalo é o próprio intervalo base: os atributos ficam iguais aos valores base.
             _economy = economy ?? EconomyRules.None(minHitInterval: rules.HitInterval);
             _permanents = permanents ?? Permanents.None();
+            _bombCharge = BombChargeSeconds; // D-313: a run começa com a bomba cheia
             _permanents.State.ReachFloor(_state.Cave); // uma partida aberta num andar já conta para o recorde
             _stats = ComputeStats();
             _internStats = ComputeInternStats();
@@ -564,6 +564,29 @@ namespace MinersIdle.Core
             return result;
         }
 
+        /// <summary>
+        /// Atalho do debug (M9j E3): até <paramref name="count"/> níveis de graça na linha da run, como compras sem custo
+        /// (respeita o limite, a trava do andar e o piso do golpe, D-371). Devolve quantos subiram.
+        /// </summary>
+        public int GrantUpgradeLevels(UpgradeId id, int count)
+        {
+            if (IsResting) return 0;
+            int raised = 0;
+            while (raised < count && Purchases.NextCost(_state, _economy, id, _rules, _permanents) != null
+                   && Purchases.Blocked(_state, _rules, id, _permanents) == null)
+            {
+                _state.RaiseLevel(id);
+                raised++;
+            }
+            if (raised == 0) return 0;
+
+            _stats = ComputeStats();
+            UpgradePurchased?.Invoke(id, _state.LevelOf(id));
+            StatsChanged?.Invoke(_stats);
+            if (id == UpgradeId.Intern || EconomyRules.IsInternTree(id)) OnInternChanged();
+            return raised;
+        }
+
         // ── A Bomba (M9g; GDD v8 §2.1, D-240, D-255, D-307, D-308, D-309, D-313) ──────────────────────────────────
 
         /// <summary>As regras da bomba deste balanço (<see cref="BombRules.None"/> sem bomba).</summary>
@@ -578,14 +601,21 @@ namespace MinersIdle.Core
         /// <summary>A fração da vida máxima que a bomba em uso tira (a Pequena: 0,1).</summary>
         public double BombFraction => HasBomb ? _strike.Bombs.FractionAt(BombIndex) : 0;
 
+        /// <summary>
+        /// Quanto a bomba leva para carregar: a carga do balanço (5 s) menos o Bombardeador (GDD v8.4, M9j E3: 0,5 s por
+        /// nível), nunca abaixo de um décimo da do balanço.
+        /// </summary>
+        public double BombChargeSeconds =>
+            Math.Max(_strike.Bombs.ChargeSeconds * 0.1, _strike.Bombs.ChargeSeconds - _permanents.BombChargeReduction);
+
         /// <summary>A carga da bomba, de 0 a 1.</summary>
-        public double BombCharge => HasBomb ? Math.Min(1, _bombCharge / _strike.Bombs.ChargeSeconds) : 0;
+        public double BombCharge => HasBomb ? Math.Min(1, _bombCharge / BombChargeSeconds) : 0;
 
         /// <summary>Segundos de jogo até a bomba encher (0 cheia).</summary>
-        public double BombChargeLeft => HasBomb ? Math.Max(0, _strike.Bombs.ChargeSeconds - _bombCharge) : 0;
+        public double BombChargeLeft => HasBomb ? Math.Max(0, BombChargeSeconds - _bombCharge) : 0;
 
         /// <summary>A bomba está cheia.</summary>
-        public bool IsBombCharged => HasBomb && _bombCharge >= _strike.Bombs.ChargeSeconds - Epsilon;
+        public bool IsBombCharged => HasBomb && _bombCharge >= BombChargeSeconds - Epsilon;
 
         /// <summary>Uma bomba no ar (D-308).</summary>
         public bool IsBombInFlight => _bombInFlight;
@@ -638,7 +668,7 @@ namespace MinersIdle.Core
         /// <summary>Atalho do debug (DBG → Bomba → Encher): a bomba cheia na hora.</summary>
         public void FillBomb()
         {
-            if (HasBomb) _bombCharge = _strike.Bombs.ChargeSeconds;
+            if (HasBomb) _bombCharge = BombChargeSeconds;
         }
 
         /// <summary>Os cristais no alcance da bomba agora, do mais perto ao mais longe, na lista reaproveitada.</summary>
@@ -1304,13 +1334,12 @@ namespace MinersIdle.Core
         double CritChance() => _strike.CritChance + _stats.CritBonus;
 
         /// <summary>
-        /// O multiplicador do crítico: o das regras (GDD v8: ×1,5) e, acima de 100% de chance, +1 ponto por 1% a mais
-        /// (D-249: 140% de chance → ×1,9).
+        /// O multiplicador do crítico: o das regras (GDD v8: ×1,5) mais o Dedo Fogoso (v8.4: +0,05 por nível, D-365). A chance
+        /// acima de 100% não dá mais dano (D-366, sai a D-249): no v8.4 a chance para em 100%.
         /// A carta "Dano de Crítico ×2" do v8 (D-243) multiplica o resultado: ×1,5 vira ×3.
         /// </summary>
         double CritMultiplier() =>
-            (_strike.CritMultiplier + _permanents.CritDamageBonus + Math.Max(0, CritChance() - 1)) // Dedo Fogoso (M9d) e D-249
-            * _state.Bonuses.CritDamageMultiplier;
+            (_strike.CritMultiplier + _permanents.CritDamageBonus) * _state.Bonuses.CritDamageMultiplier;
 
         /// <summary>O que a loja mostra da linha agora: nível, custo, estado do botão e efeito "de → para".</summary>
         public UpgradePreview Preview(UpgradeId id) => UpgradePreview.For(_rules, _economy, _state, id, _permanents);
@@ -1456,8 +1485,8 @@ namespace MinersIdle.Core
 
             // A bomba (D-313): a carga anda com a run (parada no descanso e na transição, que não passam por aqui) e a do
             // ar chega mais perto.
-            if (HasBomb && _bombCharge < _strike.Bombs.ChargeSeconds)
-                _bombCharge = Math.Min(_strike.Bombs.ChargeSeconds, _bombCharge + step);
+            if (HasBomb && _bombCharge < BombChargeSeconds)
+                _bombCharge = Math.Min(BombChargeSeconds, _bombCharge + step);
             if (_bombInFlight) _bombFlightLeft = Math.Max(0, _bombFlightLeft - step);
 
             // Fila cheia ou parede de pé: o relógio de nascimento espera no limite e nasce assim que der.

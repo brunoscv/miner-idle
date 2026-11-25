@@ -31,6 +31,30 @@ namespace MinersIdle.Core
             return line.IsMaxed(level) ? (double?)null : line.CostAt(level);
         }
 
+        /// <summary>
+        /// O custo com as regras do jogo: além do limite de compras, a Velocidade (do anão ou do estagiário) para quando o
+        /// intervalo do golpe já está no piso (D-371: 0,1 s), para ninguém comprar à toa; a loja mostra MÁX.
+        /// </summary>
+        public static double? NextCost(GameState state, EconomyRules economy, UpgradeId id, MiningRules rules, Permanents permanents)
+        {
+            double? cost = NextCost(state, economy, id);
+            return cost != null && rules != null && AtHitFloor(state, economy, id, rules, permanents) ? null : cost;
+        }
+
+        static bool AtHitFloor(GameState state, EconomyRules economy, UpgradeId id, MiningRules rules, Permanents permanents)
+        {
+            const double tolerance = 1e-9;
+            switch (id)
+            {
+                case UpgradeId.Speed:
+                    return MinerStats.Compute(rules, economy, state, permanents).HitInterval <= economy.MinHitInterval + tolerance;
+                case UpgradeId.InternSpeed:
+                    return InternStats.Compute(rules, economy, state, permanents).HitInterval <= economy.MinHitInterval + tolerance;
+                default:
+                    return false;
+            }
+        }
+
         /// <summary>Se o saldo paga o custo, com a folga de arredondamento.</summary>
         public static bool CanAfford(double shards, double cost)
         {
@@ -58,7 +82,7 @@ namespace MinersIdle.Core
         public static PurchaseResult TryPurchase(GameState state, EconomyRules economy, UpgradeId id,
                                                  MiningRules rules = null, Permanents permanents = null)
         {
-            double? cost = NextCost(state, economy, id);
+            double? cost = rules != null ? NextCost(state, economy, id, rules, permanents) : NextCost(state, economy, id);
             if (cost == null) return PurchaseResult.MaxLevel;
             var blocked = rules != null || EconomyRules.IsInternTree(id) ? Blocked(state, rules, id, permanents) : null;
             if (blocked != null) return blocked.Value;

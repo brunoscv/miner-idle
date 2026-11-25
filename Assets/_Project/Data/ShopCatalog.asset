@@ -225,6 +225,39 @@ MonoBehaviour:
     levelNames: []
     levelSheet: {fileID: 0}
     levelFrames: 0
+  - permanent: 11
+    title: Tempo Curto
+    effectFormat: "Golpe \u2212{0} s \xBB \u2212{1} s"
+    maxedFormat: "Golpe \u2212{0} s"
+    style: 0
+    icon: {fileID: 21300000, guid: 40bfa5433017b354bb47f8d3015fb374, type: 3}
+    frame: {fileID: 21300000, guid: 50ef713344fb12a48bc9dbd303690009, type: 3}
+    lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
+  - permanent: 12
+    title: Bombardeador
+    effectFormat: "Carga da bomba \u2212{0} s \xBB \u2212{1} s"
+    maxedFormat: "Carga da bomba \u2212{0} s"
+    style: 0
+    icon: {fileID: 21300000, guid: 4d64c009c6798024ca062a00af222f4f, type: 3}
+    frame: {fileID: 21300000, guid: dce503ea852bfdb4ebe2a7963a1bf3b2, type: 3}
+    lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
+  - permanent: 13
+    title: Olho Treinado
+    effectFormat: "Vermelhas {0} \xBB {1}"
+    maxedFormat: Vermelhas {0}
+    style: 3
+    icon: {fileID: 21300000, guid: 37a25e173e0b0ce40b6f3a1b423b7c06, type: 3}
+    frame: {fileID: 21300000, guid: ebff602741998a844b5753ab6768ee06, type: 3}
+    lockedFormat: 
+    levelNames: []
+    levelSheet: {fileID: 0}
+    levelFrames: 0
   quickLevelFormat: Nv {0}
   quickUpgrades: 00000000010000000200000006000000i
   internTabLabel: "ESTAGI\xC1RIO"

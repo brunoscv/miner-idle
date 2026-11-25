@@ -155,6 +155,7 @@ namespace MinersIdle.EditorTools
             changed |= BoostV8Setup.EnsureInScene(); // M9i E7 (#22): o menu do AD com linhas mais altas e letra maior
             changed |= QuickShopSetup.EnsureInScene(); // M9i E8 (D-341): a loja rápida no DBG, a proposta para o Apellon
             changed |= CalmEffectsSetup.EnsureInScene(); // M9i #24 (D-346): DBG → Efeitos → "Efeitos: limpos/antigos"
+            changed |= DebugFreeLevelsSetup.EnsureInScene(); // M9j E3: "Comprar …" do DBG vira "… +10", de graça
 
             if (changed) EditorSceneManager.SaveScene(scene);
         }
@@ -288,7 +289,8 @@ namespace MinersIdle.EditorTools
             if (rules.objectReferenceValue != null
                 && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.PrototypeBalancePath
                 && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.GddV5BalancePath
-                && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.GddV7BalancePath) return false;
+                && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.GddV7BalancePath
+                && AssetDatabase.GetAssetPath(rules.objectReferenceValue) != ProjectSetup.GddV8BalancePath) return false;
 
             var active = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(ProjectSetup.ActiveBalancePath);
             if (active == null || rules.objectReferenceValue == active) return false;

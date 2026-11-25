@@ -24,11 +24,18 @@ namespace MinersIdle.Persistence
     ///
     /// Versão 10 (M9e E1, D-283): o contador do raro (<see cref="rareTimer"/>). Até a 9 abre no zero. O Raro Dourado
     /// (D-286) vai com as outras permanentes, pelo nome: um save antigo abre sem ele.
+    ///
+    /// Versão 11 (M9j E2, GDD v8.4, D-367): os campos são os mesmos; muda o que a Promoção vale. Num save até a 10, quem
+    /// comprou a Promoção (que saiu do v8.4) recebe de volta as 50 lascas vermelhas que ela custou, e o nível some; o
+    /// estagiário no começo do dia passa a vir do marco do andar 15.
     /// </summary>
     [Serializable]
     public sealed class SaveData
     {
-        public const int CurrentVersion = 10;
+        public const int CurrentVersion = 11;
+
+        /// <summary>A primeira versão do GDD v8.4 (M9j E2): até a 10, a Promoção comprada volta em lascas vermelhas (D-367).</summary>
+        public const int FirstV84Version = 11;
 
         /// <summary>A primeira versão com os números do GDD v8 (M9c E1): as de antes abrem numa run nova (D-263).</summary>
         public const int FirstV8Version = 8;

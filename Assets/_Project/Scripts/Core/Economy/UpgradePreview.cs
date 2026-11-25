@@ -66,7 +66,7 @@ namespace MinersIdle.Core
 
             var line = economy?.Get(id) ?? throw new ArgumentNullException(nameof(economy));
             int level = state.LevelOf(id);
-            double? cost = Purchases.NextCost(state, economy, id);
+            double? cost = Purchases.NextCost(state, economy, id, rules, permanents); // com o piso do golpe (D-371)
 
             var blocked = cost == null ? null : Purchases.Blocked(state, rules, id, permanents);
             var buttonState = cost == null ? UpgradeButtonState.Maxed

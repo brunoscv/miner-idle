@@ -281,8 +281,8 @@ namespace MinersIdle.UI
             simulation.FillFloorBar();
         }
 
-        /// <summary>Os andares do "Ir ao andar…" (M9c E1), na ordem.</summary>
-        static readonly int[] FloorMarks = { 1, 5, 10, 20, 50, 100 };
+        /// <summary>Os andares do "Ir ao andar…", na ordem: os marcos do GDD v8.4 (M9j E1, §4.3) e o fim.</summary>
+        static readonly int[] FloorMarks = { 1, 3, 5, 10, 15, 20, 25, 30, 40, 45, 50, 60, 100 };
 
         /// <summary>O próximo andar da lista depois do atual (do último, volta ao primeiro), dentro dos andares do balanço.</summary>
         public static int NextFloorMark(int floor, int floorCount)
@@ -330,11 +330,18 @@ namespace MinersIdle.UI
         void BuyMining() => Buy(UpgradeId.Mining);
         void BuyCritical() => Buy(UpgradeId.Critical);
 
+        /// <summary>
+        /// M9j E3: os botões de compra do DBG dão <see cref="FreeLevels"/> níveis de graça (os preços do v8.4 crescem a
+        /// <c>3^n</c>: o "+100 lascas" não chega ao fim das linhas). A compra com lascas é a da LOJA.
+        /// </summary>
         void Buy(UpgradeId id)
         {
-            runner.Simulation?.Purchase(id);
+            runner.Simulation?.GrantUpgradeLevels(id, FreeLevels);
             _refresh = 0f; // mostra o nível e o custo novos já no próximo quadro
         }
+
+        /// <summary>Os níveis de graça de cada toque nos botões de compra do DBG (M9j E3).</summary>
+        public const int FreeLevels = 10;
 
         /// <summary>
         /// M6 (E3): os controles da câmera da descida (D-61), num painel que fica aberto com o DBG fechado. Abrir fecha os

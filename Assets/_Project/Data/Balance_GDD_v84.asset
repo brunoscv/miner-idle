@@ -1,0 +1,264 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0e0439bc883c8d45a7a6ddc24196157, type: 3}
+  m_Name: Balance_GDD_v84
+  m_EditorClassIdentifier: MinersIdle.Game::MinersIdle.Game.MiningRulesAsset
+  initialCrystals: 10
+  firstCrystalDistance: 3
+  maxCrystals: 12
+  spawnInterval: 5
+  minCrystals: 10
+  minCrystalSpacing: 6
+  spawnDistance: 12
+  crystalHealth: 1
+  crystalReward: 0.2
+  caveCount: 100
+  caveHealthGrowth: 1.5
+  rewardFormula: 1
+  caveRewardGrowth: 1
+  floorBreaks: 5
+  levelsPerBiome: 10
+  offlineMaxHours: 4
+  offlineDeepHours: 6
+  offlineDeepFloor: 20
+  autoAdvanceFloor: 3
+  internFloor: 1
+  rareFloor: 10
+  damage: 1
+  hitInterval: 2
+  walkSpeed: 4
+  miningRange: 1
+  pickaxeFormula: 2
+  pickaxeCaveGrowth: 1.2
+  pickaxe:
+    costFormula: 0
+    baseCost: 5
+    costGrowth: 1.5
+    maxLevel: 199
+    effect: 0
+  speed:
+    costFormula: 0
+    baseCost: 10
+    costGrowth: 3
+    maxLevel: 100
+    effect: 0.01
+  mining:
+    costFormula: 0
+    baseCost: 10
+    costGrowth: 2.5
+    maxLevel: 200
+    effect: 0.1
+  doublePickaxe:
+    costFormula: 0
+    baseCost: 5000
+    costGrowth: 1
+    maxLevel: 0
+    effect: 2
+  boots:
+    costFormula: 0
+    baseCost: 0
+    costGrowth: 1
+    maxLevel: 0
+    effect: 0
+  critical:
+    costFormula: 0
+    baseCost: 10
+    costGrowth: 2.5
+    maxLevel: 50
+    effect: 0.01
+  minHitInterval: 0.1
+  intern:
+    costFormula: 0
+    baseCost: 500
+    costGrowth: 1
+    maxLevel: 1
+    effect: 1
+  internPickaxe:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 1.5
+    maxLevel: 100
+    effect: 5
+  internPickaxeDamageGrowth: 2
+  internSpeed:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 2.5
+    maxLevel: 100
+    effect: 0.01
+  internMining:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 2.5
+    maxLevel: 100
+    effect: 0.1
+  critChance: 0
+  critMultiplier: 1.5
+  arrivalStrike: 2
+  swingRecovery: 0.72
+  rareChance: 0.15
+  rareSlowChance: 0.02
+  rareChooseSeconds: 30
+  rareCards:
+  - card: 0
+    value: 2
+    seconds: 30
+  - card: 2
+    value: 2
+    seconds: 30
+  - card: 3
+    value: 0.1
+    seconds: 30
+  - card: 4
+    value: 2
+    seconds: 30
+  rareInterval: 60
+  rareTier2Cards:
+  - card: 0
+    value: 4
+    seconds: 30
+  - card: 2
+    value: 4
+    seconds: 30
+  - card: 3
+    value: 0.2
+    seconds: 30
+  - card: 4
+    value: 4
+    seconds: 30
+  adSpeedDivisor: 0
+  adBoostSeconds: 0
+  adOffers:
+  - kind: 1
+    multiplier: 2
+    critChance: 0.1
+    minutes: 20
+    offlineHours: 1
+  - kind: 2
+    multiplier: 3
+    critChance: 0.15
+    minutes: 40
+    offlineHours: 2
+  - kind: 3
+    multiplier: 4
+    critChance: 0.2
+    minutes: 80
+    offlineHours: 4
+  adRareTier2Minutes: 60
+  adOfflineCapHours: 8
+  bombFractions:
+  - 0.1
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
+  - 0.7
+  - 1
+  bombChargeSeconds: 5
+  bombFlightSeconds: 0.4
+  bombReach: 7
+  restLevel: 10
+  redShardMilestoneStep: 10
+  redShardMilestone: 5
+  redShardBigMilestoneFrom: 50
+  redShardBigMilestone: 10
+  redShardPerLevel: 1
+  memory:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 1.1
+    maxLevel: 100
+    effect: 5
+  mountainBlood:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 1.5
+    maxLevel: 40
+    effect: 1
+  burningHeart:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 1.5
+    maxLevel: 40
+    effect: 1
+  nervousFingers:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 1.5
+    maxLevel: 10
+    effect: 0.05
+  dwarfSoul:
+    costFormula: 2
+    baseCost: 5
+    costGrowth: 1.1
+    maxLevel: 100
+    effect: 1
+  internTraining:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 10
+    effect: 1
+  internPromotion:
+    costFormula: 0
+    baseCost: 50
+    costGrowth: 1
+    maxLevel: 0
+    effect: 1
+  internPromotionTrainingLevel: 0
+  internStartFloor: 15
+  redShardsDoubleFloor: 45
+  floorDiscountFloor: 60
+  floorDiscount: 100
+  fieryFinger:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 1.5
+    maxLevel: 40
+    effect: 0.05
+  shortcut:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 5
+    maxLevel: 5
+    effect: 0.5
+  goldenRare:
+    costFormula: 0
+    baseCost: 500
+    costGrowth: 1
+    maxLevel: 1
+    effect: 1
+  bomb:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 7
+    effect: 1
+  shortTime:
+    costFormula: 2
+    baseCost: 10
+    costGrowth: 2
+    maxLevel: 10
+    effect: 0.1
+  bomber:
+    costFormula: 1
+    baseCost: 15
+    costGrowth: 5
+    maxLevel: 4
+    effect: 0.5
+  trainedEye:
+    costFormula: 1
+    baseCost: 10
+    costGrowth: 5
+    maxLevel: 10
+    effect: 1

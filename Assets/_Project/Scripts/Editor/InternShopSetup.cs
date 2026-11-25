@@ -102,6 +102,13 @@ namespace MinersIdle.EditorTools
                                         "Dano crítico +{0}", "", ShopCatalog.EffectStyle.ChancePercent, PermanentId.NervousFingers);
                 changed |= AddPermanent(permanents, PermanentId.Shortcut, "Atalho", "Distância −{0} m » −{1} m",
                                         "Distância −{0} m", "", ShopCatalog.EffectStyle.Number, PermanentId.InternTraining);
+                // M9j E3 (GDD v8.4 §4.2): as três novas no fim, na ordem da tabela do GDD.
+                changed |= AddPermanent(permanents, PermanentId.ShortTime, "Tempo Curto", "Golpe −{0} s » −{1} s",
+                                        "Golpe −{0} s", "", ShopCatalog.EffectStyle.Number);
+                changed |= AddPermanent(permanents, PermanentId.Bomber, "Bombardeador", "Carga da bomba −{0} s » −{1} s",
+                                        "Carga da bomba −{0} s", "", ShopCatalog.EffectStyle.Number);
+                changed |= AddPermanent(permanents, PermanentId.TrainedEye, "Olho Treinado", "Vermelhas {0} » {1}",
+                                        "Vermelhas {0}", "", ShopCatalog.EffectStyle.ChancePercent);
                 for (int i = 0; i < permanents.arraySize; i++)
                 {
                     var entry = permanents.GetArrayElementAtIndex(i);
@@ -115,7 +122,8 @@ namespace MinersIdle.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
-            Debug.Log("[Setup] Permanentes na loja: Treinar/Promoção (M7, E3, D-174) e Dedo Fogoso/Atalho (M9d E1).");
+            Debug.Log("[Setup] Permanentes na loja: Treinar/Promoção (M7, E3, D-174), Dedo Fogoso/Atalho (M9d E1) e " +
+                      "Tempo Curto/Bombardeador/Olho Treinado (M9j E3).");
         }
 
         static bool MarkLevelFromOne(SerializedProperty entries, UpgradeId id)

@@ -79,11 +79,16 @@ namespace MinersIdle.Core
             Math.Max(rules.MinCrystalSpacing * 0.1, rules.MinCrystalSpacing - Effect(PermanentId.Shortcut) * UnitsPerMeter);
 
         /// <summary>
-        /// Os cristais que o andar <paramref name="floor"/> pede para o Próximo Andar (GDD v8, D-239): <c>andar × 10</c>
-        /// menos a Memória (5 por nível), no mínimo 0 (aí a barra já nasce cheia).
+        /// Os cristais que o andar <paramref name="floor"/> pede para o Próximo Andar (GDD v8, D-239; v8.4: <c>andar × 5</c>)
+        /// menos a Memória (5 por nível) e, com o recorde no marco do 60 (v8.4, M9j E2), menos 100; no mínimo 0 (aí a barra
+        /// já nasce cheia).
         /// </summary>
-        public long FloorRequirement(MiningRules rules, int floor) =>
-            Math.Max(0, (long)Math.Round(rules.FloorBreaksIn(floor) - Effect(PermanentId.Memory)));
+        public long FloorRequirement(MiningRules rules, int floor)
+        {
+            var marks = Rules.Milestones;
+            double discount = FloorMilestones.Reached(marks.DiscountFloor, State.DeepestFloor) ? marks.Discount : 0;
+            return Math.Max(0, (long)Math.Round(rules.FloorBreaksIn(floor) - Effect(PermanentId.Memory) - discount));
+        }
 
         /// <summary>Alma dos Anões: os níveis de Picareta com que a run começa.</summary>
         public int StartingPickaxe => (int)Math.Round(Effect(PermanentId.DwarfSoul));
@@ -91,8 +96,19 @@ namespace MinersIdle.Core
         /// <summary>Treinar Estagiário: multiplica o dano do estagiário (M7; GDD v7: +10% por nível).</summary>
         public double InternDamageMultiplier => 1 + Effect(PermanentId.InternTraining);
 
-        /// <summary>Promoção do Estagiário: a run nova já começa com ele contratado (M7, D-169).</summary>
-        public bool StartsWithIntern => EffectiveLevel(PermanentId.InternPromotion) > 0;
+        /// <summary>
+        /// A run nova já começa com o estagiário contratado: pelo marco do andar 15 do GDD v8.4 (M9j E2, D-367) ou, nos
+        /// balanços de antes, pela Promoção (M7, D-169).
+        /// </summary>
+        public bool StartsWithIntern =>
+            FloorMilestones.Reached(Rules.Milestones.InternStartFloor, State.DeepestFloor)
+            || EffectiveLevel(PermanentId.InternPromotion) > 0;
+
+        /// <summary>Tempo Curto (GDD v8.4, M9j E3): os segundos a menos no intervalo do golpe do anão.</summary>
+        public double ShortTimeSeconds => Effect(PermanentId.ShortTime);
+
+        /// <summary>Bombardeador (GDD v8.4, M9j E3): os segundos a menos na carga da bomba.</summary>
+        public double BombChargeReduction => Effect(PermanentId.Bomber);
 
         /// <summary>A bomba em uso (M9g, D-240): 0 = a Pequena, de graça; cada compra da linha Bomba passa para a próxima.</summary>
         public int BombLevel => EffectiveLevel(PermanentId.Bomb);
@@ -166,8 +182,19 @@ namespace MinersIdle.Core
             return true;
         }
 
-        /// <summary>As lascas vermelhas que uma run no nível <paramref name="level"/> leva se descansar agora (D-138).</summary>
-        public double Pending(int level) => Rules.IsRestEnabled ? Rules.RedShards.UpTo(level) : 0;
+        /// <summary>
+        /// As lascas vermelhas que uma run no nível <paramref name="level"/> leva se descansar agora (D-138): a tabela e,
+        /// com o recorde no marco do 45 (GDD v8.4, M9j E2, D-370), o dobro.
+        /// </summary>
+        public double Pending(int level) => Rules.IsRestEnabled ? Rules.RedShards.UpTo(level) * RedShardsMultiplier(level) : 0;
+
+        /// <summary>
+        /// O que multiplica a tabela das vermelhas (D-370): o Olho Treinado (+100% por nível) vezes o ×2 do marco do 45
+        /// (contando o andar da run). Olho no 10 com o marco: ×22.
+        /// </summary>
+        double RedShardsMultiplier(int level) =>
+            (1 + Effect(PermanentId.TrainedEye))
+            * (FloorMilestones.Reached(Rules.Milestones.RedShardsDoubleFloor, Math.Max(State.DeepestFloor, level)) ? 2 : 1);
 
         /// <summary>Encerra o dia: as pendentes da run vão para o banco e o dia avança.</summary>
         internal RestSummary Rest(GameState run)

@@ -196,6 +196,14 @@ namespace MinersIdle.Game
         [SerializeField] UpgradeLineValues internPromotion = new UpgradeLineValues(50, 1, 0, 1);
         [Tooltip("O nível do Treinar que a Promoção pede (GDD v8.2: 5). 0 = o Treinar no limite (GDD v7, D-169).")]
         [SerializeField] int internPromotionTrainingLevel;
+        [Tooltip("Marco (GDD v8.4: 15): com o recorde neste andar, todo dia novo começa com o estagiário (no lugar da Promoção, D-367). 0 = sem o marco.")]
+        [SerializeField] int internStartFloor;
+        [Tooltip("Marco (GDD v8.4: 45): com o recorde neste andar, as lascas vermelhas do descanso dobram (D-370). 0 = sem o marco.")]
+        [SerializeField] int redShardsDoubleFloor;
+        [Tooltip("Marco (GDD v8.4: 60): com o recorde neste andar, todo andar pede menos cristais (o desconto abaixo). 0 = sem o marco.")]
+        [SerializeField] int floorDiscountFloor;
+        [Tooltip("Os cristais a menos no requisito de todo andar depois do marco acima (GDD v8.4: 100; soma com a Memória).")]
+        [SerializeField] double floorDiscount;
         [Tooltip("Dedo Fogoso (M9d). Efeito: soma no dano do crítico por nível (GDD v8.2: 0,5, até o nível 10). 0 níveis desliga.")]
         [SerializeField] UpgradeLineValues fieryFinger = new UpgradeLineValues(10, 2, 0, 0.5, CostFormula.OffsetExponential);
         [Tooltip("Atalho (M9d). Efeito: metros a menos entre cristais por nível (D-252: 0,5, até o nível 5; 1 m = 2 unidades). 0 níveis desliga.")]
@@ -206,6 +214,12 @@ namespace MinersIdle.Game
         [Tooltip("Bomba (M9g, D-255, D-314): cada compra passa para a próxima bomba, a 10 + 2^(n−1) lascas vermelhas (11, 12, " +
                  "14, 18, 26, 42, 74). GDD v8: 7 níveis. 0 níveis desliga (fica a Pequena).")]
         [SerializeField] UpgradeLineValues bomb = new UpgradeLineValues(10, 2, 0, 1, CostFormula.OffsetExponential);
+        [Tooltip("Tempo Curto (GDD v8.4). Efeito: segundos a menos no intervalo do golpe por nível (0,1, até o 10; custo 10 + 2^n). 0 níveis desliga.")]
+        [SerializeField] UpgradeLineValues shortTime = new UpgradeLineValues(10, 2, 0, 0.1, CostFormula.OffsetExponential);
+        [Tooltip("Bombardeador (GDD v8.4). Efeito: segundos a menos na carga da bomba por nível (0,5, até o 4; custo 15 + 5n). 0 níveis desliga.")]
+        [SerializeField] UpgradeLineValues bomber = new UpgradeLineValues(15, 5, 0, 0.5, CostFormula.Linear);
+        [Tooltip("Olho Treinado (GDD v8.4). Efeito: fração a mais de lascas vermelhas por nível (1 = +100%, até o 10; custo 10 + 5n). 0 níveis desliga.")]
+        [SerializeField] UpgradeLineValues trainedEye = new UpgradeLineValues(10, 5, 0, 1, CostFormula.Linear);
 
         /// <summary>A fórmula da Picareta deste balanço: a taxa e o incremento do DBG → Cálculos não valem no Multiply (v5).</summary>
         public PickaxeFormula PickaxeFormula => pickaxeFormula;
@@ -242,10 +256,13 @@ namespace MinersIdle.Game
             var table = new RedShardTable(restLevel, redShardMilestoneStep, redShardMilestone, redShardBigMilestoneFrom,
                                           redShardBigMilestone, redShardPerLevel);
             // Na ordem do PermanentId.
-            return new PermanentRules(restLevel, table, internPromotionTrainingLevel, rareFloor, memory.ToDefinition(), mountainBlood.ToDefinition(),
+            var milestones = new FloorMilestones(internStartFloor, redShardsDoubleFloor, floorDiscountFloor, floorDiscount);
+            return new PermanentRules(restLevel, table, internPromotionTrainingLevel, rareFloor, milestones,
+                                      memory.ToDefinition(), mountainBlood.ToDefinition(),
                                       burningHeart.ToDefinition(), nervousFingers.ToDefinition(), dwarfSoul.ToDefinition(),
                                       internTraining.ToDefinition(), internPromotion.ToDefinition(), fieryFinger.ToDefinition(),
-                                      shortcut.ToDefinition(), goldenRare.ToDefinition(), bomb.ToDefinition());
+                                      shortcut.ToDefinition(), goldenRare.ToDefinition(), bomb.ToDefinition(),
+                                      shortTime.ToDefinition(), bomber.ToDefinition(), trainedEye.ToDefinition());
         }
 
         /// <summary>A chance do raro no padrão e no ritmo lento (para o rótulo do DBG → Cálculos).</summary>

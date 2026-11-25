@@ -2,7 +2,7 @@
 
 > Análise de 2026-11-25. Compara o [GDD v8.4](../GDD_Idle_Miner%20v84.pdf) (versão 8.4, 23 de novembro de 2026) com o [GDD v8.2](../GDD_Idle_Miner%20v82.pdf) (a referência desde a D-248) e com o que o jogo faz hoje (blocos A…G do v8 no jogo, M9i E1…E8 e #23).
 >
-> **Estado:** só análise. Nada muda no código nem nos valores sem decisão registrada. As perguntas da §4 viram decisões (D-347 em diante) quando o Bruno responder.
+> **Estado:** **o v8.4 é a referência desde 2026-11-25 (D-347).** O Bruno respondeu as P1…P24 no mesmo dia → **D-347…D-366** ([Decisões e Riscos](Decisoes%20e%20Riscos.md) §1.18); a P21 já era a D-345. Mudaram da recomendação: **P1** (a lasca voando sai a cada golpe), **P7** (o estagiário não aparece na tela) e **P13** (a compra automática em sequência, regra do Bruno). Com o Apellon ficam P4 (bomba em área), P12 (o ×2 do Médio) e P18 (a frase cortada). O código muda pelos blocos da §6, cada um com plano de marco antes.
 
 ## Resumo
 
@@ -161,6 +161,8 @@ Velocidade cheia (100 × 0,01 s) + Tempo Curto cheio (10 × 0,1 s) = 2 s, o inte
 
 ## 5. Perguntas (com recomendação)
 
+**Respostas (2026-11-25):** P23, P15 → D-347 · P1 → D-348 (a lasca voa a cada golpe) · P2, P3 → D-349 · P4 → D-350 (provisória) · P5 → D-351 · P6 → D-352 · P14 → D-353 · P7, P8 → D-354 (o estagiário não aparece) · P9 → D-355 · P10 → D-356 · P11 → D-357 · P12 → D-358 · P13 → D-359 (regra do Bruno) · P22 → D-360 · P24 → D-361 · P16 → D-362 · P17 → D-363 · P18 → D-364 · P19 → D-365 · P20 → D-366 · P21 → D-345.
+
 | # | Pergunta | **[REC]** |
 |---|---|---|
 | **P1** | **Lascas = dano:** os multiplicadores (Mineração, Coração, cartas, Ganância) valem em cada pagamento? A lasca voando fica na quebra ou em cada golpe? | Sim, multiplicam cada pagamento. O número sobe a cada golpe; a lasca voando continua só na quebra (é só desenho). |
@@ -194,7 +196,7 @@ Mesmo processo da D-298: blocos em sequência, cada um com plano de marco aprova
 
 | Bloco | O que entra | Tamanho |
 |---|---|---|
-| **1. Números e marcos** | tabela da §4 (anão, estagiário, permanentes), `andar × 5`, Tempo Curto, Bombardeador, Olho Treinado, sai a Promoção, marcos 3/15/45/60 (sem os de automação), crítico >100% sai, loja rápida ligada | médio (quase tudo no `Balance_GDD_v8` + 3 permanentes) |
+| **1. Números e marcos** ([M9j](Marco%209j%20-%20Numeros%20e%20marcos%20do%20v8.4.md), ✅ aprovado em 2026-11-25, D-372) | tabela da §4 (anão, estagiário, permanentes), `andar × 5`, Tempo Curto, Bombardeador, Olho Treinado, sai a Promoção, marcos 3/15/45/60 (sem os de automação), crítico >100% sai, loja rápida ligada | médio (quase tudo no `Balance_GDD_v8` + 3 permanentes) |
 | **2. Lascas pelo dano** | pagamento por golpe, bomba paga, offline novo | médio (mexe no núcleo da economia e em muitos testes) |
 | **3. Estagiário offline** | online só corre atrás, Crítico dele, anúncio que dobra o offline | médio |
 | **4. Bomba do v8.4** | andar 5/50, 110%…190% − 1%/andar, 1 cristal → área, permanente nova, Bombardeador na carga | médio |

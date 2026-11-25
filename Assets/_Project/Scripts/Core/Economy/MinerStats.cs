@@ -75,9 +75,11 @@ namespace MinersIdle.Core
 
             if (permanents != null) damage *= permanents.DamageMultiplier;
 
+            // O Tempo Curto (GDD v8.4, M9j E3) soma com a Velocidade; o piso continua (D-371: 0,1 s).
             double interval = Math.Max(
                 economy.MinHitInterval,
-                rules.HitInterval - economy.Get(UpgradeId.Speed).Effect * Level(UpgradeId.Speed));
+                rules.HitInterval - economy.Get(UpgradeId.Speed).Effect * Level(UpgradeId.Speed)
+                - (permanents?.ShortTimeSeconds ?? 0));
 
             double walk = rules.WalkSpeed * (1 + economy.Get(UpgradeId.Boots).Effect * Level(UpgradeId.Boots));
             // D-208: os bônus somam, cada um no seu teto (Mineração +1000%, Coração Ardente +1000%). D-209: com o estagiário

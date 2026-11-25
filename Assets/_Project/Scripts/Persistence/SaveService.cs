@@ -264,9 +264,24 @@ namespace MinersIdle.Persistence
             var levels = new Dictionary<string, int>();
             foreach (var saved in data.permanent.levels ?? new List<SavedLevel>())
                 if (saved != null && saved.upgrade != null) levels[saved.upgrade] = saved.level;
-            return PermanentState.Restore(data.permanent.redShards, data.permanent.day,
+
+            double redShards = data.permanent.redShards;
+            string promotion = PermanentId.InternPromotion.ToString();
+            if (data.version < SaveData.FirstV84Version && !rules.Get(PermanentId.InternPromotion).IsEnabled
+                && levels.TryGetValue(promotion, out int promoted) && promoted > 0)
+            {
+                // D-367: a Promoção saiu no v8.4 (o marco do andar 15 faz o mesmo). Ela custava 50 lascas vermelhas (uma compra).
+                redShards += PromotionRefund * promoted;
+                levels[promotion] = 0;
+                Debug.Log($"[Save] Save da versão {data.version}: a Promoção saiu no GDD v8.4; {PromotionRefund * promoted} " +
+                          "lascas vermelhas de volta (D-367).");
+            }
+            return PermanentState.Restore(redShards, data.permanent.day,
                                           id => levels.TryGetValue(id.ToString(), out int level) ? level : 0, rules, deepestFloor);
         }
+
+        /// <summary>O preço da Promoção no GDD v8.2 (50 lascas vermelhas, compra única): o que volta a quem tinha (D-367).</summary>
+        const double PromotionRefund = 50;
 
         /// <param name="permanent">
         /// A parte permanente (Marco 8b). Sem ela, grava zerada: quem joga sempre passa a dele (o <c>MiningRunner</c>).

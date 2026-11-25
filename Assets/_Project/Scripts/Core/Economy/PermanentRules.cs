@@ -23,12 +23,13 @@ namespace MinersIdle.Core
         InternTraining,
         /// <summary>
         /// Promoção do Estagiário (M7): compra única; a run já começa com o estagiário contratado, a árvore dele no zero
-        /// (D-169). Só se compra com o Treinar no limite (GDD v7: nível 10).
+        /// (D-169). Só se compra com o Treinar no limite (GDD v7: nível 10). Saiu no GDD v8.4 (M9j E2, D-367): o marco do
+        /// andar 15 faz o mesmo; fica no enum para os índices não mudarem, desligada no balanço.
         /// </summary>
         InternPromotion,
         /// <summary>
-        /// Dedo Fogoso (GDD v8.2 §4.2, D-248): soma efeito × nível no dano do crítico (0,5: ×1,5 → ×2,0 no nível 1), junto
-        /// com o excedente da chance acima de 100% (D-249). Só o anão (o estagiário não tem crítico, D-167).
+        /// Dedo Fogoso (GDD v8.2 §4.2, D-248; v8.4 D-365): soma efeito × nível no dano do crítico (v8.4: 0,05, ×1,5 → ×1,55 no
+        /// nível 1, ×3,5 no 40). Só o anão.
         /// </summary>
         FieryFinger,
         /// <summary>
@@ -46,6 +47,21 @@ namespace MinersIdle.Core
         /// compra troca pela próxima, a <c>10 + 2^(n−1)</c> lascas vermelhas. Nos fins da lista do enum, como o Atalho.
         /// </summary>
         Bomb,
+        /// <summary>
+        /// Tempo Curto (GDD v8.4 §4.2, M9j E3): tira efeito × nível segundos do intervalo do golpe do anão (0,1 s; 10 níveis
+        /// = 1 s), somado à Velocidade, com o piso de 0,1 s (D-371).
+        /// </summary>
+        ShortTime,
+        /// <summary>
+        /// Bombardeador (GDD v8.4 §4.2, M9j E3, D-369): tira efeito × nível segundos da carga da bomba (0,5 s; 4 níveis: de
+        /// 5 s a 3 s).
+        /// </summary>
+        Bomber,
+        /// <summary>
+        /// Olho Treinado (GDD v8.4 §4.2, M9j E3, D-370): +100% de lascas vermelhas por nível no descanso; multiplica com o
+        /// ×2 do marco do 45.
+        /// </summary>
+        TrainedEye,
     }
 
     /// <summary>
@@ -136,7 +152,15 @@ namespace MinersIdle.Core
         /// </param>
         public PermanentRules(int restLevel, RedShardTable redShards, int promotionTrainingLevel, int goldenRareFloor,
                               params UpgradeDefinition[] lines)
+            : this(restLevel, redShards, promotionTrainingLevel, goldenRareFloor, FloorMilestones.None, lines)
         {
+        }
+
+        /// <param name="milestones">Os marcos de andar do GDD v8.4 (M9j E2): 15, 45 e 60; <c>null</c> = nenhum.</param>
+        public PermanentRules(int restLevel, RedShardTable redShards, int promotionTrainingLevel, int goldenRareFloor,
+                              FloorMilestones milestones, params UpgradeDefinition[] lines)
+        {
+            Milestones = milestones ?? FloorMilestones.None;
             if (promotionTrainingLevel < 0) throw new ArgumentOutOfRangeException(nameof(promotionTrainingLevel));
             if (goldenRareFloor < 0) throw new ArgumentOutOfRangeException(nameof(goldenRareFloor));
             GoldenRareFloor = goldenRareFloor;
@@ -159,6 +183,9 @@ namespace MinersIdle.Core
 
         /// <summary>O andar mais fundo que o Raro Dourado pede (D-286: o do raro, 10); 0 = sem trava.</summary>
         public int GoldenRareFloor { get; }
+
+        /// <summary>Os marcos 15, 45 e 60 do GDD v8.4 (M9j E2); <see cref="FloorMilestones.None"/> nos balanços de antes.</summary>
+        public FloorMilestones Milestones { get; }
 
         public bool IsRestEnabled => RestLevel > 0;
 
