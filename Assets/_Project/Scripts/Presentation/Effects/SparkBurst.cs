@@ -34,6 +34,12 @@ namespace MinersIdle.Presentation
 
         public int ActiveCount => _active.Count;
 
+        /// <summary>
+        /// Teto de faíscas na tela ao mesmo tempo (M9i #24, D-346): cheio, as novas não saem. 0 = sem teto (o jeito antigo,
+        /// no DBG → Efeitos → "Efeitos: antigos").
+        /// </summary>
+        public int Limit { get; set; }
+
         void Awake()
         {
             sparkTemplate.gameObject.SetActive(false);
@@ -50,6 +56,7 @@ namespace MinersIdle.Presentation
         {
             for (int i = 0; i < count; i++)
             {
+                if (Limit > 0 && _active.Count >= Limit) return;
                 var spark = _pool.Get();
                 Vector2 direction = Random.insideUnitCircle.normalized;
                 spark.Velocity = new Vector3(direction.x, Mathf.Abs(direction.y) + 0.3f, 0f) * (speed * Random.Range(0.6f, 1f));

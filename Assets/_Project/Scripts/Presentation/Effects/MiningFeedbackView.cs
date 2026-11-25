@@ -25,6 +25,19 @@ namespace MinersIdle.Presentation
     ///
     /// M9g (D-316): a bomba estoura em cada cristal que pegou: faíscas laranja e amarelas, o cristal treme forte, o dano
     /// sobe em laranja e a tela treme uma vez por bomba (não uma por cristal).
+    ///
+    /// M9i #24 (D-346), os efeitos limpos: com a Velocidade e o Crítico no máximo (andares 40–50), cada golpe a cada 0,1 s
+    /// soltava 9 + 18 faíscas, um "CRÍTICO!" e um tremor, e a tela virava um borrão dourado (a foto do Apellon). Agora:
+    /// <list type="bullet">
+    /// <item><b>faíscas no ritmo do golpe:</b> o tempo médio entre os golpes do anão (tempo real) abaixo de
+    /// <see cref="calmRhythmSeconds"/> diminui as faíscas do golpe e do crítico na mesma proporção, até
+    /// <see cref="calmMinFactor"/>; o crítico fica também menor. Com um golpe a cada 2 s (o começo), nada muda;</item>
+    /// <item><b>crítico discreto:</b> no máximo um "CRÍTICO!" e um tremor de tela de golpe a cada <see cref="calmTextGap"/>;</item>
+    /// <item><b>tetos:</b> no máximo <see cref="calmSparkLimit"/> faíscas na tela e um número do estagiário a cada
+    /// <see cref="calmInternNumberGap"/>.</item>
+    /// </list>
+    /// A quebra, a rachadura e a bomba seguem como eram (só o teto das faíscas vale para elas). DBG → Efeitos → "Efeitos:
+    /// limpos/antigos" (<see cref="Calm"/>) volta ao jeito antigo para comparar.
     /// </summary>
     public sealed class MiningFeedbackView : MiningViewBase
     {
@@ -62,7 +75,48 @@ namespace MinersIdle.Presentation
         [Tooltip("O estouro da bomba (M9g, D-316): uma vez por lançamento.")]
         [SerializeField] float bombShake = 0.6f;
         [SerializeField] float bombShakeSeconds = 0.3f;
+
+        [Header("Efeitos limpos (M9i #24, D-346)")]
+        [Tooltip("Abaixo deste tempo entre golpes (segundos reais), as faíscas do golpe e do crítico diminuem na proporção.")]
+        [SerializeField] float calmRhythmSeconds = 0.5f;
+        [Tooltip("O mínimo da proporção: com um golpe a cada 0,1 s, 9 faíscas viram 2 e 18 viram 4.")]
+        [SerializeField] float calmMinFactor = 0.2f;
+        [Tooltip("No máximo um \"CRÍTICO!\" e um tremor de golpe a cada tantos segundos.")]
+        [SerializeField] float calmTextGap = 0.5f;
+        [Tooltip("No máximo um número do estagiário a cada tantos segundos.")]
+        [SerializeField] float calmInternNumberGap = 0.3f;
+        [Tooltip("Faíscas na tela ao mesmo tempo, no máximo.")]
+        [SerializeField] int calmSparkLimit = 40;
+
         float _intensity = 1f;
+        bool _calm = true;
+        float _hitGap = 2f;            // média dos segundos reais entre os golpes do anão
+        float _lastHitAt = -1f;
+        float _lastCriticalTextAt = -10f;
+        float _lastHitShakeAt = -10f;
+        float _lastInternNumberAt = -10f;
+
+        /// <summary>
+        /// Os efeitos limpos (D-346), ligados de fábrica. Desligado (DBG → Efeitos → "Efeitos: antigos"), volta ao jeito de
+        /// antes do M9i #24: todas as faíscas, todo "CRÍTICO!" e todo tremor, sem teto.
+        /// </summary>
+        public bool Calm
+        {
+            get => _calm;
+            set
+            {
+                _calm = value;
+                if (sparks != null) sparks.Limit = value ? calmSparkLimit : 0;
+            }
+        }
+
+        /// <summary>A proporção das faíscas do golpe agora (1 = todas; para os testes e o DBG).</summary>
+        public float RhythmFactor => _calm ? Mathf.Clamp(_hitGap / Mathf.Max(0.01f, calmRhythmSeconds), calmMinFactor, 1f) : 1f;
+
+        /// <summary>Quantos "CRÍTICO!" já subiram (para os testes).</summary>
+        public int CriticalTextsShown { get; private set; }
+
+        void Awake() => Calm = _calm;
 
         /// <summary>Multiplica quantidades e tremores (o ajuste "Intensidade dos efeitos" do DBG, M6 E4).</summary>
         public float Intensity
@@ -119,21 +173,46 @@ namespace MinersIdle.Presentation
         /// <summary>Quantas peças, com a intensidade do DBG (pelo menos uma).</summary>
         int Count(int baseCount) => Mathf.Max(1, Mathf.RoundToInt(baseCount * _intensity));
 
+        /// <summary>Como <see cref="Count"/>, já na proporção do ritmo do golpe (D-346).</summary>
+        int Count(int baseCount, float factor) => Mathf.Max(1, Mathf.RoundToInt(baseCount * _intensity * factor));
+
+        /// <summary>Mede o ritmo dos golpes do anão em tempo real (a tela é o que importa, também com o DBG ×20).</summary>
+        void MeasureRhythm(float now)
+        {
+            if (_lastHitAt >= 0f) _hitGap = Mathf.Lerp(_hitGap, Mathf.Min(now - _lastHitAt, 2f), 0.35f);
+            _lastHitAt = now;
+        }
+
         void OnHit(MiningHit hit)
         {
             var at = stage.CrystalOnScreen(hit.Crystal);
             float size = SparkBurst.DefaultSize * sizeScale;
+            float now = Time.unscaledTime;
+            MeasureRhythm(now);
+            float factor = RhythmFactor;
 
             stage.Shake(hit.Crystal, 0.1f * _intensity); // metros no corredor
             ShowCrack(hit, at);
-            sparks.Emit(at, Count(9), HitSparkColor, 4f * sizeScale, size);
-            screenShake.Shake(hitShake * _intensity, hitShakeSeconds);
+            sparks.Emit(at, Count(9, factor), HitSparkColor, 4f * sizeScale, size);
+
+            // O tremor do golpe (e o do crítico, mais forte, no lugar dele): no limpo, no máximo um a cada calmTextGap.
+            bool shakeFree = !_calm || now - _lastHitShakeAt >= calmTextGap;
+            if (shakeFree)
+            {
+                if (hit.IsCritical) screenShake.Shake(criticalShake * _intensity, criticalShakeSeconds);
+                else screenShake.Shake(hitShake * _intensity, hitShakeSeconds);
+                _lastHitShakeAt = now;
+            }
 
             if (!hit.IsCritical) return;
-            sparks.Emit(at, Count(18), CriticalColor, 6f * sizeScale, size * 1.4f, 0.5f);
+            // Golpe rápido, crítico menor: de 1,4× (o de sempre) até 1× o tamanho da faísca do golpe.
+            float criticalSize = _calm ? Mathf.Lerp(1f, 1.4f, Mathf.InverseLerp(calmMinFactor, 1f, factor)) : 1.4f;
+            sparks.Emit(at, Count(18, factor), CriticalColor, 6f * sizeScale, size * criticalSize, 0.5f);
+            if (_calm && now - _lastCriticalTextAt < calmTextGap) return;
             var near = stage.MinerOnScreen + (Vector3)(Random.insideUnitCircle * 1.2f * sizeScale) + Vector3.up * (0.5f * sizeScale);
             floatingTexts.Show(texts.CriticalLabel, near, CriticalColor, 1.05f * sizeScale * 0.65f, 0.85f, 1.2f * sizeScale); // um pouco menor (pedido do Bruno)
-            screenShake.Shake(criticalShake * _intensity, criticalShakeSeconds);
+            _lastCriticalTextAt = now;
+            CriticalTextsShown++;
         }
 
         /// <summary>
@@ -148,6 +227,9 @@ namespace MinersIdle.Presentation
             sparks.Emit(at, Count(4), InternColor, 3f * sizeScale, size * 0.7f);
             ShowCrack(hit, at);
 
+            float now = Time.unscaledTime;
+            if (_calm && now - _lastInternNumberAt < calmInternNumberGap) return; // os números não se empilham (D-346)
+            _lastInternNumberAt = now;
             var near = at + (Vector3)(Random.insideUnitCircle * 0.4f * sizeScale) + Vector3.up * (0.4f * sizeScale);
             floatingTexts.Show(NumberFormatter.Format(hit.Damage), near, InternColor, 0.45f * sizeScale, 0.7f, 0.8f * sizeScale);
             InternNumbersShown++;

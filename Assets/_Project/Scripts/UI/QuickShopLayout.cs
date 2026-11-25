@@ -16,8 +16,11 @@ namespace MinersIdle.UI
     /// da LOJA na hierarquia (os modais e o DBG, que vêm depois, continuam por cima dela). O menu do AD sobe e vai para
     /// depois da LOJA do mesmo jeito, para o tile da LOJA não cobrir o X dele.</item>
     /// </list>
-    /// Desligada, tudo volta às poses que a cena tinha ao abrir. A escolha fica lembrada entre aberturas (P9), nas
-    /// preferências do aparelho, fora do save; num build de lançamento ela nunca liga.
+    /// Desligada, tudo volta às poses que a cena tinha ao abrir.
+    ///
+    /// <b>Desde 2026-11-25 (D-345) é o layout do jogo:</b> abre ligada. O botão do DBG continua para comparar com a tela
+    /// antiga, e a escolha fica lembrada entre aberturas, nas preferências do aparelho, fora do save (numa chave nova, para
+    /// o "não" gravado quando ela era só proposta não esconder o layout novo). Num build de lançamento ela é sempre ligada.
     /// </summary>
     public sealed class QuickShopLayout : MonoBehaviour
     {
@@ -63,7 +66,9 @@ namespace MinersIdle.UI
         [SerializeField] string labelFormat = "Loja rápida: {0}";
         [SerializeField] string yesName = "sim";
         [SerializeField] string noName = "não";
-        [SerializeField] string prefsKey = "dbg.quickShop";
+
+        /// <summary>A chave da escolha do DBG (1 = ligada; sem nada gravado, ligada: D-345).</summary>
+        public const string PrefsKey = "quickShop.on";
 
         Pose[] _offPoses = Array.Empty<Pose>();
         readonly System.Collections.Generic.List<(Transform target, int index)> _moved =
@@ -76,8 +81,8 @@ namespace MinersIdle.UI
             _offPoses = new Pose[onPoses.Length];
             for (int i = 0; i < onPoses.Length; i++)
                 _offPoses[i] = onPoses[i].target != null ? Pose.Of(onPoses[i].target) : default;
-            bool allowed = Debug.isDebugBuild || Application.isEditor;
-            Apply(allowed && ReadPref());
+            bool debug = Debug.isDebugBuild || Application.isEditor;
+            Apply(!debug || ReadPref()); // no lançamento, sempre ligada; no DBG, a escolha (ligada de fábrica)
         }
 
         void OnEnable()
@@ -97,7 +102,7 @@ namespace MinersIdle.UI
             Apply(on);
             try
             {
-                PlayerPrefs.SetInt(prefsKey, on ? 1 : 0);
+                PlayerPrefs.SetInt(PrefsKey, on ? 1 : 0);
                 PlayerPrefs.Save();
             }
             catch (Exception) { /* sem preferências, vale só nesta abertura */ }
@@ -105,8 +110,8 @@ namespace MinersIdle.UI
 
         bool ReadPref()
         {
-            try { return PlayerPrefs.GetInt(prefsKey, 0) == 1; }
-            catch (Exception) { return false; }
+            try { return PlayerPrefs.GetInt(PrefsKey, 1) == 1; }
+            catch (Exception) { return true; }
         }
 
         void Apply(bool on)

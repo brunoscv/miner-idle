@@ -18,7 +18,7 @@ namespace MinersIdle.Tests
     public class QuickShopTests
     {
         const string GameScenePath = "Assets/_Project/Scenes/Game.unity";
-        const string PrefsKey = "dbg.quickShop";
+        const string PrefsKey = QuickShopLayout.PrefsKey; // D-345: a chave nova, ligada de fábrica
 
         MiningRunner _runner;
         QuickShopLayout _layout;
@@ -31,7 +31,7 @@ namespace MinersIdle.Tests
         [UnitySetUp]
         public IEnumerator LoadGame()
         {
-            _savedPref = PlayerPrefs.GetInt(PrefsKey, 0); // a escolha do Bruno no Editor volta no fim
+            _savedPref = PlayerPrefs.GetInt(PrefsKey, 1); // a escolha do Bruno no Editor volta no fim (sem nada, ligada)
             PlayerPrefs.SetInt(PrefsKey, 0);
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode(GameScenePath, new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;

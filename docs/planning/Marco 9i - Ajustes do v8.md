@@ -228,6 +228,15 @@ Pedido do Bruno (2026-11-19, D-344): com o jogo aberto, a tela do celular não a
 - **A linha nos AJUSTES (Bruno, 2026-11-19, depois do teste no G75):** "Tela sempre acesa", a última antes de CRÉDITOS e APAGAR SAVE, com o interruptor do Tremor e da Vibração, **ligada de fábrica**. Fica no `settings.json` (`keepScreenOn`, fora do save; Apagar save não mexe; um arquivo antigo, sem o campo, abre ligado). Quem aplica é o `SettingsEffects`, como o som e o tremor (desligada: `SleepTimeout.SystemSetting`, o tempo do aparelho); a linha do `GameBootstrap` saiu. A janela dos AJUSTES cresce 22 px. Testes: `SettingsStoreTests.KeepScreenOff_ComesBack` e o arquivo antigo, e `SettingsFlowTests.KeepScreenOn_IsOnByDefault_TurnsOff_AndSurvivesReopening` (verdes em 2026-11-19, com o resto de `SettingsFlowTests` e `BackAndBombTests`).
 - **Só no aparelho:** no Editor quem manda na tela é o PC; abrir a cena Game direto (sem a Bootstrap) pula esta linha, como pula o save.
 
+### Loja rápida de fábrica e efeitos limpos (#24)
+
+Em 2026-11-25, depois do jogo do Apellon até os andares 40–50:
+
+- **A loja rápida é o layout do jogo (D-345):** abre ligada. O `QuickShopLayout` lê uma chave nova (`quickShop.on`, sem nada gravado = ligada), para o "não" que ficou gravado quando ela era só proposta não esconder o layout novo; num build de lançamento é sempre ligada. `DBG → Loja → Loja rápida` continua, para comparar com a tela da E7.
+- **Os efeitos limpos (D-346, #24):** a foto do Apellon no andar 48 (Velocidade e Crítico no máximo) mostra os quadrados amarelos do crítico, seis "CRÍTICO!" encavalados e os números do estagiário empilhados. No `MiningFeedbackView`: as faíscas do golpe e do crítico seguem o ritmo dos golpes do anão (média em tempo real; abaixo de 0,5 s entre golpes diminuem na proporção, até 20%: 9 → 2 e 18 → 4, e a faísca do crítico encolhe de 1,4× para 1×); no máximo um "CRÍTICO!" e um tremor de golpe a cada 0,5 s; um número do estagiário a cada 0,3 s; no máximo 40 faíscas na tela (`SparkBurst.Limit`). Com um golpe a cada 2 s (o começo da run) nada muda. A quebra, a rachadura e a bomba ficam como eram (só o teto vale para elas). `DBG → Efeitos → Efeitos: limpos/antigos` (`DebugCalmEffects`, criado pelo `CalmEffectsSetup`) volta ao jeito antigo para comparar; não fica gravado. Nenhuma regra muda.
+- **A tela sempre acesa** já está nos AJUSTES desde o #23 (D-344), ligada de fábrica.
+- **Testes:** ficam para o fim do v8.4 (pedido do Bruno, 2026-11-25). Os testes PlayMode que medem posições com a loja rápida desligada precisam desligá-la antes (o `QuickShopTests` já faz); os que contam faíscas ou "CRÍTICO!" passam a ver os números do limpo.
+
 ### E9 — Suíte de testes
 
 - EditMode e PlayMode sem as sessões longas, tudo verde (como em 2026-11-18). Os `AdFlowTests` continuam pendentes.
@@ -343,6 +352,14 @@ Pedido do Bruno (2026-11-19, D-344): com o jogo aberto, a tela do celular não a
   6. **AJUSTES:** tocar em AJUSTES: a última linha antes de CRÉDITOS é "Tela sempre acesa", ligada. Desligar e esperar o tempo do aparelho sem tocar: a tela apaga como nos outros apps. Fechar e abrir o jogo: continua desligada. Ligar de novo: volta a não apagar.
   7. No Editor dá para ver só a linha e o interruptor (a tela do PC não apaga por causa do Unity).
 
+- **Loja rápida de fábrica e efeitos limpos (#24)** (feitos em 2026-11-25, D-345, D-346). Cena `Assets/_Project/Scenes/Game.unity`; o setup já rodou (o botão novo do DBG está na cena).
+  1. Abrir a cena Game e dar Play: a loja rápida já aparece ligada (os quatro cards acima do Descansar e do DESCER), sem mexer no DBG.
+  2. `DBG → Loja → Loja rápida: sim` desliga (tela da E7); tocar de novo liga. Parar e dar Play: fica como você deixou.
+  3. **Efeitos no começo:** andar 1, sem compras: os golpes soltam as faíscas de sempre (um golpe a cada 2 s não muda nada).
+  4. **Efeitos no fim:** `DBG → Andar → Ir ao andar` até o 50; `DBG → Loja → +lascas` e comprar Velocidade e Crítico até o máximo pelos cards. Olhar a mina por uns 10 s: poucas faíscas por golpe, no máximo um "CRÍTICO!" a cada meio segundo, sem a tela tremendo sem parar e sem os números cinza empilhados.
+  5. `DBG → Efeitos → Efeitos: limpos` vira "antigos": volta o borrão da foto do Apellon. Tocar de novo volta ao limpo.
+  6. **No G75:** `Tools → Miners Idle → Build → Rodar no celular (Android)` e repetir os passos 1, 4 e 5.
+
 ## Critério de pronto
 
 - Todos os ajustes de prioridade alta feitos; os outros feitos ou adiados com o Bruno (com o motivo na lista).
@@ -371,4 +388,5 @@ Pedido do Bruno (2026-11-19, D-344): com o jogo aberto, a tela do celular não a
 | E7, complemento: nomes da coluna e menu do AD | 🔶 feito em 2026-11-19, espera o seu teste | D-342 |
 | E8 Loja rápida no DBG | ✅ aprovada pelo Bruno em 2026-11-19 ("pode fechar essa implementação"), com o DBG no alto | D-341, D-343; proposta para o Apellon |
 | Tela sempre acesa (#23) | ✅ aprovada pelo Bruno em 2026-11-19 no G75 ("Testei, commita"); a linha nos AJUSTES também, no G75 | D-344 |
+| Loja rápida de fábrica e efeitos limpos (#24) | ✅ aprovados pelo Bruno em 2026-11-25 ("Testei, commita") | D-345, D-346 |
 | E9 Suíte de testes | ⏳ | sem as sessões longas |
