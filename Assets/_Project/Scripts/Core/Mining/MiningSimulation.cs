@@ -451,7 +451,9 @@ namespace MinersIdle.Core
             var target = _miner.Target;
             if (target == null) return false;
 
-            target.ApplyDamage(target.Health);
+            double before = target.Health;
+            target.ApplyDamage(before);
+            PayHit(target, before, before); // no v8.4, o que faltava do cristal (D-348)
             Break(target);
             return true;
         }
@@ -693,7 +695,9 @@ namespace MinersIdle.Core
             {
                 var crystal = _bombTargets[i];
                 double damage = crystal.MaxHealth * _bombFlightFraction;
+                double before = crystal.Health;
                 bool broke = crystal.ApplyDamage(damage);
+                PayHit(crystal, before, damage); // D-373: com o multiplicador, como o golpe
                 BombHitLanded?.Invoke(new MiningHit(crystal, damage, false));
                 if (broke) _bombBroken.Add(crystal);
             }
@@ -713,7 +717,7 @@ namespace MinersIdle.Core
         void BreakAhead(Crystal crystal)
         {
             _track.Remove(crystal);
-            _state.RegisterBreak(crystal.Reward * _stats.RewardMultiplier);
+            _state.RegisterBreak(BreakReward(crystal));
             CrystalBroken?.Invoke(crystal);
             ShardsChanged?.Invoke(_state.Shards);
             if (crystal.IsRare) OpenRareWindow();
@@ -1627,7 +1631,9 @@ namespace MinersIdle.Core
 
             _state.RegisterHit();
             _swungAtTarget = true;
+            double before = target.Health;
             bool broke = target.ApplyDamage(damage);
+            PayHit(target, before, damage);
             HitLanded?.Invoke(new MiningHit(target, damage, critical));
 
             if (broke) Break(target);
@@ -1642,7 +1648,9 @@ namespace MinersIdle.Core
             var target = _miner.Target;
             double damage = _internStats.Damage;
             _internHits++;
+            double before = target.Health;
             bool broke = target.ApplyDamage(damage);
+            PayHit(target, before, damage); // até o bloco 3 tirar ele da tela (D-354)
             InternHitLanded?.Invoke(new MiningHit(target, damage, false));
             if (broke) Break(target);
         }
@@ -1657,7 +1665,7 @@ namespace MinersIdle.Core
             bool finishSwing = midSwing && _miner.State == MinerState.Mining && _swungAtTarget && recovery > Epsilon;
 
             _track.Remove(target);
-            _state.RegisterBreak(target.Reward * _stats.RewardMultiplier);
+            _state.RegisterBreak(BreakReward(target));
             _miner.Target = null;
             if (finishSwing)
             {
@@ -1674,5 +1682,23 @@ namespace MinersIdle.Core
             TargetChanged?.Invoke(null);
             if (target.IsRare) OpenRareWindow(); // D-184: a janela abre, sem pausar
         }
+
+        /// <summary>
+        /// As lascas de um golpe (GDD v8.4, M9k, D-348): o dano causado, até a vida que o cristal tinha
+        /// (<paramref name="healthBefore"/>), na razão lascas ÷ vida do cristal (no v8.4, 1) e vezes o multiplicador
+        /// <b>de agora</b> (Mineração, Coração Ardente, cartas, anúncios). Só nos balanços que pagam por golpe.
+        /// </summary>
+        void PayHit(Crystal crystal, double healthBefore, double damage)
+        {
+            if (!_rules.PaysPerHit) return;
+            double dealt = Math.Min(damage, healthBefore);
+            if (dealt <= 0) return;
+            double amount = dealt * (crystal.Reward / crystal.MaxHealth) * _stats.RewardMultiplier;
+            _state.AddMinedShards(amount);
+            ShardsChanged?.Invoke(_state.Shards);
+        }
+
+        /// <summary>O que a quebra paga: tudo de uma vez até o v8.2; nada no v8.4, que já pagou nos golpes (D-348).</summary>
+        double BreakReward(Crystal crystal) => _rules.PaysPerHit ? 0 : crystal.Reward * _stats.RewardMultiplier;
     }
 }

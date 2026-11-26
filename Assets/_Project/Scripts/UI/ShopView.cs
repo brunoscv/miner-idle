@@ -222,7 +222,21 @@ namespace MinersIdle.UI
 
         void BuyPermanent(PermanentId id) => Simulation?.PurchasePermanent(id); // avisa PermanentsChanged
 
-        void OnShardsChanged(double shards) => Refresh();
+        // Lascas pelo dano (M9k): o saldo muda a cada golpe; os botões se refazem no máximo a cada ShardsRefreshGap
+        // pelo saldo (uma compra, o andar e os atributos refazem na hora).
+        const float ShardsRefreshGap = 0.1f;
+        bool _shardsDirty;
+        float _nextShardsRefresh;
+
+        void OnShardsChanged(double shards) => _shardsDirty = true;
+
+        void LateUpdate()
+        {
+            if (!_shardsDirty || Time.unscaledTime < _nextShardsRefresh) return;
+            _shardsDirty = false;
+            _nextShardsRefresh = Time.unscaledTime + ShardsRefreshGap;
+            Refresh();
+        }
         void OnStatsChanged(MinerStats stats) => Refresh();
         void OnCaveChanged(int cave) => Refresh();
         void OnInternChanged(InternStats stats) => Refresh();

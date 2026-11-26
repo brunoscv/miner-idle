@@ -38823,6 +38823,8 @@ MonoBehaviour:
   calmTextGap: 0.5
   calmInternNumberGap: 0.3
   calmSparkLimit: 40
+  calmShardGap: 0.25
+  calmBombShards: 3
 --- !u!1 &874474294
 GameObject:
   m_ObjectHideFlags: 0

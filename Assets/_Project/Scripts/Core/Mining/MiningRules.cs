@@ -25,6 +25,11 @@ namespace MinersIdle.Core
         /// vida × 0,2; andar 3, vida × 0,4; andar 10, vida × 1,8.
         /// </summary>
         FloorScaled,
+        /// <summary>
+        /// GDD v8.4 (M9k, D-348): as lascas do cristal são a vida dele, pagas <b>a cada golpe</b> pelo dano causado (até a
+        /// vida que restava; <see cref="MiningRules.PaysPerHit"/>). Um cristal inteiro rende a vida × o multiplicador.
+        /// </summary>
+        Health,
     }
 
     /// <summary>
@@ -219,8 +224,20 @@ namespace MinersIdle.Core
         /// Lascas do cristal no andar <paramref name="cave"/>: base × crescimento^(c−1) até o v7; no v8 (D-238), vida do
         /// andar × base × max(1, andar − 1).
         /// </summary>
-        public double CrystalRewardIn(int cave) => RewardFormula == RewardFormula.FloorScaled
-            ? CrystalHealthIn(cave) * CrystalReward * Math.Max(1, cave - 1)
-            : CrystalReward * Math.Pow(CaveRewardGrowth, cave - 1);
+        public double CrystalRewardIn(int cave)
+        {
+            switch (RewardFormula)
+            {
+                case RewardFormula.FloorScaled: return CrystalHealthIn(cave) * CrystalReward * Math.Max(1, cave - 1);
+                case RewardFormula.Health: return CrystalHealthIn(cave); // GDD v8.4 (D-348): a vida do cristal
+                default: return CrystalReward * Math.Pow(CaveRewardGrowth, cave - 1);
+            }
+        }
+
+        /// <summary>
+        /// GDD v8.4 (M9k, D-348): cada golpe paga as lascas do dano causado, na hora; a quebra só conta. Até o v8.2, a quebra
+        /// paga tudo de uma vez.
+        /// </summary>
+        public bool PaysPerHit => RewardFormula == RewardFormula.Health;
     }
 }

@@ -23,7 +23,7 @@ MonoBehaviour:
   crystalReward: 0.2
   caveCount: 100
   caveHealthGrowth: 1.5
-  rewardFormula: 1
+  rewardFormula: 2
   caveRewardGrowth: 1
   floorBreaks: 5
   levelsPerBiome: 10

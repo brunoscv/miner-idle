@@ -484,6 +484,17 @@ Plano do [M9j](Marco%209j%20-%20Numeros%20e%20marcos%20do%20v8.4.md) aprovado pe
 | **D-371** | **O piso de 0,1 s no golpe fica (P5):** intervalo = `max(0,1 s, 2 s − 0,01 × Velocidade − 0,1 × Tempo Curto)`. A linha mostra **MÁX** quando o intervalo já está no piso (na LOJA e no descanso), para ninguém comprar à toa. | M9j |
 | **D-372** | **M9j aprovado (bloco 1 do GDD v8.4)** em 2026-11-25, depois da subida do Bruno do andar 1 ao 20 sem DBG ("Subi, aprovo o M9j"): o `Balance_GDD_v84` é o balanço do jogo, com os marcos 3/15/45/60, as três permanentes novas e a Promoção fora. Os testes automáticos que medem o v8.2 seguem para a bateria do fim do v8.4. Próximo: o plano do bloco 2 (lascas pelo dano). | M9j |
 
+### 1.20 Marco 9k — lascas pelo dano, em 2026-11-25
+
+Plano do [M9k](Marco%209k%20-%20Lascas%20pelo%20dano.md) aprovado pelo Bruno com as três recomendações ("Aprovo as 3").
+
+| ID | Decisão | Base |
+|---|---|---|
+| **D-373** | **A bomba paga com o multiplicador (P1):** as lascas do dano dela vêm vezes Mineração, Coração Ardente e cartas, como o golpe; o dano dela continua sem crítico nem bônus (D-255). | M9k |
+| **D-374** | **A lasca voando no ritmo dos efeitos limpos (P2):** uma por golpe do anão até ~4 por segundo; mais rápido, uma a cada 0,25 s (o contador sobe a cada golpe igual). A bomba solta uma por cristal atingido, até 3. O estagiário não solta. Na quebra, só os estilhaços na cor do cristal. "Efeitos: antigos" no DBG mostra sem limite. | M9k, D-346 |
+| **D-375** | **Sem número "+N" de lascas por golpe (P3):** o contador de LASCAS e a lasca voando mostram o ganho; ficam os números do dano do estagiário e da bomba, como hoje. | M9k, D-346 |
+| **D-376** | **M9k aprovado (bloco 2 do GDD v8.4)** em 2026-11-25, depois da subida do Bruno do andar 1 ao 20 sem DBG ("Subi, aprovo o M9k"): no `Balance_GDD_v84` as lascas do cristal são a vida dele, pagas a cada golpe (anão, estagiário na tela e bomba) pelo dano causado, vezes o multiplicador da hora; a quebra conta e não paga; a lasca voa no ritmo da D-374. Os testes automáticos que medem o pagamento na quebra seguem para a bateria do fim do v8.4. Próximo: o plano do bloco 3 (estagiário só offline). | M9k |
+
 ## 2. Aguardando aprovação do Bruno (ordenadas pelo que bloqueiam)
 
 Legenda: **Bloq.** = bloqueia a partir de qual marco · **Rec.** = recomendação.

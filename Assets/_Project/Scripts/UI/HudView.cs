@@ -89,6 +89,7 @@ namespace MinersIdle.UI
 
         void Update()
         {
+            if (_shardsDirty) ShowShards(_shards);
             if (_pulse > 0f)
             {
                 _pulse = Mathf.Max(0f, _pulse - Time.unscaledDeltaTime / PulseSeconds);
@@ -100,7 +101,7 @@ namespace MinersIdle.UI
 
         protected override void Rebuild(MiningSimulation simulation)
         {
-            OnShardsChanged(simulation.State.Shards);
+            ShowShards(simulation.State.Shards);
             OnStatsChanged(simulation.Stats);
             OnCaveChanged(simulation.State.Cave);
             OnPermanentsChanged();
@@ -114,7 +115,21 @@ namespace MinersIdle.UI
                 redShardsValue.text = NumberFormatter.FormatShards(Simulation.Permanents.State.RedShards);
         }
 
-        void OnShardsChanged(double shards) => shardsValue.text = NumberFormatter.FormatShards(shards);
+        // Lascas pelo dano (M9k): o saldo muda a cada golpe (e do estagiário e da bomba); o texto muda uma vez por quadro.
+        double _shards;
+        bool _shardsDirty;
+
+        void OnShardsChanged(double shards)
+        {
+            _shards = shards;
+            _shardsDirty = true;
+        }
+
+        void ShowShards(double shards)
+        {
+            _shardsDirty = false;
+            shardsValue.text = NumberFormatter.FormatShards(shards);
+        }
 
         void OnStatsChanged(MinerStats stats)
         {

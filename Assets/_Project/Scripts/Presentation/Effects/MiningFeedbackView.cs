@@ -87,6 +87,10 @@ namespace MinersIdle.Presentation
         [SerializeField] float calmInternNumberGap = 0.3f;
         [Tooltip("Faíscas na tela ao mesmo tempo, no máximo.")]
         [SerializeField] int calmSparkLimit = 40;
+        [Tooltip("Lascas pelo dano (M9k, D-374): no máximo uma lasca voando do golpe a cada tantos segundos (~4 por segundo).")]
+        [SerializeField] float calmShardGap = 0.25f;
+        [Tooltip("Lascas pelo dano (M9k, D-374): quantas lascas a bomba solta, uma por cristal atingido, no máximo.")]
+        [SerializeField] int calmBombShards = 3;
 
         float _intensity = 1f;
         bool _calm = true;
@@ -95,6 +99,8 @@ namespace MinersIdle.Presentation
         float _lastCriticalTextAt = -10f;
         float _lastHitShakeAt = -10f;
         float _lastInternNumberAt = -10f;
+        float _lastShardAt = -10f;
+        int _bombShards;               // lascas da bomba desta explosão (D-374)
 
         /// <summary>
         /// Os efeitos limpos (D-346), ligados de fábrica. Desligado (DBG → Efeitos → "Efeitos: antigos"), volta ao jeito de
@@ -127,6 +133,19 @@ namespace MinersIdle.Presentation
 
         /// <summary>Quantos números de golpe do estagiário já subiram (para testes).</summary>
         public int InternNumbersShown { get; private set; }
+
+        /// <summary>Quantas lascas voaram dos golpes e da bomba (M9k, D-374; para os testes).</summary>
+        public int ShardsFlown { get; private set; }
+
+        /// <summary>O balanço paga a cada golpe (GDD v8.4, D-348): a lasca voa do golpe, não da quebra.</summary>
+        bool PaysPerHit => Simulation != null && Simulation.Rules.PaysPerHit;
+
+        /// <summary>Uma lasca voa do cristal até o LASCAS do HUD.</summary>
+        void LaunchShard(Vector3 at)
+        {
+            shardFlight.Launch(at, sizeScale * 0.7f);
+            ShardsFlown++;
+        }
 
         /// <summary>A cor do número dos golpes do estagiário (cinza, D-171).</summary>
         public static Color InternNumberColor => InternColor;
@@ -195,6 +214,13 @@ namespace MinersIdle.Presentation
             ShowCrack(hit, at);
             sparks.Emit(at, Count(9, factor), HitSparkColor, 4f * sizeScale, size);
 
+            // Lascas pelo dano (M9k, D-374): uma lasca por golpe, no limpo no máximo uma a cada calmShardGap.
+            if (PaysPerHit && (!_calm || now - _lastShardAt >= calmShardGap))
+            {
+                LaunchShard(at);
+                _lastShardAt = now;
+            }
+
             // O tremor do golpe (e o do crítico, mais forte, no lugar dele): no limpo, no máximo um a cada calmTextGap.
             bool shakeFree = !_calm || now - _lastHitShakeAt >= calmTextGap;
             if (shakeFree)
@@ -252,10 +278,18 @@ namespace MinersIdle.Presentation
             var near = at + Vector3.up * (0.6f * sizeScale);
             floatingTexts.Show(NumberFormatter.Format(hit.Damage), near, BombColor, 0.7f * sizeScale, 0.9f, 1f * sizeScale);
             BombBlastsShown++;
+
+            // Lascas pelo dano (M9k, D-374): uma por cristal atingido, no limpo até calmBombShards por explosão.
+            if (PaysPerHit && (!_calm || _bombShards < calmBombShards))
+            {
+                LaunchShard(at);
+                _bombShards++;
+            }
         }
 
         void OnBombLanded(IReadOnlyList<Crystal> hit)
         {
+            _bombShards = 0; // a explosão acabou (o BombLanded sai depois de todos os BombHitLanded)
             if (hit.Count > 0) screenShake.Shake(bombShake * _intensity, bombShakeSeconds);
         }
 
@@ -292,7 +326,7 @@ namespace MinersIdle.Presentation
             screenShake.Shake(breakShake * _intensity, breakShakeSeconds);
             sparks.Emit(at, Count(10), HitSparkColor, 5f * sizeScale, size);
             sparks.Emit(at, Count(18), shards, 6f * sizeScale, size * 2f, 0.6f); // estilhaços na cor do cristal
-            shardFlight.Launch(at, sizeScale * 0.7f);
+            if (!PaysPerHit) shardFlight.Launch(at, sizeScale * 0.7f); // no v8.4 a lasca já voou nos golpes (D-374)
         }
 
         /// <summary>A carta escolhida sobe do anão com o efeito no tier de agora ({0}: "DANO ×2", ×4 no tier 2; M9e E1).</summary>

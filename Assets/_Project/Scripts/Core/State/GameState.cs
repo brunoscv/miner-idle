@@ -130,6 +130,16 @@ namespace MinersIdle.Core
             ShardsEarned += reward;
         }
 
+        /// <summary>
+        /// As lascas de um golpe (GDD v8.4, M9k, D-348): entram no saldo e nas lascas do dia, sem contar quebra (a quebra
+        /// conta à parte, com <see cref="RegisterBreak"/> de 0).
+        /// </summary>
+        internal void AddMinedShards(double amount)
+        {
+            Shards += amount;
+            ShardsEarned += amount;
+        }
+
         internal void AddPlayTime(double seconds) => PlaySeconds += seconds;
 
         /// <summary>O contador do raro anda, até <paramref name="interval"/> (cheio, espera o próximo cristal nascer).</summary>

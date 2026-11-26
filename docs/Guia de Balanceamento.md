@@ -1,7 +1,7 @@
 # Guia de balanceamento — onde ficam as fórmulas e como mexer
 
 > Para quem vai testar e ajustar a jogabilidade (custos, danos, tempos) sem precisar ler o código todo.
-> Escrito em 2026-11-19 com o jogo no GDD v8.2; **atualizado em 2026-11-25 para o GDD v8.4** (M9j, bloco 1: balanço ativo `Balance_GDD_v84`). Os blocos 2 a 7 do v8.4 (lascas pelo dano, estagiário só offline, bomba, raro e anúncios, tiers, automação) ainda não entraram: onde o guia fala deles, vale o v8.2.
+> Escrito em 2026-11-19 com o jogo no GDD v8.2; **atualizado em 2026-11-25 para o GDD v8.4** (M9j, bloco 1: balanço ativo `Balance_GDD_v84`; M9k, bloco 2: lascas pelo dano, pagas a cada golpe). Os blocos 3 a 7 do v8.4 (estagiário só offline, bomba, raro e anúncios, tiers, automação) ainda não entraram: onde o guia fala deles, vale o v8.2.
 
 ## 1. Resumo em 30 segundos
 
@@ -77,7 +77,7 @@ Nomes em **negrito** são os campos do asset como aparecem no Inspector (o Unity
 | Funcionalidade | Fórmula | Campos (valor atual) | Código |
 |---|---|---|---|
 | **Vida do cristal** no andar | `Crystal Health × Cave Health Growth^(andar − 1)` | **Crystal Health** 1 · **Cave Health Growth** 1,5 | `MiningRules.CrystalHealthIn` |
-| **Lascas (moeda) por cristal** | `vida do andar × Crystal Reward × max(1, andar − 1)` × multiplicador de lascas (§4.3) | **Crystal Reward** 0,2 · **Reward Formula** FloorScaled (**Cave Reward Growth** não vale nela) | `MiningRules.CrystalRewardIn` |
+| **Lascas (moeda) por cristal** | `vida do andar` × multiplicador de lascas (§4.3), **pagas a cada golpe pelo dano causado** (§4.3); a quebra conta, mas não paga (D-348) | **Reward Formula** Health (**Crystal Reward** e **Cave Reward Growth** não valem nela; no v8.2 era FloorScaled: `vida × 0,2 × max(1, andar − 1)`, pago na quebra) | `MiningRules.CrystalRewardIn`, `MiningRules.PaysPerHit` |
 | **Número de andares** | — | **Cave Count** 100 | |
 | **Bioma** (troca de visual) | a cada **Levels Per Biome** andares | **Levels Per Biome** 10 | `MiningRules.BiomeOf` |
 | **Cristais para o Próximo Andar** | `andar × Floor Breaks − Memória − (Floor Discount com o recorde no Floor Discount Floor)` (mín. 0) | **Floor Breaks** 5 · **Floor Discount Floor** 60 · **Floor Discount** 100 | `Permanents.FloorRequirement` |
@@ -86,7 +86,7 @@ Nomes em **negrito** são os campos do asset como aparecem no Inspector (o Unity
 | Avanço automático / estagiário / raro liberam no andar | recorde de andar ≥ valor | **Auto Advance Floor** 3 · **Intern Floor** 1 · **Rare Floor** 10 | `MiningRules.Is…Unlocked` |
 | Marcos do v8.4 (para sempre, pelo recorde) | dia começa com o estagiário · vermelhas ×2 · −100 cristais | **Intern Start Floor** 15 · **Red Shards Double Floor** 45 · **Floor Discount Floor** 60 | `FloorMilestones` |
 
-Exemplo (vida / lascas sem bônus): andar 1 → 1 / 0,2 · andar 3 → 2,25 / 0,9 · andar 10 → 38,4 / 69,2 · andar 20 → 2.217 / 8.424.
+Exemplo (vida / lascas do cristal inteiro sem bônus): andar 1 → 1 / 1 · andar 3 → 2,25 / 2,25 · andar 10 → 38,4 / 38,4 · andar 20 → 2.217 / 2.217. No v8.2 eram 0,2 · 0,9 · 69,2 · 8.424: o começo rende mais e, do andar 10 em diante, menos.
 
 ### 4.2 Anão: dano, velocidade, corrida
 
@@ -107,6 +107,7 @@ Exemplo da Picareta (dano / custo da próxima): 0 compras → 2 / 5 · 5 → 3,4
 
 | Funcionalidade | Fórmula | Campos (valor atual) | Código |
 |---|---|---|---|
+| **Lascas de um golpe** (v8.4) | `min(dano, vida que restava) × (lascas do cristal ÷ vida dele) × multiplicador de lascas`, na hora do golpe; vale para o golpe do anão, do estagiário na tela e da bomba (D-373). O dano além da vida não paga; o multiplicador é o **de agora** (uma carta ou compra vale já no golpe seguinte) | (vem da vida, §4.1, e do multiplicador abaixo) | `MiningSimulation.PayHit` |
 | **Multiplicador de lascas** | `1 + Mining.Effect × n + Coração Ardente + Mineração do estagiário` × cartas/anúncios | **Mining**: Effect 0,1 (+10%/nível) · Max 200 (sem teto além do nível máximo) | `MinerStats.Compute` |
 | **Custo da Mineração** | `10 × 2,5^n` | **Mining**: Base Cost 10 · Cost Growth 2,5 | |
 | **Chance de crítico** | `Crit Chance + Critical.Effect × n + Dedos Nervosos + cartas/anúncios` (máx. do v8.4: 50% + 50% = 100%) | **Crit Chance** 0 · **Critical**: Effect 0,01 · Max 50 | `MiningSimulation.CritChance` |
@@ -132,7 +133,7 @@ Código: `InternStats.Compute`. O crítico e o Sangue da Montanha **não** valem
 | Funcionalidade | Fórmula | Campos (valor atual) |
 |---|---|---|
 | Teto de tempo que conta | 4 h; 6 h depois de chegar ao andar 20; + horas dos anúncios ativos ao fechar, até o teto dos anúncios | **Offline Max Hours** 4 · **Offline Deep Hours** 6 · **Offline Deep Floor** 20 · **Ad Offline Cap Hours** 8 |
-| O que rende | só o estagiário minera: cristais = tempo ÷ (corrida + ⌈vida ÷ dano⌉ golpes); lascas × Mineração dele | (vem das linhas do estagiário) |
+| O que rende | só o estagiário minera: cristais = tempo ÷ (corrida + ⌈vida ÷ dano⌉ golpes); cada cristal rende as lascas dele inteiro (no v8.4, a vida) × Mineração dele | (vem das linhas do estagiário) |
 
 Código: `OfflineMining.cs`.
 
@@ -140,7 +141,7 @@ Código: `OfflineMining.cs`.
 
 | Funcionalidade | Fórmula | Campos (valor atual) |
 |---|---|---|
-| **Dano da bomba** | `fração × vida máxima` de cada cristal no alcance (sem crítico nem bônus) | **Bomb Fractions** 0,1 · 0,2 · 0,3 · 0,4 · 0,5 · 0,6 · 0,7 · 1 (a 1ª é de graça; cada compra da permanente Bomba passa para a próxima) |
+| **Dano da bomba** | `fração × vida máxima` de cada cristal no alcance (sem crítico nem bônus); no v8.4 esse dano paga lascas como um golpe, com o multiplicador (D-373) | **Bomb Fractions** 0,1 · 0,2 · 0,3 · 0,4 · 0,5 · 0,6 · 0,7 · 1 (a 1ª é de graça; cada compra da permanente Bomba passa para a próxima) |
 | Recarga / voo / alcance | recarga = `Bomb Charge Seconds − Bombardeador` (mín. 10%) | **Bomb Charge Seconds** 5 · **Bomb Flight Seconds** 0,4 · **Bomb Reach** 7 un (3,5 m) |
 
 Código: `BombRules.cs` e `MiningSimulation`.

@@ -114,6 +114,7 @@ namespace MinersIdle.EditorTools
             EnsureGddV84Balance(); // depois de todo o v8.2: a cópia leva o balanço inteiro (M9j)
             EnsureGddV84Milestones();
             EnsureGddV84NewPermanents();
+            EnsureGddV84ShardsByDamage();
             EnsureBootstrapScene();
             EnsureSplash();
             EnsureGameScene();
@@ -918,6 +919,24 @@ namespace MinersIdle.EditorTools
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] GDD v8.4: Tempo Curto, Bombardeador e Olho Treinado no descanso (M9j E3).");
+        }
+
+        /// <summary>
+        /// M9k E1 (GDD v8.4 §3.1, D-348): as lascas do cristal são a vida dele, pagas a cada golpe pelo dano causado. Só troca
+        /// se o <c>Balance_GDD_v84</c> ainda estiver na fórmula do v8.2 (FloorScaled): outra posta à mão fica.
+        /// </summary>
+        static void EnsureGddV84ShardsByDamage()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<MiningRulesAsset>(GddV84BalancePath);
+            if (asset == null) return;
+            var serialized = new SerializedObject(asset);
+            var formula = serialized.FindProperty("rewardFormula");
+            if (formula.enumValueIndex != (int)RewardFormula.FloorScaled) return;
+            formula.enumValueIndex = (int)RewardFormula.Health;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] GDD v8.4: lascas pelo dano, pagas a cada golpe (M9k E1, D-348).");
         }
 
         static void SetLine(SerializedObject serialized, string line, double baseCost, double costGrowth, int maxLevel, double effect,

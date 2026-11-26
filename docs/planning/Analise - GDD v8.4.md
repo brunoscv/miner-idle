@@ -197,7 +197,7 @@ Mesmo processo da D-298: blocos em sequência, cada um com plano de marco aprova
 | Bloco | O que entra | Tamanho |
 |---|---|---|
 | **1. Números e marcos** ([M9j](Marco%209j%20-%20Numeros%20e%20marcos%20do%20v8.4.md), ✅ aprovado em 2026-11-25, D-372) | tabela da §4 (anão, estagiário, permanentes), `andar × 5`, Tempo Curto, Bombardeador, Olho Treinado, sai a Promoção, marcos 3/15/45/60 (sem os de automação), crítico >100% sai, loja rápida ligada | médio (quase tudo no `Balance_GDD_v8` + 3 permanentes) |
-| **2. Lascas pelo dano** | pagamento por golpe, bomba paga, offline novo | médio (mexe no núcleo da economia e em muitos testes) |
+| **2. Lascas pelo dano** ([M9k](Marco%209k%20-%20Lascas%20pelo%20dano.md), ✅ aprovado em 2026-11-25, D-376) | pagamento por golpe, bomba paga, offline novo | médio (mexe no núcleo da economia e em muitos testes) |
 | **3. Estagiário offline** | online só corre atrás, Crítico dele, anúncio que dobra o offline | médio |
 | **4. Bomba do v8.4** | andar 5/50, 110%…190% − 1%/andar, 1 cristal → área, permanente nova, Bombardeador na carga | médio |
 | **5. Raro e anúncios do v8.4** | contador visível, cartas novas, modal fecha sozinho, 9 anúncios em abas, Ganância com tier 2, anúncio que dobra o descanso | médio |
